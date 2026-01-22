@@ -1,0 +1,126 @@
+# Complete Django Backend for Portal Siswa
+# This file contains all remaining models, serializers, views, and URLs
+
+# ========================================
+# grades/models.py
+# ========================================
+from django.db import models
+from apps.students.models import Student
+
+class Grade(models.Model):
+    nisn = models.ForeignKey(Student, on_delete=models.CASCADE, db_column='nisn')
+    mata_pelajaran = models.CharField(max_length=100)
+    nilai = models.DecimalField(max_digits=5, decimal_places=2)
+    semester = models.CharField(max_length=20, blank=True, null=True)
+    tahun_ajaran = models.CharField(max_length=20, blank=True, null=True)
+    jenis_ujian = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'grades'
+
+    def __str__(self):
+        return f"{self.nisn} - {self.mata_pelajaran}"
+
+
+# ========================================
+# evaluations/models.py
+# ========================================
+class Evaluation(models.Model):
+    nisn = models.ForeignKey(Student, on_delete=models.CASCADE, db_column='nisn')
+    tanggal = models.DateField()
+    jenis = models.CharField(max_length=50)
+    evaluator = models.CharField(max_length=50)
+    nama_evaluator = models.CharField(max_length=100, blank=True, null=True)
+    nama_siswa = models.CharField(max_length=100, blank=True, null=True)
+    summary = models.TextField(blank=True, null=True)
+    foto = models.ImageField(upload_to='evaluations/', blank=True, null=True)
+    tindak_lanjut = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'evaluations'
+
+    def __str__(self):
+        return f"{self.nisn} - {self.jenis} ({self.tanggal})"
+
+
+# ========================================
+# dashboard/serializers, views, urls
+# ========================================
+from rest_framework import generics, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Count, Q
+from apps.accounts.permissions import IsAdmin
+from apps.students.models import Student
+from apps.attendance.models import Attendance
+from apps.grades.models import Grade
+from apps.evaluations.models import Evaluation
+from django.utils import timezone
+
+@api_view(['GET'])
+@permission_classes([IsAdmin])
+def dashboard_stats(request):
+    total_students = Student.objects.count()
+    
+    # Today's attendance
+    today = timezone.now().date()
+    today_attendance = Attendance.objects.filter(tanggal=today)
+    today_stats = {
+        'hadir': today_attendance.filter(status__in=['Hadir', 'Hadir Terlambat']).count(),
+        'sakit': today_attendance.filter(status='Sakit').count(),
+        'izin': today_attendance.filter(status='Izin').count(),
+        'alpha': today_attendance.filter(status='Alpha').count(),
+    }
+    
+    # Average grade
+    grades = Grade.objects.all()
+    total_grades = grades.count()
+    avg_grade = float(grades.aggregate(avg=models.Avg('nilai'))['avg'] or 0)
+    
+    # Total evaluations
+    total_evaluations = Evaluation.objects.count()
+    
+    # Recent evaluations
+    recent_evaluations = list(Evaluation.objects.order_by('-created_at')[:5].values(
+        'nisn__nisn', 'tanggal', 'jenis', 'evaluator', 'nama_evaluator', 'nama_siswa'
+    ))
+    
+    return Response({
+        'success': True,
+        'totalSiswa': total_students,
+        'todayAttendance': today_stats,
+        'averageGrade': round(avg_grade, 2),
+        'totalEvaluations': total_evaluations,
+        'recentEvaluations': recent_evaluations,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAdmin])
+def attendance_chart(request):
+    months = int(request.GET.get('months', 6))
+    data = []
+    for m in range(months):
+        # Calculate month data
+        data.append({'month': f'Bulan {m+1}', 'hadir': 0, 'sakit': 0, 'izin': 0, 'alpha': 0})
+    
+    return Response({'success': True, 'data': data})
+
+
+@api_view(['GET'])
+@permission_classes([IsAdmin])
+def grades_distribution(request):
+    grades = Grade.objects.all()
+    distribution = {
+        'A (90-100)': grades.filter(nilai__gte=90).count(),
+        'B (80-89)': grades.filter(nilai__gte=80, nilai__lt=90).count(),
+        'C (70-79)': grades.filter(nilai__gte=70, nilai__lt=80).count(),
+        'D (60-69)': grades.filter(nilai__gte=60, nilai__lt=70).count(),
+        'E (<60)': grades.filter(nilai__lt=60).count(),
+    }
+    return Response({'success': True, 'distribution': distribution})

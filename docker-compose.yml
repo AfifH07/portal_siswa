@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: portal_siswa_db
+    environment:
+      POSTGRES_DB: portal_siswa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend_django
+    container_name: portal_siswa_backend
+    command: sh -c "python manage.py migrate && python manage.py createsuperuser --noinput || true && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend_django:/app
+      - ./frontend:/app/../frontend
+      - media_files:/app/backend_django/media
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-change-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=portal_siswa
+      - DB_USER=postgres
+      - DB_PASS=postgres_password
+      - DJANGO_SETTINGS_MODULE=backend_django.settings
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /app
+
+volumes:
+  postgres_data:
+  media_files:

@@ -1,0 +1,78 @@
+portal-siswa/
+│
+├── backend/                          # Node.js/Express Backend
+│   ├── config/                       # Konfigurasi
+│   │   ├── config.js                 # App config (migrasi CONFIG)
+│   │   └── database.js              # DB connection (MySQL/PostgreSQL)
+│   │
+│   ├── controllers/                  # Business Logic (migrasi Code.gs)
+│   │   ├── authController.js        # ✅ Auth: login, change password, reset
+│   │   ├── usersController.js       # ⏳ User management CRUD
+│   │   ├── attendanceController.js   # ⏳ Attendance operations
+│   │   ├── gradesController.js      # ⏳ Grades operations
+│   │   ├── evaluationsController.js # ⏳ Evaluations operations
+│   │   ├── dashboardController.js   # ⏳ Dashboard statistics
+│   │   └── uploadController.js     # ⏳ File upload handler
+│   │
+│   ├── middleware/                  # Express Middleware
+│   │   ├── authMiddleware.js       # ✅ JWT authentication
+│   │   └── uploadMiddleware.js     # ✅ Multer file upload
+│   │
+│   ├── models/                      # Database Models (Sequelize)
+│   │   ├── User.js                # ✅ Users table (Sheet: Users)
+│   │   ├── Student.js             # ✅ Students table (Sheet: Siswa)
+│   │   ├── Attendance.js          # ✅ Attendance table (Sheet: Absensi)
+│   │   ├── Grade.js              # ✅ Grades table (Sheet: Nilai)
+│   │   ├── Evaluation.js          # ✅ Evaluations table (Sheet: Evaluasi)
+│   │   ├── ResetToken.js         # ✅ Reset tokens (Sheet: ResetPassword)
+│   │   ├── Schedule.js           # ✅ Schedule table (Sheet: Jadwal)
+│   │   ├── AttendanceDraft.js     # ✅ Draft attendance (Sheet: AttendanceDraft)
+│   │   └── index.js             # ✅ Export all models
+│   │
+│   ├── routes/                      # API Routes
+│   │   ├── auth.js                # ✅ /api/auth/*
+│   │   ├── users.js               # ⏳ /api/users/*
+│   │   ├── attendance.js          # ⏳ /api/attendance/*
+│   │   ├── grades.js             # ⏳ /api/grades/*
+│   │   ├── evaluations.js        # ⏳ /api/evaluations/*
+│   │   ├── dashboard.js          # ⏳ /api/dashboard/*
+│   │   └── upload.js            # ⏳ /api/upload/*
+│   │
+│   ├── utils/                       # Helper Functions
+│   │   ├── auth.js                # ✅ JWT helpers (hash, compare, verify)
+│   │   ├── date.js               # ✅ Date formatting
+│   │   ├── helpers.js            # ✅ General helpers (normalize, generate token)
+│   │   └── permission.js         # ✅ Permission checker
+│   │
+│   └── server.js                   # ✅ Express app entry point
+│
+├── frontend/                         # Frontend Files
+│   ├── public/                      # Static Files
+│   │   ├── css/
+│   │   │   └── style.css          # ⏳ Extract from Index.html
+│   │   ├── js/
+│   │   │   └── app.js             # ⏳ Extract from Index.html
+│   │   └── assets/
+│   │       └── (images, fonts)     # Upload logo, etc.
+│   │
+│   └── views/
+│       └── index.html              # ⏳ Modified Index.html
+│
+├── uploads/                          # File Storage (ganti Google Drive)
+│   └── .gitkeep                    # Placeholder
+│
+├── database/                         # Database Schema & Migrations
+│   └── schema.sql                  # ✅ SQL schema untuk setup
+│
+├── .env                              # ⚠️ Environment variables (copy dari .env.example)
+├── .env.example                      # ✅ Template environment
+├── .gitignore                        # ✅ Git ignore patterns
+├── package.json                       # ✅ Node.js dependencies
+├── README.md                         # ✅ Dokumentasi lengkap
+├── QUICKSTART.md                     # ✅ Panduan quick start
+└── MIGRASI.md                       # ✅ Panduan migrasi detail
+
+Legend:
+✅ = Sudah dibuat
+⏳ = Perlu dibuat
+⚠️  = Perlu disiapkan

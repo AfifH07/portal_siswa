@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+ENV/
+*.db
+*.sqlite3
+
+# Django
+*.log
+logs/
+staticfiles/
+media/
+!media/.gitkeep
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Legacy
+legacy_node_backend/
+
+# Backup
+*.bak
+*.backup
