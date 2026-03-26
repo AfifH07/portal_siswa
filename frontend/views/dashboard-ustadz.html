@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Ustadz - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260314c" rel="stylesheet">
+    <link href="/static/css/bento-dashboard.css?v=20260327F" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-role="guru">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Ustadz/Ustadzah</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">Ustadz</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1>Dashboard Ustadz</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Dashboard</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+            <div class="welcome-text">
+                <h2>Assalamu'alaikum, <span id="welcome-name">Ustadz</span>! 👋</h2>
+                <p>Semoga hari ini penuh keberkahan. Anda memiliki <span class="highlight" id="today-schedule-count">0</span> jadwal mengajar hari ini.</p>
+            </div>
+            <div class="welcome-badge">
+                <div class="wb-label">Total Evaluasi Bulan Ini</div>
+                <div class="wb-val" id="eval-total">+0</div>
+                <div class="wb-sub">poin</div>
+            </div>
+        </div>
+
+        <!-- Bento Grid Dashboard -->
+        <div class="bento-grid bento-grid-main" id="dashboard-content">
+
+            <!-- ROW 1: Quick Input Buttons -->
+            <div class="bento-card bento-span-12" id="card-quick-input">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: var(--emerald-100);">⚡</div>
+                            <h3>Aksi Cepat</h3>
+                        </div>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="quick-input-grid">
+                            <a href="/attendance?action=input" class="quick-input-btn">
+                                <div class="quick-input-icon absensi">📋</div>
+                                <div class="quick-input-label">Input Presensi</div>
+                                <div class="quick-input-sublabel">KBM / Diniyah</div>
+                            </a>
+                            <a href="/hafalan?action=ziyadah" class="quick-input-btn">
+                                <div class="quick-input-icon ziyadah">📖</div>
+                                <div class="quick-input-label">Input Ziyadah</div>
+                                <div class="quick-input-sublabel">Setoran Hafalan</div>
+                            </a>
+                            <a href="/evaluations" class="quick-input-btn">
+                                <div class="quick-input-icon evaluasi">⭐</div>
+                                <div class="quick-input-label">Evaluasi Santri</div>
+                                <div class="quick-input-sublabel">Prestasi & Catatan</div>
+                            </a>
+                            <a href="/inval?action=record" class="quick-input-btn" id="btn-inval" style="display: none;">
+                                <div class="quick-input-icon inval">🔄</div>
+                                <div class="quick-input-label">Catat Inval</div>
+                                <div class="quick-input-sublabel">Penggantian Kelas</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: Assignment Cards + Inval Card (if Piket) -->
+            <!-- Assignment Cards - Span 8 -->
+            <div class="bento-card bento-span-8 bento-row-2" id="card-assignments">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: #dbeafe;">📚</div>
+                            <h3>Tugas & Penugasan Anda</h3>
+                        </div>
+                        <span class="card-badge" id="assignment-count">0 Tugas</span>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="assignment-grid" id="assignment-grid">
+                            <!-- Will be populated by JS -->
+                            <div class="assignment-card">
+                                <div class="assignment-header">
+                                    <div class="assignment-icon kbm">📚</div>
+                                    <div>
+                                        <div class="assignment-title">Memuat...</div>
+                                        <div class="assignment-subtitle">Mohon tunggu</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inval Action Card (Piket Only) - Span 4 -->
+            <div class="bento-card bento-card-inval bento-span-4 bento-row-2" id="card-inval" style="display: none;">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon">🔄</div>
+                            <h3>Piket Hari Ini</h3>
+                        </div>
+                    </div>
+                    <div class="bento-card-body">
+                        <p style="font-size: 13px; opacity: 0.9; margin-bottom: 12px;">
+                            Anda bertugas sebagai Ustadz Piket hari ini. Catat setiap penggantian kelas yang terjadi.
+                        </p>
+                        <div class="inval-stats">
+                            <div class="inval-stat-item">
+                                <div class="inval-stat-value" id="inval-today">0</div>
+                                <div class="inval-stat-label">Inval Hari Ini</div>
+                            </div>
+                            <div class="inval-stat-item">
+                                <div class="inval-stat-value" id="inval-pending">0</div>
+                                <div class="inval-stat-label">Pending Verifikasi</div>
+                            </div>
+                        </div>
+                        <a href="/inval?action=record" class="inval-action-btn">
+                            ➕ Catat Inval Baru
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: Today's Schedule + My Evaluation -->
+            <!-- Today's Schedule - Span 6 -->
+            <div class="bento-card bento-span-6" id="card-schedule">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: var(--baron-gold-pale);">📅</div>
+                            <h3>Jadwal Hari Ini</h3>
+                        </div>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="schedule-list" id="schedule-list">
+                            <!-- Will be populated by JS -->
+                            <div class="schedule-item">
+                                <div class="schedule-time">--:--</div>
+                                <div class="schedule-info">
+                                    <div class="schedule-title">Memuat jadwal...</div>
+                                    <div class="schedule-room">Mohon tunggu</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Evaluation Summary - Span 6 -->
+            <div class="bento-card bento-span-6" id="card-my-eval">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: #f3e8ff;">⭐</div>
+                            <h3>Evaluasi Kinerja Saya</h3>
+                        </div>
+                        <span class="card-badge" id="eval-semester">Semester Ini</span>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="stats-row" style="grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+                            <div class="stat-card sc-green" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" style="color: var(--emerald-600);" id="eval-prestasi">+0</div>
+                                    <div class="stat-label">Prestasi</div>
+                                </div>
+                            </div>
+                            <div class="stat-card sc-red" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" style="color: #dc2626;" id="eval-minus">0</div>
+                                    <div class="stat-label">Pelanggaran</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <div style="flex: 1; background: var(--emerald-50); padding: 12px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Inval +</div>
+                                <div style="font-size: 20px; font-weight: 800; color: var(--emerald-600);" id="eval-inval-plus">0</div>
+                            </div>
+                            <div style="flex: 1; background: #fef2f2; padding: 12px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Inval -</div>
+                                <div style="font-size: 20px; font-weight: 800; color: #dc2626;" id="eval-inval-minus">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 4: Class Overview (for Wali Kelas) -->
+            <div class="bento-card bento-span-12" id="card-class-overview" style="display: none;">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: var(--emerald-100);">👥</div>
+                            <h3>Ringkasan Kelas <span id="wali-kelas-name"></span></h3>
+                        </div>
+                        <a href="/students" class="card-badge" style="text-decoration: none;">Lihat Semua →</a>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="stats-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 0;">
+                            <div class="stat-card sc-green" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" id="class-total">0</div>
+                                    <div class="stat-label">Total Santri</div>
+                                </div>
+                            </div>
+                            <div class="stat-card sc-blue" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" id="class-hadir">0</div>
+                                    <div class="stat-label">Hadir Hari Ini</div>
+                                </div>
+                            </div>
+                            <div class="stat-card sc-gold" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" id="class-avg">0</div>
+                                    <div class="stat-label">Rata-rata Nilai</div>
+                                </div>
+                            </div>
+                            <div class="stat-card sc-purple" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" id="class-hafalan">0%</div>
+                                    <div class="stat-label">Progress Hafalan</div>
+                                </div>
+                            </div>
+                            <div class="stat-card sc-green" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" id="class-blp">0</div>
+                                    <div class="stat-label">Avg BLP</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 5: Recent Activity -->
+            <div class="bento-card bento-span-12" id="card-activity">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: #fef3c7;">📜</div>
+                            <h3>Aktivitas Terbaru</h3>
+                        </div>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="activity-list" id="activity-list">
+                            <!-- Will be populated by JS -->
+                            <div class="activity-item">
+                                <div class="activity-dot dot-green">📋</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Memuat aktivitas...</div>
+                                    <div class="activity-sub">Mohon tunggu</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Core Dependencies (order matters!) -->
+<script src="/static/js/utils.js?v=20260327B"></script>
+<script src="/static/js/apiConfig.js?v=20260327B"></script>
+<script src="/static/js/apiFetch.js?v=20260327B"></script>
+<script src="/static/js/auth-check.js?v=20260327B"></script>
+<!-- Page-specific JS -->
+<script src="/static/js/dashboard-ustadz.js?v=20260327C"></script>
+</body>
+</html>

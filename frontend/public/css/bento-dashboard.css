@@ -1,0 +1,1301 @@
+/* =============================================
+   BENTO UI DASHBOARD - Portal Ponpes Baron v2.3
+   Modern Grid-based Dashboard with Card Clusters
+   ============================================= */
+
+/* =============================================
+   BENTO GRID SYSTEM
+   ============================================= */
+.bento-grid {
+    display: grid;
+    gap: 16px;
+    padding: 0;
+}
+
+/* Main Layout: 12-column grid */
+.bento-grid-main {
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(80px, auto);
+}
+
+/* Card span classes */
+.bento-span-1 { grid-column: span 1; }
+.bento-span-2 { grid-column: span 2; }
+.bento-span-3 { grid-column: span 3; }
+.bento-span-4 { grid-column: span 4; }
+.bento-span-5 { grid-column: span 5; }
+.bento-span-6 { grid-column: span 6; }
+.bento-span-7 { grid-column: span 7; }
+.bento-span-8 { grid-column: span 8; }
+.bento-span-9 { grid-column: span 9; }
+.bento-span-10 { grid-column: span 10; }
+.bento-span-11 { grid-column: span 11; }
+.bento-span-12 { grid-column: span 12; }
+
+/* Row span */
+.bento-row-1 { grid-row: span 1; }
+.bento-row-2 { grid-row: span 2; }
+.bento-row-3 { grid-row: span 3; }
+.bento-row-4 { grid-row: span 4; }
+
+/* =============================================
+   BENTO CARD BASE
+   ============================================= */
+.bento-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: var(--transition);
+    position: relative;
+}
+
+.bento-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+/* =============================================
+   CLICKABLE CARD (Drill-Down Navigation)
+   All clickable cards have uniform hover behavior
+   ============================================= */
+.bento-clickable {
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.bento-clickable::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    transition: background 0.3s ease;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+/* Uniform hover: scale(1.02) + enhanced shadow */
+.bento-clickable:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+    border-color: var(--emerald-300);
+}
+
+.bento-clickable:hover::after {
+    background: rgba(16, 185, 129, 0.03);
+}
+
+.bento-clickable:active {
+    transform: scale(0.99);
+}
+
+/* Click indicator arrow for clickable cards */
+.bento-clickable .click-indicator {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    background: var(--emerald-100);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--emerald-600);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.3s ease;
+}
+
+.bento-clickable:hover .click-indicator {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Specific style for BLP clickable card */
+.bento-card-blp.bento-clickable:hover {
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.35);
+}
+
+/* Specific style for Attendance clickable card */
+#card-attendance.bento-clickable:hover {
+    border-color: var(--emerald-400);
+    box-shadow: 0 8px 28px rgba(16, 185, 129, 0.22);
+}
+
+/* Academic card clickable */
+#card-academic.bento-clickable:hover {
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+    border-color: #93c5fd;
+}
+
+/* Hafalan card clickable */
+#card-hafalan.bento-clickable:hover {
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+    border-color: #c4b5fd;
+}
+
+/* Pembinaan card clickable */
+#card-pembinaan.bento-clickable:hover {
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.2);
+    border-color: #fcd34d;
+}
+
+/* Ibadah card clickable */
+#card-ibadah.bento-clickable:hover {
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+    border-color: var(--emerald-300);
+}
+
+.bento-card-inner {
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Card header */
+.bento-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.bento-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bento-card-title h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+/* Incident Count Badge (notification style) */
+.incident-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 8px;
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.bento-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.bento-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =============================================
+   TUNGGAKAN CARD (Financial - Large)
+   Soft & Professional Design
+   ============================================= */
+
+/* Base card - Always emerald gradient for consistency */
+.bento-card-tunggakan {
+    background: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-700) 100%);
+    border: none;
+    position: relative;
+}
+
+/* LUNAS state - Brighter emerald */
+.bento-card-tunggakan.lunas {
+    background: linear-gradient(135deg, var(--emerald-400) 0%, var(--emerald-600) 100%);
+}
+
+.bento-card-tunggakan .bento-card-inner {
+    color: #fff;
+}
+
+.bento-card-tunggakan .bento-card-icon {
+    background: rgba(255,255,255,0.2);
+}
+
+.bento-card-tunggakan h3 {
+    color: rgba(255,255,255,0.9);
+}
+
+/* Status Badge - Small label in corner */
+.tunggakan-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 10;
+}
+
+.tunggakan-badge.badge-lunas {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+}
+
+.tunggakan-badge.badge-pending {
+    background: #fef3c7;
+    color: #92400e;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Amount display */
+.tunggakan-amount {
+    font-size: 42px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    line-height: 1.1;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tunggakan-amount .currency {
+    font-size: 22px;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+/* Warning icon for pending payments - subtle amber */
+.tunggakan-amount .warning-icon {
+    font-size: 24px;
+    opacity: 0.9;
+    margin-left: 8px;
+}
+
+.tunggakan-details {
+    display: flex;
+    gap: 16px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.tunggakan-detail-item {
+    flex: 1;
+}
+
+.tunggakan-detail-label {
+    font-size: 11px;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tunggakan-detail-value {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+/* Glow effect decoration */
+.bento-card-tunggakan::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 60%;
+    height: 150%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* LUNAS display styles */
+.lunas-display {
+    font-size: 36px !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.lunas-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* Status text styling */
+.status-lunas {
+    color: rgba(255,255,255,0.95);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-belum {
+    color: #fef3c7;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+}
+
+/* Unpaid months - amber tinted */
+.unpaid-months {
+    color: #fef3c7;
+    font-size: 13px;
+}
+
+/* BLP Domain Score Colors */
+.blp-domain-score.score-high {
+    color: var(--emerald-600);
+    font-weight: 700;
+}
+
+.blp-domain-score.score-medium {
+    color: var(--baron-gold);
+    font-weight: 600;
+}
+
+.blp-domain-score.score-low {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* =============================================
+   DONUT CHART CLUSTER
+   ============================================= */
+.donut-cluster {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    height: 100%;
+}
+
+.donut-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--emerald-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+
+.donut-item:hover {
+    background: var(--emerald-100);
+    transform: scale(1.02);
+}
+
+.donut-chart-mini {
+    position: relative;
+    width: 70px;
+    height: 70px;
+}
+
+.donut-chart-mini canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.donut-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--text-main);
+}
+
+.donut-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sub);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Individual donut colors */
+.donut-item.sholat .donut-center-text { color: var(--emerald-600); }
+.donut-item.kbm .donut-center-text { color: #3b82f6; }
+.donut-item.diniyah .donut-center-text { color: var(--baron-gold); }
+.donut-item.halaqoh .donut-center-text { color: #8b5cf6; }
+.donut-item.puasa .donut-center-text { color: #ec4899; }
+
+/* =============================================
+   BLP SUMMARY CARD
+   ============================================= */
+.bento-card-blp {
+    background: linear-gradient(135deg, var(--emerald-600) 0%, var(--emerald-800) 100%);
+    border: none;
+}
+
+.bento-card-blp .bento-card-inner {
+    color: #fff;
+}
+
+.bento-card-blp h3 {
+    color: rgba(255,255,255,0.9);
+}
+
+.bento-card-blp .bento-card-icon {
+    background: rgba(255,255,255,0.2);
+}
+
+.blp-score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.blp-score-value {
+    font-size: 56px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    line-height: 1;
+}
+
+.blp-score-max {
+    font-size: 20px;
+    opacity: 0.6;
+    font-weight: 600;
+}
+
+.blp-predikat {
+    display: inline-block;
+    padding: 8px 20px;
+    background: var(--baron-gold);
+    color: #1a1a1a;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: var(--shadow-gold);
+}
+
+.blp-predikat.mumtaz { background: var(--baron-gold); }
+.blp-predikat.jayyid-jiddan { background: #a3e635; color: #1a1a1a; }
+.blp-predikat.jayyid { background: #60a5fa; color: #fff; }
+.blp-predikat.maqbul { background: #fbbf24; color: #1a1a1a; }
+.blp-predikat.perlu-pembinaan { background: #f87171; color: #fff; }
+
+.blp-domains {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.blp-domain-item {
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+.blp-domain-label {
+    font-size: 10px;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.blp-domain-score {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+/* =============================================
+   SERTIFIKASI BADGES
+   ============================================= */
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    height: 100%;
+}
+
+.badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 12px;
+    background: var(--bg-card);
+    border: 2px dashed var(--border-card);
+    border-radius: var(--radius-md);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.badge-item.earned {
+    background: linear-gradient(135deg, var(--baron-gold-pale) 0%, #fef9e7 100%);
+    border: 2px solid var(--baron-gold);
+}
+
+.badge-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 12px;
+    background: var(--emerald-50);
+}
+
+.badge-item.earned .badge-icon {
+    background: var(--baron-gold);
+    box-shadow: var(--shadow-gold);
+}
+
+.badge-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.badge-status {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.badge-status.earned {
+    background: var(--emerald-500);
+    color: #fff;
+}
+
+.badge-status.in-progress {
+    background: var(--baron-gold-pale);
+    color: #a37215;
+}
+
+.badge-status.locked {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* =============================================
+   ASSIGNMENT CARDS (Ustadz)
+   ============================================= */
+.assignment-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.assignment-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.assignment-card:hover {
+    border-color: var(--emerald-400);
+    box-shadow: var(--shadow-md);
+}
+
+.assignment-card.active {
+    border-color: var(--emerald-500);
+    background: var(--emerald-50);
+}
+
+.assignment-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.assignment-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.assignment-icon.kbm { background: #dbeafe; }
+.assignment-icon.diniyah { background: var(--baron-gold-pale); }
+.assignment-icon.halaqoh { background: #f3e8ff; }
+.assignment-icon.piket { background: #fef3c7; }
+.assignment-icon.wali_kelas { background: var(--emerald-100); }
+
+.assignment-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.assignment-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.assignment-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.assignment-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: var(--emerald-50);
+    color: var(--emerald-600);
+    border: 1px solid var(--emerald-200);
+}
+
+/* =============================================
+   QUICK INPUT BUTTONS
+   ============================================= */
+.quick-input-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.quick-input-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: var(--bg-card);
+    border: 2px solid var(--border-card);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.quick-input-btn:hover {
+    border-color: var(--emerald-400);
+    background: var(--emerald-50);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.quick-input-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.quick-input-icon.absensi { background: #dbeafe; }
+.quick-input-icon.ziyadah { background: #f3e8ff; }
+.quick-input-icon.blp { background: var(--emerald-100); }
+.quick-input-icon.evaluasi { background: #fef3c7; } /* Gold/amber for star icon */
+.quick-input-icon.inval { background: #fef3c7; }
+
+.quick-input-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.quick-input-sublabel {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* =============================================
+   INVAL ACTION CARD
+   ============================================= */
+.bento-card-inval {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: none;
+}
+
+.bento-card-inval .bento-card-inner {
+    color: #fff;
+}
+
+.bento-card-inval h3 {
+    color: rgba(255,255,255,0.95);
+}
+
+.bento-card-inval .bento-card-icon {
+    background: rgba(255,255,255,0.2);
+}
+
+.inval-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.inval-stat-item {
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+}
+
+.inval-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+}
+
+.inval-stat-label {
+    font-size: 10px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.inval-action-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: rgba(255,255,255,0.95);
+    color: #d97706;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: var(--transition);
+    text-align: center;
+    text-decoration: none;
+}
+
+.inval-action-btn:hover {
+    background: #fff;
+    transform: scale(1.02);
+}
+
+/* =============================================
+   CHILD SELECTOR (Multi-child walisantri)
+   ============================================= */
+.child-selector {
+    display: flex;
+    gap: 12px;
+    padding: 16px 0;
+    overflow-x: auto;
+    margin-bottom: 16px;
+}
+
+.child-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: var(--bg-card);
+    border: 2px solid var(--border-card);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.child-tab:hover {
+    border-color: var(--emerald-400);
+}
+
+.child-tab.active {
+    border-color: var(--emerald-500);
+    background: var(--emerald-50);
+}
+
+.child-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--emerald-400), var(--emerald-600));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.child-info h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 4px 0;
+}
+
+.child-info span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* =============================================
+   SCHEDULE MINI CARD
+   ============================================= */
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.schedule-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--emerald-50);
+    border-radius: 10px;
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+
+.schedule-item:hover {
+    background: var(--emerald-100);
+}
+
+.schedule-time {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--emerald-600);
+    min-width: 60px;
+}
+
+.schedule-info {
+    flex: 1;
+}
+
+.schedule-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.schedule-room {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.schedule-status {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+
+.schedule-status.ongoing {
+    background: var(--emerald-500);
+    color: #fff;
+}
+
+.schedule-status.upcoming {
+    background: var(--baron-gold-pale);
+    color: #a37215;
+}
+
+.schedule-status.done {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* =============================================
+   ANIMATIONS
+   ============================================= */
+@keyframes bentoFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.bento-card {
+    animation: bentoFadeIn 0.4s ease-out both;
+}
+
+.bento-card:nth-child(1) { animation-delay: 0.05s; }
+.bento-card:nth-child(2) { animation-delay: 0.1s; }
+.bento-card:nth-child(3) { animation-delay: 0.15s; }
+.bento-card:nth-child(4) { animation-delay: 0.2s; }
+.bento-card:nth-child(5) { animation-delay: 0.25s; }
+.bento-card:nth-child(6) { animation-delay: 0.3s; }
+.bento-card:nth-child(7) { animation-delay: 0.35s; }
+.bento-card:nth-child(8) { animation-delay: 0.4s; }
+
+/* =============================================
+   QUICK ACTIONS BAR
+   ============================================= */
+.quick-actions-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-main);
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.btn-action .btn-icon {
+    font-size: 16px;
+}
+
+/* Primary Button (Emerald) */
+.btn-action.btn-primary {
+    background: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
+    color: #fff;
+    border-color: var(--emerald-600);
+}
+
+.btn-action.btn-primary:hover {
+    background: linear-gradient(135deg, var(--emerald-600) 0%, var(--emerald-700) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Secondary Button (Gold) */
+.btn-action.btn-secondary {
+    background: linear-gradient(135deg, var(--baron-gold) 0%, #a37215 100%);
+    color: #fff;
+    border-color: #a37215;
+}
+
+.btn-action.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-gold);
+}
+
+/* Outline Button */
+.btn-action.btn-outline {
+    background: transparent;
+    color: var(--emerald-600);
+    border-color: var(--emerald-300);
+}
+
+.btn-action.btn-outline:hover {
+    background: var(--emerald-50);
+    border-color: var(--emerald-400);
+}
+
+/* Ghost Button */
+.btn-action.btn-ghost {
+    background: transparent;
+    color: var(--text-sub);
+    border-color: transparent;
+}
+
+.btn-action.btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+}
+
+/* Danger Button */
+.btn-action.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    border-color: #dc2626;
+}
+
+.btn-action.btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+/* Disabled state */
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Loading state */
+.btn-action.loading {
+    pointer-events: none;
+    position: relative;
+}
+
+.btn-action.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btnSpin 0.6s linear infinite;
+    right: 12px;
+}
+
+@keyframes btnSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* Page Transition Animation */
+@keyframes pageTransitionOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+body.page-transition-out {
+    animation: pageTransitionOut 0.2s ease-out forwards;
+}
+
+body.page-transition-out * {
+    pointer-events: none;
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media (max-width: 1400px) {
+    .bento-span-4 { grid-column: span 6; }
+    .bento-span-5 { grid-column: span 6; }
+    .bento-span-7 { grid-column: span 6; }
+    .bento-span-8 { grid-column: span 12; }
+    .donut-cluster { grid-template-columns: repeat(3, 1fr); }
+    .badges-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 1024px) {
+    .bento-span-3 { grid-column: span 6; }
+    .bento-span-4 { grid-column: span 6; }
+    .bento-span-5 { grid-column: span 12; }
+    .bento-span-6 { grid-column: span 12; }
+    .bento-span-7 { grid-column: span 12; }
+    .quick-input-grid { grid-template-columns: repeat(2, 1fr); }
+    .assignment-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .bento-span-3 { grid-column: span 12; }
+    .bento-span-4 { grid-column: span 12; }
+    .donut-cluster { grid-template-columns: repeat(2, 1fr); }
+    .badges-grid { grid-template-columns: repeat(2, 1fr); }
+    .blp-domains { grid-template-columns: repeat(2, 1fr); }
+    .inval-stats { grid-template-columns: 1fr; }
+    .tunggakan-amount { font-size: 32px; }
+    .blp-score-value { font-size: 42px; }
+}
+
+@media (max-width: 480px) {
+    .bento-card-inner { padding: 16px; }
+    .donut-cluster { grid-template-columns: 1fr 1fr; }
+    .donut-chart-mini { width: 60px; height: 60px; }
+    .quick-input-grid { grid-template-columns: 1fr; }
+    .badges-grid { grid-template-columns: 1fr; }
+
+    /* Quick Actions responsive */
+    .quick-actions-bar {
+        flex-direction: column;
+        padding: 12px;
+    }
+    .btn-action {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* =============================================
+   DYNAMIC INSIGHT BANNER (v2.3.2e)
+   Shows computed trends based on child data
+   ============================================= */
+.insight-banner {
+    margin-bottom: 16px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, var(--emerald-50) 0%, rgba(255,255,255,0.9) 100%);
+    border: 1px solid var(--emerald-200);
+    border-left: 4px solid var(--emerald-500);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+    transition: all 0.3s ease;
+}
+
+.insight-banner-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.insight-icon {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--emerald-100);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.insight-content {
+    flex: 1;
+}
+
+.insight-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+.insight-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.insight-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.insight-tag.insight-loading {
+    background: rgba(156, 163, 175, 0.15);
+    color: #6b7280;
+}
+
+.insight-tag.insight-up {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+}
+
+.insight-tag.insight-down {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.insight-tag.insight-stable {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+}
+
+.insight-tag.insight-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+}
+
+.insight-tag.insight-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+}
+
+/* State variations */
+.insight-banner.insight-positive {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(255,255,255,0.95) 100%);
+    border-left-color: #059669;
+}
+
+.insight-banner.insight-negative {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(255,255,255,0.95) 100%);
+    border-color: rgba(239, 68, 68, 0.2);
+    border-left-color: #dc2626;
+}
+
+.insight-banner.insight-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(255,255,255,0.95) 100%);
+    border-color: rgba(245, 158, 11, 0.25);
+    border-left-color: #d97706;
+}
+
+@media (max-width: 768px) {
+    .insight-banner-inner {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .insight-details {
+        justify-content: center;
+    }
+}

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluasi & Catatan - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260315" rel="stylesheet">
+    <link href="/static/css/evaluations-baron.css?v=20260314" rel="stylesheet">
+    <link href="/static/css/case-management.css?v=20260319N" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <!-- Back to main website chip -->
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Evaluasi Perilaku</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Evaluasi</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+            <div class="topbar-actions admin-actions">
+                <button id="btn-add-incident" class="btn btn-primary admin-only" onclick="window.openIncidentModal()">
+                    <span>➕</span> Tambah Evaluasi
+                </button>
+                <button onclick="window.exportEvaluations()" class="btn btn-export admin-only">
+                    <span>📥</span> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- =========== MODULE TABS =========== -->
+        <div class="module-tabs" id="module-tabs">
+            <button class="tab-btn active" data-tab="evaluasi" onclick="window.switchTab('evaluasi')">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">Evaluasi Perilaku</span>
+            </button>
+            <button class="tab-btn" data-tab="catatan" onclick="window.switchTab('catatan')">
+                <span class="tab-icon">📝</span>
+                <span class="tab-label">Catatan & Bimbingan</span>
+                <span class="tab-badge" id="incident-badge" style="display: none;">0</span>
+            </button>
+        </div>
+
+        <!-- =========== TAB: EVALUASI =========== -->
+        <div class="tab-content active" id="tab-evaluasi">
+
+        <!-- =========== ADMIN VIEW =========== -->
+        <div class="admin-view" id="admin-view">
+
+            <!-- Welcome/Summary Banner -->
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h2>Analitik Perilaku Santri</h2>
+                    <p>Monitor dan kelola <span class="highlight">evaluasi perilaku</span> seluruh santri</p>
+                </div>
+                <div class="welcome-badge">
+                    <div class="wb-label">Catatan Bulan Ini</div>
+                    <div class="wb-val" id="evaluations-this-month">0</div>
+                    <div class="wb-sub">evaluasi tercatat</div>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">📊</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-evaluations">0</div>
+                        <div class="stat-label">Total Catatan</div>
+                        <div class="stat-delta delta-up" id="evaluations-delta"></div>
+                    </div>
+                </div>
+                <div class="stat-card sc-teal">
+                    <div class="stat-icon-wrap">🏆</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-prestasi">0</div>
+                        <div class="stat-label">Poin Positif</div>
+                        <div class="stat-delta delta-up" id="prestasi-delta"></div>
+                    </div>
+                </div>
+                <div class="stat-card sc-rose">
+                    <div class="stat-icon-wrap">⚠️</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-pelanggaran">0</div>
+                        <div class="stat-label">Poin Negatif</div>
+                        <div class="stat-delta" id="pelanggaran-delta"></div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">📈</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="top-kategori">-</div>
+                        <div class="stat-label">Kategori Terbanyak</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <!-- Category Distribution (Doughnut) -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📊</span> Distribusi Kategori</h3>
+                        <div class="card-badge">Doughnut</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Behavioral Trend (Line Chart) -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📈</span> Tren Perilaku Semester</h3>
+                        <div class="card-badge">Timeline</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secondary Charts Row -->
+            <div class="charts-row-secondary">
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">⚖️</span> Perbandingan Prestasi vs Pelanggaran</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap-large">
+                            <canvas id="comparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="glass-card filter-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🔍</span> Filter & Pencarian</h3>
+                    <button onclick="window.resetFilters()" class="btn btn-reset">
+                        <span>🔄</span> Reset
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="filter-grid">
+                        <div class="filter-group fg-large">
+                            <label>Pencarian</label>
+                            <input type="text" id="search-input" placeholder="Ketik Nama Siswa atau NISN..." class="glass-input">
+                        </div>
+                        <div class="filter-group">
+                            <label>Kelas</label>
+                            <select id="filter-class" class="glass-input">
+                                <option value="">Semua Kelas</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Jenis</label>
+                            <select id="filter-type" class="glass-input">
+                                <option value="">Semua Jenis</option>
+                                <option value="prestasi">Prestasi (Positif)</option>
+                                <option value="pelanggaran">Pelanggaran (Negatif)</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Kategori</label>
+                            <select id="filter-kategori" class="glass-input">
+                                <option value="">Semua Kategori</option>
+                                <option value="adab">🤲 Adab</option>
+                                <option value="kedisiplinan">⏰ Kedisiplinan</option>
+                                <option value="akademik">📚 Akademik</option>
+                                <option value="kebersihan">🧹 Kebersihan</option>
+                                <option value="hafalan">📖 Hafalan</option>
+                                <option value="sosial">🤝 Sosial</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filters Display -->
+            <div id="active-filters" class="active-filters" style="display: none;"></div>
+
+            <!-- Table Section -->
+            <div class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Daftar Evaluasi</h3>
+                    <div class="table-info">
+                        <span id="filtered-count">0</span> dari <span id="total-count">0</span> catatan
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="main-evaluations-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Tanggal</th>
+                                <th>Kategori</th>
+                                <th>Nama Siswa</th>
+                                <th>Kelas</th>
+                                <th>Deskripsi</th>
+                                <th>Jenis</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evaluations-table-body">
+                            <tr><td colspan="8" class="text-center"><div class="loading-spinner"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <button onclick="window.loadPreviousPage()" id="btn-prev" class="btn btn-secondary" disabled>◀ Prev</button>
+                    <div class="pagination-info">
+                        Halaman <span id="current-page">1</span> dari <span id="total-pages">1</span>
+                    </div>
+                    <button onclick="window.loadNextPage()" id="btn-next" class="btn btn-secondary" disabled>Next ▶</button>
+                </div>
+            </div>
+
+        </div><!-- /admin-view -->
+
+        <!-- =========== WALISANTRI VIEW =========== -->
+        <div class="walisantri-view" id="walisantri-view" style="display: none;">
+            <div class="walisantri-header">
+                <h2>Karakter & Evaluasi Ananda</h2>
+                <p class="text-muted">Penilaian karakter (BLP) dan statistik evaluasi ananda di pesantren</p>
+            </div>
+
+            <!-- BLP Core Section -->
+            <div class="blp-core-section" id="blp-core-section">
+                <div class="glass-card blp-core-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📊</span> Penilaian Karakter (BLP)</h3>
+                        <div class="blp-predikat-badge" id="blp-predikat-badge">-</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="blp-core-grid">
+                            <!-- Radar Chart -->
+                            <div class="blp-radar-wrap">
+                                <canvas id="blpRadarChart"></canvas>
+                            </div>
+                            <!-- Core Indicators List (25 Indicators) -->
+                            <div class="blp-indicators-list">
+                                <div class="blp-indicator-group">
+                                    <div class="indicator-domain">🤲 Akhlak & Adab</div>
+                                    <div class="indicator-items" id="ind-akhlak">
+                                        <div class="indicator-item"><span>Sopan Santun</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Kejujuran</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Rendah Hati (Tawadhu)</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Adab Makan & Minum</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Adab Berbicara</span><span class="ind-score">0/5</span></div>
+                                    </div>
+                                </div>
+                                <div class="blp-indicator-group">
+                                    <div class="indicator-domain">⏰ Kedisiplinan</div>
+                                    <div class="indicator-items" id="ind-kedisiplinan">
+                                        <div class="indicator-item"><span>Tepat Waktu Sholat</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Tepat Waktu Kelas</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Kebersihan Diri</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Kepatuhan Jam Malam</span><span class="ind-score">0/5</span></div>
+                                    </div>
+                                </div>
+                                <div class="blp-indicator-group">
+                                    <div class="indicator-domain">🕌 Ibadah & Spiritual</div>
+                                    <div class="indicator-items" id="ind-ibadah">
+                                        <div class="indicator-item"><span>Sholat Subuh Berjamaah</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Sholat Dhuha</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Sholat Tahajud</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Tilawah Al-Quran</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Dzikir Pagi</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Kekhusyukan Sholat</span><span class="ind-score">0/5</span></div>
+                                    </div>
+                                </div>
+                                <div class="blp-indicator-group">
+                                    <div class="indicator-domain">📚 Akademik Keagamaan</div>
+                                    <div class="indicator-items" id="ind-akademik">
+                                        <div class="indicator-item"><span>Progress Hafalan</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Konsistensi Murojaah</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Penguasaan Tajwid</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Kehadiran Diniyah</span><span class="ind-score">0/5</span></div>
+                                    </div>
+                                </div>
+                                <div class="blp-indicator-group">
+                                    <div class="indicator-domain">👥 Interaksi Sosial</div>
+                                    <div class="indicator-items" id="ind-sosial">
+                                        <div class="indicator-item"><span>Kerjasama Tim</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Tolong Menolong</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Anti Bullying</span><span class="ind-score">0/5</span></div>
+                                    </div>
+                                </div>
+                                <div class="blp-indicator-group">
+                                    <div class="indicator-domain">🌟 Pengembangan Diri</div>
+                                    <div class="indicator-items" id="ind-pengembangan">
+                                        <div class="indicator-item"><span>Kemandirian</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Inisiatif</span><span class="ind-score">0/5</span></div>
+                                        <div class="indicator-item"><span>Public Speaking</span><span class="ind-score">0/5</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Domain Summary -->
+                        <div class="blp-domain-summary" id="blp-domain-summary">
+                            <div class="domain-chip" data-domain="akhlak">
+                                <span class="dc-icon">🤲</span>
+                                <span class="dc-label">Akhlak</span>
+                                <span class="dc-score" id="dc-akhlak">-/25</span>
+                            </div>
+                            <div class="domain-chip" data-domain="kedisiplinan">
+                                <span class="dc-icon">⏰</span>
+                                <span class="dc-label">Disiplin</span>
+                                <span class="dc-score" id="dc-kedisiplinan">-/20</span>
+                            </div>
+                            <div class="domain-chip" data-domain="ibadah">
+                                <span class="dc-icon">🕌</span>
+                                <span class="dc-label">Ibadah</span>
+                                <span class="dc-score" id="dc-ibadah">-/30</span>
+                            </div>
+                            <div class="domain-chip" data-domain="akademik">
+                                <span class="dc-icon">📚</span>
+                                <span class="dc-label">Akademik</span>
+                                <span class="dc-score" id="dc-akademik">-/20</span>
+                            </div>
+                            <div class="domain-chip" data-domain="sosial">
+                                <span class="dc-icon">👥</span>
+                                <span class="dc-label">Sosial</span>
+                                <span class="dc-score" id="dc-sosial">-/15</span>
+                            </div>
+                            <div class="domain-chip" data-domain="pengembangan_diri">
+                                <span class="dc-icon">🌟</span>
+                                <span class="dc-label">Pengembangan</span>
+                                <span class="dc-score" id="dc-pengembangan">-/15</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Walisantri Stats -->
+            <div class="walisantri-stats" id="walisantri-stats">
+                <div class="ws-stat ws-green">
+                    <div class="ws-icon">🏆</div>
+                    <div class="ws-val" id="ws-prestasi">0</div>
+                    <div class="ws-label">Prestasi</div>
+                </div>
+                <div class="ws-stat ws-rose">
+                    <div class="ws-icon">⚠️</div>
+                    <div class="ws-val" id="ws-pelanggaran">0</div>
+                    <div class="ws-label">Perlu Perhatian</div>
+                </div>
+            </div>
+
+            <!-- Note: Riwayat Evaluasi has been relocated to "Catatan & Bimbingan" tab -->
+
+        </div><!-- /walisantri-view -->
+
+        </div><!-- /tab-evaluasi -->
+
+        <!-- =========== TAB: CATATAN & BIMBINGAN (CASE MANAGEMENT) =========== -->
+        <div class="tab-content" id="tab-catatan" style="display: none;">
+
+            <!-- Summary Section -->
+            <div class="incident-summary-section">
+                <div class="incident-stat-cards">
+                    <div class="incident-stat is-open">
+                        <div class="is-icon">🔴</div>
+                        <div class="is-body">
+                            <div class="is-val" id="incident-open-count">0</div>
+                            <div class="is-label">Masalah Aktif</div>
+                        </div>
+                    </div>
+                    <div class="incident-stat is-discussion">
+                        <div class="is-icon">🟡</div>
+                        <div class="is-body">
+                            <div class="is-val" id="incident-discussion-count">0</div>
+                            <div class="is-label">Dalam Pembahasan</div>
+                        </div>
+                    </div>
+                    <div class="incident-stat is-resolved">
+                        <div class="is-icon">🟢</div>
+                        <div class="is-body">
+                            <div class="is-val" id="incident-resolved-count">0</div>
+                            <div class="is-label">Sudah Diselesaikan</div>
+                        </div>
+                    </div>
+                    <div class="incident-stat is-suggestion">
+                        <div class="is-icon">💡</div>
+                        <div class="is-body">
+                            <div class="is-val" id="incident-suggestion-count">-</div>
+                            <div class="is-label">Saran Utama BK</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incident Filters (Admin Only) -->
+            <div class="incident-actions-bar admin-only">
+                <div class="incident-filters">
+                    <select id="incident-filter-status" class="glass-input" onchange="window.filterIncidents()">
+                        <option value="">Semua Status</option>
+                        <option value="open">🔴 Open</option>
+                        <option value="in_discussion">🟡 In Discussion</option>
+                        <option value="resolved">🟢 Resolved</option>
+                        <option value="closed">⚫ Closed</option>
+                    </select>
+                    <select id="incident-filter-kategori" class="glass-input" onchange="window.filterIncidents()">
+                        <option value="">Semua Kategori</option>
+                        <option value="perilaku">Perilaku/Akhlak</option>
+                        <option value="kedisiplinan">Kedisiplinan</option>
+                        <option value="akademik">Akademik</option>
+                        <option value="sosial">Sosial</option>
+                        <option value="kesehatan">Kesehatan</option>
+                        <option value="keluarga">Keluarga</option>
+                        <option value="lainnya">Lainnya</option>
+                    </select>
+                    <select id="incident-filter-tingkat" class="glass-input" onchange="window.filterIncidents()">
+                        <option value="">Semua Tingkat</option>
+                        <option value="ringan">Ringan</option>
+                        <option value="sedang">Sedang</option>
+                        <option value="berat">Berat</option>
+                        <option value="kritis">Kritis</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Incident Timeline/Cards -->
+            <div class="incident-list-container">
+                <div class="incident-list" id="incident-list">
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Memuat catatan...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /tab-catatan -->
+
+    </div><!-- /page-body -->
+</main>
+
+<!-- ===================== MODAL: ADD/EDIT EVALUATION ===================== -->
+<div id="evaluation-modal" class="modal">
+    <div class="modal-content glass-card modal-wizard">
+        <div class="modal-header">
+            <h2 id="modal-title">Tambah Evaluasi</h2>
+            <button onclick="window.closeModal()" class="btn-close">&times;</button>
+        </div>
+
+        <!-- Wizard Progress -->
+        <div class="wizard-progress">
+            <div class="wizard-step active" id="wizard-step-dot-1">
+                <div class="step-number">1</div>
+                <div class="step-label">Siswa</div>
+            </div>
+            <div class="wizard-step" id="wizard-step-dot-2">
+                <div class="step-number">2</div>
+                <div class="step-label">Kategori</div>
+            </div>
+            <div class="wizard-step" id="wizard-step-dot-3">
+                <div class="step-number">3</div>
+                <div class="step-label">Detail</div>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Step 1: Pilih Siswa -->
+            <div class="wizard-panel active" id="wizard-step-1">
+                <p class="step-desc">Pilih siswa yang akan dievaluasi.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Kelas <span class="required">*</span></label>
+                        <select id="wizard-kelas" class="glass-input" required>
+                            <option value="">Pilih Kelas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Siswa <span class="required">*</span></label>
+                        <select id="wizard-siswa" class="glass-input" required disabled>
+                            <option value="">Pilih Kelas Dulu</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="wizard-actions">
+                    <button onclick="window.goToWizardStep(2)" class="btn btn-primary" id="btn-step1-next" disabled>Lanjut ➡️</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Pilih Jenis & Kategori -->
+            <div class="wizard-panel" id="wizard-step-2" style="display: none;">
+                <p class="step-desc">Tentukan jenis dan kategori evaluasi.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Jenis Evaluasi <span class="required">*</span></label>
+                        <div class="jenis-selector">
+                            <label class="jenis-radio jenis-prestasi">
+                                <input type="radio" name="wizard-jenis" value="prestasi">
+                                <span class="jenis-label">
+                                    <span class="jenis-icon">🏆</span>
+                                    <span class="jenis-text">Prestasi</span>
+                                    <span class="jenis-desc">Catatan positif</span>
+                                </span>
+                            </label>
+                            <label class="jenis-radio jenis-pelanggaran">
+                                <input type="radio" name="wizard-jenis" value="pelanggaran">
+                                <span class="jenis-label">
+                                    <span class="jenis-icon">⚠️</span>
+                                    <span class="jenis-text">Pelanggaran</span>
+                                    <span class="jenis-desc">Perlu perhatian</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori <span class="required">*</span></label>
+                        <div class="kategori-chips" id="kategori-chips">
+                            <label class="kategori-chip"><input type="radio" name="wizard-kategori" value="adab"><span>🤲 Adab</span></label>
+                            <label class="kategori-chip"><input type="radio" name="wizard-kategori" value="kedisiplinan"><span>⏰ Kedisiplinan</span></label>
+                            <label class="kategori-chip"><input type="radio" name="wizard-kategori" value="akademik"><span>📚 Akademik</span></label>
+                            <label class="kategori-chip"><input type="radio" name="wizard-kategori" value="kebersihan"><span>🧹 Kebersihan</span></label>
+                            <label class="kategori-chip"><input type="radio" name="wizard-kategori" value="hafalan"><span>📖 Hafalan</span></label>
+                            <label class="kategori-chip"><input type="radio" name="wizard-kategori" value="sosial"><span>🤝 Sosial</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="wizard-actions">
+                    <button onclick="window.goToWizardStep(1)" class="btn btn-secondary">⬅️ Kembali</button>
+                    <button onclick="window.goToWizardStep(3)" class="btn btn-primary" id="btn-step2-next" disabled>Lanjut ➡️</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Detail Evaluasi -->
+            <div class="wizard-panel" id="wizard-step-3" style="display: none;">
+                <div class="step-info">
+                    <span id="step-siswa-info">-</span>
+                    <span class="step-divider">|</span>
+                    <span id="step-jenis-info">-</span>
+                    <span class="step-divider">|</span>
+                    <span id="step-kategori-info">-</span>
+                </div>
+                <form id="evaluation-form" class="modal-form" enctype="multipart/form-data">
+                    <input type="hidden" id="evaluation-id">
+                    <input type="hidden" id="evaluation-nisn">
+                    <input type="hidden" id="evaluation-jenis">
+                    <input type="hidden" id="evaluation-kategori">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="evaluation-name">Nama Evaluasi <span class="required">*</span></label>
+                            <input type="text" id="evaluation-name" name="name" required class="glass-input" maxlength="100" placeholder="Contoh: Juara 1 Lomba Tahfidz">
+                        </div>
+                        <div class="form-group">
+                            <label for="evaluation-date">Tanggal <span class="required">*</span></label>
+                            <input type="date" id="evaluation-date" name="tanggal" required class="glass-input">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evaluation-summary">Ringkasan <span class="required">*</span></label>
+                        <textarea id="evaluation-summary" name="summary" required class="glass-input" rows="3" maxlength="500" placeholder="Deskripsi singkat evaluasi"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evaluation-note">Catatan (Opsional)</label>
+                        <textarea id="evaluation-note" name="catatan" class="glass-input" rows="2" maxlength="500" placeholder="Catatan tambahan"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evaluation-photo">Foto Bukti (Opsional)</label>
+                        <input type="file" id="evaluation-photo" name="photo" class="glass-input file-input" accept="image/*">
+                        <div id="photo-preview" class="photo-preview" style="display: none;">
+                            <img id="preview-img" src="" alt="Preview">
+                            <button type="button" onclick="window.removePhoto()" class="btn btn-sm btn-danger">Hapus</button>
+                        </div>
+                    </div>
+
+                    <div class="wizard-actions">
+                        <button type="button" onclick="window.goToWizardStep(2)" class="btn btn-secondary">⬅️ Kembali</button>
+                        <button type="submit" class="btn btn-success">💾 Simpan Evaluasi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: VIEW DETAIL ===================== -->
+<div id="view-modal" class="modal">
+    <div class="modal-content glass-card modal-large">
+        <div class="modal-header">
+            <h2>Detail Evaluasi</h2>
+            <button onclick="window.closeViewModal()" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body" id="view-modal-body">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: ADD/EDIT INCIDENT ===================== -->
+<div id="incident-modal" class="modal">
+    <div class="modal-content glass-card modal-incident">
+        <div class="modal-header">
+            <h2 id="incident-modal-title">Input Evaluasi & Pelanggaran Baru</h2>
+            <button onclick="window.closeIncidentModal()" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="incident-form" class="modal-form" onsubmit="return window.handleIncidentSubmit(event);">
+                <input type="hidden" id="incident-id" name="incident-id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="incident-siswa">Siswa <span class="required">*</span></label>
+                        <select id="incident-siswa" name="siswa_nisn" class="glass-input" required>
+                            <option value="">Pilih Siswa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="incident-tanggal">Tanggal Kejadian <span class="required">*</span></label>
+                        <input type="date" id="incident-tanggal" name="tanggal_kejadian" class="glass-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="incident-judul">Judul Catatan <span class="required">*</span></label>
+                    <input type="text" id="incident-judul" name="judul" class="glass-input" maxlength="200" placeholder="Ringkasan singkat masalah/kejadian" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="incident-kategori">Kategori <span class="required">*</span></label>
+                        <select id="incident-kategori" name="kategori" class="glass-input" required>
+                            <option value="">Pilih Kategori</option>
+                            <option value="perilaku">Perilaku/Akhlak</option>
+                            <option value="kedisiplinan">Kedisiplinan</option>
+                            <option value="akademik">Akademik</option>
+                            <option value="sosial">Sosial</option>
+                            <option value="kesehatan">Kesehatan</option>
+                            <option value="keluarga">Keluarga</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="incident-tingkat">Tingkat <span class="required">*</span></label>
+                        <select id="incident-tingkat" name="tingkat" class="glass-input" required>
+                            <option value="">Pilih Tingkat</option>
+                            <option value="ringan">Ringan</option>
+                            <option value="sedang">Sedang</option>
+                            <option value="berat">Berat</option>
+                            <option value="kritis">Kritis</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="incident-deskripsi">Deskripsi Lengkap <span class="required">*</span></label>
+                    <textarea id="incident-deskripsi" name="deskripsi" class="glass-input" rows="4" placeholder="Jelaskan detail kejadian, kronologi, dan observasi..." required></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" onclick="window.closeIncidentModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="incident-submit-btn">💾 Simpan Catatan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: INCIDENT THREAD VIEW ===================== -->
+<div id="thread-modal" class="modal">
+    <div class="modal-content glass-card modal-thread">
+        <div class="modal-header">
+            <div class="thread-header-info">
+                <span class="thread-status" id="thread-status">🔴</span>
+                <h2 id="thread-title">Detail Catatan</h2>
+            </div>
+            <button onclick="window.closeThreadModal()" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Incident Detail -->
+            <div class="thread-incident-detail" id="thread-incident-detail">
+                <div class="loading-spinner"></div>
+            </div>
+
+            <!-- Comments Thread -->
+            <div class="thread-section">
+                <h3 class="thread-section-title">
+                    <span>💬</span> Diskusi & Tanggapan
+                    <span class="comment-count" id="thread-comment-count">0</span>
+                </h3>
+                <div class="thread-comments" id="thread-comments">
+                    <p class="text-muted">Belum ada komentar.</p>
+                </div>
+            </div>
+
+            <!-- Add Comment Form (Admin Only) -->
+            <div class="thread-add-comment admin-only" id="thread-add-comment">
+                <h4>Tambah Tanggapan</h4>
+                <form id="comment-form">
+                    <input type="hidden" id="comment-incident-id">
+                    <input type="hidden" id="comment-parent-id">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="comment-type">Jenis Tanggapan</label>
+                            <select id="comment-type" class="glass-input">
+                                <option value="observation">📋 Observasi</option>
+                                <option value="suggestion">💡 Saran</option>
+                                <option value="follow_up">🔄 Follow Up</option>
+                                <option value="decision">⚖️ Keputusan</option>
+                                <option value="note">📝 Catatan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="comment-visibility">Visibilitas</label>
+                            <select id="comment-visibility" class="glass-input">
+                                <option value="internal">🔒 Internal (Staff Only)</option>
+                                <option value="public">👁️ Public (Visible to Wali)</option>
+                                <option value="final_decision">✅ Final Decision</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comment-content">Isi Tanggapan <span class="required">*</span></label>
+                        <textarea id="comment-content" class="glass-input" rows="3" placeholder="Tulis tanggapan atau saran..." required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💬 Kirim Tanggapan</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Resolve Action (Pimpinan Only) -->
+            <div class="thread-resolve-action pimpinan-only" id="thread-resolve-action" style="display: none;">
+                <h4>Tutup & Selesaikan Kasus</h4>
+                <form id="resolve-form">
+                    <div class="form-group">
+                        <label for="resolve-decision">Keputusan Final <span class="required">*</span></label>
+                        <textarea id="resolve-decision" class="glass-input" rows="3" placeholder="Tuliskan keputusan final dan tindak lanjut..." required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success">✅ Selesaikan Kasus</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260208" defer></script>
+<script src="/static/js/apiConfig.js?v=20260208" defer></script>
+<script src="/static/js/apiFetch.js?v=20260208" defer></script>
+<script src="/static/js/auth-check.js?v=20260327D" defer></script>
+<script src="/static/js/auth.js?v=20260208" defer></script>
+<script src="/static/js/page-events.js?v=20260312c" defer></script>
+<script src="/static/js/evaluations.js?v=20260314b" defer></script>
+<script src="/static/js/case-management.js?v=20260319O" defer></script>
+
+<script>
+    // Baron Light Emerald Theme Init
+    window.addEventListener('load', function() {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = user.role || window.getUserRole?.() || 'guest';
+
+        document.body.setAttribute('data-role', role);
+
+        // Update topbar date
+        const dateEl = document.getElementById('topbar-date');
+        if (dateEl) {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', options);
+        }
+
+        // Update user avatar initials
+        const avatarEl = document.getElementById('user-avatar-initials');
+        if (avatarEl && user.name) {
+            const words = user.name.trim().split(' ');
+            if (words.length >= 2) {
+                avatarEl.textContent = (words[0][0] + words[1][0]).toUpperCase();
+            } else {
+                avatarEl.textContent = user.name.substring(0, 2).toUpperCase();
+            }
+        }
+
+        // Update role display
+        const roleEl = document.getElementById('user-role-display');
+        if (roleEl) {
+            const roleDisplay = {
+                'superadmin': 'Super Admin',
+                'pimpinan': 'Pimpinan',
+                'guru': 'Guru',
+                'walisantri': 'Wali Santri'
+            };
+            roleEl.textContent = roleDisplay[role] || role || '-';
+        }
+
+        // Role-based view switching
+        if (role === 'walisantri') {
+            if (window.switchView) window.switchView('walisantri');
+        } else {
+            if (window.switchView) window.switchView('admin');
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluasi Asatidz - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260321" rel="stylesheet">
+    <link href="/static/css/case-management.css?v=20260321" rel="stylesheet">
+    <link href="/static/css/evaluasi-asatidz.css?v=20260327E" rel="stylesheet">
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <!-- Back to main website chip -->
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar Enhanced -->
+    <div class="topbar topbar-enhanced">
+        <div class="topbar-left">
+            <h1 id="page-title">👨‍🏫 Evaluasi Asatidz</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>HR &rsaquo; Evaluasi Asatidz</span></div>
+        </div>
+        <div class="topbar-right">
+            <!-- Standard Date Display -->
+            <div class="topbar-date-badge" id="topbar-date">
+                <span class="date-icon">📅</span>
+                <span class="date-text">Memuat tanggal...</span>
+            </div>
+            <!-- Academic Year Display -->
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+            <!-- Action Buttons (Pimpinan Only) -->
+            <div class="topbar-action-buttons pimpinan-only" id="topbar-actions" style="display: none;">
+                <button id="btn-rating-kinerja" class="btn btn-warning text-dark fw-bold" onclick="window.openRatingModal()">
+                    <i class="fas fa-star me-2"></i> Beri Rapor Kinerja
+                </button>
+                <button id="btn-add-asatidz-eval" class="btn btn-success" onclick="window.openAsatidzModal()">
+                    <i class="fas fa-plus me-2"></i> Tambah Evaluasi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Summary Banner (Pimpinan Only) -->
+        <div class="summary-banner pimpinan-only" id="summary-banner" style="display: none;">
+            <div class="summary-cards">
+                <div class="summary-card sc-total">
+                    <div class="sc-icon">📊</div>
+                    <div class="sc-body">
+                        <div class="sc-val" id="summary-total">0</div>
+                        <div class="sc-label">Total Evaluasi</div>
+                    </div>
+                </div>
+                <div class="summary-card sc-apresiasi">
+                    <div class="sc-icon">🌟</div>
+                    <div class="sc-body">
+                        <div class="sc-val" id="summary-apresiasi">0</div>
+                        <div class="sc-label">Apresiasi</div>
+                    </div>
+                </div>
+                <div class="summary-card sc-administratif">
+                    <div class="sc-icon">📋</div>
+                    <div class="sc-body">
+                        <div class="sc-val" id="summary-administratif">0</div>
+                        <div class="sc-label">Administratif</div>
+                    </div>
+                </div>
+                <div class="summary-card sc-kedisiplinan">
+                    <div class="sc-icon">⚠️</div>
+                    <div class="sc-body">
+                        <div class="sc-val" id="summary-kedisiplinan">0</div>
+                        <div class="sc-label">Kedisiplinan</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Banner (Ustadz View) -->
+        <div class="info-banner ustadz-only" id="ustadz-banner" style="display: none;">
+            <div class="info-icon">📝</div>
+            <div class="info-text">
+                <h3>Catatan Evaluasi Anda</h3>
+                <p>Berikut adalah catatan evaluasi kinerja yang dibuat oleh pimpinan untuk Anda.</p>
+            </div>
+        </div>
+
+        <!-- ========== FILTER & SEARCH BAR (Pimpinan Only) ========== -->
+        <div class="filter-bar-card pimpinan-only" id="filter-section">
+            <div class="filter-bar-inner">
+                <!-- Search Input Group -->
+                <div class="filter-search-group">
+                    <span class="filter-search-icon">🔍</span>
+                    <input type="text"
+                           id="search-ustadz"
+                           class="filter-search-input"
+                           placeholder="Cari nama ustadz atau isi evaluasi..."
+                           autocomplete="off">
+                    <button type="button" class="filter-search-clear" id="search-clear">&times;</button>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="filter-select-group">
+                    <span class="filter-select-icon">📂</span>
+                    <select id="filter-kategori" class="filter-select-input">
+                        <option value="">Semua Kategori</option>
+                        <option value="apresiasi">🟢 Apresiasi</option>
+                        <option value="administratif">🟡 Administratif</option>
+                        <option value="kedisiplinan">🔴 Kedisiplinan</option>
+                    </select>
+                </div>
+
+                <!-- Ustadz Filter -->
+                <div class="filter-select-group">
+                    <span class="filter-select-icon">👤</span>
+                    <select id="filter-ustadz" class="filter-select-input">
+                        <option value="">Semua Ustadz</option>
+                    </select>
+                </div>
+
+                <!-- Reset Button -->
+                <button type="button" class="filter-reset-btn" id="btn-reset-filters" title="Reset Filter">
+                    🔄 Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Evaluation Cards List -->
+        <div class="evaluation-list-container">
+            <div class="evaluation-list" id="evaluation-list">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Memuat data evaluasi...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <div class="empty-icon">📭</div>
+            <h3>Belum Ada Evaluasi</h3>
+            <p id="empty-message">Belum ada catatan evaluasi yang tersedia.</p>
+        </div>
+
+    </div><!-- /page-body -->
+</main>
+
+<!-- ===================== MODAL: ADD/EDIT EVALUATION ===================== -->
+<div id="asatidz-modal" class="modal">
+    <div class="modal-content glass-card modal-asatidz">
+        <div class="modal-header">
+            <h2 id="asatidz-modal-title">Tambah Evaluasi Kinerja</h2>
+            <button onclick="window.closeAsatidzModal()" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="asatidz-form" class="modal-form" onsubmit="return window.handleAsatidzSubmit(event);">
+                <input type="hidden" id="asatidz-id" name="evaluation-id">
+
+                <div class="form-group form-group-lg">
+                    <label for="asatidz-ustadz" class="form-label-lg">👤 Ustadz/Karyawan <span class="required">*</span></label>
+                    <select id="asatidz-ustadz" name="ustadz" class="glass-input input-lg" required>
+                        <option value="">-- Pilih Ustadz/Karyawan --</option>
+                    </select>
+                </div>
+
+                <div class="form-group form-group-lg">
+                    <label for="asatidz-tanggal" class="form-label-lg">📅 Tanggal Kejadian <span class="required">*</span></label>
+                    <input type="date" id="asatidz-tanggal" name="tanggal_kejadian" class="glass-input input-lg" required>
+                </div>
+
+                <!-- Hidden dropdown - synced with visual selector -->
+                <select id="asatidz-kategori" name="kategori" class="visually-hidden" required>
+                    <option value="">Pilih Kategori</option>
+                    <option value="apresiasi">Apresiasi</option>
+                    <option value="administratif">Administratif</option>
+                    <option value="kedisiplinan">Kedisiplinan</option>
+                </select>
+
+                <div class="form-group form-group-lg">
+                    <label class="form-label-lg">📝 Kategori Evaluasi <span class="required">*</span></label>
+                </div>
+
+                <!-- Kategori visual selector -->
+                <div class="kategori-selector">
+                    <label class="kategori-option kategori-apresiasi" data-value="apresiasi">
+                        <input type="radio" name="kategori-visual" value="apresiasi">
+                        <span class="kategori-card">
+                            <span class="kategori-icon">🌟</span>
+                            <span class="kategori-label">Apresiasi</span>
+                            <span class="kategori-desc">Prestasi & pencapaian positif</span>
+                        </span>
+                    </label>
+                    <label class="kategori-option kategori-administratif" data-value="administratif">
+                        <input type="radio" name="kategori-visual" value="administratif">
+                        <span class="kategori-card">
+                            <span class="kategori-icon">📋</span>
+                            <span class="kategori-label">Administratif</span>
+                            <span class="kategori-desc">Catatan administrasi & izin</span>
+                        </span>
+                    </label>
+                    <label class="kategori-option kategori-kedisiplinan" data-value="kedisiplinan">
+                        <input type="radio" name="kategori-visual" value="kedisiplinan">
+                        <span class="kategori-card">
+                            <span class="kategori-icon">⚠️</span>
+                            <span class="kategori-label">Kedisiplinan</span>
+                            <span class="kategori-desc">Teguran & catatan disiplin</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="form-group form-group-lg">
+                    <label for="asatidz-deskripsi" class="form-label-lg">📝 Deskripsi Lengkap <span class="required">*</span></label>
+                    <textarea id="asatidz-deskripsi" name="deskripsi" class="glass-input input-lg textarea-lg" rows="6" placeholder="Jelaskan detail evaluasi, kronologi kejadian, dan observasi Anda..." required></textarea>
+                    <div class="form-hint">Tulis dengan jelas dan lengkap untuk dokumentasi yang baik.</div>
+                </div>
+
+                <div class="form-actions form-actions-lg">
+                    <button type="button" onclick="window.closeAsatidzModal()" class="btn btn-secondary btn-lg">❌ Batal</button>
+                    <button type="submit" class="btn btn-primary btn-lg" id="asatidz-submit-btn">💾 Simpan Evaluasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: VIEW DETAIL (ENHANCED) ===================== -->
+<div id="detail-modal" class="modal modal-centered">
+    <div class="modal-content glass-card modal-detail modal-lg">
+        <div class="modal-header detail-modal-header">
+            <div class="detail-header-info">
+                <span class="detail-kategori-badge badge-lg" id="detail-kategori-badge">-</span>
+                <h2 id="detail-title">Detail Evaluasi</h2>
+            </div>
+            <button onclick="window.closeDetailModal()" class="btn-close btn-close-lg">&times;</button>
+        </div>
+        <div class="modal-body modal-body-detail" id="detail-modal-body">
+            <div class="loading-spinner"></div>
+        </div>
+        <div class="modal-footer detail-modal-footer pimpinan-only" id="detail-actions" style="display: none;">
+            <button onclick="window.editAsatidzEvaluation()" class="btn-action btn-action-edit">
+                <span class="btn-action-icon">✏️</span>
+                <span class="btn-action-text">Edit Evaluasi</span>
+            </button>
+            <button onclick="window.deleteAsatidzEvaluation()" class="btn-action btn-action-delete">
+                <span class="btn-action-icon">🗑️</span>
+                <span class="btn-action-text">Hapus</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: STAR RATING KINERJA ===================== -->
+<div id="rating-modal" class="modal modal-centered">
+    <div class="modal-content glass-card modal-rating modal-xl">
+        <div class="modal-header rating-modal-header">
+            <div class="rating-header-info">
+                <span class="rating-header-icon">⭐</span>
+                <div>
+                    <h2 id="rating-modal-title">Rapor Kinerja Asatidz</h2>
+                    <p class="rating-modal-subtitle">Penilaian Periode <span id="rating-periode">-</span></p>
+                </div>
+            </div>
+            <button onclick="window.closeRatingModal()" class="btn-close btn-close-lg">&times;</button>
+        </div>
+        <div class="modal-body modal-body-rating">
+            <form id="rating-form" onsubmit="return window.handleRatingSubmit(event);">
+                <input type="hidden" id="rating-penilaian-id" value="">
+
+                <!-- Ustadz Selection -->
+                <div class="rating-section rating-section-ustadz">
+                    <div class="rating-section-header">
+                        <span class="rating-section-icon">👤</span>
+                        <h3>Pilih Ustadz/Karyawan</h3>
+                    </div>
+                    <div class="rating-ustadz-select">
+                        <select id="rating-ustadz" name="ustadz" class="glass-input input-lg" required>
+                            <option value="">-- Pilih Ustadz/Karyawan --</option>
+                        </select>
+                        <div class="rating-ustadz-info" id="rating-ustadz-info" style="display: none;">
+                            <div class="ustadz-avatar" id="rating-ustadz-avatar">?</div>
+                            <div class="ustadz-meta">
+                                <div class="ustadz-name" id="rating-ustadz-name">-</div>
+                                <div class="ustadz-role" id="rating-ustadz-role">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Indicators Container -->
+                <div class="rating-section rating-section-indicators">
+                    <div class="rating-section-header">
+                        <span class="rating-section-icon">📊</span>
+                        <h3>Penilaian Indikator</h3>
+                        <span class="rating-progress" id="rating-progress">0/0 dinilai</span>
+                    </div>
+                    <div class="rating-indicators-loading" id="rating-indicators-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Memuat indikator...</p>
+                    </div>
+                    <div id="dynamic-indicators-container" class="indicators-container">
+                        <!-- Indicators will be rendered here by JS -->
+                    </div>
+                </div>
+
+                <!-- Overall Score Preview -->
+                <div class="rating-section rating-section-summary">
+                    <div class="rating-summary-card">
+                        <div class="rating-summary-left">
+                            <div class="rating-summary-label">Rata-rata Nilai</div>
+                            <div class="rating-summary-value" id="rating-average">0.00</div>
+                            <div class="rating-summary-stars" id="rating-average-stars">
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="rating-summary-right">
+                            <div class="rating-predikat-label">Predikat</div>
+                            <div class="rating-predikat" id="rating-predikat">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Catatan Tambahan -->
+                <div class="rating-section">
+                    <div class="rating-section-header">
+                        <span class="rating-section-icon">📝</span>
+                        <h3>Catatan Tambahan (Opsional)</h3>
+                    </div>
+                    <textarea id="rating-catatan" name="catatan_tambahan" class="glass-input textarea-lg" rows="3" placeholder="Tambahkan catatan atau rekomendasi untuk ustadz ini..."></textarea>
+                </div>
+
+                <!-- Actions -->
+                <div class="rating-actions">
+                    <button type="button" onclick="window.closeRatingModal()" class="btn btn-secondary btn-lg">
+                        ❌ Batal
+                    </button>
+                    <button type="button" onclick="window.saveRatingDraft()" class="btn btn-outline btn-lg" id="btn-save-draft">
+                        💾 Simpan Draft
+                    </button>
+                    <button type="submit" class="btn btn-warning btn-lg" id="btn-submit-rating">
+                        ⭐ Submit Penilaian
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: VIEW RATING DETAIL ===================== -->
+<div id="rating-detail-modal" class="modal modal-centered">
+    <div class="modal-content glass-card modal-rating-detail modal-lg">
+        <div class="modal-header">
+            <h2>📊 Detail Rapor Kinerja</h2>
+            <button onclick="window.closeRatingDetailModal()" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body" id="rating-detail-body">
+            <div class="loading-spinner"></div>
+        </div>
+        <div class="modal-footer pimpinan-only" id="rating-detail-actions" style="display: none;">
+            <button onclick="window.editRating()" class="btn btn-primary">✏️ Edit</button>
+            <button onclick="window.finalizeRating()" class="btn btn-warning">🔒 Finalisasi</button>
+        </div>
+    </div>
+</div>
+
+<!-- FontAwesome for Star Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<!-- ===================== SCRIPTS ===================== -->
+<!-- CRITICAL: Load order matters! apiConfig → apiFetch → auth-check → page-specific -->
+<script src="/static/js/apiConfig.js?v=20260321" defer></script>
+<script src="/static/js/apiFetch.js?v=20260321" defer></script>
+<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/evaluasi-asatidz.js?v=20260322C" defer></script>
+
+</body>
+</html>
