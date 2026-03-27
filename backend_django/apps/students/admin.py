@@ -183,9 +183,11 @@ class StudentResource(resources.ModelResource):
         use_bulk = True
         batch_size = 100
 
-    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+    def before_import(self, dataset, **kwargs):
         """
         CRITICAL: Clean up junk header rows BEFORE import processing.
+
+        Compatible with django-import-export >= 3.0 (new signature)
 
         School Excel files often have 4-5 title rows like:
         ┌─────────────────────────────────────────────────────┐
@@ -521,9 +523,10 @@ class StudentResource(resources.ModelResource):
         }
         return [header_map.get(h, h) for h in headers]
 
-    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
+    def after_import(self, dataset, result, **kwargs):
         """
         Called after import is complete. Log summary.
+        Compatible with django-import-export >= 3.0 (new signature)
         """
         logger.info(f"[StudentImport] Import complete: "
                    f"{result.totals['new']} new, "
