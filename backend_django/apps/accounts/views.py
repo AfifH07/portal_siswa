@@ -94,38 +94,59 @@ def change_password_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 @api_view(['POST'])
 @authentication_classes([SessionAuthentication])  # Enforces CSRF validation
 @permission_classes([permissions.AllowAny])
 @throttle_classes([PasswordResetRateThrottle])
 def request_reset_view(request):
-    serializer = RequestResetSerializer(data=request.data)
-    if serializer.is_valid():
+    """
+    Request password reset token.
+    Sends email if configured, otherwise logs token for admin retrieval.
+    NEVER crashes - always returns a graceful response.
+    """
+    try:
+        serializer = RequestResetSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         username = serializer.validated_data.get('username')
+
+        # Check if user exists (generic response to prevent enumeration)
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            # Return generic message to prevent username enumeration
+            logger.info(f'Password reset requested for non-existent user: {username}')
             return Response({
                 'success': True,
                 'message': 'Jika username terdaftar, token reset akan dikirim ke kontak terdaftar.'
             })
 
+        # Generate and store token
         token = generate_token()
         ResetToken.objects.create(username=username, token=token)
-
-        # Send email with reset token
-        import logging
-        from django.core.mail import send_mail
-        from django.conf import settings
-
-        logger = logging.getLogger(__name__)
         logger.info(f'Password reset token generated for user: {username}')
 
-        # Attempt to send email if user has email configured
+        # Attempt to send email
         email_sent = False
-        if user.email:
+        email_error = None
+
+        # Check if email is configured before attempting to send
+        from django.conf import settings as django_settings
+
+        email_host_user = getattr(django_settings, 'EMAIL_HOST_USER', '')
+        email_configured = bool(email_host_user and email_host_user.strip())
+
+        if user.email and email_configured:
             try:
+                from django.core.mail import send_mail
+
+                # Safely get email settings with defaults
+                from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@pesantrenbaron.ac.id')
+
                 send_mail(
                     subject='Reset Password - Portal Ponpes Baron',
                     message=f'''Assalamu'alaikum {user.name},
@@ -140,24 +161,41 @@ Jika Anda tidak meminta reset password, abaikan email ini.
 
 Wassalamu'alaikum,
 Tim Portal Ponpes Baron''',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    from_email=from_email,
                     recipient_list=[user.email],
                     fail_silently=False,
                 )
                 email_sent = True
-                logger.info(f'Password reset email sent to: {user.email}')
-            except Exception as e:
-                logger.error(f'Failed to send password reset email: {str(e)}')
+                logger.info(f'Password reset email sent successfully to: {user.email}')
 
-        # Log token for admin retrieval if email fails or not configured
-        if not email_sent:
-            logger.warning(f'Email not sent for {username}. Token: {token} (admin retrieval)')
+            except Exception as e:
+                email_error = str(e)
+                logger.error(f'Failed to send password reset email to {user.email}: {email_error}')
+        elif not email_configured:
+            logger.warning(f'Email not configured (EMAIL_HOST_USER empty). Token for {username}: {token}')
+        elif not user.email:
+            logger.warning(f'User {username} has no email address. Token: {token}')
+
+        # Always return success to prevent username enumeration
+        if email_sent:
+            message = 'Token reset password telah dikirim ke email terdaftar.'
+        elif not email_configured:
+            message = 'Token reset telah dibuat. Hubungi admin sekolah untuk mendapatkan kode verifikasi.'
+        else:
+            message = 'Token reset telah dibuat. Hubungi admin untuk mendapatkan token.'
 
         return Response({
             'success': True,
-            'message': 'Token reset password telah dikirim ke kontak terdaftar.' if email_sent else 'Token reset telah dibuat. Hubungi admin untuk mendapatkan token.'
+            'message': message
         })
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        # Catch-all for any unexpected errors - NEVER return 500
+        logger.exception(f'Unexpected error in password reset: {str(e)}')
+        return Response({
+            'success': False,
+            'message': 'Terjadi kesalahan sistem. Silakan coba lagi atau hubungi admin.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
