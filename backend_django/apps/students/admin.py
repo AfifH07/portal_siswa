@@ -3,8 +3,56 @@ from django.utils.html import format_html
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from import_export.widgets import DateWidget
+from import_export.results import RowResult
+import re
+import logging
 
 from .models import Student, Schedule, normalize_kelas_format
+
+logger = logging.getLogger(__name__)
+
+
+# =============================================================
+# FLEXIBLE DATE WIDGET - Handles multiple date formats
+# =============================================================
+
+class FlexibleDateWidget(DateWidget):
+    """
+    Custom DateWidget that handles multiple date formats from school Excel files.
+    Supports: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, D/M/YYYY, etc.
+    """
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+
+        # If already a date object, return as is
+        if hasattr(value, 'year'):
+            return value
+
+        value = str(value).strip()
+
+        # Try multiple date formats
+        date_formats = [
+            '%Y-%m-%d',      # 2024-03-27
+            '%d/%m/%Y',      # 27/03/2024
+            '%d-%m-%Y',      # 27-03-2024
+            '%d %B %Y',      # 27 March 2024
+            '%d %b %Y',      # 27 Mar 2024
+            '%Y/%m/%d',      # 2024/03/27
+            '%m/%d/%Y',      # 03/27/2024 (US format)
+        ]
+
+        from datetime import datetime
+        for fmt in date_formats:
+            try:
+                return datetime.strptime(value, fmt).date()
+            except ValueError:
+                continue
+
+        # If nothing works, log warning and return None
+        logger.warning(f"[FlexibleDateWidget] Could not parse date: '{value}'")
+        return None
 
 
 # =============================================================
@@ -15,39 +63,92 @@ class StudentResource(resources.ModelResource):
     """
     Resource class for importing/exporting Student data via Excel/CSV.
 
-    Excel Column Mapping:
-    - NISN (required, unique identifier)
-    - Nama
-    - Kelas (will be auto-normalized to "X A" format)
-    - Program
-    - Jenis Kelamin (L/P)
-    - Tempat Lahir
-    - Tanggal Lahir (format: YYYY-MM-DD or DD/MM/YYYY)
-    - Alamat
-    - Email
-    - Phone
-    - Wali Nama
-    - Wali Phone
-    - Wali Hubungan
-    - Tanggal Masuk
-    - Status (aktif/alumni/pindah/dikeluarkan)
+    SUPPORTS SCHOOL EXCEL FORMAT:
+    ┌─────────────────────────────────────────────────────┐
+    │ Row 1: "Daftar Peserta Didik"        (SKIPPED)      │
+    │ Row 2: "SMA Bina Insan Mandiri"      (SKIPPED)      │
+    │ Row 3: "Tahun Pelajaran 2025/2026"   (SKIPPED)      │
+    │ Row 4: (empty row)                   (SKIPPED)      │
+    │ Row 5: No | Nama | NISN | JK | ...   (HEADER ROW)   │
+    │ Row 6+: Data rows                    (IMPORTED)     │
+    └─────────────────────────────────────────────────────┘
+
+    Column Mapping (School Excel → Database Field):
+    - "Nama"              → nama
+    - "NISN"              → nisn (unique identifier)
+    - "JK"                → jenis_kelamin (L/P)
+    - "Tempat Lahir"      → tempat_lahir
+    - "Tanggal Lahir"     → tanggal_lahir
+    - "Rombel Saat Ini"   → kelas (auto-normalized to "X A" format)
+    - "Alamat"            → alamat
+    - "Email"             → email
+    - "No HP"             → phone
     """
 
-    # Custom field definitions for better Excel headers
+    # =============================================================
+    # FIELD DEFINITIONS - Map Excel columns to model fields
+    # =============================================================
+
+    # Primary fields with exact column name mapping
+    nisn = fields.Field(
+        column_name='NISN',
+        attribute='nisn'
+    )
+    nama = fields.Field(
+        column_name='Nama',
+        attribute='nama'
+    )
+    jenis_kelamin = fields.Field(
+        column_name='JK',
+        attribute='jenis_kelamin'
+    )
+    tempat_lahir = fields.Field(
+        column_name='Tempat Lahir',
+        attribute='tempat_lahir'
+    )
     tanggal_lahir = fields.Field(
         column_name='Tanggal Lahir',
         attribute='tanggal_lahir',
-        widget=DateWidget(format='%Y-%m-%d')
+        widget=FlexibleDateWidget()
+    )
+
+    # "Rombel Saat Ini" is the school's column name for class
+    kelas = fields.Field(
+        column_name='Rombel Saat Ini',
+        attribute='kelas'
+    )
+
+    # Optional fields that may or may not exist in school Excel
+    alamat = fields.Field(
+        column_name='Alamat',
+        attribute='alamat'
+    )
+    email = fields.Field(
+        column_name='Email',
+        attribute='email'
+    )
+    phone = fields.Field(
+        column_name='No HP',
+        attribute='phone'
+    )
+
+    # Additional optional fields with alternate column names
+    program = fields.Field(
+        column_name='Program',
+        attribute='program'
+    )
+    wali_nama = fields.Field(
+        column_name='Nama Wali',
+        attribute='wali_nama'
+    )
+    wali_phone = fields.Field(
+        column_name='HP Wali',
+        attribute='wali_phone'
     )
     tanggal_masuk = fields.Field(
         column_name='Tanggal Masuk',
         attribute='tanggal_masuk',
-        widget=DateWidget(format='%Y-%m-%d')
-    )
-    tanggal_keluar = fields.Field(
-        column_name='Tanggal Keluar',
-        attribute='tanggal_keluar',
-        widget=DateWidget(format='%Y-%m-%d')
+        widget=FlexibleDateWidget()
     )
 
     class Meta:
@@ -69,13 +170,6 @@ class StudentResource(resources.ModelResource):
             'phone',
             'wali_nama',
             'wali_phone',
-            'wali_hubungan',
-            'tanggal_masuk',
-            'target_hafalan',
-            'current_hafalan',
-            'status',
-            'tahun_lulus',
-            'tanggal_keluar',
         )
 
         # Export column order
@@ -92,50 +186,138 @@ class StudentResource(resources.ModelResource):
     def before_import_row(self, row, row_number=None, **kwargs):
         """
         Pre-process each row before import.
+        - Map alternate column names to standard field names
         - Normalize kelas format
         - Clean whitespace from fields
-        - Handle empty values
+        - Skip junk/header rows
         """
-        # Normalize kelas if present
-        if 'kelas' in row and row['kelas']:
-            row['kelas'] = normalize_kelas_format(row['kelas'])
-
-        # Handle alternate column names (Indonesian)
+        # =============================================================
+        # STEP 1: Map alternate column names (handles variations)
+        # =============================================================
         column_mappings = {
-            'Nama': 'nama',
-            'Kelas': 'kelas',
-            'Program': 'program',
-            'Jenis Kelamin': 'jenis_kelamin',
-            'JK': 'jenis_kelamin',
-            'Tempat Lahir': 'tempat_lahir',
-            'TTL': 'tempat_lahir',
-            'Alamat': 'alamat',
-            'Email': 'email',
-            'Phone': 'phone',
-            'Telepon': 'phone',
-            'HP': 'phone',
-            'No HP': 'phone',
-            'Wali': 'wali_nama',
-            'Nama Wali': 'wali_nama',
-            'HP Wali': 'wali_phone',
-            'Telepon Wali': 'wali_phone',
-            'Hubungan Wali': 'wali_hubungan',
-            'Hubungan': 'wali_hubungan',
-            'Tgl Masuk': 'tanggal_masuk',
-            'Target Hafalan': 'target_hafalan',
-            'Hafalan Saat Ini': 'current_hafalan',
-            'Status': 'status',
-            'Tahun Lulus': 'tahun_lulus',
+            # NISN variations
+            'Nisn': 'NISN',
+            'nisn': 'NISN',
+            'NIS': 'NISN',
+            'Nis': 'NISN',
+
+            # Nama variations
+            'nama': 'Nama',
+            'NAMA': 'Nama',
+            'Nama Lengkap': 'Nama',
+            'Nama Siswa': 'Nama',
+            'Nama Peserta Didik': 'Nama',
+
+            # Jenis Kelamin variations
+            'Jenis Kelamin': 'JK',
+            'jenis_kelamin': 'JK',
+            'Gender': 'JK',
+            'L/P': 'JK',
+
+            # Kelas variations (map to "Rombel Saat Ini")
+            'Kelas': 'Rombel Saat Ini',
+            'kelas': 'Rombel Saat Ini',
+            'Rombel': 'Rombel Saat Ini',
+            'Tingkat': 'Rombel Saat Ini',
+
+            # Phone variations
+            'HP': 'No HP',
+            'Telepon': 'No HP',
+            'Phone': 'No HP',
+            'No Telepon': 'No HP',
+            'No. HP': 'No HP',
+
+            # Wali variations
+            'Wali': 'Nama Wali',
+            'Nama Orang Tua': 'Nama Wali',
+            'Orang Tua': 'Nama Wali',
+            'HP Orang Tua': 'HP Wali',
+            'Telepon Wali': 'HP Wali',
         }
 
-        for indo_name, field_name in column_mappings.items():
-            if indo_name in row and indo_name != field_name:
-                row[field_name] = row[indo_name]
+        # Apply column mappings
+        for alt_name, standard_name in column_mappings.items():
+            if alt_name in row and alt_name != standard_name:
+                if standard_name not in row or not row.get(standard_name):
+                    row[standard_name] = row[alt_name]
 
-        # Clean whitespace
-        for key, value in row.items():
+        # =============================================================
+        # STEP 2: Clean whitespace and normalize values
+        # =============================================================
+        for key, value in list(row.items()):
             if isinstance(value, str):
                 row[key] = value.strip()
+
+        # =============================================================
+        # STEP 3: Normalize kelas format (10-A → X A, etc.)
+        # =============================================================
+        kelas_value = row.get('Rombel Saat Ini') or row.get('kelas') or row.get('Kelas')
+        if kelas_value:
+            row['Rombel Saat Ini'] = normalize_kelas_format(kelas_value)
+
+        # =============================================================
+        # STEP 4: Normalize jenis kelamin (ensure L or P)
+        # =============================================================
+        jk_value = row.get('JK', '')
+        if jk_value:
+            jk_upper = str(jk_value).strip().upper()
+            if jk_upper in ['LAKI-LAKI', 'LAKI', 'MALE', 'M', 'L']:
+                row['JK'] = 'L'
+            elif jk_upper in ['PEREMPUAN', 'WANITA', 'FEMALE', 'F', 'P']:
+                row['JK'] = 'P'
+
+        # Log for debugging
+        nisn = row.get('NISN', 'N/A')
+        nama = row.get('Nama', 'N/A')
+        logger.debug(f"[StudentImport] Row {row_number}: NISN={nisn}, Nama={nama}")
+
+    def skip_row(self, instance, original, row, import_validation_errors=None):
+        """
+        Determine if a row should be skipped.
+        Skip rows that:
+        - Are junk header rows (no valid NISN)
+        - Have empty NISN
+        - Are title rows like "Daftar Peserta Didik"
+        """
+        # Get NISN value
+        nisn = row.get('NISN', '')
+
+        # Skip if NISN is empty
+        if not nisn:
+            logger.debug(f"[StudentImport] Skipping row - empty NISN")
+            return True
+
+        # Skip if NISN is not a valid number (likely a header row)
+        nisn_str = str(nisn).strip()
+
+        # Skip junk rows (titles, headers, etc.)
+        junk_patterns = [
+            'nisn',              # Header row
+            'daftar',           # "Daftar Peserta Didik"
+            'peserta',          # "Peserta Didik"
+            'tahun',            # "Tahun Pelajaran"
+            'no',               # "No" column header
+            'nama sekolah',     # School name row
+            'sma',              # School name
+            'smp',              # School name
+            'mts',              # School name
+            'ma ',              # School name
+        ]
+
+        nisn_lower = nisn_str.lower()
+        for pattern in junk_patterns:
+            if pattern in nisn_lower:
+                logger.debug(f"[StudentImport] Skipping junk row: NISN='{nisn_str}'")
+                return True
+
+        # Skip if NISN doesn't look like a valid ID (should be mostly digits)
+        # NISN is typically 10 digits, but allow some flexibility
+        clean_nisn = re.sub(r'[^0-9]', '', nisn_str)
+        if len(clean_nisn) < 5:  # Too short to be valid NISN
+            logger.debug(f"[StudentImport] Skipping row - invalid NISN format: '{nisn_str}'")
+            return True
+
+        return super().skip_row(instance, original, row, import_validation_errors)
 
     def get_export_headers(self):
         """
@@ -146,7 +328,7 @@ class StudentResource(resources.ModelResource):
         header_map = {
             'nisn': 'NISN',
             'nama': 'Nama',
-            'kelas': 'Kelas',
+            'kelas': 'Rombel Saat Ini',
             'program': 'Program',
             'jenis_kelamin': 'JK',
             'tempat_lahir': 'Tempat Lahir',
@@ -156,15 +338,18 @@ class StudentResource(resources.ModelResource):
             'phone': 'No HP',
             'wali_nama': 'Nama Wali',
             'wali_phone': 'HP Wali',
-            'wali_hubungan': 'Hubungan Wali',
-            'tanggal_masuk': 'Tanggal Masuk',
-            'target_hafalan': 'Target Hafalan',
-            'current_hafalan': 'Hafalan Saat Ini',
-            'status': 'Status',
-            'tahun_lulus': 'Tahun Lulus',
-            'tanggal_keluar': 'Tanggal Keluar',
         }
         return [header_map.get(h, h) for h in headers]
+
+    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
+        """
+        Called after import is complete. Log summary.
+        """
+        logger.info(f"[StudentImport] Import complete: "
+                   f"{result.totals['new']} new, "
+                   f"{result.totals['update']} updated, "
+                   f"{result.totals['skip']} skipped, "
+                   f"{result.totals['error']} errors")
 
 
 # =============================================================
