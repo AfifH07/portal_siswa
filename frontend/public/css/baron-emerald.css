@@ -184,6 +184,15 @@ body {
     margin-bottom: 2px;
 }
 
+/* Lucide icon styling */
+.nav-item .nav-icon {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
+/* Legacy emoji icon fallback */
 .nav-item .icon { font-size: 17px; line-height: 1; }
 
 .nav-item:hover {
@@ -199,6 +208,7 @@ body {
     box-shadow: 0 4px 14px rgba(200, 150, 28, 0.4);
 }
 
+.nav-item.active .nav-icon { stroke: #1a1a1a; }
 .nav-item.active .icon { filter: none; }
 
 /* =============================================

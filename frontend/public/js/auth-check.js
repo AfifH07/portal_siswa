@@ -373,114 +373,115 @@ function createRoleBasedNav() {
 
     if (!nav) return;
 
-    // Define menu structure with sections
+    // Define menu structure with Lucide icon names
+    // Icons: https://lucide.dev/icons
     const navConfig = {
         'superadmin': {
             main: [
-                { href: '/dashboard/', icon: '📊', label: 'Dashboard' },
-                { href: '/students', icon: '👥', label: 'Siswa' },
-                { href: '/attendance', icon: '📋', label: 'Presensi' },
-                { href: '/grades', icon: '📝', label: 'Nilai' },
-                { href: '/hafalan', icon: '📖', label: 'Hafalan', id: 'nav-hafalan' }
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
+                { href: '/students', icon: 'users', label: 'Siswa' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/grades', icon: 'file-text', label: 'Nilai' },
+                { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
             ],
             admin: [
-                { href: '/users', icon: '🔐', label: 'Manajemen User' }
+                { href: '/users', icon: 'user-cog', label: 'Manajemen User' }
             ],
             hr: [
-                { href: '/evaluasi-asatidz', icon: '👨‍🏫', label: 'Evaluasi Asatidz' }
+                { href: '/evaluasi-asatidz', icon: 'user-check', label: 'Evaluasi Asatidz' }
             ],
             other: [
-                { href: '/evaluations', icon: '⭐', label: 'Evaluasi' },
-                { href: '/finance', icon: '💰', label: 'Keuangan', id: 'nav-finance' }
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
             ]
         },
         'pimpinan': {
             main: [
-                { href: '/dashboard/', icon: '📊', label: 'Dashboard' },
-                { href: '/students', icon: '👥', label: 'Data Siswa' },
-                { href: '/attendance', icon: '📋', label: 'Presensi' },
-                { href: '/grades', icon: '📝', label: 'Nilai' },
-                { href: '/hafalan', icon: '📖', label: 'Hafalan', id: 'nav-hafalan' }
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
+                { href: '/students', icon: 'users', label: 'Data Siswa' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/grades', icon: 'file-text', label: 'Nilai' },
+                { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
             ],
             hr: [
-                { href: '/evaluasi-asatidz', icon: '👨‍🏫', label: 'Evaluasi Asatidz' }
+                { href: '/evaluasi-asatidz', icon: 'user-check', label: 'Evaluasi Asatidz' }
             ],
             other: [
-                { href: '/evaluations', icon: '⭐', label: 'Evaluasi' },
-                { href: '/finance', icon: '💰', label: 'Keuangan', id: 'nav-finance' }
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
             ]
         },
         'guru': {
             main: [
-                { href: '/dashboard/', icon: '📊', label: 'Dashboard' },
-                { href: '/students', icon: '👥', label: 'Data Santri' },
-                { href: '/attendance', icon: '📋', label: 'Presensi' },
-                { href: '/grades', icon: '📝', label: 'Nilai' }
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
+                { href: '/students', icon: 'users', label: 'Data Santri' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/grades', icon: 'file-text', label: 'Nilai' }
             ],
             kesantrian: [
-                { href: '/hafalan', icon: '📖', label: 'Hafalan & Ziyadah', id: 'nav-hafalan' }
+                { href: '/hafalan', icon: 'book-open', label: 'Hafalan & Ziyadah', id: 'nav-hafalan' }
             ],
             other: [
-                { href: '/evaluations', icon: '⭐', label: 'Evaluasi Santri' },
-                { href: '/evaluasi-asatidz', icon: '📝', label: 'Evaluasi Saya' }
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
+                { href: '/evaluasi-asatidz', icon: 'clipboard-list', label: 'Evaluasi Saya' }
             ]
         },
         'musyrif': {
             main: [
-                { href: '/dashboard/', icon: '📊', label: 'Dashboard' },
-                { href: '/students', icon: '👥', label: 'Data Santri' },
-                { href: '/attendance', icon: '📋', label: 'Presensi' },
-                { href: '/grades', icon: '📝', label: 'Nilai' }
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
+                { href: '/students', icon: 'users', label: 'Data Santri' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/grades', icon: 'file-text', label: 'Nilai' }
             ],
             kesantrian: [
-                { href: '/hafalan', icon: '📖', label: 'Hafalan & Ziyadah', id: 'nav-hafalan' }
+                { href: '/hafalan', icon: 'book-open', label: 'Hafalan & Ziyadah', id: 'nav-hafalan' }
             ],
             other: [
-                { href: '/evaluations', icon: '⭐', label: 'Evaluasi Santri' },
-                { href: '/evaluasi-asatidz', icon: '📝', label: 'Evaluasi Saya' }
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
+                { href: '/evaluasi-asatidz', icon: 'clipboard-list', label: 'Evaluasi Saya' }
             ]
         },
         'wali_kelas': {
             main: [
-                { href: '/dashboard/', icon: '📊', label: 'Dashboard' },
-                { href: '/students', icon: '👥', label: 'Data Santri' },
-                { href: '/attendance', icon: '📋', label: 'Presensi' },
-                { href: '/grades', icon: '📝', label: 'Nilai' },
-                { href: '/hafalan', icon: '📖', label: 'Hafalan', id: 'nav-hafalan' }
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
+                { href: '/students', icon: 'users', label: 'Data Santri' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/grades', icon: 'file-text', label: 'Nilai' },
+                { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
             ],
             other: [
-                { href: '/evaluations', icon: '⭐', label: 'Evaluasi' },
-                { href: '/case-management', icon: '📂', label: 'Pembinaan' }
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/case-management', icon: 'folder-open', label: 'Pembinaan' }
             ]
         },
         'bk': {
             main: [
-                { href: '/dashboard/', icon: '📊', label: 'Dashboard' },
-                { href: '/students', icon: '👥', label: 'Data Santri' },
-                { href: '/case-management', icon: '📂', label: 'Pembinaan' }
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
+                { href: '/students', icon: 'users', label: 'Data Santri' },
+                { href: '/case-management', icon: 'folder-open', label: 'Pembinaan' }
             ],
             other: [
-                { href: '/evaluations', icon: '⭐', label: 'Evaluasi' },
-                { href: '/evaluasi-asatidz', icon: '📝', label: 'Evaluasi Saya' }
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/evaluasi-asatidz', icon: 'clipboard-list', label: 'Evaluasi Saya' }
             ]
         },
         'bendahara': {
             main: [
-                { href: '/dashboard/', icon: '📊', label: 'Dashboard' }
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' }
             ],
             other: [
-                { href: '/finance', icon: '💰', label: 'Keuangan', id: 'nav-finance' }
+                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
             ]
         },
         'walisantri': {
             main: [
-                { href: '/dashboard/', icon: '📊', label: 'Dashboard' },
-                { href: '/attendance', icon: '📋', label: 'Presensi' },
-                { href: '/ibadah', icon: '🕌', label: 'Ibadah' },
-                { href: '/grades', icon: '📝', label: 'Akademik' },
-                { href: '/hafalan', icon: '📖', label: 'Hafalan', id: 'nav-hafalan' },
-                { href: '/blp', icon: '⭐', label: 'Karakter (BLP)', id: 'nav-blp' },
-                { href: '/finance', icon: '💰', label: 'Tagihan', id: 'nav-finance' }
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/ibadah', icon: 'moon', label: 'Ibadah' },
+                { href: '/grades', icon: 'file-text', label: 'Akademik' },
+                { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' },
+                { href: '/blp', icon: 'award', label: 'Karakter (BLP)', id: 'nav-blp' },
+                { href: '/finance', icon: 'credit-card', label: 'Tagihan', id: 'nav-finance' }
             ],
             other: []
         },
@@ -507,7 +508,7 @@ function createRoleBasedNav() {
                (normalizedHref !== '/' && currentPath.startsWith(normalizedHref));
     }
 
-    // Helper to create nav item
+    // Helper to create nav item with Lucide icon
     function createNavItem(item) {
         const link = document.createElement('a');
 
@@ -524,7 +525,8 @@ function createRoleBasedNav() {
             link.classList.add('active');
         }
 
-        link.innerHTML = `<span class="icon">${item.icon}</span> ${item.label}`;
+        // Use Lucide icon syntax: <i data-lucide="icon-name"></i>
+        link.innerHTML = `<i data-lucide="${item.icon}" class="nav-icon"></i><span class="nav-label-text">${item.label}</span>`;
         return link;
     }
 
@@ -586,6 +588,11 @@ function createRoleBasedNav() {
         config.other.forEach(item => {
             nav.appendChild(createNavItem(item));
         });
+    }
+
+    // Initialize Lucide icons after nav is built
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
     }
 
     // Also update user role display
