@@ -130,15 +130,28 @@ class StudentViewSet(viewsets.ModelViewSet):
         queryset = Student.objects.all()
         user = self.request.user
 
+        # Role-based filtering
         if user.role == 'walisantri':
-            queryset = queryset.filter(nisn=user.linked_student_nisn)
-        elif user.role == 'guru':
-            # Guru with kelas assignment: filter to their class only
-            # Guru without kelas assignment: show all students (for input flexibility)
-            kelas = getattr(user, 'kelas', None)
-            if kelas:
-                queryset = queryset.filter(kelas=kelas)
-            # else: return all students - allows guru to input evaluations for any student
+            # Walisantri: only see their linked children
+            linked_nisns = []
+            if hasattr(user, 'get_linked_students'):
+                linked_nisns = user.get_linked_students()
+            if user.linked_student_nisn:
+                linked_nisns.append(user.linked_student_nisn)
+            if linked_nisns:
+                queryset = queryset.filter(nisn__in=linked_nisns)
+            else:
+                queryset = queryset.none()
+
+        elif user.role in ['guru', 'musyrif', 'wali_kelas']:
+            # Teachers: filter by assigned kelas if available
+            # If no kelas assigned, show ALL students (for input flexibility during testing)
+            kelas_assigned = getattr(user, 'kelas', None)
+            if kelas_assigned:
+                queryset = queryset.filter(kelas=kelas_assigned)
+            # else: queryset remains all() - allows dropdown to populate
+
+        # Superadmin, pimpinan, bk: see all students (no additional filter)
 
         search = self.request.query_params.get('search')
         if search:
