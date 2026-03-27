@@ -52,7 +52,8 @@ async function checkAuthAndRedirect() {
     const currentPath = window.location.pathname;
 
     // Skip auth check on public pages
-    if (currentPath === '/login' || currentPath === '/login/' || currentPath === '/registration' || currentPath === '/registration/') {
+    const publicPaths = ['/login', '/login/', '/registration', '/registration/', '/forgot-password', '/forgot-password/'];
+    if (publicPaths.includes(currentPath)) {
         return;
     }
 
@@ -144,7 +145,8 @@ async function verifyRoleWithBackend() {
     const currentPath = window.location.pathname;
 
     // Skip verification on public pages
-    if (currentPath === '/login' || currentPath === '/login/' || currentPath === '/registration' || currentPath === '/registration/') {
+    const publicPaths = ['/login', '/login/', '/registration', '/registration/', '/forgot-password', '/forgot-password/'];
+    if (publicPaths.includes(currentPath)) {
         return;
     }
 
@@ -257,7 +259,9 @@ function checkPageAccess() {
     const userRole = localStorage.getItem('user_role');
     const currentPath = window.location.pathname;
 
-    if (currentPath === '/login' || currentPath === '/login/' || currentPath === '/registration' || currentPath === '/registration/') {
+    // Skip on public pages
+    const publicPaths = ['/login', '/login/', '/registration', '/registration/', '/forgot-password', '/forgot-password/'];
+    if (publicPaths.includes(currentPath)) {
         return;
     }
 
@@ -659,10 +663,10 @@ async function loadActiveTahunAjaran() {
         return;
     }
 
-    // Skip on public pages (login, registration)
+    // Skip on public pages (login, registration, forgot-password)
     const currentPath = window.location.pathname;
-    if (currentPath === '/login' || currentPath === '/login/' ||
-        currentPath === '/registration' || currentPath === '/registration/') {
+    const publicPaths = ['/login', '/login/', '/registration', '/registration/', '/forgot-password', '/forgot-password/'];
+    if (publicPaths.includes(currentPath)) {
         return;
     }
 
