@@ -114,17 +114,48 @@ def request_reset_view(request):
         token = generate_token()
         ResetToken.objects.create(username=username, token=token)
 
-        # TODO: Send token via secure channel (email/SMS) instead of response
-        # For now, log token for admin retrieval (in production, integrate with email service)
+        # Send email with reset token
         import logging
+        from django.core.mail import send_mail
+        from django.conf import settings
+
         logger = logging.getLogger(__name__)
         logger.info(f'Password reset token generated for user: {username}')
 
-        # SECURITY: Never expose token in API response
-        # Token should be sent via email/SMS to registered contact
+        # Attempt to send email if user has email configured
+        email_sent = False
+        if user.email:
+            try:
+                send_mail(
+                    subject='Reset Password - Portal Ponpes Baron',
+                    message=f'''Assalamu'alaikum {user.name},
+
+Anda menerima email ini karena ada permintaan reset password untuk akun Anda di Portal Ponpes Baron.
+
+Kode Verifikasi Anda: {token}
+
+Kode ini berlaku selama 30 menit.
+
+Jika Anda tidak meminta reset password, abaikan email ini.
+
+Wassalamu'alaikum,
+Tim Portal Ponpes Baron''',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                email_sent = True
+                logger.info(f'Password reset email sent to: {user.email}')
+            except Exception as e:
+                logger.error(f'Failed to send password reset email: {str(e)}')
+
+        # Log token for admin retrieval if email fails or not configured
+        if not email_sent:
+            logger.warning(f'Email not sent for {username}. Token: {token} (admin retrieval)')
+
         return Response({
             'success': True,
-            'message': 'Token reset password telah dikirim ke kontak terdaftar.'
+            'message': 'Token reset password telah dikirim ke kontak terdaftar.' if email_sent else 'Token reset telah dibuat. Hubungi admin untuk mendapatkan token.'
         })
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

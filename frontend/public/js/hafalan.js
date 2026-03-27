@@ -8,139 +8,29 @@
  */
 
 // ============================================
-// SECTION 1: DATA DUMMY (JSON)
+// SECTION 1: DATA PLACEHOLDER (API-First)
 // ============================================
+// NOTE: Dummy data removed in v2.3.7 cleanup
+// All data now loaded from API endpoints:
+// - GET /api/kesantrian/hafalan/{nisn}/ - Student hafalan data
+// - GET /api/kesantrian/hafalan/dashboard-stats/ - Pimpinan summary
 
-const hafalanData = {
-    student: {
-        id: 1,
-        nama: "Ahmad Baihaqi",
-        nisn: "0076540548",
-        kelas: "XII A",
-        program: "Tahfidz Intensif",
-        foto: null
-    },
-
-    // Juz Progress Data (30 Juz)
-    juzProgress: [
-        { juz: 1, status: 'mutqin', tanggal: '2024-06-15', nilai: 92 },
-        { juz: 2, status: 'mutqin', tanggal: '2024-08-20', nilai: 88 },
-        { juz: 3, status: 'murojaah', tanggal: '2024-10-10', nilai: 85 },
-        { juz: 4, status: 'proses', tanggal: null, nilai: 0 },
-        { juz: 5, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 6, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 7, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 8, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 9, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 10, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 11, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 12, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 13, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 14, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 15, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 16, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 17, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 18, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 19, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 20, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 21, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 22, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 23, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 24, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 25, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 26, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 27, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 28, status: 'belum', tanggal: null, nilai: 0 },
-        { juz: 29, status: 'mutqin', tanggal: '2024-04-10', nilai: 90 },
-        { juz: 30, status: 'mutqin', tanggal: '2024-02-05', nilai: 95 }
-    ],
-
-    // Average days per juz (for prediction)
-    avgDaysPerJuz: 21,
-
-    tartil: [
-        { id: 1, jilid: "Jilid 1", nilai: 85, capaian_persen: 100, status_lulus: true, tanggal_lulus: "2024-03-15" },
-        { id: 2, jilid: "Jilid 2", nilai: 88, capaian_persen: 100, status_lulus: true, tanggal_lulus: "2024-06-20" },
-        { id: 3, jilid: "Jilid 3", nilai: 82, capaian_persen: 100, status_lulus: true, tanggal_lulus: "2024-09-10" },
-        { id: 4, jilid: "Tadarus", nilai: 78, capaian_persen: 75, status_lulus: false, tanggal_lulus: null },
-        { id: 5, jilid: "Gharib", nilai: 0, capaian_persen: 0, status_lulus: false, tanggal_lulus: null },
-        { id: 6, jilid: "Tajwid", nilai: 0, capaian_persen: 0, status_lulus: false, tanggal_lulus: null }
-    ],
-
-    tahfidz: [
-        { id: 1, kategori: "Juz Hafal", nilai: 87, jumlah_juz: 5, total_juz_target: 12, detail: "Juz 1, 2, 3, 29, 30" },
-        { id: 2, kategori: "Juz Uji", nilai: 90, jumlah_juz: 3, total_juz_target: 5, detail: "Juz 1, 2, 30 telah diuji" },
-        { id: 3, kategori: "Tasmi'", nilai: 75, jumlah_juz: 0.65, total_juz_target: 1, detail: "Juz 4 - Halaman 62" },
-        { id: 4, kategori: "Munaqosyah", nilai: 0, jumlah_juz: 0, total_juz_target: 1, detail: "Ujian Juz 4 - 25 Februari 2026" }
-    ],
-
-    kompetensi: {
-        guru_tartil: "Ust. Abdullah Faqih",
-        guru_tahfidz: "Ust. Muhammad Hafidz",
-        status_khidmat: "Aktif",
-        keterangan_khidmat: "Piket Masjid"
-    },
-
-    kehadiran: {
-        bulan: "Februari 2026",
-        hadir: 18,
-        izin: 2,
-        sakit: 0,
-        alfa: 0,
-        total_hari: 20,
-        persentase: 90
-    },
-
-    catatan: "Santri menunjukkan perkembangan yang baik dalam hafalan. Perlu ditingkatkan pada aspek tajwid dan makhraj huruf. Target khatam 12 juz sebelum wisuda.",
-
-    riwayat: [
-        { tanggal: "2026-02-10", aktivitas: "Setoran Juz 4 halaman 60-62", hasil: "Lancar", guru: "Ust. Muhammad" },
-        { tanggal: "2026-02-08", aktivitas: "Muroja'ah Juz 30", hasil: "Perlu perbaikan ayat 5-7 An-Naba", guru: "Ust. Muhammad" },
-        { tanggal: "2026-02-05", aktivitas: "Tasmi' Juz 3", hasil: "Lulus", guru: "Ust. Abdullah" }
-    ]
+// Empty state templates for when API returns no data
+const EMPTY_STATE = {
+    student: { id: null, nama: '', nisn: '', kelas: '', program: '', foto: null },
+    juzProgress: [],
+    tartil: [],
+    tahfidz: [],
+    kompetensi: { guru_tartil: '-', guru_tahfidz: '-', status_khidmat: '-', keterangan_khidmat: '-' },
+    kehadiran: { bulan: '-', hadir: 0, izin: 0, sakit: 0, alfa: 0, total_hari: 0, persentase: 0 },
+    catatan: 'Belum ada catatan.',
+    riwayat: []
 };
 
-// Data dummy untuk Pimpinan (Summary per kelas)
-const summaryData = {
-    kelasComparison: [
-        {
-            kelas: "XII A",
-            totalSantri: 30,
-            lulusTartil: 24,
-            rataJuzHafal: 6.5,
-            rataKehadiran: 92,
-            targetTercapai: 80
-        },
-        {
-            kelas: "XII B",
-            totalSantri: 28,
-            lulusTartil: 20,
-            rataJuzHafal: 5.8,
-            rataKehadiran: 88,
-            targetTercapai: 71
-        },
-        {
-            kelas: "XII C",
-            totalSantri: 25,
-            lulusTartil: 18,
-            rataJuzHafal: 5.2,
-            rataKehadiran: 85,
-            targetTercapai: 72
-        }
-    ],
-    totals: {
-        totalSantri: 83,
-        totalLulusTartil: 62,
-        rataJuzHafal: 5.83,
-        rataKehadiran: 88.3,
-        santriOnTrack: 65,
-        santriNeedAttention: 18
-    },
-    topPerformers: [
-        { nama: "Ahmad Baihaqi", kelas: "XII A", juzHafal: 12, status: "Khatam" },
-        { nama: "Fatimah Azzahra", kelas: "XII A", juzHafal: 10, status: "On Track" },
-        { nama: "Muhammad Fauzan", kelas: "XII B", juzHafal: 9, status: "On Track" }
-    ]
+const EMPTY_SUMMARY = {
+    kelasComparison: [],
+    totals: { totalSantri: 0, totalLulusTartil: 0, rataJuzHafal: 0, rataKehadiran: 0, santriOnTrack: 0, santriNeedAttention: 0 },
+    topPerformers: []
 };
 
 // ============================================
@@ -481,45 +371,53 @@ function renderClassComparisonChart(data) {
 
 /**
  * Render Progress Trend Chart (Line) - Baron Light Theme
+ * v2.3.7: Now accepts API data instead of hardcoded values
  */
-function renderProgressTrendChart() {
+function renderProgressTrendChart(trendData = null) {
     const canvas = document.getElementById('progressTrendChart');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-
     destroyChart('progressTrend');
+
+    // Show empty state if no data
+    if (!trendData || !trendData.labels || trendData.labels.length === 0) {
+        const container = canvas.parentElement;
+        if (container) {
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #6b7280;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">📊</div>
+                    <p style="margin: 0; font-size: 14px;">Belum ada data trend hafalan</p>
+                    <p style="margin: 4px 0 0; font-size: 12px; color: #9ca3af;">Data akan muncul setelah periode berjalan</p>
+                </div>
+            `;
+        }
+        return;
+    }
+
+    // Build datasets from API data
+    const colors = [
+        { border: 'rgba(31, 168, 122, 1)', bg: 'rgba(31, 168, 122, 0.1)' },
+        { border: 'rgba(59, 130, 246, 1)', bg: 'rgba(59, 130, 246, 0.1)' },
+        { border: 'rgba(200, 150, 28, 1)', bg: 'rgba(200, 150, 28, 0.1)' },
+        { border: 'rgba(239, 68, 68, 1)', bg: 'rgba(239, 68, 68, 0.1)' },
+        { border: 'rgba(139, 92, 246, 1)', bg: 'rgba(139, 92, 246, 0.1)' }
+    ];
+
+    const datasets = (trendData.datasets || []).map((ds, i) => ({
+        label: ds.label || `Kelas ${i + 1}`,
+        data: ds.data || [],
+        borderColor: colors[i % colors.length].border,
+        backgroundColor: colors[i % colors.length].bg,
+        tension: 0.4,
+        fill: true
+    }));
 
     chartInstances['progressTrend'] = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Sep', 'Okt', 'Nov', 'Des', 'Jan', 'Feb'],
-            datasets: [
-                {
-                    label: 'XII A',
-                    data: [4.2, 4.8, 5.3, 5.8, 6.2, 6.5],
-                    borderColor: 'rgba(31, 168, 122, 1)',
-                    backgroundColor: 'rgba(31, 168, 122, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'XII B',
-                    data: [3.8, 4.2, 4.6, 5.0, 5.4, 5.8],
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'XII C',
-                    data: [3.5, 3.9, 4.2, 4.6, 4.9, 5.2],
-                    borderColor: 'rgba(200, 150, 28, 1)',
-                    backgroundColor: 'rgba(200, 150, 28, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }
-            ]
+            labels: trendData.labels,
+            datasets: datasets
         },
         options: {
             responsive: true,

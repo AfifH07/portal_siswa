@@ -10,6 +10,7 @@ urlpatterns = [
     # FRONTEND ROUTES (TemplateView)
     # ==========================================
     path('login/', TemplateView.as_view(template_name='login.html')),
+    path('forgot-password/', TemplateView.as_view(template_name='forgot-password.html')),
     path('', TemplateView.as_view(template_name='index.html')),
 
     # ==========================================

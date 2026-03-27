@@ -19,10 +19,11 @@ staticfiles/
 media/
 !media/.gitkeep
 
-# Environment
+# Environment - ALL variations (SECURITY: Never commit secrets)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.production.example
 
 # Node
 node_modules/

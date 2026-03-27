@@ -490,14 +490,48 @@ function renderTrendChart(monthlyData) {
 
     if (trendChart) trendChart.destroy();
 
-    // Default data if API doesn't provide monthly trend
-    const defaultMonths = ['Sep', 'Okt', 'Nov', 'Des', 'Jan', 'Feb'];
-    const defaultPrestasi = [12, 15, 18, 14, 20, 22];
-    const defaultPelanggaran = [8, 6, 5, 7, 4, 3];
+    // ============================================
+    // NO DUMMY DATA - Only show real data from API
+    // ============================================
 
-    const labels = monthlyData.length > 0 ? monthlyData.map(m => m.month) : defaultMonths;
-    const prestasiValues = monthlyData.length > 0 ? monthlyData.map(m => m.prestasi || 0) : defaultPrestasi;
-    const pelanggaranValues = monthlyData.length > 0 ? monthlyData.map(m => m.pelanggaran || 0) : defaultPelanggaran;
+    // If no data, show empty state message
+    if (!monthlyData || monthlyData.length === 0) {
+        // Show empty state in chart container
+        const chartContainer = ctx.parentElement;
+        if (chartContainer) {
+            // Hide canvas and show message
+            ctx.style.display = 'none';
+
+            // Check if empty state already exists
+            let emptyState = chartContainer.querySelector('.chart-empty-state');
+            if (!emptyState) {
+                emptyState = document.createElement('div');
+                emptyState.className = 'chart-empty-state';
+                emptyState.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.5;">📊</div>
+                        <p style="margin: 0; font-size: 14px; font-weight: 500;">Belum ada data perilaku semester ini</p>
+                        <p style="margin: 8px 0 0; font-size: 12px; opacity: 0.7;">Data akan muncul setelah ada evaluasi yang tercatat</p>
+                    </div>
+                `;
+                chartContainer.appendChild(emptyState);
+            }
+        }
+        return;
+    }
+
+    // If data exists, ensure canvas is visible and remove empty state
+    ctx.style.display = 'block';
+    const chartContainer = ctx.parentElement;
+    if (chartContainer) {
+        const emptyState = chartContainer.querySelector('.chart-empty-state');
+        if (emptyState) emptyState.remove();
+    }
+
+    // Use real data from API
+    const labels = monthlyData.map(m => m.month);
+    const prestasiValues = monthlyData.map(m => m.prestasi || 0);
+    const pelanggaranValues = monthlyData.map(m => m.pelanggaran || 0);
 
     trendChart = new Chart(ctx, {
         type: 'line',

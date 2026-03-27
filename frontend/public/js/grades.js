@@ -1129,8 +1129,23 @@ function renderTrendChart(trendData) {
     if (!ctx) return;
     if (trendChart) trendChart.destroy();
 
-    const labels = trendData?.labels || ['Smt 1', 'Smt 2', 'Smt 3', 'Smt 4', 'Smt 5', 'Smt 6'];
-    const data = trendData?.data || [75, 78, 80, 77, 82, 85];
+    // v2.3.7: No fallback dummy data - show empty state if no data
+    if (!trendData || !trendData.labels || trendData.labels.length === 0) {
+        const container = ctx.parentElement;
+        if (container) {
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #6b7280;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">📈</div>
+                    <p style="margin: 0; font-size: 14px;">Belum ada data trend nilai</p>
+                    <p style="margin: 4px 0 0; font-size: 12px; color: #9ca3af;">Data akan muncul setelah semester berjalan</p>
+                </div>
+            `;
+        }
+        return;
+    }
+
+    const labels = trendData.labels;
+    const data = trendData.data;
 
     if (typeof Chart === 'undefined') return;
 
@@ -1374,8 +1389,23 @@ function renderMapelChart(mapelData) {
 
     if (typeof Chart === 'undefined') return;
 
-    const labels = mapelData?.labels || ['MTK', 'B.Indo', 'B.Ing', 'Fisika', 'Kimia'];
-    const data = mapelData?.data || [78, 82, 75, 80, 77];
+    // v2.3.7: No fallback dummy data - show empty state if no data
+    if (!mapelData || !mapelData.labels || mapelData.labels.length === 0) {
+        const container = ctx.parentElement;
+        if (container) {
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #6b7280;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">📚</div>
+                    <p style="margin: 0; font-size: 14px;">Belum ada data nilai per mapel</p>
+                    <p style="margin: 4px 0 0; font-size: 12px; color: #9ca3af;">Data akan muncul setelah nilai diinput</p>
+                </div>
+            `;
+        }
+        return;
+    }
+
+    const labels = mapelData.labels;
+    const data = mapelData.data;
 
     mapelChart = new Chart(ctx, {
         type: 'bar',
