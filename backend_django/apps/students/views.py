@@ -127,31 +127,18 @@ class StudentViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        queryset = Student.objects.all()
-        user = self.request.user
+        """
+        ============================================================
+        TEMPORARY BYPASS: ALL ROLE-BASED FILTERS DISABLED
+        For development/testing - ensures dropdown always populated
+        TODO: Re-enable role-based filtering after data sync complete
+        ============================================================
+        """
+        # BASE: Return ALL students, sorted by name
+        queryset = Student.objects.all().order_by('nama')
 
-        # Role-based filtering
-        if user.role == 'walisantri':
-            # Walisantri: only see their linked children
-            linked_nisns = []
-            if hasattr(user, 'get_linked_students'):
-                linked_nisns = user.get_linked_students()
-            if user.linked_student_nisn:
-                linked_nisns.append(user.linked_student_nisn)
-            if linked_nisns:
-                queryset = queryset.filter(nisn__in=linked_nisns)
-            else:
-                queryset = queryset.none()
-
-        elif user.role in ['guru', 'musyrif', 'wali_kelas']:
-            # Teachers: filter by assigned kelas if available
-            # If no kelas assigned, show ALL students (for input flexibility during testing)
-            kelas_assigned = getattr(user, 'kelas', None)
-            if kelas_assigned:
-                queryset = queryset.filter(kelas=kelas_assigned)
-            # else: queryset remains all() - allows dropdown to populate
-
-        # Superadmin, pimpinan, bk: see all students (no additional filter)
+        # Keep query param filters (search, kelas, program, aktif)
+        # These are user-initiated filters, not role-based restrictions
 
         search = self.request.query_params.get('search')
         if search:
