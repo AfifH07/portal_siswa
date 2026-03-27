@@ -1,45 +1,46 @@
 # ==============================================
 # Portal Siswa Baron v2.3.7 - Production Requirements
+# Compatible with Python 3.13+
 # ==============================================
 
 # Django & DRF Core
-Django==4.2.7
-djangorestframework==3.14.0
-djangorestframework-simplejwt==5.3.1
+Django>=4.2.7,<5.0
+djangorestframework>=3.14.0
+djangorestframework-simplejwt>=5.3.1
 
 # Database
 psycopg2-binary>=2.9.9
-django-environ==0.11.2
+django-environ>=0.11.2
 
 # CORS
-django-cors-headers==4.3.1
+django-cors-headers>=4.3.1
 
 # API Documentation (OpenAPI/Swagger)
-drf-spectacular==0.27.0
+drf-spectacular>=0.27.0
 
 # Import/Export (Excel/CSV admin operations)
-django-import-export==3.3.5
+django-import-export>=3.3.5
 
-# Image Handling
+# Image Handling (CRITICAL: 10.3.0+ required for Python 3.13)
 Pillow>=10.3.0
 
 # Filtering & Utils
-django-filter==23.5
-python-decouple==3.8
+django-filter>=23.5
+python-decouple>=3.8
 
 # Excel Processing
-pandas==2.1.4
-openpyxl==3.1.2
-numpy==1.26.2
+pandas>=2.1.4
+openpyxl>=3.1.2
+numpy>=1.26.0
 
 # ==============================================
 # Production Deployment
 # ==============================================
-gunicorn==21.2.0
-whitenoise==6.6.0
+gunicorn>=21.2.0
+whitenoise>=6.6.0
 
 # ==============================================
 # Development Only (comment out for production)
 # ==============================================
-django-debug-toolbar==4.2.0
-# requests==2.31.0  # Only needed for test scripts
+# django-debug-toolbar>=4.2.0
+# requests>=2.31.0
