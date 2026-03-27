@@ -65,10 +65,29 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'backend_django.urls'
 
+# Template directories - supports both local dev and PythonAnywhere production
+# Local: BASE_DIR.parent / 'frontend' / 'views' (project_root/frontend/views)
+# PythonAnywhere: Set TEMPLATE_DIR env var if different structure
+TEMPLATE_DIRS = []
+
+# Primary: Environment variable (for PythonAnywhere flexibility)
+_custom_template_dir = config('TEMPLATE_DIR', default='')
+if _custom_template_dir:
+    TEMPLATE_DIRS.append(Path(_custom_template_dir))
+
+# Fallback 1: Standard project structure (frontend/views relative to backend_django)
+TEMPLATE_DIRS.append(BASE_DIR.parent / 'frontend' / 'views')
+
+# Fallback 2: If frontend is inside backend_django (some deployment setups)
+TEMPLATE_DIRS.append(BASE_DIR / 'frontend' / 'views')
+
+# Filter to only existing directories
+TEMPLATE_DIRS = [d for d in TEMPLATE_DIRS if d.exists()]
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR.parent / 'frontend' / 'views'],
+        'DIRS': TEMPLATE_DIRS,
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
