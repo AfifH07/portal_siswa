@@ -183,6 +183,186 @@ class StudentResource(resources.ModelResource):
         use_bulk = True
         batch_size = 100
 
+    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+        """
+        CRITICAL: Clean up junk header rows BEFORE import processing.
+
+        School Excel files often have 4-5 title rows like:
+        ┌─────────────────────────────────────────────────────┐
+        │ Row 0: "Daftar Peserta Didik"        (JUNK)         │
+        │ Row 1: "SMA Bina Insan Mandiri"      (JUNK)         │
+        │ Row 2: "Tahun Pelajaran 2025/2026"   (JUNK)         │
+        │ Row 3: (empty row)                   (JUNK)         │
+        │ Row 4: No | Nama | NISN | JK | ...   (REAL HEADER)  │
+        │ Row 5+: Data rows                                   │
+        └─────────────────────────────────────────────────────┘
+
+        This method:
+        1. Searches for the row containing "NISN" or "Nama" keywords
+        2. Sets that row as the new header
+        3. Removes all junk rows above it
+        """
+        if not dataset or len(dataset) == 0:
+            logger.warning("[StudentImport] Empty dataset received")
+            return
+
+        logger.info(f"[StudentImport] before_import: Processing {len(dataset)} rows")
+
+        # =============================================================
+        # STEP 1: Find the REAL header row by searching for keywords
+        # =============================================================
+        header_keywords = ['nisn', 'nama', 'nis', 'name', 'no']
+        header_row_index = None
+
+        # Check if current headers already contain our keywords
+        current_headers = [str(h).lower().strip() for h in dataset.headers] if dataset.headers else []
+        logger.debug(f"[StudentImport] Current headers: {current_headers}")
+
+        # Check if headers are already valid
+        if any(keyword in current_headers for keyword in header_keywords):
+            logger.info("[StudentImport] Headers already valid, no cleanup needed")
+            self._normalize_headers(dataset)
+            return
+
+        # Search through rows to find the real header
+        for idx, row in enumerate(dataset):
+            # Convert row values to lowercase strings for comparison
+            row_values = [str(cell).lower().strip() if cell else '' for cell in row]
+            row_text = ' '.join(row_values)
+
+            # Check if this row contains header keywords
+            if any(keyword in row_text for keyword in header_keywords):
+                # Additional check: make sure it looks like a header (multiple keywords or "nisn")
+                keyword_count = sum(1 for kw in header_keywords if kw in row_text)
+                if keyword_count >= 2 or 'nisn' in row_text:
+                    header_row_index = idx
+                    logger.info(f"[StudentImport] Found header row at index {idx}: {row_values[:5]}...")
+                    break
+
+        # =============================================================
+        # STEP 2: Rebuild dataset with correct header
+        # =============================================================
+        if header_row_index is not None:
+            logger.info(f"[StudentImport] Removing {header_row_index} junk rows above header")
+
+            # Get the real header row
+            new_headers = list(dataset[header_row_index])
+
+            # Clean header names (strip whitespace, normalize)
+            new_headers = [str(h).strip() if h else f'col_{i}' for i, h in enumerate(new_headers)]
+
+            # Get data rows (everything after the header row)
+            new_data = []
+            for idx in range(header_row_index + 1, len(dataset)):
+                row_data = list(dataset[idx])
+
+                # Skip completely empty rows
+                if all(cell is None or str(cell).strip() == '' for cell in row_data):
+                    continue
+
+                new_data.append(row_data)
+
+            # Clear and rebuild the dataset
+            dataset.headers = new_headers
+            dataset._data = []  # Clear existing data
+
+            # Re-add the cleaned data rows
+            for row in new_data:
+                dataset.append(row)
+
+            logger.info(f"[StudentImport] Dataset rebuilt: {len(new_headers)} columns, {len(dataset)} data rows")
+            logger.debug(f"[StudentImport] New headers: {new_headers}")
+
+        # =============================================================
+        # STEP 3: Normalize headers to match our field definitions
+        # =============================================================
+        self._normalize_headers(dataset)
+
+    def _normalize_headers(self, dataset):
+        """
+        Normalize header names to match our expected column names.
+        Handles variations like 'nama siswa' → 'Nama', 'Rombel' → 'Rombel Saat Ini'
+        """
+        if not dataset.headers:
+            return
+
+        header_mappings = {
+            # NISN variations
+            'nisn': 'NISN',
+            'nis': 'NISN',
+            'no induk': 'NISN',
+            'nomor induk': 'NISN',
+
+            # Nama variations
+            'nama': 'Nama',
+            'nama lengkap': 'Nama',
+            'nama siswa': 'Nama',
+            'nama peserta didik': 'Nama',
+            'name': 'Nama',
+
+            # JK variations
+            'jk': 'JK',
+            'jenis kelamin': 'JK',
+            'gender': 'JK',
+            'l/p': 'JK',
+
+            # Kelas variations
+            'kelas': 'Rombel Saat Ini',
+            'rombel': 'Rombel Saat Ini',
+            'rombel saat ini': 'Rombel Saat Ini',
+            'tingkat': 'Rombel Saat Ini',
+            'class': 'Rombel Saat Ini',
+
+            # Tempat Lahir
+            'tempat lahir': 'Tempat Lahir',
+            'tmp lahir': 'Tempat Lahir',
+            'ttl': 'Tempat Lahir',
+
+            # Tanggal Lahir
+            'tanggal lahir': 'Tanggal Lahir',
+            'tgl lahir': 'Tanggal Lahir',
+            'dob': 'Tanggal Lahir',
+
+            # Alamat
+            'alamat': 'Alamat',
+            'address': 'Alamat',
+
+            # Phone
+            'no hp': 'No HP',
+            'hp': 'No HP',
+            'telepon': 'No HP',
+            'phone': 'No HP',
+            'no telepon': 'No HP',
+            'no. hp': 'No HP',
+
+            # Email
+            'email': 'Email',
+            'e-mail': 'Email',
+
+            # Wali
+            'nama wali': 'Nama Wali',
+            'wali': 'Nama Wali',
+            'nama orang tua': 'Nama Wali',
+            'orang tua': 'Nama Wali',
+            'hp wali': 'HP Wali',
+            'telepon wali': 'HP Wali',
+            'hp orang tua': 'HP Wali',
+
+            # Program
+            'program': 'Program',
+            'jurusan': 'Program',
+        }
+
+        # Normalize each header
+        new_headers = []
+        for header in dataset.headers:
+            header_lower = str(header).lower().strip()
+            normalized = header_mappings.get(header_lower, header)
+            new_headers.append(normalized)
+
+        dataset.headers = new_headers
+        logger.debug(f"[StudentImport] Normalized headers: {new_headers}")
+
     def before_import_row(self, row, row_number=None, **kwargs):
         """
         Pre-process each row before import.
