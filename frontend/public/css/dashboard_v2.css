@@ -1,0 +1,744 @@
+/**
+ * Dashboard v2.2 - Bento Box Layout
+ * Portal Ponpes Baron
+ * ================================
+ *
+ * Color System:
+ * - Emerald Deep: Primary academic/general
+ * - Baron Gold: Diniyah/Tahfidz accent
+ *
+ * Layout: Bento Box Grid
+ * - Top Row: 2 large cards (50/50)
+ * - Bottom Row: 4 medium/small cards
+ */
+
+/* =============================================
+   CSS CUSTOM PROPERTIES (Variables)
+   ============================================= */
+:root {
+    /* Primary Colors */
+    --emerald-deep: #178560;
+    --emerald-light: #1fa87a;
+    --emerald-dark: #0f5c42;
+    --emerald-surface: rgba(23, 133, 96, 0.08);
+    --emerald-border: rgba(23, 133, 96, 0.2);
+
+    /* Accent Colors */
+    --baron-gold: #c8961c;
+    --baron-gold-light: #e0b044;
+    --baron-gold-dark: #9a7415;
+    --baron-gold-surface: rgba(200, 150, 28, 0.08);
+    --baron-gold-border: rgba(200, 150, 28, 0.2);
+
+    /* Status Colors */
+    --status-success: #22c55e;
+    --status-warning: #f59e0b;
+    --status-danger: #ef4444;
+    --status-info: #3b82f6;
+
+    /* Neutral Colors */
+    --neutral-50: #fafafa;
+    --neutral-100: #f5f5f5;
+    --neutral-200: #e5e5e5;
+    --neutral-300: #d4d4d4;
+    --neutral-400: #a3a3a3;
+    --neutral-500: #737373;
+    --neutral-600: #525252;
+    --neutral-700: #404040;
+    --neutral-800: #262626;
+    --neutral-900: #171717;
+
+    /* Layout */
+    --bento-gap: 20px;
+    --card-radius: 16px;
+    --card-radius-sm: 12px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+}
+
+/* =============================================
+   PAGE HEADER
+   ============================================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.header-left {
+    flex: 1;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--neutral-800);
+    margin: 0 0 4px 0;
+}
+
+.page-subtitle {
+    font-size: 0.9rem;
+    color: var(--neutral-500);
+    margin: 0;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Student Selector */
+.student-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--neutral-50);
+    padding: 8px 12px;
+    border-radius: var(--card-radius-sm);
+    border: 1px solid var(--neutral-200);
+}
+
+.selector-label {
+    font-size: 0.85rem;
+    color: var(--neutral-500);
+    white-space: nowrap;
+}
+
+.student-selector {
+    padding: 6px 12px;
+    border: 1px solid var(--neutral-300);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: white;
+    min-width: 180px;
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+}
+
+.student-selector:focus {
+    outline: none;
+    border-color: var(--emerald-deep);
+    box-shadow: 0 0 0 3px var(--emerald-surface);
+}
+
+/* Print Button */
+.btn-print {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--emerald-deep);
+    color: white;
+    border: none;
+    border-radius: var(--card-radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-print:hover {
+    background: var(--emerald-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-print .btn-icon {
+    font-size: 1.1rem;
+}
+
+/* =============================================
+   BENTO BOX CONTAINER
+   ============================================= */
+.bento-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--bento-gap);
+}
+
+.bento-row {
+    display: grid;
+    gap: var(--bento-gap);
+}
+
+/* Top Row: 2 equal columns */
+.bento-row-top {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* Bottom Row: 4 columns with varying sizes */
+.bento-row-bottom {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* =============================================
+   BENTO CARDS - Base Styles
+   ============================================= */
+.bento-card {
+    background: white;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.bento-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Card Sizes */
+.bento-large {
+    min-height: 380px;
+}
+
+.bento-medium {
+    min-height: 300px;
+}
+
+.bento-small {
+    min-height: 220px;
+}
+
+/* =============================================
+   CLIPPED CARD - Decorative Corner Clip
+   ============================================= */
+.clipped-card {
+    position: relative;
+}
+
+.clipped-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, transparent 50%, var(--emerald-surface) 50%);
+    border-radius: 0 var(--card-radius) 0 0;
+    z-index: 1;
+}
+
+/* Gold variant for diniyah cards */
+.card-diniyah.clipped-card::before,
+.card-hafalan.clipped-card::before {
+    background: linear-gradient(135deg, transparent 50%, var(--baron-gold-surface) 50%);
+}
+
+/* =============================================
+   CARD HEADER
+   ============================================= */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--neutral-100);
+}
+
+.card-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    border-radius: 10px;
+    background: var(--emerald-surface);
+}
+
+.card-icon.academic-icon,
+.card-icon.attendance-icon,
+.card-icon.behavior-icon {
+    background: var(--emerald-surface);
+}
+
+.card-icon.diniyah-icon,
+.card-icon.hafalan-icon {
+    background: var(--baron-gold-surface);
+}
+
+.card-icon.ibadah-icon {
+    background: linear-gradient(135deg, var(--emerald-surface), var(--baron-gold-surface));
+}
+
+.card-title-group {
+    flex: 1;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--neutral-800);
+    margin: 0;
+}
+
+.card-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--emerald-surface);
+    color: var(--emerald-deep);
+    margin-top: 4px;
+}
+
+.card-badge.badge-gold {
+    background: var(--baron-gold-surface);
+    color: var(--baron-gold-dark);
+}
+
+/* =============================================
+   CARD BODY
+   ============================================= */
+.card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =============================================
+   METRIC HERO (Large Number Display)
+   ============================================= */
+.metric-hero {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.metric-value {
+    display: block;
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--emerald-deep);
+    line-height: 1;
+}
+
+.metric-gold .metric-value {
+    color: var(--baron-gold);
+}
+
+.metric-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--neutral-500);
+    margin-top: 4px;
+}
+
+/* =============================================
+   CHART CONTAINERS
+   ============================================= */
+.chart-container {
+    flex: 1;
+    position: relative;
+    min-height: 180px;
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.chart-radial {
+    max-width: 160px;
+    margin: 0 auto;
+}
+
+/* =============================================
+   CARD FOOTER
+   ============================================= */
+.card-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--neutral-100);
+    background: var(--neutral-50);
+}
+
+.footer-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--neutral-500);
+}
+
+.stat-icon {
+    font-size: 1rem;
+}
+
+/* =============================================
+   PROGRESS RING (Hafalan)
+   ============================================= */
+.progress-ring-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 16px;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-bg {
+    fill: none;
+    stroke: var(--neutral-200);
+    stroke-width: 8;
+}
+
+.progress-ring-fill {
+    fill: none;
+    stroke: var(--baron-gold);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 326.73;
+    stroke-dashoffset: 326.73;
+    transition: stroke-dashoffset 1s ease;
+}
+
+.progress-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.ring-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--baron-gold);
+}
+
+.ring-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--neutral-500);
+}
+
+/* Hafalan Stats */
+.hafalan-stats {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--neutral-800);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--neutral-500);
+}
+
+.stat-divider {
+    width: 1px;
+    height: 30px;
+    background: var(--neutral-200);
+}
+
+/* =============================================
+   ATTENDANCE LEGEND
+   ============================================= */
+.attendance-legend {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.dot-hadir { background: var(--status-success); }
+.dot-izin { background: var(--status-info); }
+.dot-sakit { background: var(--status-warning); }
+.dot-alpha { background: var(--status-danger); }
+
+.legend-label {
+    color: var(--neutral-500);
+    flex: 1;
+}
+
+.legend-value {
+    font-weight: 600;
+    color: var(--neutral-700);
+}
+
+/* =============================================
+   SHOLAT GRID (Ibadah Card)
+   ============================================= */
+.sholat-grid {
+    font-size: 0.75rem;
+}
+
+.sholat-header,
+.sholat-row {
+    display: grid;
+    grid-template-columns: 60px repeat(7, 1fr);
+    gap: 4px;
+    align-items: center;
+}
+
+.sholat-header {
+    color: var(--neutral-500);
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.sholat-header span:first-child {
+    text-align: left;
+}
+
+.sholat-row {
+    margin-bottom: 6px;
+}
+
+.waktu-label {
+    font-weight: 500;
+    color: var(--neutral-600);
+}
+
+.sholat-cell {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--neutral-100);
+    margin: 0 auto;
+    transition: background var(--transition-fast);
+}
+
+/* Status colors for sholat cells */
+.sholat-cell[data-status="hadir"] {
+    background: var(--status-success);
+}
+
+.sholat-cell[data-status="terlambat"] {
+    background: var(--status-warning);
+}
+
+.sholat-cell[data-status="tidak_hadir"] {
+    background: var(--status-danger);
+}
+
+.ibadah-summary {
+    text-align: center;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--neutral-100);
+}
+
+.summary-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--emerald-deep);
+}
+
+.summary-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--neutral-500);
+}
+
+/* =============================================
+   BEHAVIOR SCORE CARD
+   ============================================= */
+.score-display {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.score-value {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--emerald-deep);
+    line-height: 1;
+}
+
+.score-grade {
+    display: inline-block;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--emerald-surface);
+    color: var(--emerald-deep);
+    margin-top: 8px;
+}
+
+.score-breakdown {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+}
+
+.breakdown-item {
+    text-align: center;
+}
+
+.breakdown-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--neutral-500);
+    margin-bottom: 4px;
+}
+
+.breakdown-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.breakdown-value.positive {
+    color: var(--status-success);
+}
+
+.breakdown-value.negative {
+    color: var(--status-danger);
+}
+
+/* =============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================= */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .bento-row-top {
+        grid-template-columns: 1fr;
+    }
+
+    .bento-row-bottom {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bento-large {
+        min-height: 320px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-right {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .student-selector-wrapper {
+        width: 100%;
+    }
+
+    .student-selector {
+        flex: 1;
+    }
+
+    .btn-print {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .bento-row-bottom {
+        grid-template-columns: 1fr;
+    }
+
+    .bento-medium,
+    .bento-small {
+        min-height: auto;
+    }
+
+    .metric-value {
+        font-size: 2.25rem;
+    }
+
+    .sholat-header,
+    .sholat-row {
+        grid-template-columns: 50px repeat(7, 1fr);
+    }
+
+    .sholat-cell {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* =============================================
+   LOADING STATES (Skeleton)
+   ============================================= */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--neutral-100) 25%,
+        var(--neutral-200) 50%,
+        var(--neutral-100) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* =============================================
+   PRINT STYLES
+   ============================================= */
+@media print {
+    .sidebar,
+    .btn-print,
+    .student-selector-wrapper {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .bento-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid var(--neutral-200);
+    }
+}

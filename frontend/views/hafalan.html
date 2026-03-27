@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Program Al-Qur'an - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260316" rel="stylesheet">
+    <link href="/static/css/hafalan-baron.css?v=20260316" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <!-- Back to main website chip -->
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Program Al-Qur'an</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Hafalan</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+            <div class="topbar-actions admin-actions">
+                <button class="btn btn-export admin-only" id="btn-export">
+                    <span>📥</span> Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- ==================== STUDENT IDENTITY HEADER ==================== -->
+        <section class="student-identity-header" id="student-identity-header">
+            <div class="identity-main">
+                <div class="identity-avatar">
+                    <div class="avatar-circle-lg">
+                        <span class="avatar-initials" id="avatar-initials">-</span>
+                    </div>
+                </div>
+                <div class="identity-info">
+                    <h1 class="identity-name" id="student-name">Memuat data...</h1>
+                    <div class="identity-meta">
+                        <span class="identity-class" id="student-kelas">Kelas -</span>
+                        <span class="identity-separator">•</span>
+                        <span class="identity-nisn" id="student-nisn">NISN: -</span>
+                        <span class="identity-separator">•</span>
+                        <span class="identity-program" id="student-program">-</span>
+                    </div>
+                </div>
+                <div class="identity-achievement">
+                    <div class="achievement-badge">
+                        <span class="achievement-icon">📖</span>
+                        <div class="achievement-content">
+                            <span class="achievement-label">Capaian Saat Ini</span>
+                            <span class="achievement-value"><span id="total-juz">0</span> Juz</span>
+                        </div>
+                    </div>
+                    <div class="achievement-progress">
+                        <div class="progress-ring">
+                            <span class="progress-value" id="progress-percent">0%</span>
+                        </div>
+                        <span class="progress-label">dari target</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== PREDICTION/INSIGHT CARD ==================== -->
+        <section class="hafalan-insight-card glass-card" id="hafalan-prediction">
+            <div class="insight-card-content">
+                <div class="insight-card-icon" id="prediction-icon">🎯</div>
+                <div class="insight-card-body">
+                    <h3 class="insight-card-title" id="prediction-title">Memuat analisis...</h3>
+                    <p class="insight-card-desc" id="prediction-desc">Menganalisis progress hafalan ananda</p>
+                </div>
+                <div class="insight-card-stats">
+                    <div class="insight-stat">
+                        <span class="insight-stat-value" id="avg-days-per-juz">-</span>
+                        <span class="insight-stat-label">hari/juz</span>
+                    </div>
+                    <div class="insight-stat">
+                        <span class="insight-stat-value" id="remaining-juz">-</span>
+                        <span class="insight-stat-label">juz tersisa</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 30 JUZ PROGRESS GRID ==================== -->
+        <section class="glass-card juz-progress-section" id="juz-progress-section">
+            <div class="card-head">
+                <h3><span class="ch-icon">📖</span> Progress Hafalan 30 Juz</h3>
+                <div class="juz-legend">
+                    <span class="juz-legend-item"><span class="juz-box mutqin"></span> Mutqin</span>
+                    <span class="juz-legend-item"><span class="juz-box murojaah"></span> Murojaah</span>
+                    <span class="juz-legend-item"><span class="juz-box proses"></span> Proses</span>
+                    <span class="juz-legend-item"><span class="juz-box belum"></span> Belum</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="juz-grid" id="juz-grid">
+                    <!-- Will be populated by JS -->
+                </div>
+                <div class="juz-summary" id="juz-summary">
+                    <div class="juz-stat">
+                        <span class="juz-stat-value" id="mutqin-count">0</span>
+                        <span class="juz-stat-label">Mutqin</span>
+                    </div>
+                    <div class="juz-stat">
+                        <span class="juz-stat-value" id="murojaah-count">0</span>
+                        <span class="juz-stat-label">Murojaah</span>
+                    </div>
+                    <div class="juz-stat">
+                        <span class="juz-stat-value" id="proses-count">0</span>
+                        <span class="juz-stat-label">Proses</span>
+                    </div>
+                    <div class="juz-stat">
+                        <span class="juz-stat-value" id="belum-count">0</span>
+                        <span class="juz-stat-label">Belum</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hafalan Grid: Tartil & Tahfidz -->
+        <section class="hafalan-grid" id="hafalan-grid">
+            <!-- Panel Kiri: Tartil -->
+            <div class="glass-card hafalan-panel">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📚</span> Target Tartil</h3>
+                    <div class="card-badge">6 Item</div>
+                </div>
+                <div class="panel-body" id="tartil-panel">
+                    <ul class="hafalan-list">
+                        <li class="hafalan-item completed">
+                            <div class="item-info">
+                                <span class="item-name">Jilid 1</span>
+                                <span class="item-status badge badge-success">Lulus</span>
+                            </div>
+                            <div class="item-progress">
+                                <div class="mini-progress">
+                                    <div class="mini-track">
+                                        <div class="mini-fill fill-good" style="width: 100%;"></div>
+                                    </div>
+                                    <span class="mini-pct">100%</span>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="hafalan-item completed">
+                            <div class="item-info">
+                                <span class="item-name">Jilid 2</span>
+                                <span class="item-status badge badge-success">Lulus</span>
+                            </div>
+                            <div class="item-progress">
+                                <div class="mini-progress">
+                                    <div class="mini-track">
+                                        <div class="mini-fill fill-good" style="width: 100%;"></div>
+                                    </div>
+                                    <span class="mini-pct">100%</span>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="hafalan-item completed">
+                            <div class="item-info">
+                                <span class="item-name">Jilid 3</span>
+                                <span class="item-status badge badge-success">Lulus</span>
+                            </div>
+                            <div class="item-progress">
+                                <div class="mini-progress">
+                                    <div class="mini-track">
+                                        <div class="mini-fill fill-good" style="width: 100%;"></div>
+                                    </div>
+                                    <span class="mini-pct">100%</span>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="hafalan-item in-progress">
+                            <div class="item-info">
+                                <span class="item-name">Tadarus</span>
+                                <span class="item-status badge badge-warning">Proses</span>
+                            </div>
+                            <div class="item-progress">
+                                <div class="mini-progress">
+                                    <div class="mini-track">
+                                        <div class="mini-fill fill-ok" style="width: 75%;"></div>
+                                    </div>
+                                    <span class="mini-pct">75%</span>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="hafalan-item">
+                            <div class="item-info">
+                                <span class="item-name">Gharib</span>
+                                <span class="item-status badge badge-info">Belum</span>
+                            </div>
+                            <div class="item-progress">
+                                <div class="mini-progress">
+                                    <div class="mini-track">
+                                        <div class="mini-fill" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="mini-pct">0%</span>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="hafalan-item">
+                            <div class="item-info">
+                                <span class="item-name">Tajwid</span>
+                                <span class="item-status badge badge-info">Belum</span>
+                            </div>
+                            <div class="item-progress">
+                                <div class="mini-progress">
+                                    <div class="mini-track">
+                                        <div class="mini-fill" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="mini-pct">0%</span>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Panel Kanan: Tahfidz -->
+            <div class="glass-card hafalan-panel">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🏆</span> Target Tahfidz</h3>
+                    <div class="card-badge">4 Item</div>
+                </div>
+                <div class="panel-body" id="tahfidz-panel">
+                    <ul class="hafalan-list">
+                        <li class="hafalan-item highlight">
+                            <div class="item-info">
+                                <span class="item-name">Juz Hafal</span>
+                                <span class="item-value" id="juz-hafal-value">5 Juz</span>
+                            </div>
+                            <div class="item-detail">
+                                <span class="detail-text">Target: 12 Juz</span>
+                                <div class="mini-progress">
+                                    <div class="mini-track">
+                                        <div class="mini-fill fill-good" style="width: 42%;"></div>
+                                    </div>
+                                    <span class="mini-pct">42%</span>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="hafalan-item highlight">
+                            <div class="item-info">
+                                <span class="item-name">Juz Uji</span>
+                                <span class="item-value" id="juz-uji-value">3 Juz</span>
+                            </div>
+                            <div class="item-detail">
+                                <span class="detail-text">Juz 1, 2, 30 telah diuji</span>
+                            </div>
+                        </li>
+                        <li class="hafalan-item in-progress">
+                            <div class="item-info">
+                                <span class="item-name">Tasmi'</span>
+                                <span class="item-status badge badge-warning">Proses</span>
+                            </div>
+                            <div class="item-detail">
+                                <span class="detail-text">Juz 4 - Halaman 62</span>
+                                <div class="mini-progress">
+                                    <div class="mini-track">
+                                        <div class="mini-fill fill-ok" style="width: 65%;"></div>
+                                    </div>
+                                    <span class="mini-pct">65%</span>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="hafalan-item">
+                            <div class="item-info">
+                                <span class="item-name">Munaqosyah</span>
+                                <span class="item-status badge badge-info">Terjadwal</span>
+                            </div>
+                            <div class="item-detail">
+                                <span class="detail-text">Ujian Juz 4 - 25 Februari 2026</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kompetensi Section -->
+        <section class="kompetensi-section" id="kompetensi-section">
+            <h3 class="section-title">Kompetensi & Pengajar</h3>
+            <div class="kompetensi-grid">
+                <div class="glass-card kompetensi-card kc-green">
+                    <div class="kompetensi-icon">📚</div>
+                    <div class="kompetensi-info">
+                        <span class="kompetensi-label">Guru Tartil</span>
+                        <span class="kompetensi-value" id="guru-tartil">Ust. Abdullah</span>
+                    </div>
+                </div>
+                <div class="glass-card kompetensi-card kc-gold">
+                    <div class="kompetensi-icon">🏆</div>
+                    <div class="kompetensi-info">
+                        <span class="kompetensi-label">Guru Tahfidz</span>
+                        <span class="kompetensi-value" id="guru-tahfidz">Ust. Muhammad</span>
+                    </div>
+                </div>
+                <div class="glass-card kompetensi-card kc-purple">
+                    <div class="kompetensi-icon">⭐</div>
+                    <div class="kompetensi-info">
+                        <span class="kompetensi-label">Status Khidmat</span>
+                        <span class="kompetensi-value badge badge-success" id="status-khidmat">Aktif</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kehadiran Section -->
+        <section class="glass-card kehadiran-section" id="kehadiran-section">
+            <div class="card-head">
+                <h3><span class="ch-icon">📅</span> Kehadiran Halaqoh</h3>
+                <select class="filter-select" id="filter-bulan">
+                    <option value="">Bulan Ini</option>
+                    <option value="1">Januari</option>
+                    <option value="2">Februari</option>
+                    <option value="3">Maret</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div class="kehadiran-content">
+                    <div class="kehadiran-stats">
+                        <div class="kehadiran-stat ks-green">
+                            <span class="stat-number" id="hadir-count">18</span>
+                            <span class="stat-label">Hadir</span>
+                        </div>
+                        <div class="kehadiran-stat ks-gold">
+                            <span class="stat-number" id="izin-count">2</span>
+                            <span class="stat-label">Izin</span>
+                        </div>
+                        <div class="kehadiran-stat ks-red">
+                            <span class="stat-number" id="alpa-count">0</span>
+                            <span class="stat-label">Alpa</span>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="kehadiranChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <p class="footer-text">Portal Ponpes Baron - Program Tahfidz & Tartil Al-Qur'an</p>
+            <p class="footer-copyright">2024/2025</p>
+        </footer>
+    </div><!-- /page-body -->
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260312c" defer></script>
+<script src="/static/js/apiConfig.js?v=20260312c" defer></script>
+<script src="/static/js/apiFetch.js?v=20260312c" defer></script>
+<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/auth.js?v=20260312c" defer></script>
+<script src="/static/js/page-events.js?v=20260312c" defer></script>
+<script src="/static/js/hafalan.js?v=20260314" defer></script>
+
+<script>
+    // Baron Light Emerald Theme Init
+    window.addEventListener('load', function() {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = user.role || window.getUserRole?.() || 'guest';
+
+        document.body.setAttribute('data-role', role);
+
+        // Update topbar date
+        const dateEl = document.getElementById('topbar-date');
+        if (dateEl) {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', options);
+        }
+
+        // Update user avatar initials
+        const avatarEl = document.getElementById('user-avatar-initials');
+        if (avatarEl && user.name) {
+            const words = user.name.trim().split(' ');
+            if (words.length >= 2) {
+                avatarEl.textContent = (words[0][0] + words[1][0]).toUpperCase();
+            } else {
+                avatarEl.textContent = user.name.substring(0, 2).toUpperCase();
+            }
+        }
+
+        // Update role display
+        const roleEl = document.getElementById('user-role-display');
+        if (roleEl) {
+            const roleDisplay = {
+                'superadmin': 'Super Admin',
+                'pimpinan': 'Pimpinan',
+                'guru': 'Guru',
+                'walisantri': 'Wali Santri'
+            };
+            roleEl.textContent = roleDisplay[role] || role || '-';
+        }
+
+        // Role-based UI
+        if (role === 'walisantri') {
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            document.getElementById('page-title').textContent = 'Hafalan Ananda';
+        }
+    });
+</script>
+</body>
+</html>

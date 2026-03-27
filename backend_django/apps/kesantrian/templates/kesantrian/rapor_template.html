@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapor Santri - {{ rapor.student.nama }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .rapor-container {
+            max-width: 210mm;
+            margin: 20px auto;
+            background: white;
+            padding: 30px 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .rapor-header {
+            text-align: center;
+            border-bottom: 3px double #0f6347;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .rapor-header h1 {
+            color: #0f6347;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .rapor-header h2 {
+            color: #c8961c;
+            font-size: 18px;
+            font-weight: normal;
+        }
+
+        .rapor-header .semester-info {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Student Info */
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #f0faf7 0%, #e8f5f0 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #0f6347;
+        }
+
+        .student-info-left h3 {
+            color: #0f6347;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .student-info-left p {
+            color: #666;
+            font-size: 14px;
+            margin: 3px 0;
+        }
+
+        .student-info-right {
+            text-align: right;
+        }
+
+        .student-info-right .kelas-badge {
+            background: #0f6347;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* Section Title */
+        .section-title {
+            background: linear-gradient(90deg, #0f6347 0%, #1fa87a 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 25px 0 15px;
+            font-size: 16px;
+        }
+
+        .section-title.diniyah {
+            background: linear-gradient(90deg, #b8860b 0%, #c8961c 100%);
+        }
+
+        /* Grade Table */
+        .grade-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .grade-table th,
+        .grade-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .grade-table th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .grade-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .grade-table .nilai {
+            text-align: center;
+            font-weight: bold;
+            color: #0f6347;
+        }
+
+        .grade-table .diniyah .nilai {
+            color: #c8961c;
+        }
+
+        .grade-average {
+            background: #f0faf7;
+            font-weight: bold;
+        }
+
+        .grade-average.diniyah {
+            background: #fff8e6;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .summary-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .summary-card .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0f6347;
+        }
+
+        .summary-card .label {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .summary-card.gold .value {
+            color: #c8961c;
+        }
+
+        /* Ibadah Table */
+        .ibadah-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .ibadah-table th,
+        .ibadah-table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .ibadah-table th {
+            background: #0f6347;
+            color: white;
+        }
+
+        .ibadah-table .waktu {
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .ibadah-table .good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .ibadah-table .warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .ibadah-table .danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Pembinaan List */
+        .pembinaan-list {
+            list-style: none;
+        }
+
+        .pembinaan-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #0f6347;
+        }
+
+        .pembinaan-item .date {
+            min-width: 100px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .pembinaan-item .content {
+            flex: 1;
+        }
+
+        .pembinaan-item .content h4 {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .pembinaan-item .content .kategori {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .pembinaan-item .tingkat {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tingkat-sangat_baik { background: #d4edda; color: #155724; }
+        .tingkat-baik { background: #cce5ff; color: #004085; }
+        .tingkat-cukup { background: #fff3cd; color: #856404; }
+        .tingkat-perlu_perhatian { background: #f8d7da; color: #721c24; }
+
+        /* Footer */
+        .rapor-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+
+        .signature-box .line {
+            border-bottom: 1px solid #333;
+            margin: 60px 0 10px;
+        }
+
+        .signature-box .title {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .rapor-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 20px;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Print Button */
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #0f6347;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(15,99,71,0.3);
+        }
+
+        .print-btn:hover {
+            background: #178560;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">
+        <span>🖨️</span> Cetak Rapor
+    </button>
+
+    <div class="rapor-container">
+        <!-- Header -->
+        <div class="rapor-header">
+            <h1>PONDOK PESANTREN BARON</h1>
+            <h2>Laporan Perkembangan Santri</h2>
+            <div class="semester-info">
+                Semester: {{ rapor.semester }} | Tahun Ajaran: {{ rapor.tahun_ajaran }}
+            </div>
+        </div>
+
+        <!-- Student Info -->
+        <div class="student-info">
+            <div class="student-info-left">
+                <h3>{{ rapor.student.nama }}</h3>
+                <p><strong>NISN:</strong> {{ rapor.student.nisn }}</p>
+                <p><strong>Program:</strong> {{ rapor.student.program|default:"Reguler" }}</p>
+            </div>
+            <div class="student-info-right">
+                <span class="kelas-badge">{{ rapor.student.kelas }}</span>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="icon">📚</div>
+                <div class="value">{{ rapor.academic.average }}</div>
+                <div class="label">Rata-rata Akademik</div>
+            </div>
+            <div class="summary-card gold">
+                <div class="icon">📖</div>
+                <div class="value">{{ rapor.diniyah.average }}</div>
+                <div class="label">Rata-rata Diniyah</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon">🕌</div>
+                <div class="value">{{ rapor.ibadah.overall_percentage }}%</div>
+                <div class="label">Kehadiran Ibadah</div>
+            </div>
+        </div>
+
+        <!-- Academic Grades -->
+        <h3 class="section-title">📚 Nilai Akademik</h3>
+        <table class="grade-table">
+            <thead>
+                <tr>
+                    <th width="60">No</th>
+                    <th>Mata Pelajaran</th>
+                    <th width="100">Nilai</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for grade in rapor.academic.grades %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ grade.mata_pelajaran }}</td>
+                    <td class="nilai">{{ grade.nilai }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #999;">Belum ada data nilai</td>
+                </tr>
+                {% endfor %}
+                <tr class="grade-average">
+                    <td colspan="2"><strong>Rata-rata</strong></td>
+                    <td class="nilai"><strong>{{ rapor.academic.average }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Diniyah Grades -->
+        <h3 class="section-title diniyah">📖 Nilai Diniyah & Tahfidz</h3>
+        <table class="grade-table diniyah">
+            <thead>
+                <tr>
+                    <th width="60">No</th>
+                    <th>Mata Pelajaran</th>
+                    <th width="100">Nilai</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for grade in rapor.diniyah.grades %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ grade.mata_pelajaran }}</td>
+                    <td class="nilai">{{ grade.nilai }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #999;">Belum ada data nilai</td>
+                </tr>
+                {% endfor %}
+                <tr class="grade-average diniyah">
+                    <td colspan="2"><strong>Rata-rata</strong></td>
+                    <td class="nilai"><strong>{{ rapor.diniyah.average }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Hafalan Progress -->
+        <h3 class="section-title diniyah">🏆 Progress Hafalan Al-Quran</h3>
+        <div class="summary-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="summary-card gold">
+                <div class="icon">🎯</div>
+                <div class="value">{{ rapor.hafalan.target_juz }}</div>
+                <div class="label">Target Juz</div>
+            </div>
+            <div class="summary-card gold">
+                <div class="icon">✓</div>
+                <div class="value">{{ rapor.hafalan.tercapai_juz }}</div>
+                <div class="label">Tercapai</div>
+            </div>
+            <div class="summary-card gold">
+                <div class="icon">📊</div>
+                <div class="value">{{ rapor.hafalan.persentase }}%</div>
+                <div class="label">Persentase</div>
+            </div>
+        </div>
+
+        <!-- Ibadah Statistics -->
+        <h3 class="section-title">🕌 Statistik Ibadah Harian (30 Hari Terakhir)</h3>
+        <table class="ibadah-table">
+            <thead>
+                <tr>
+                    <th>Waktu Sholat</th>
+                    <th>Total Hari</th>
+                    <th>Hadir</th>
+                    <th>Persentase</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for waktu, stats in rapor.ibadah.detail.items %}
+                <tr>
+                    <td class="waktu">{{ waktu|title }}</td>
+                    <td>{{ stats.total }}</td>
+                    <td>{{ stats.hadir }}</td>
+                    <td class="{% if stats.persentase >= 90 %}good{% elif stats.persentase >= 70 %}warning{% else %}danger{% endif %}">
+                        {{ stats.persentase }}%
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Attendance Summary -->
+        <h3 class="section-title">📅 Kehadiran Sekolah</h3>
+        <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="summary-card">
+                <div class="value" style="color: #333;">{{ rapor.attendance.total_hari }}</div>
+                <div class="label">Total Hari</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #28a745;">{{ rapor.attendance.hadir }}</div>
+                <div class="label">Hadir</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #ffc107;">{{ rapor.attendance.sakit }}</div>
+                <div class="label">Sakit</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #17a2b8;">{{ rapor.attendance.izin }}</div>
+                <div class="label">Izin</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #dc3545;">{{ rapor.attendance.alpha }}</div>
+                <div class="label">Alpha</div>
+            </div>
+        </div>
+
+        <!-- Pembinaan/BLP -->
+        <h3 class="section-title">📝 Catatan Pembinaan (BLP)</h3>
+        <ul class="pembinaan-list">
+            {% for p in rapor.pembinaan.recent %}
+            <li class="pembinaan-item">
+                <div class="date">{{ p.tanggal }}</div>
+                <div class="content">
+                    <h4>{{ p.judul }}</h4>
+                    <span class="kategori">{{ p.kategori }}</span>
+                </div>
+                <span class="tingkat tingkat-{{ p.tingkat|slugify }}">{{ p.tingkat }}</span>
+            </li>
+            {% empty %}
+            <li style="text-align: center; color: #999; padding: 20px;">Belum ada catatan pembinaan</li>
+            {% endfor %}
+        </ul>
+
+        <!-- Halaqoh Info -->
+        {% if rapor.halaqoh %}
+        <h3 class="section-title diniyah">👥 Keanggotaan Halaqoh</h3>
+        <table class="grade-table">
+            <thead>
+                <tr>
+                    <th>Nama Halaqoh</th>
+                    <th>Jenis</th>
+                    <th>Musyrif</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in rapor.halaqoh %}
+                <tr>
+                    <td>{{ h.nama }}</td>
+                    <td>{{ h.jenis }}</td>
+                    <td>{{ h.musyrif }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="rapor-footer">
+            <div class="signature-box">
+                <div class="line"></div>
+                <div class="title">Wali Kelas</div>
+            </div>
+            <div class="signature-box">
+                <div class="line"></div>
+                <div class="title">Kepala Sekolah</div>
+            </div>
+            <div class="signature-box">
+                <div class="line"></div>
+                <div class="title">Orang Tua/Wali</div>
+            </div>
+        </div>
+
+        <p style="text-align: center; color: #999; font-size: 11px; margin-top: 30px;">
+            Dicetak pada: {{ rapor.generated_at|date:"d F Y H:i" }} WIB
+        </p>
+    </div>
+</body>
+</html>

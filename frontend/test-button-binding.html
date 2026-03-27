@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Button Binding</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .test-button-attendance {
+            background: #4CAF50;
+            color: white;
+        }
+        .test-button-grades {
+            background: #2196F3;
+            color: white;
+        }
+        .test-button-evaluations {
+            background: #FF9800;
+            color: white;
+        }
+        .test-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        #console-output {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .log-info { color: #00ff00; }
+        .log-success { color: #00ffff; }
+        .log-error { color: #ff0000; }
+        .log-warning { color: #ffff00; }
+    </style>
+</head>
+<body>
+    <h1>Test Button Binding - Portal Siswa</h1>
+
+    <div class="test-section">
+        <h2>Attendance</h2>
+        <button id="btn-test-attendance" class="test-button test-button-attendance">
+            Test: loadAttendanceForm()
+        </button>
+        <p><small>Fungsi: window.loadAttendanceForm()</small></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Grades</h2>
+        <button id="btn-test-grades" class="test-button test-button-grades">
+            Test: openAddModal()
+        </button>
+        <p><small>Fungsi: window.openAddModal() (Grades)</small></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Evaluations</h2>
+        <button id="btn-test-evaluations" class="test-button test-button-evaluations">
+            Test: openAddModal()
+        </button>
+        <p><small>Fungsi: window.openAddModal() (Evaluations)</small></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Output</h2>
+        <button id="btn-clear-console" class="test-button">Clear Console</button>
+        <div id="console-output"></div>
+    </div>
+
+    <script>
+        const consoleOutput = document.getElementById('console-output');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            consoleOutput.appendChild(entry);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearConsole() {
+            consoleOutput.innerHTML = '';
+            log('Console cleared', 'info');
+        }
+
+        document.getElementById('btn-clear-console').addEventListener('click', clearConsole);
+
+        // Test window functions
+        function testWindowFunction(funcName) {
+            log(`Testing: ${funcName}`, 'info');
+
+            if (typeof window[funcName] === 'undefined') {
+                log(`❌ ERROR: window.${funcName} is not defined!`, 'error');
+                return false;
+            }
+
+            if (typeof window[funcName] !== 'function') {
+                log(`❌ ERROR: window.${funcName} is not a function!`, 'error');
+                return false;
+            }
+
+            log(`✅ SUCCESS: window.${funcName} is defined and is a function`, 'success');
+            return true;
+        }
+
+        // Event delegation for test buttons
+        document.addEventListener('click', function(event) {
+            if (event.target.id === 'btn-test-attendance') {
+                log('--- ATTENDANCE TEST START ---', 'info');
+                if (testWindowFunction('loadAttendanceForm')) {
+                    try {
+                        log('Calling window.loadAttendanceForm()...', 'info');
+                        window.loadAttendanceForm();
+                        log('✅ loadAttendanceForm() called successfully', 'success');
+                    } catch (error) {
+                        log(`❌ ERROR calling loadAttendanceForm(): ${error.message}`, 'error');
+                        console.error(error);
+                    }
+                }
+                log('--- ATTENDANCE TEST END ---', 'info');
+            }
+
+            if (event.target.id === 'btn-test-grades') {
+                log('--- GRADES TEST START ---', 'info');
+                if (testWindowFunction('openAddModal')) {
+                    try {
+                        log('Calling window.openAddModal()...', 'info');
+                        window.openAddModal();
+                        log('✅ openAddModal() called successfully', 'success');
+                    } catch (error) {
+                        log(`❌ ERROR calling openAddModal(): ${error.message}`, 'error');
+                        console.error(error);
+                    }
+                }
+                log('--- GRADES TEST END ---', 'info');
+            }
+
+            if (event.target.id === 'btn-test-evaluations') {
+                log('--- EVALUATIONS TEST START ---', 'info');
+                if (testWindowFunction('openAddModal')) {
+                    try {
+                        log('Calling window.openAddModal()...', 'info');
+                        window.openAddModal();
+                        log('✅ openAddModal() called successfully', 'success');
+                    } catch (error) {
+                        log(`❌ ERROR calling openAddModal(): ${error.message}`, 'error');
+                        console.error(error);
+                    }
+                }
+                log('--- EVALUATIONS TEST END ---', 'info');
+            }
+        });
+
+        // Test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM Content Loaded', 'info');
+            log('Checking window functions...', 'info');
+
+            const functionsToCheck = [
+                'loadAttendanceForm',
+                'showHistory',
+                'openAddModal',
+                'closeModal',
+                'viewEvaluation',
+                'editEvaluation',
+                'deleteEvaluation'
+            ];
+
+            functionsToCheck.forEach(funcName => {
+                if (typeof window[funcName] !== 'undefined') {
+                    log(`✅ window.${funcName} is defined`, 'success');
+                } else {
+                    log(`⚠️  WARNING: window.${funcName} is NOT defined`, 'warning');
+                }
+            });
+
+            log('Test page ready. Click buttons to test.', 'info');
+        });
+
+        window.addEventListener('load', function() {
+            log('Window fully loaded', 'info');
+        });
+    </script>
+</body>
+</html>

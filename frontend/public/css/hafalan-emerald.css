@@ -1,0 +1,1145 @@
+/* ============================================
+   HAFALAN PAGE - Deep Emerald Theme
+   Extends deep-emerald.css base theme
+   ============================================ */
+
+/* ============================================
+   ROLE SWITCHER DEMO (Header Buttons)
+   ============================================ */
+.role-switcher-demo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    background: rgba(31, 216, 164, 0.05);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.role-switcher-demo .switcher-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 8px;
+}
+
+.role-switcher-demo .btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all var(--transition-normal);
+}
+
+.role-switcher-demo .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-input);
+    color: var(--text-secondary);
+}
+
+.role-switcher-demo .btn-secondary:hover {
+    background: rgba(31, 216, 164, 0.1);
+    border-color: var(--teal);
+    color: var(--teal);
+}
+
+.role-switcher-demo .btn-primary {
+    background: linear-gradient(135deg, var(--amber), var(--amber-dark));
+    border: none;
+    color: var(--bg-deep);
+    box-shadow: 0 2px 8px rgba(245, 166, 35, 0.3);
+}
+
+/* ============================================
+   PROFILE SECTION (Student Card)
+   ============================================ */
+.profile-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-lg);
+    padding: 28px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--blue));
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+}
+
+.profile-avatar {
+    position: relative;
+}
+
+.avatar-placeholder {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--bg-deep);
+    border: 3px solid var(--teal);
+    box-shadow: 0 0 25px rgba(31, 216, 164, 0.3);
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 220px;
+}
+
+.profile-name {
+    color: var(--text-primary);
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+}
+
+.profile-details {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.profile-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-detail-item .detail-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-detail-item .detail-value {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.profile-detail-item .detail-value.mono {
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+}
+
+/* Profile Stats (Juz Hafal & Progress) */
+.profile-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.profile-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.stat-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    position: relative;
+}
+
+.stat-circle.success {
+    background: rgba(31, 216, 164, 0.12);
+    border: 3px solid var(--teal);
+    color: var(--teal-light);
+    box-shadow: 0 0 20px rgba(31, 216, 164, 0.2);
+}
+
+.stat-circle.info {
+    background: rgba(74, 158, 255, 0.12);
+    border: 3px solid var(--blue);
+    color: var(--blue-light);
+    box-shadow: 0 0 20px rgba(74, 158, 255, 0.2);
+}
+
+.stat-desc {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================
+   HAFALAN GRID (Tartil & Tahfidz Panels)
+   ============================================ */
+.hafalan-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.hafalan-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+}
+
+.panel-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(31, 216, 164, 0.04);
+}
+
+.panel-title {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.panel-body {
+    padding: 8px 0;
+}
+
+/* ============================================
+   HAFALAN LIST ITEMS
+   ============================================ */
+.hafalan-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.hafalan-item {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background var(--transition-fast);
+}
+
+.hafalan-item:last-child {
+    border-bottom: none;
+}
+
+.hafalan-item:hover {
+    background: rgba(31, 216, 164, 0.03);
+}
+
+.hafalan-item.highlight {
+    background: rgba(31, 216, 164, 0.06);
+}
+
+.hafalan-item.highlight:hover {
+    background: rgba(31, 216, 164, 0.08);
+}
+
+.hafalan-item.completed {
+    border-left: 3px solid var(--teal);
+}
+
+.hafalan-item.in-progress {
+    border-left: 3px solid var(--amber);
+}
+
+.item-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.item-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.item-value {
+    color: var(--teal);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.item-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Progress Bars */
+.item-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.progress-bar-mini {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-input);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-mini.large {
+    height: 12px;
+    border-radius: 6px;
+}
+
+.progress-fill-mini {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.progress-fill-mini.success {
+    background: linear-gradient(90deg, var(--teal), var(--blue));
+}
+
+.progress-fill-mini.warning {
+    background: linear-gradient(90deg, var(--amber), var(--amber-light));
+}
+
+.progress-fill-mini.info {
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+}
+
+.progress-fill-mini.neutral {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.progress-text {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Item Detail */
+.item-detail {
+    margin-top: 10px;
+}
+
+.detail-text {
+    color: var(--text-muted);
+    font-size: 12px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* ============================================
+   GURU VIEW - EDIT ROW STYLING
+   ============================================ */
+.item-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.edit-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.edit-group label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.glass-input-mini {
+    width: 70px;
+    padding: 6px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+
+.glass-input-mini:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(31, 216, 164, 0.15);
+}
+
+.glass-input-mini.changed {
+    border-color: var(--amber);
+    background: rgba(245, 166, 35, 0.1);
+}
+
+.input-with-suffix {
+    display: flex;
+    align-items: center;
+}
+
+.input-suffix {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    accent-color: var(--teal);
+    width: 16px;
+    height: 16px;
+}
+
+.btn-save-item {
+    padding: 6px 14px !important;
+    font-size: 11px !important;
+}
+
+/* ============================================
+   WALISANTRI VIEW - READONLY STYLING
+   ============================================ */
+.item-readonly {
+    display: flex;
+    gap: 20px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+}
+
+.readonly-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.readonly-label {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.readonly-value {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+}
+
+.readonly-value.good {
+    color: var(--teal);
+}
+
+.readonly-value.warning {
+    color: var(--amber);
+}
+
+/* Juz Progress Visual (Walisantri) */
+.juz-progress-visual {
+    margin: 12px 0;
+}
+
+.progress-bar-large {
+    height: 24px;
+    background: var(--bg-input);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill-large {
+    height: 100%;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 0.6s ease;
+}
+
+.progress-fill-large.success {
+    background: linear-gradient(90deg, var(--teal), var(--blue));
+}
+
+.progress-fill-large.warning {
+    background: linear-gradient(90deg, var(--amber), var(--amber-light));
+}
+
+.progress-label {
+    color: var(--bg-deep);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+/* ============================================
+   KOMPETENSI SECTION
+   ============================================ */
+.kompetensi-section {
+    margin-bottom: 24px;
+}
+
+.kompetensi-section .section-title {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.kompetensi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.kompetensi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-lg);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.kompetensi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--teal);
+}
+
+.kompetensi-card:nth-child(2)::before {
+    background: var(--amber);
+}
+
+.kompetensi-card:nth-child(3)::before {
+    background: var(--purple);
+}
+
+.kompetensi-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-glow);
+    box-shadow: var(--shadow-md);
+}
+
+.kompetensi-icon {
+    font-size: 28px;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(31, 216, 164, 0.1);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.kompetensi-info {
+    flex: 1;
+}
+
+.kompetensi-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.kompetensi-value {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* ============================================
+   KEHADIRAN SECTION
+   ============================================ */
+.kehadiran-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.kehadiran-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.kehadiran-section .section-header .section-title {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.kehadiran-content {
+    padding: 24px;
+}
+
+.kehadiran-stats {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 24px;
+    justify-content: center;
+}
+
+.kehadiran-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.stat-number {
+    font-size: 36px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    line-height: 1;
+}
+
+.stat-number.success { color: var(--teal); }
+.stat-number.warning { color: var(--amber); }
+.stat-number.danger { color: var(--rose); }
+
+.kehadiran-stat .stat-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.chart-container {
+    position: relative;
+    height: 220px;
+}
+
+/* ============================================
+   CATATAN SECTION (Guru & Walisantri)
+   ============================================ */
+.catatan-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.catatan-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.catatan-section .section-title {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.catatan-content {
+    padding: 20px 24px;
+}
+
+.glass-textarea {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: var(--border-radius-md);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: var(--font-primary);
+    line-height: 1.6;
+    resize: vertical;
+    transition: all var(--transition-normal);
+}
+
+.glass-textarea:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(31, 216, 164, 0.15);
+}
+
+.catatan-readonly {
+    background: rgba(31, 216, 164, 0.05);
+    padding: 16px 20px;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.catatan-text {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* Riwayat Section */
+.riwayat-section {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.subsection-title {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.riwayat-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.riwayat-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.riwayat-item:last-child {
+    border-bottom: none;
+}
+
+.riwayat-tanggal {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    min-width: 90px;
+}
+
+.riwayat-aktivitas {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.riwayat-hasil {
+    font-size: 10px;
+}
+
+/* ============================================
+   PIMPINAN DASHBOARD
+   ============================================ */
+.pimpinan-dashboard {
+    margin-top: 24px;
+}
+
+.summary-stats-section {
+    margin-bottom: 24px;
+}
+
+.summary-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.summary-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.summary-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.summary-stat-card.stat-primary::before { background: var(--blue); }
+.summary-stat-card.stat-success::before { background: var(--teal); }
+.summary-stat-card.stat-info::before { background: var(--purple); }
+.summary-stat-card.stat-warning::before { background: var(--amber); }
+
+.summary-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.summary-stat-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    background: rgba(31, 216, 164, 0.1);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--teal);
+}
+
+.summary-stat-info {
+    flex: 1;
+}
+
+.summary-stat-value {
+    color: var(--text-primary);
+    font-size: 28px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    line-height: 1.1;
+}
+
+.summary-stat-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-stat-sub {
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+/* Pimpinan Charts Grid */
+.pimpinan-charts-section {
+    margin-bottom: 24px;
+}
+
+.pimpinan-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.chart-header h3 {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.chart-container-large {
+    position: relative;
+    height: 280px;
+}
+
+/* Class Detail Table */
+.class-detail-section {
+    margin-bottom: 24px;
+    padding: 20px;
+}
+
+.class-detail-section .section-header {
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.class-detail-section .section-title {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Progress Inline */
+.progress-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-bar-inline {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-input);
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 80px;
+}
+
+.progress-fill-inline {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.progress-fill-inline.success {
+    background: linear-gradient(90deg, var(--teal), var(--blue));
+}
+
+.progress-fill-inline.warning {
+    background: linear-gradient(90deg, var(--amber), var(--amber-light));
+}
+
+.progress-inline span {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 35px;
+}
+
+/* Top Performers */
+.top-performers-section {
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.top-performers-section .section-header {
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.top-performers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.performer-card {
+    background: var(--bg-mid);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all var(--transition-normal);
+}
+
+.performer-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.performer-card.gold {
+    border-color: rgba(255, 215, 0, 0.3);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), transparent);
+}
+
+.performer-card.silver {
+    border-color: rgba(192, 192, 192, 0.3);
+    background: linear-gradient(135deg, rgba(192, 192, 192, 0.08), transparent);
+}
+
+.performer-card.bronze {
+    border-color: rgba(205, 127, 50, 0.3);
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.08), transparent);
+}
+
+.performer-rank {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    min-width: 40px;
+}
+
+.performer-card.gold .performer-rank { color: #ffd700; }
+.performer-card.silver .performer-rank { color: #c0c0c0; }
+.performer-card.bronze .performer-rank { color: #cd7f32; }
+
+.performer-info {
+    flex: 1;
+}
+
+.performer-name {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.performer-class {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.performer-stats {
+    text-align: right;
+}
+
+.performer-juz {
+    color: var(--teal);
+    font-size: 18px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    margin-bottom: 4px;
+}
+
+/* ============================================
+   PAGE FOOTER
+   ============================================ */
+.page-footer {
+    padding: 24px 0;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-subtle);
+    text-align: center;
+}
+
+.footer-text {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.footer-copyright {
+    color: var(--text-disabled);
+    font-size: 12px;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1200px) {
+    .summary-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pimpinan-charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .top-performers-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1024px) {
+    .hafalan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kompetensi-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-details {
+        justify-content: center;
+    }
+
+    .profile-stats {
+        justify-content: center;
+    }
+
+    .kehadiran-stats {
+        gap: 24px;
+    }
+
+    .stat-number {
+        font-size: 28px;
+    }
+
+    .role-switcher-demo {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .item-edit-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .summary-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

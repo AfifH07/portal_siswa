@@ -18,6 +18,11 @@ django-filter==23.5
 python-decouple==3.8
 gunicorn==21.2.0
 
+# Excel Processing
+pandas==2.1.4
+openpyxl==3.1.2
+numpy==1.26.2
+
 # Development
 django-debug-toolbar==4.2.0
 

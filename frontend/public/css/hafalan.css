@@ -1,0 +1,1397 @@
+/* ============================================
+   HAFALAN PAGE STYLES
+   Portal Ponpes Baron - Program Al-Qur'an
+   Glassmorphism + Teal Theme
+   ============================================ */
+
+/* ============================================
+   PROFILE SECTION
+   ============================================ */
+.profile-section {
+    padding: 25px 30px;
+    margin-bottom: 25px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+.profile-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    box-shadow: 0 4px 20px rgba(15, 118, 110, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.profile-name {
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.profile-details {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+.profile-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-detail-item .detail-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-detail-item .detail-value {
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 20px;
+    margin-left: auto;
+}
+
+.profile-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    transition: transform 0.3s ease;
+}
+
+.stat-circle:hover {
+    transform: scale(1.1);
+}
+
+.stat-circle.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.stat-circle.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.stat-circle.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+.stat-desc {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* ============================================
+   HAFALAN GRID (2 Columns)
+   ============================================ */
+.hafalan-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.hafalan-panel {
+    padding: 0;
+    overflow: hidden;
+}
+
+.panel-header {
+    padding: 18px 25px;
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.3), rgba(19, 78, 74, 0.2));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-title {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.panel-icon {
+    font-size: 16px;
+}
+
+.panel-body {
+    padding: 20px 25px;
+}
+
+/* ============================================
+   HAFALAN LIST
+   ============================================ */
+.hafalan-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.hafalan-item {
+    padding: 15px 18px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.hafalan-item:last-child {
+    margin-bottom: 0;
+}
+
+.hafalan-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.hafalan-item.completed {
+    border-left: 4px solid #10b981;
+}
+
+.hafalan-item.in-progress {
+    border-left: 4px solid #f59e0b;
+}
+
+.hafalan-item.highlight {
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.15), rgba(15, 118, 110, 0.05));
+    border-left: 4px solid var(--primary);
+}
+
+.item-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.item-name {
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.item-value {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.item-status {
+    font-size: 11px;
+    padding: 4px 10px;
+}
+
+.item-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.item-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+}
+
+/* Mini Progress Bar */
+.progress-bar-mini {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-mini.large {
+    height: 8px;
+    margin-top: 5px;
+}
+
+.progress-fill-mini {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    transition: width 0.5s ease;
+}
+
+.progress-fill-mini.warning {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.progress-fill-mini.success {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.progress-fill-mini.neutral {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.progress-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* ============================================
+   KOMPETENSI SECTION
+   ============================================ */
+.kompetensi-section {
+    margin-bottom: 25px;
+}
+
+.section-title {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    padding-left: 5px;
+}
+
+.kompetensi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.kompetensi-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.kompetensi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.kompetensi-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.kompetensi-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.kompetensi-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.kompetensi-value {
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* ============================================
+   KEHADIRAN SECTION
+   ============================================ */
+.kehadiran-section {
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-header .section-title {
+    margin: 0;
+    padding: 0;
+}
+
+.section-actions .glass-input {
+    min-width: 150px;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.kehadiran-content {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 30px;
+    align-items: center;
+}
+
+.kehadiran-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.kehadiran-stat {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.kehadiran-stat .stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    min-width: 50px;
+    text-align: center;
+}
+
+.kehadiran-stat .stat-number.success {
+    color: #6ee7b7;
+}
+
+.kehadiran-stat .stat-number.warning {
+    color: #fbbf24;
+}
+
+.kehadiran-stat .stat-number.danger {
+    color: #fca5a5;
+}
+
+.kehadiran-stat .stat-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.kehadiran-section .chart-container {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.kehadiran-section .chart-container canvas {
+    max-width: 100%;
+    max-height: 180px;
+}
+
+/* ============================================
+   PAGE FOOTER
+   ============================================ */
+.page-footer {
+    padding: 25px 0;
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-content {
+    text-align: center;
+}
+
+.footer-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.footer-copyright {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+}
+
+/* ============================================
+   BADGES (Override/Extend)
+   ============================================ */
+.badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    color: #6ee7b7;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.1));
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+}
+
+.badge-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.1));
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    color: #93c5fd;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.1));
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-info {
+        text-align: center;
+    }
+
+    .profile-details {
+        justify-content: center;
+    }
+
+    .profile-stats {
+        margin-left: 0;
+        justify-content: center;
+    }
+
+    .kompetensi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .profile-section {
+        padding: 20px;
+    }
+
+    .avatar-placeholder {
+        width: 70px;
+        height: 70px;
+        font-size: 24px;
+    }
+
+    .profile-name {
+        font-size: 20px;
+    }
+
+    .profile-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .stat-circle {
+        width: 60px;
+        height: 60px;
+        font-size: 16px;
+    }
+
+    /* Stack hafalan panels */
+    .hafalan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .panel-header {
+        padding: 15px 20px;
+    }
+
+    .panel-body {
+        padding: 15px 20px;
+    }
+
+    .hafalan-item {
+        padding: 12px 15px;
+    }
+
+    /* Kompetensi: 1 column */
+    .kompetensi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Kehadiran: stack */
+    .kehadiran-content {
+        grid-template-columns: 1fr;
+    }
+
+    .kehadiran-stats {
+        flex-direction: row;
+        justify-content: space-around;
+    }
+
+    .kehadiran-stat {
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+        padding: 15px 10px;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .section-actions {
+        width: 100%;
+    }
+
+    .section-actions .glass-input {
+        width: 100%;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 15px;
+    }
+
+    .page-header h1 {
+        font-size: 20px;
+    }
+
+    .profile-section {
+        padding: 15px;
+    }
+
+    .profile-name {
+        font-size: 18px;
+    }
+
+    .stat-circle {
+        width: 55px;
+        height: 55px;
+        font-size: 14px;
+    }
+
+    .hafalan-item {
+        padding: 10px 12px;
+    }
+
+    .item-name {
+        font-size: 14px;
+    }
+
+    .kehadiran-section {
+        padding: 18px;
+    }
+
+    .kehadiran-stat .stat-number {
+        font-size: 22px;
+    }
+
+    .footer-text {
+        font-size: 12px;
+    }
+}
+
+/* ============================================
+   ADMIN VIEW OVERRIDES
+   ============================================ */
+body[data-role="walisantri"] .admin-only {
+    display: none !important;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hafalan-panel,
+.kompetensi-card,
+.kehadiran-section {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.hafalan-panel:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.kompetensi-card:nth-child(1) { animation-delay: 0.05s; }
+.kompetensi-card:nth-child(2) { animation-delay: 0.1s; }
+.kompetensi-card:nth-child(3) { animation-delay: 0.15s; }
+
+/* ============================================
+   EDITABLE INPUTS (GURU VIEW)
+   ============================================ */
+.item-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 12px 0;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    flex-wrap: wrap;
+}
+
+.edit-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.edit-group label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.glass-input-mini {
+    width: 70px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.glass-input-mini:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.glass-input-mini.changed {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.glass-input-mini::-webkit-inner-spin-button,
+.glass-input-mini::-webkit-outer-spin-button {
+    opacity: 0.5;
+}
+
+.input-with-suffix {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.input-suffix {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #10b981;
+    cursor: pointer;
+}
+
+.btn-save-item {
+    padding: 6px 14px;
+    font-size: 12px;
+    margin-left: auto;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+/* ============================================
+   CATATAN SECTION
+   ============================================ */
+.catatan-section {
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.catatan-content {
+    margin-bottom: 20px;
+}
+
+.glass-textarea {
+    width: 100%;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 100px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.glass-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.glass-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.catatan-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+/* Riwayat Aktivitas */
+.riwayat-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.subsection-title {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.riwayat-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.riwayat-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.riwayat-item:last-child {
+    margin-bottom: 0;
+}
+
+.riwayat-tanggal {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 80px;
+}
+
+.riwayat-aktivitas {
+    flex: 1;
+    color: white;
+    font-size: 13px;
+    min-width: 200px;
+}
+
+.riwayat-hasil {
+    font-size: 10px;
+    padding: 4px 10px;
+}
+
+/* ============================================
+   RESPONSIVE EDITABLE
+   ============================================ */
+@media (max-width: 768px) {
+    .item-edit-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .edit-group {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .glass-input-mini {
+        flex: 1;
+        max-width: 100px;
+    }
+
+    .btn-save-item {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 5px;
+    }
+
+    .riwayat-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .riwayat-tanggal {
+        min-width: auto;
+    }
+
+    .riwayat-aktivitas {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .item-edit-row {
+        padding: 10px 12px;
+    }
+
+    .glass-input-mini {
+        width: 60px;
+        padding: 6px 8px;
+        font-size: 13px;
+    }
+
+    .edit-group label {
+        font-size: 11px;
+    }
+
+    .catatan-section {
+        padding: 18px;
+    }
+
+    .glass-textarea {
+        padding: 12px;
+        font-size: 13px;
+    }
+}
+
+/* ============================================
+   WALISANTRI VIEW (Read-Only)
+   ============================================ */
+.item-readonly {
+    display: flex;
+    gap: 20px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.readonly-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.readonly-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.readonly-value {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.readonly-value.good {
+    color: #6ee7b7;
+}
+
+.readonly-value.warning {
+    color: #fbbf24;
+}
+
+/* Large Progress Bar for Walisantri */
+.juz-progress-visual {
+    margin: 12px 0;
+}
+
+.progress-bar-large {
+    height: 28px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill-large {
+    height: 100%;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    transition: width 0.6s ease;
+}
+
+.progress-fill-large.success {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.progress-fill-large.warning {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.progress-fill-large.info {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.progress-label {
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.catatan-readonly {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+}
+
+.catatan-readonly .catatan-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* ============================================
+   PIMPINAN VIEW (Dashboard Summary)
+   ============================================ */
+.pimpinan-dashboard {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.summary-stats-section {
+    margin-bottom: 25px;
+}
+
+.summary-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.summary-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
+
+.summary-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+.summary-stat-card.stat-primary {
+    border-left: 5px solid var(--primary);
+}
+
+.summary-stat-card.stat-success {
+    border-left: 5px solid #10b981;
+}
+
+.summary-stat-card.stat-info {
+    border-left: 5px solid #3b82f6;
+}
+
+.summary-stat-card.stat-warning {
+    border-left: 5px solid #f59e0b;
+}
+
+.summary-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.summary-stat-info {
+    flex: 1;
+}
+
+.summary-stat-value {
+    color: white;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.summary-stat-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.summary-stat-sub {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+/* Pimpinan Charts */
+.pimpinan-charts-section {
+    margin-bottom: 25px;
+}
+
+.pimpinan-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+.chart-card {
+    padding: 20px;
+}
+
+.chart-card .chart-header {
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chart-card .chart-header h3 {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.chart-container-large {
+    height: 280px;
+    position: relative;
+}
+
+/* Class Detail Table */
+.class-detail-section {
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.class-detail-section .table-container {
+    margin-top: 15px;
+}
+
+.progress-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-bar-inline {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 80px;
+}
+
+.progress-fill-inline {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.progress-fill-inline.success {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.progress-fill-inline.warning {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.progress-inline span {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 35px;
+}
+
+/* Top Performers */
+.top-performers-section {
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.top-performers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.performer-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.performer-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+}
+
+.performer-card.gold {
+    border-color: rgba(255, 215, 0, 0.5);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.02));
+}
+
+.performer-card.silver {
+    border-color: rgba(192, 192, 192, 0.5);
+    background: linear-gradient(135deg, rgba(192, 192, 192, 0.1), rgba(192, 192, 192, 0.02));
+}
+
+.performer-card.bronze {
+    border-color: rgba(205, 127, 50, 0.5);
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.02));
+}
+
+.performer-rank {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: white;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+.performer-card.gold .performer-rank {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+}
+
+.performer-card.silver .performer-rank {
+    background: linear-gradient(135deg, #c0c0c0, #808080);
+}
+
+.performer-card.bronze .performer-rank {
+    background: linear-gradient(135deg, #cd7f32, #8b4513);
+}
+
+.performer-info {
+    flex: 1;
+}
+
+.performer-name {
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.performer-class {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.performer-stats {
+    text-align: right;
+}
+
+.performer-juz {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+/* Role Switcher Demo */
+.role-switcher-demo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    padding: 8px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.switcher-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.role-switcher-demo .btn {
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+/* Responsive Pimpinan */
+@media (max-width: 1200px) {
+    .summary-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .pimpinan-charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .top-performers-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .summary-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-stat-card {
+        padding: 20px;
+    }
+
+    .summary-stat-value {
+        font-size: 26px;
+    }
+
+    .role-switcher-demo {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .item-readonly {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .performer-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 15px;
+    }
+
+    .performer-stats {
+        text-align: center;
+    }
+
+    .chart-container-large {
+        height: 220px;
+    }
+}

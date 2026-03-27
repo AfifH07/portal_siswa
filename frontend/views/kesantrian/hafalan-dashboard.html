@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Hafalan - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260326" rel="stylesheet">
+    <link href="/static/css/hafalan-dashboard.css?v=20260326C" rel="stylesheet">
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <!-- Back to main website chip -->
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Dashboard Hafalan</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Hafalan Manager</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date"><i class="fas fa-calendar-alt"></i> Memuat...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+            <div class="topbar-actions">
+                <select class="filter-select" id="filter-kelas">
+                    <option value="">Semua Kelas</option>
+                </select>
+                <button class="btn btn-export" id="btn-export">
+                    <span>📥</span> Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- ==================== ROW 1: SUMMARY CARDS ==================== -->
+        <section class="dashboard-row">
+            <div class="summary-cards-grid">
+                <!-- Card 1: Total Hafizh (30 Juz) - Green Border -->
+                <div class="summary-card border-success" id="card-khatam">
+                    <div class="summary-card-icon success">
+                        <span>🏆</span>
+                    </div>
+                    <div class="summary-card-content">
+                        <div class="summary-card-value" id="stat-khatam">-</div>
+                        <div class="summary-card-label">Total Hafizh (30 Juz)</div>
+                    </div>
+                    <div class="summary-card-trend up">
+                        <span class="trend-icon">↑</span>
+                        <span class="trend-text" id="trend-khatam">+0 bulan ini</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: Rata-rata Capaian Sekolah - Blue Border -->
+                <div class="summary-card border-info" id="card-avg">
+                    <div class="summary-card-icon info">
+                        <span>📖</span>
+                    </div>
+                    <div class="summary-card-content">
+                        <div class="summary-card-value" id="stat-avg-juz">-</div>
+                        <div class="summary-card-label">Rata-rata Capaian Sekolah</div>
+                    </div>
+                    <div class="summary-card-badge">
+                        <span id="badge-avg-status">Menghitung...</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Santri Aktif Menyetorkan - Yellow Border -->
+                <div class="summary-card border-warning" id="card-aktif">
+                    <div class="summary-card-icon warning">
+                        <span>👨‍🎓</span>
+                    </div>
+                    <div class="summary-card-content">
+                        <div class="summary-card-value" id="stat-aktif">-</div>
+                        <div class="summary-card-label">Santri Aktif Menyetorkan</div>
+                    </div>
+                    <div class="summary-card-progress">
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" id="progress-aktif" style="width: 0%"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text-aktif">0% dari total</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ROW 2: CHART + LEADERBOARD ==================== -->
+        <section class="dashboard-row">
+            <div class="visualization-grid">
+                <!-- Left Column (col-md-8): Chart Capaian per Kelas -->
+                <div class="viz-card chart-card-large">
+                    <div class="viz-card-header">
+                        <h3 class="viz-card-title">
+                            <span class="title-icon">📊</span>
+                            Rata-rata Hafalan per Kelas
+                        </h3>
+                        <div class="viz-card-actions">
+                            <select class="mini-filter" id="chart-filter-semester">
+                                <option value="">Semua Semester</option>
+                                <option value="Ganjil">Ganjil</option>
+                                <option value="Genap">Genap</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="viz-card-body">
+                        <canvas id="chartCapaianKelas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right Column (col-md-4): Leaderboard Top 5 -->
+                <div class="viz-card leaderboard-card">
+                    <div class="viz-card-header">
+                        <h3 class="viz-card-title">
+                            <span class="title-icon">🌟</span>
+                            Top 5 Santri Terbaik
+                        </h3>
+                    </div>
+                    <div class="viz-card-body">
+                        <ul class="leaderboard-list" id="top-santri-list">
+                            <li class="leaderboard-loading">
+                                <div class="skeleton-avatar"></div>
+                                <div class="skeleton-text"></div>
+                            </li>
+                            <li class="leaderboard-loading">
+                                <div class="skeleton-avatar"></div>
+                                <div class="skeleton-text"></div>
+                            </li>
+                            <li class="leaderboard-loading">
+                                <div class="skeleton-avatar"></div>
+                                <div class="skeleton-text"></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="viz-card-footer">
+                        <a href="#" class="link-view-all" id="btn-view-all-santri">
+                            Lihat Semua Santri →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ROW 3: GLOBAL TABLE ==================== -->
+        <section class="dashboard-row">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <h3 class="table-card-title">
+                        <span class="title-icon">📋</span>
+                        Rekapitulasi Hafalan Global
+                    </h3>
+                    <div class="table-card-actions">
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="search-table" placeholder="Cari santri atau kelas...">
+                        </div>
+                        <button class="btn-icon" id="btn-refresh-table" title="Refresh Data">
+                            🔄
+                        </button>
+                        <button class="btn-icon" id="btn-export-table" title="Export Excel">
+                            📥
+                        </button>
+                    </div>
+                </div>
+                <div class="table-card-body">
+                    <div class="table-responsive">
+                        <table class="executive-table" id="table-rekap-global">
+                            <thead>
+                                <tr>
+                                    <th class="th-rank">#</th>
+                                    <th class="th-nisn">NISN</th>
+                                    <th class="th-nama">Nama Santri</th>
+                                    <th class="th-kelas">Kelas</th>
+                                    <th class="th-target">Target (Juz)</th>
+                                    <th class="th-tercapai">Tercapai (Juz)</th>
+                                    <th class="th-progress">Progress</th>
+                                    <th class="th-status">Status</th>
+                                    <th class="th-action">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-rekap-body">
+                                <tr class="loading-row">
+                                    <td colspan="9">
+                                        <div class="table-loading-state">
+                                            <div class="spinner-border"></div>
+                                            <span>Memuat data rekapitulasi...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="table-card-footer">
+                    <div class="table-info">
+                        Menampilkan <strong id="showing-count">0</strong> dari <strong id="total-count">0</strong> santri
+                    </div>
+                    <div class="table-pagination" id="pagination-container">
+                        <!-- Pagination will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ROW 4: DISTRIBUTION CHART (Bonus) ==================== -->
+        <section class="dashboard-row">
+            <div class="visualization-grid dual-chart">
+                <!-- Distribusi Capaian Hafalan -->
+                <div class="viz-card">
+                    <div class="viz-card-header">
+                        <h3 class="viz-card-title">
+                            <span class="title-icon">🥧</span>
+                            Distribusi Capaian Hafalan
+                        </h3>
+                    </div>
+                    <div class="viz-card-body chart-body-sm">
+                        <canvas id="chartDistribusi"></canvas>
+                    </div>
+                    <div class="chart-legend" id="legend-distribusi">
+                        <!-- Legend will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Trend Bulanan -->
+                <div class="viz-card">
+                    <div class="viz-card-header">
+                        <h3 class="viz-card-title">
+                            <span class="title-icon">📈</span>
+                            Trend Setoran Bulanan
+                        </h3>
+                    </div>
+                    <div class="viz-card-body chart-body-sm">
+                        <canvas id="chartTrendBulanan"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<!-- ===================== MODAL: DETAIL SANTRI ===================== -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal-container modal-lg" id="modal-detail-santri">
+        <div class="modal-header">
+            <h3 class="modal-title">Detail Hafalan Santri</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body-content">
+            <!-- Dynamic content -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
+            <button class="btn btn-primary" id="btn-print-detail">🖨️ Cetak</button>
+        </div>
+    </div>
+</div>
+
+<!-- API Config (MUST load first - defines window.API_CONFIG with buildUrl) -->
+<script src="/static/js/apiConfig.js?v=20260326"></script>
+
+<!-- Core API (uses window.API_CONFIG.buildUrl) -->
+<script src="/static/js/apiFetch.js?v=20260326"></script>
+
+<!-- Auth Check (uses window.apiFetch) -->
+<script src="/static/js/auth-check.js?v=20260326"></script>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Dashboard Logic (uses window.apiFetch) -->
+<script src="/static/js/hafalan-dashboard.js?v=20260326E"></script>
+
+</body>
+</html>

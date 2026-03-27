@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendaftaran - Portal Ponpes Baron</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/registration.css" rel="stylesheet">
+    <link href="/static/css/glassmorphism.css" rel="stylesheet">
+</head>
+<body>
+    <div class="registration-container">
+        <div class="glass-card">
+            <div class="registration-header">
+                <h1>📝 Formulir Pendaftaran</h1>
+                <p>Silakan lengkapi formulir pendaftaran santri baru</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar-wrapper">
+                    <div class="progress-steps">
+                        <div class="step active" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-label">Data Diri</span>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-label">Kontak</span>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-label">Akademik</span>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-label">Wali</span>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" data-step="5">
+                            <span class="step-number">5</span>
+                            <span class="step-label">Target</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Steps -->
+            <form id="registration-form" class="registration-form">
+                <!-- Step 1: Data Diri -->
+                <div class="form-step active" data-step="1">
+                    <h2 class="step-title">Step 1: Data Diri</h2>
+                    <div class="step-content">
+                        <div class="form-group">
+                            <label for="nisn">NISN *</label>
+                            <input type="text" id="nisn" name="nisn" required class="glass-input" maxlength="20" placeholder="Masukkan NISN">
+                            <small class="help-text">NISN harus unik dan belum terdaftar</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="nama-lengkap">Nama Lengkap *</label>
+                            <input type="text" id="nama-lengkap" name="nama" required class="glass-input" maxlength="100" placeholder="Masukkan nama lengkap">
+                        </div>
+                        <div class="form-group">
+                            <label for="tempat-lahir">Tempat Lahir</label>
+                            <input type="text" id="tempat-lahir" name="tempat_lahir" class="glass-input" maxlength="50" placeholder="Masukkan tempat lahir">
+                        </div>
+                        <div class="form-group">
+                            <label for="tanggal-lahir">Tanggal Lahir</label>
+                            <input type="date" id="tanggal-lahir" name="tanggal_lahir" class="glass-input">
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button type="button" onclick="window.nextStep(1)" class="btn btn-primary">Lanjut →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Kontak -->
+                <div class="form-step" data-step="2">
+                    <h2 class="step-title">Step 2: Kontak</h2>
+                    <div class="step-content">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" class="glass-input" maxlength="100" placeholder="Masukkan email">
+                        </div>
+                        <div class="form-group">
+                            <label for="no-hp">No. HP *</label>
+                            <input type="tel" id="no-hp" name="phone" required class="glass-input" maxlength="20" placeholder="Masukkan nomor HP">
+                        </div>
+                        <div class="form-group">
+                            <label for="alamat">Alamat</label>
+                            <textarea id="alamat" name="alamat" class="glass-input" rows="3" maxlength="500" placeholder="Masukkan alamat lengkap"></textarea>
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button type="button" onclick="window.previousStep(2)" class="btn btn-secondary">← Kembali</button>
+                        <button type="button" onclick="window.nextStep(2)" class="btn btn-primary">Lanjut →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Akademik -->
+                <div class="form-step" data-step="3">
+                    <h2 class="step-title">Step 3: Akademik</h2>
+                    <div class="step-content">
+                        <div class="form-group">
+                            <label for="program">Program *</label>
+                            <select id="program" name="program" required class="glass-input">
+                                <option value="">Pilih Program</option>
+                                <option value="Reguler">Reguler</option>
+                                <option value="Tahfidz">Tahfidz</option>
+                                <option value="Khusus">Khusus</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="kelas-akademik">Kelas</label>
+                            <select id="kelas-akademik" name="kelas" class="glass-input">
+                                <option value="">Pilih Kelas</option>
+                                <option value="X A">X A</option>
+                                <option value="X B">X B</option>
+                                <option value="X C">X C</option>
+                                <option value="X D">X D</option>
+                                <option value="XI A">XI A</option>
+                                <option value="XI B">XI B</option>
+                                <option value="XI C">XI C</option>
+                                <option value="XI D">XI D</option>
+                                <option value="XII A">XII A</option>
+                                <option value="XII B">XII B</option>
+                                <option value="XII C">XII C</option>
+                                <option value="XII D">XII D</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tanggal-masuk">Tanggal Masuk *</label>
+                            <input type="date" id="tanggal-masuk" name="tanggal_masuk" required class="glass-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="sekolah-asal">Sekolah Asal</label>
+                            <input type="text" id="sekolah-asal" name="sekolah_asal" class="glass-input" maxlength="100" placeholder="Masukkan sekolah asal">
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button type="button" onclick="window.previousStep(3)" class="btn btn-secondary">← Kembali</button>
+                        <button type="button" onclick="window.nextStep(3)" class="btn btn-primary">Lanjut →</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Wali -->
+                <div class="form-step" data-step="4">
+                    <h2 class="step-title">Step 4: Data Wali</h2>
+                    <div class="step-content">
+                        <div class="form-group">
+                            <label for="nama-wali">Nama Wali *</label>
+                            <input type="text" id="nama-wali" name="wali_nama" required class="glass-input" maxlength="100" placeholder="Masukkan nama wali">
+                        </div>
+                        <div class="form-group">
+                            <label for="hubungan-wali">Hubungan dengan Wali *</label>
+                            <select id="hubungan-wali" name="hubungan" required class="glass-input">
+                                <option value="">Pilih Hubungan</option>
+                                <option value="Ayah">Ayah</option>
+                                <option value="Ibu">Ibu</option>
+                                <option value="Wali">Wali</option>
+                                <option value="Saudara">Saudara</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="no-hp-wali">No. HP Wali *</label>
+                            <input type="tel" id="no-hp-wali" name="wali_phone" required class="glass-input" maxlength="20" placeholder="Masukkan nomor HP wali">
+                        </div>
+                        <div class="form-group">
+                            <label for="alamat-wali">Alamat Wali</label>
+                            <textarea id="alamat-wali" name="alamat_wali" class="glass-input" rows="3" maxlength="500" placeholder="Masukkan alamat wali"></textarea>
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button type="button" onclick="window.previousStep(4)" class="btn btn-secondary">← Kembali</button>
+                        <button type="button" onclick="window.nextStep(4)" class="btn btn-primary">Lanjut →</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Target -->
+                <div class="form-step" data-step="5">
+                    <h2 class="step-title">Step 5: Target Progress</h2>
+                    <div class="step-content">
+                        <div class="form-group">
+                            <label for="target-hafalan">Target Hafalan (Juz) *</label>
+                            <input type="number" id="target-hafalan" name="target_hafalan" required class="glass-input" min="0" max="30" value="30">
+                            <small class="help-text">Maksimal 30 juz (Al-Qur'an lengkap)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="target-nilai-reg">Target Nilai Akademik *</label>
+                            <input type="number" id="target-nilai-reg" name="target_nilai" required class="glass-input" min="0" max="100" value="75">
+                            <small class="help-text">Rentang nilai: 0-100</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="foto-profil">Foto Profil</label>
+                            <div class="file-upload">
+                                <input type="file" id="foto-profil" name="foto" accept="image/*" onchange="previewPhoto(this)">
+                                <div class="file-upload-label">
+                                    <span class="upload-icon">📷</span>
+                                    <span class="upload-text">Klik untuk memilih foto</span>
+                                    <span class="upload-filename">atau drag & drop</span>
+                                </div>
+                                <div class="photo-preview" id="photo-preview"></div>
+                            </div>
+                            <small class="help-text">Format: JPG, PNG. Maksimal 2MB</small>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="setuju-data" name="setuju_data" required>
+                                <span>Saya menyatakan bahwa data yang diisi adalah benar dan dapat dipertanggungjawabkan</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button type="button" onclick="window.previousStep(5)" class="btn btn-secondary">← Kembali</button>
+                        <button type="submit" class="btn btn-primary">✅ Submit Pendaftaran</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Success Modal -->
+            <div id="success-modal" class="modal">
+                <div class="modal-content glass-card">
+                    <div class="success-icon">✓</div>
+                    <h2>Pendaftaran Berhasil!</h2>
+                    <p>Terima kasih telah mendaftarkan santri baru. Data akan diproses dan dikonfirmasi oleh admin.</p>
+                    <div class="success-details">
+                        <p><strong>NISN:</strong> <span id="success-nisn">-</span></p>
+                        <p><strong>Nama:</strong> <span id="success-nama">-</span></p>
+                    </div>
+                    <div class="modal-actions">
+                        <button onclick="window.closeSuccessModal()" class="btn btn-primary">Kembali ke Beranda</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="registration-footer">
+                <p>Sudah punya akun? <a href="/login">Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/apiConfig.js" defer></script>
+    <script src="/static/js/apiFetch.js" defer></script>
+    <script src="/static/js/auth-check.js" defer></script>
+    <script src="/static/js/page-events.js" defer></script>
+    <script src="/static/js/registration.js" defer></script>
+    <script>
+        window.addEventListener('load', function() {
+            const userRole = window.getUserRole();
+            const currentPath = window.location.pathname;
+
+            if (userRole && userRole !== 'pendaftar') {
+                const redirectMap = {
+                    'superadmin': '/dashboard/admin',
+                    'pimpinan': '/dashboard/pimpinan',
+                    'guru': '/dashboard/guru',
+                    'walisantri': '/dashboard/walisantri'
+                };
+                if (redirectMap[userRole] && currentPath !== '/registration') { window.location.href = redirectMap[userRole]; }
+            }
+        });
+    </script>
+</body>
+</html>

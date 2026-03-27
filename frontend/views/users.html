@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen User - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260314c" rel="stylesheet">
+    <link href="/static/css/users.css?v=20260325G" rel="stylesheet">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Manajemen User</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Administrasi</span> &rsaquo; <span>User</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Access Denied View (for non-superadmin) -->
+        <section class="access-denied-view" id="access-denied-view" style="display: none;">
+            <div class="glass-card" style="padding: 60px; text-align: center;">
+                <div class="empty-icon" style="font-size: 80px;">🔒</div>
+                <h2 style="color: var(--text-main); margin: 20px 0;">Akses Ditolak</h2>
+                <p style="color: var(--text-sub);">Halaman ini hanya dapat diakses oleh Superadmin.</p>
+                <a href="/dashboard" class="btn btn-primary" style="margin-top: 20px;">Kembali ke Dashboard</a>
+            </div>
+        </section>
+
+        <!-- Admin View -->
+        <section class="admin-view" id="admin-view">
+
+            <!-- Header Actions - Clean & Proportional -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <button id="btn-tambah-user" onclick="openCreateUserModal()" class="btn btn-primary fw-bold shadow-sm d-flex align-items-center" style="border-radius: 8px; padding: 10px 20px;">
+                    <i class="fas fa-user-plus me-2"></i> Tambah User Baru
+                </button>
+                <button id="btn-activity-log" onclick="openActivityLogModal()" class="btn btn-outline-secondary fw-bold bg-white shadow-sm d-flex align-items-center" style="border-radius: 8px; padding: 10px 20px;">
+                    <i class="fas fa-history me-2"></i> Activity Log
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">👥</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-users">0</div>
+                        <div class="stat-label">Total User</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">✅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="active-users">0</div>
+                        <div class="stat-label">User Aktif</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">👨‍🏫</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-teachers">0</div>
+                        <div class="stat-label">Guru/Musyrif</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-red">
+                    <div class="stat-icon-wrap">⚠️</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="unassigned-teachers">0</div>
+                        <div class="stat-label">Belum Assign</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🔍</span> Filter &amp; Pencarian</h3>
+                </div>
+                <div class="card-body">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label>Cari User</label>
+                            <input type="text" id="filter-search" placeholder="Username, Nama, Email..." onkeyup="debounceSearch()">
+                        </div>
+                        <div class="filter-group">
+                            <label>Role</label>
+                            <select id="filter-role" onchange="applyFilters()">
+                                <option value="">Semua Role</option>
+                                <option value="superadmin">Superadmin</option>
+                                <option value="pimpinan">Pimpinan</option>
+                                <option value="guru">Guru</option>
+                                <option value="musyrif">Musyrif</option>
+                                <option value="wali_kelas">Wali Kelas</option>
+                                <option value="bk">Guru BK</option>
+                                <option value="bendahara">Bendahara</option>
+                                <option value="walisantri">Walisantri</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="filter-status" onchange="applyFilters()">
+                                <option value="active">Aktif</option>
+                                <option value="inactive">Nonaktif</option>
+                                <option value="all">Semua</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Assignment</label>
+                            <select id="filter-assignment" onchange="applyFilters()">
+                                <option value="">Semua</option>
+                                <option value="true">Sudah Assign</option>
+                                <option value="false">Belum Assign</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="glass-card table-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Daftar User</h3>
+                    <div class="card-actions">
+                        <span class="result-count" id="result-count">0 user</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Kelas/Assignment</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="loading-spinner"></div>
+                                    <p class="text-muted">Memuat data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-wrap" id="pagination-wrap">
+                    <button class="btn btn-sm" id="btn-prev" onclick="prevPage()" disabled>← Prev</button>
+                    <span class="page-info" id="page-info">Page 1</span>
+                    <button class="btn btn-sm" id="btn-next" onclick="nextPage()">Next →</button>
+                </div>
+            </div>
+
+        </section>
+    </div>
+</main>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Create/Edit User Modal -->
+<div class="modal-overlay" id="user-modal-overlay" onclick="closeUserModal()">
+    <div class="modal-container modal-lg" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <i class="fas fa-user-plus modal-header-icon"></i>
+                <h3 id="user-modal-title">Tambah User Baru</h3>
+            </div>
+            <button class="modal-close" onclick="closeUserModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="user-form" onsubmit="saveUser(event)">
+                <input type="hidden" id="form-user-id">
+
+                <!-- Section: Informasi Dasar -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-id-card"></i> Informasi Dasar
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Username <span class="required">*</span></label>
+                            <input type="text" id="form-username" required pattern="[a-zA-Z0-9_]+"
+                                   placeholder="Masukkan username" autocomplete="off" class="form-input">
+                            <small class="form-hint"><i class="fas fa-info-circle"></i> Hanya huruf, angka, dan underscore</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Lengkap <span class="required">*</span></label>
+                            <input type="text" id="form-name" required placeholder="Masukkan nama lengkap" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="form-email" placeholder="email@example.com" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>No. HP</label>
+                            <input type="tel" id="form-phone" placeholder="08xxxxxxxxxx" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Role & Status -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-user-tag"></i> Role & Status
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Role <span class="required">*</span></label>
+                            <select id="form-role" required onchange="onRoleChange()" class="form-select">
+                                <option value="">-- Pilih Role --</option>
+                                <option value="superadmin">👑 Superadmin</option>
+                                <option value="pimpinan">🎓 Pimpinan</option>
+                                <option value="guru">👨‍🏫 Guru</option>
+                                <option value="musyrif">📿 Musyrif</option>
+                                <option value="wali_kelas">📋 Wali Kelas</option>
+                                <option value="bk">🧑‍⚕️ Guru BK</option>
+                                <option value="bendahara">💰 Bendahara</option>
+                                <option value="walisantri">👨‍👧 Walisantri</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status <span class="required">*</span></label>
+                            <select id="form-status" required class="form-select">
+                                <option value="active">✅ Aktif</option>
+                                <option value="inactive">❌ Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row" id="form-kelas-group">
+                        <div class="form-group">
+                            <label>Kelas</label>
+                            <select id="form-kelas" class="form-select">
+                                <option value="">-- Pilih Kelas --</option>
+                                <option value="X A">X A</option>
+                                <option value="X B">X B</option>
+                                <option value="X C">X C</option>
+                                <option value="XI A">XI A</option>
+                                <option value="XI B">XI B</option>
+                                <option value="XI C">XI C</option>
+                                <option value="XII A">XII A</option>
+                                <option value="XII B">XII B</option>
+                                <option value="XII C">XII C</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Walisantri specific -->
+                    <div class="form-row" id="walisantri-fields" style="display: none;">
+                        <div class="form-group">
+                            <label>NISN Anak (Linked)</label>
+                            <input type="text" id="form-linked-nisn" placeholder="NISN anak yang terhubung" class="form-input">
+                            <small class="form-hint"><i class="fas fa-info-circle"></i> Untuk multi-anak, pisahkan dengan koma</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Password (only for new user) -->
+                <div class="form-section" id="password-fields">
+                    <div class="form-section-title">
+                        <i class="fas fa-lock"></i> Keamanan
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Password <span class="required">*</span></label>
+                            <input type="password" id="form-password" minlength="8" placeholder="Min. 8 karakter" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Konfirmasi Password <span class="required">*</span></label>
+                            <input type="password" id="form-confirm-password" minlength="8" placeholder="Ulangi password" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">
+                        <i class="fas fa-times me-2"></i> Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-user">
+                        <i class="fas fa-save me-2"></i> Simpan User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Modal -->
+<div class="modal-overlay" id="assign-modal-overlay" onclick="closeAssignModal()">
+    <div class="modal-container" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Assign Tugas</h3>
+            <button class="modal-close" onclick="closeAssignModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="assign-user-info" id="assign-user-info">
+                <strong id="assign-user-name">-</strong>
+                <span class="badge" id="assign-user-role">-</span>
+            </div>
+
+            <form id="assign-form" onsubmit="saveAssignment(event)">
+                <input type="hidden" id="assign-user-id">
+
+                <div class="form-group">
+                    <label>Jenis Assignment <span class="required">*</span></label>
+                    <select id="assign-type" required onchange="onAssignTypeChange()">
+                        <option value="">Pilih Jenis</option>
+                        <option value="kbm">KBM (Kegiatan Belajar Mengajar)</option>
+                        <option value="diniyah">Diniyah</option>
+                        <option value="halaqoh">Halaqoh Tahfidz/Tahsin</option>
+                        <option value="wali_kelas">Wali Kelas</option>
+                        <option value="piket">Piket Harian</option>
+                    </select>
+                </div>
+
+                <!-- Kelas field -->
+                <div class="form-group" id="assign-kelas-group">
+                    <label>Kelas <span class="required">*</span></label>
+                    <select id="assign-kelas">
+                        <option value="">Pilih Kelas</option>
+                        <option value="X A">X A</option>
+                        <option value="X B">X B</option>
+                        <option value="X C">X C</option>
+                        <option value="XI A">XI A</option>
+                        <option value="XI B">XI B</option>
+                        <option value="XI C">XI C</option>
+                        <option value="XII A">XII A</option>
+                        <option value="XII B">XII B</option>
+                        <option value="XII C">XII C</option>
+                    </select>
+                </div>
+
+                <!-- Mata Pelajaran (for KBM) -->
+                <div class="form-group" id="assign-mapel-group" style="display: none;">
+                    <label>Mata Pelajaran</label>
+                    <input type="text" id="assign-mapel" placeholder="Contoh: Matematika">
+                </div>
+
+                <!-- Halaqoh field -->
+                <div class="form-group" id="assign-halaqoh-group" style="display: none;">
+                    <label>Halaqoh <span class="required">*</span></label>
+                    <select id="assign-halaqoh">
+                        <option value="">Pilih Halaqoh</option>
+                        <!-- Loaded dynamically -->
+                    </select>
+                </div>
+
+                <!-- Hari (for Piket) -->
+                <div class="form-group" id="assign-hari-group" style="display: none;">
+                    <label>Hari Piket <span class="required">*</span></label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="hari" value="Senin"> Senin</label>
+                        <label><input type="checkbox" name="hari" value="Selasa"> Selasa</label>
+                        <label><input type="checkbox" name="hari" value="Rabu"> Rabu</label>
+                        <label><input type="checkbox" name="hari" value="Kamis"> Kamis</label>
+                        <label><input type="checkbox" name="hari" value="Jumat"> Jumat</label>
+                        <label><input type="checkbox" name="hari" value="Sabtu"> Sabtu</label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tahun Ajaran <span class="required">*</span></label>
+                        <select id="assign-tahun" required>
+                            <option value="2025/2026">2025/2026</option>
+                            <option value="2026/2027">2026/2027</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester <span class="required">*</span></label>
+                        <select id="assign-semester" required>
+                            <option value="Genap">Genap</option>
+                            <option value="Ganjil">Ganjil</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Catatan</label>
+                    <textarea id="assign-catatan" rows="2" placeholder="Catatan tambahan (opsional)"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAssignModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary">Assign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="reset-modal-overlay" onclick="closeResetModal()">
+    <div class="modal-container modal-sm" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Reset Password</h3>
+            <button class="modal-close" onclick="closeResetModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="reset-info">
+                Reset password untuk user: <strong id="reset-username">-</strong>
+            </p>
+
+            <form id="reset-form" onsubmit="submitResetPassword(event)">
+                <input type="hidden" id="reset-user-id">
+
+                <div class="form-group">
+                    <label>Password Baru <span class="required">*</span></label>
+                    <input type="password" id="reset-password" required minlength="8" placeholder="Min. 8 karakter">
+                </div>
+
+                <div class="form-group">
+                    <label>Konfirmasi Password <span class="required">*</span></label>
+                    <input type="password" id="reset-confirm" required minlength="8" placeholder="Ulangi password">
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeResetModal()">Batal</button>
+                    <button type="submit" class="btn btn-danger">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- User Detail Modal -->
+<div class="modal-overlay" id="detail-modal-overlay" onclick="closeDetailModal()">
+    <div class="modal-container modal-lg modal-dialog-centered" onclick="event.stopPropagation()">
+        <div class="modal-header detail-modal-header">
+            <div class="modal-header-content">
+                <div class="modal-header-icon-wrapper">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="modal-header-text">
+                    <h3>Detail User</h3>
+                    <p class="modal-subtitle" id="detail-subtitle">Informasi lengkap pengguna</p>
+                </div>
+            </div>
+            <button class="modal-close-btn" onclick="closeDetailModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="modal-body detail-modal-body">
+            <!-- User Profile Card -->
+            <div class="detail-profile-card">
+                <div class="profile-avatar-lg" id="detail-avatar">
+                    <span id="detail-avatar-initials">--</span>
+                </div>
+                <div class="profile-info">
+                    <h4 class="profile-name" id="detail-name-display">-</h4>
+                    <span class="profile-username" id="detail-username-display">@username</span>
+                    <div class="profile-badges">
+                        <span class="badge badge-role" id="detail-role">-</span>
+                        <span class="badge badge-status" id="detail-status">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Cards Grid -->
+            <div class="detail-cards-grid">
+                <!-- Informasi User Card -->
+                <div class="detail-info-card">
+                    <div class="card-header-mini">
+                        <i class="fas fa-id-card"></i>
+                        <span>Informasi User</span>
+                    </div>
+                    <div class="card-body-info">
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-user"></i> Username</span>
+                            <span class="info-value" id="detail-username">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-signature"></i> Nama Lengkap</span>
+                            <span class="info-value" id="detail-name">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-envelope"></i> Email</span>
+                            <span class="info-value" id="detail-email">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-phone"></i> No. HP</span>
+                            <span class="info-value" id="detail-phone">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-clock"></i> Login Terakhir</span>
+                            <span class="info-value" id="detail-last-login">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignments Card -->
+                <div class="detail-info-card">
+                    <div class="card-header-mini">
+                        <i class="fas fa-tasks"></i>
+                        <span>Assignments</span>
+                    </div>
+                    <div class="card-body-info" id="detail-assignments">
+                        <p class="text-muted">Memuat...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer detail-modal-footer">
+            <button class="btn-detail-action btn-detail-close" id="btn-detail-close" onclick="closeDetailModal()">
+                <i class="fas fa-times"></i> Tutup
+            </button>
+            <button class="btn-detail-action btn-detail-edit" id="btn-detail-edit" data-user-id="" onclick="editUserFromDetail()">
+                <i class="fas fa-edit"></i> Edit User
+            </button>
+            <button class="btn-detail-action btn-detail-assign" id="btn-detail-assign" data-user-id="" onclick="assignFromDetail()">
+                <i class="fas fa-plus"></i> Assign Tugas
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Log Modal -->
+<div class="modal-overlay" id="activity-modal-overlay" onclick="closeActivityLogModal()">
+    <div class="modal-container modal-lg" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <i class="fas fa-history modal-header-icon" style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: #4f46e5;"></i>
+                <h3>Activity Log</h3>
+            </div>
+            <button class="modal-close" onclick="closeActivityLogModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Filter Section -->
+            <div class="activity-filters-bar">
+                <div class="filter-group-inline">
+                    <label><i class="fas fa-filter"></i> Filter:</label>
+                    <select id="activity-action-filter" class="form-select-sm" onchange="loadActivityLog()">
+                        <option value="">Semua Aksi</option>
+                        <option value="create">➕ Create User</option>
+                        <option value="update">✏️ Update User</option>
+                        <option value="reset_password">🔑 Reset Password</option>
+                        <option value="assign">📋 Assign</option>
+                        <option value="unassign">❌ Unassign</option>
+                        <option value="activate">✅ Activate</option>
+                        <option value="deactivate">⛔ Deactivate</option>
+                    </select>
+                </div>
+                <div class="activity-stats" id="activity-stats">
+                    <span class="badge-count"><i class="fas fa-list"></i> <span id="activity-count">0</span> aktivitas</span>
+                </div>
+            </div>
+
+            <!-- Activity Table -->
+            <div class="table-responsive activity-table-container">
+                <table class="data-table activity-table" id="activity-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 160px;"><i class="fas fa-clock"></i> Waktu</th>
+                            <th style="width: 140px;"><i class="fas fa-user"></i> User</th>
+                            <th><i class="fas fa-bolt"></i> Aktivitas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activity-log-table-body">
+                        <tr>
+                            <td colspan="3" class="text-center">
+                                <div class="loading-spinner"></div>
+                                <p class="text-muted">Memuat riwayat aktivitas...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div class="activity-empty-state" id="activity-empty-state" style="display: none;">
+                <div class="empty-icon">📭</div>
+                <h4>Tidak Ada Aktivitas</h4>
+                <p>Belum ada riwayat aktivitas yang tercatat.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260314c"></script>
+<script src="/static/js/apiConfig.js?v=20260314c"></script>
+<script src="/static/js/apiFetch.js?v=20260314c"></script>
+<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/users.js?v=20260325G"></script>
+
+</body>
+</html>

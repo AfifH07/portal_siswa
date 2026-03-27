@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hafalan - Portal Ponpes Baron</title>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .loader {
+            text-align: center;
+            color: white;
+        }
+        .loader h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner"></div>
+        <h2>Memuat Hafalan...</h2>
+    </div>
+
+    <script>
+        // Hafalan Router - redirects to role-specific hafalan page
+        (function() {
+            const role = localStorage.getItem('user_role');
+            const token = localStorage.getItem('access_token');
+
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (!role) {
+                // No role cached, fetch from API
+                fetch('/api/users/me/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.role) {
+                        localStorage.setItem('user_role', data.role);
+                        window.location.href = `/hafalan/?role=${data.role}`;
+                    } else {
+                        window.location.href = '/login';
+                    }
+                })
+                .catch(() => {
+                    window.location.href = '/login';
+                });
+            } else {
+                // Role exists, redirect immediately
+                window.location.href = `/hafalan/?role=${role}`;
+            }
+        })();
+    </script>
+</body>
+</html>

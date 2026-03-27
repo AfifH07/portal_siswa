@@ -1,0 +1,313 @@
+/* ============================================
+   STUDENTS PAGE - Deep Emerald Enhancements
+   Extends deep-emerald.css base theme
+   ============================================ */
+
+/* View Tabs */
+.view-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(31, 216, 164, 0.05);
+    padding: 4px;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.view-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-primary);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.view-tab:hover {
+    background: rgba(31, 216, 164, 0.1);
+    color: var(--text-primary);
+}
+
+.view-tab.active {
+    background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+    color: var(--bg-deep);
+    font-weight: 600;
+}
+
+/* NISN Monospace Font */
+.data-table tbody td:first-child,
+.nisn-cell {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Status Badge */
+.status-aktif {
+    background: rgba(31, 216, 164, 0.15);
+    border: 1px solid rgba(31, 216, 164, 0.3);
+    color: var(--teal-light);
+}
+
+.status-tidak-aktif {
+    background: rgba(244, 91, 105, 0.15);
+    border: 1px solid rgba(244, 91, 105, 0.3);
+    color: var(--rose-light);
+}
+
+/* Hafalan Progress in Table */
+.hafalan-progress-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hafalan-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-input);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 60px;
+}
+
+.hafalan-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.hafalan-bar-fill.above {
+    background: linear-gradient(90deg, var(--teal), var(--teal-light));
+}
+
+.hafalan-bar-fill.below {
+    background: linear-gradient(90deg, var(--amber), var(--amber-light));
+}
+
+.hafalan-text {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-width: 50px;
+}
+
+/* Program Badge */
+.badge-program {
+    background: rgba(167, 139, 250, 0.15);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    color: var(--purple-light);
+}
+
+.badge-kelas {
+    background: rgba(74, 158, 255, 0.15);
+    border: 1px solid rgba(74, 158, 255, 0.3);
+    color: var(--blue-light);
+}
+
+/* ============================================
+   MODAL ENHANCEMENTS
+   ============================================ */
+.modal-content.modal-large {
+    max-width: 900px;
+}
+
+/* Form Row */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-row .form-group {
+    margin-bottom: 0;
+}
+
+/* Modal Form Input Readonly */
+#student-modal .glass-input[readonly],
+#view-modal .glass-input[readonly] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* ============================================
+   WALISANTRI VIEW ENHANCEMENTS
+   ============================================ */
+.walisantri-view {
+    display: none;
+}
+
+.walisantri-view.active {
+    display: block;
+}
+
+.walisantri-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Profile Header for Walisantri */
+.walisantri-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 28px;
+    background: linear-gradient(135deg, rgba(31, 216, 164, 0.1), rgba(31, 216, 164, 0.03));
+    border: 1px solid rgba(31, 216, 164, 0.2);
+    border-radius: var(--border-radius-lg);
+}
+
+.walisantri-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--bg-deep);
+    border: 3px solid var(--teal);
+    box-shadow: 0 0 25px rgba(31, 216, 164, 0.3);
+}
+
+.walisantri-details {
+    flex: 1;
+}
+
+.walisantri-name {
+    color: var(--text-primary);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.walisantri-nisn {
+    color: var(--text-muted);
+    font-size: 14px;
+    font-family: var(--font-mono);
+    margin-bottom: 12px;
+}
+
+.walisantri-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Student Detail View in Modal */
+.student-detail-section {
+    margin-bottom: 24px;
+}
+
+.student-detail-section h4 {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.detail-item {
+    background: rgba(31, 216, 164, 0.05);
+    padding: 14px 16px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.detail-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.detail-value.mono {
+    font-family: var(--font-mono);
+}
+
+/* Stats Cards for Students */
+.stats-section {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+/* Table Header Style */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.table-header h3 {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .stats-section {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .walisantri-profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .walisantri-tags {
+        justify-content: center;
+    }
+
+    .stats-section {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-section {
+        grid-template-columns: 1fr;
+    }
+}

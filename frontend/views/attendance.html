@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presensi - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260314c" rel="stylesheet">
+    <link href="/static/css/attendance-baron.css?v=20260312c" rel="stylesheet">
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout?.()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Kelola Presensi</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Presensi</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Admin/Guru Section -->
+        <section id="admin-section" class="admin-section">
+
+            <!-- Page Actions -->
+            <div class="page-actions">
+                <button id="btn-add-attendance" onclick="openAddModal()" class="btn btn-emerald">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    Input Absensi
+                </button>
+                <button onclick="openExportModal()" class="btn btn-outline-emerald">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Export
+                </button>
+            </div>
+
+            <!-- Stats Row - Reactive to filters, default to today -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">📋</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-records">0</div>
+                        <div class="stat-label">Total Hari Ini</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">✅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-hadir">0</div>
+                        <div class="stat-label">Hadir</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">🤒</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-sakit">0</div>
+                        <div class="stat-label">Sakit</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-red">
+                    <div class="stat-icon-wrap">❌</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-alpha">0</div>
+                        <div class="stat-label">Alpha</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Chart -->
+            <div class="glass-card chart-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📈</span> Statistik Kehadiran Mingguan</h3>
+                    <div class="card-badge live">Live</div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-wrap">
+                        <canvas id="weeklyAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="glass-card filters-card">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="filter-kelas">Kelas</label>
+                        <select id="filter-kelas" class="filter-input">
+                            <option value="">Semua Kelas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-start">Dari Tanggal</label>
+                        <input type="date" id="filter-start" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-end">Sampai Tanggal</label>
+                        <input type="date" id="filter-end" class="filter-input">
+                    </div>
+                    <div class="filter-group filter-actions">
+                        <button onclick="resetFilters()" class="btn btn-outline-emerald btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M1 4v6h6M23 20v-6h-6"/>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                            </svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div id="teacher-view" class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Data Absensi</h3>
+                    <div class="card-badge" id="record-count-badge">0 Record</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Kelas</th>
+                                <th>Jam Pelajaran</th>
+                                <th>Mata Pelajaran</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Hadir</th>
+                                <th class="text-center">Sakit</th>
+                                <th class="text-center">Izin</th>
+                                <th class="text-center">Alpha</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-table-body">
+                            <tr>
+                                <td colspan="10" class="text-center">
+                                    <div class="loading-spinner" style="margin: 20px auto;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <div class="pagination-info">
+                        Menampilkan <span id="showing-count">0</span> dari <span id="total-count">0</span> data
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="btn-pagination" id="btn-prev" onclick="goToPage('prev')" disabled>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                            Prev
+                        </button>
+                        <span class="page-indicator">Hal <span id="current-page">1</span></span>
+                        <button class="btn-pagination" id="btn-next" onclick="goToPage('next')" disabled>
+                            Next
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Parent/Walisantri Section -->
+        <section id="parent-section" class="walisantri-section" style="display: none;">
+            <div class="glass-card">
+                <div class="parent-view-header">
+                    <h3>Riwayat Kehadiran Ananda</h3>
+                </div>
+                <div class="attendance-timeline" id="attendance-timeline">
+                    <div class="loading-inline">Memuat data kehadiran...</div>
+                </div>
+                <div class="pagination">
+                    <div class="pagination-info">
+                        Menampilkan <span id="parent-showing-count">0</span> dari <span id="parent-total-count">0</span>
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="btn-pagination" id="btn-prev-parent" onclick="goToPage('prev')" disabled>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                            Prev
+                        </button>
+                        <span class="page-indicator">Hal <span id="parent-current-page">1</span></span>
+                        <button class="btn-pagination" id="btn-next-parent" onclick="goToPage('next')" disabled>
+                            Next
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<!-- ===================== MODAL: INPUT ABSENSI ===================== -->
+<div id="add-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeAddModal()"></div>
+    <div class="modal-content modal-wizard">
+        <div class="modal-header">
+            <h2>Input Absensi Baru</h2>
+            <button class="modal-close" onclick="closeAddModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Step indicator -->
+            <div class="step-indicator">
+                <div class="step-wrap">
+                    <div class="step-dot active" id="dot-1">1</div>
+                    <div class="step-label">Info Kelas</div>
+                </div>
+                <div class="step-line" id="line-1"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="dot-2">2</div>
+                    <div class="step-label">Kehadiran</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Info Kelas -->
+            <div id="modal-step-1" class="modal-step active">
+                <div class="form-group">
+                    <label for="input-kelas">Kelas <span class="required">*</span></label>
+                    <select id="input-kelas" class="glass-input" required>
+                        <option value="">-- Pilih Kelas --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="input-mapel">Mata Pelajaran <span class="required">*</span></label>
+                    <select id="input-mapel" class="glass-input" required>
+                        <option value="">-- Pilih Mata Pelajaran --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="input-tanggal">Tanggal <span class="required">*</span></label>
+                    <input type="date" id="input-tanggal" class="glass-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Sesi & Jam Pelajaran <span class="required">*</span></label>
+                    <div class="session-selector">
+                        <label class="session-radio">
+                            <input type="radio" name="sesi" value="pagi">
+                            <span class="session-label"><span>🌅</span> Pagi</span>
+                        </label>
+                        <label class="session-radio">
+                            <input type="radio" name="sesi" value="siang">
+                            <span class="session-label"><span>☀️</span> Siang</span>
+                        </label>
+                        <label class="session-radio">
+                            <input type="radio" name="sesi" value="sore">
+                            <span class="session-label"><span>🌇</span> Sore</span>
+                        </label>
+                    </div>
+                    <div class="jp-chips-container" id="jp-chips-container">
+                        <div class="jp-chips-placeholder"><span>👆</span> Pilih sesi terlebih dahulu</div>
+                    </div>
+                    <div class="jp-hint" id="jp-hint">Pilih sesi, lalu pilih jam pelajaran</div>
+                </div>
+            </div>
+
+            <!-- Step 2: Input Kehadiran -->
+            <div id="modal-step-2" class="modal-step">
+                <div class="step-info">
+                    <span id="step-kelas-info">-</span> &nbsp;|&nbsp; <span id="step-mapel-info">-</span> &nbsp;|&nbsp; <span id="step-tanggal-info">-</span>
+                    <div class="step-jp-info">
+                        <strong>Jam Pelajaran:</strong> <span id="step-jp-info">-</span>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button type="button" class="btn btn-emerald btn-sm" onclick="markAllPresent()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                        Semua Hadir
+                    </button>
+                </div>
+
+                <div class="students-list" id="students-list">
+                    <div class="loading-inline">Memuat siswa...</div>
+                </div>
+
+                <div class="attendance-summary">
+                    <span class="summary-item hadir">Hadir: <strong id="count-hadir">0</strong></span>
+                    <span class="summary-item sakit">Sakit: <strong id="count-sakit">0</strong></span>
+                    <span class="summary-item izin">Izin: <strong id="count-izin">0</strong></span>
+                    <span class="summary-item alpha">Alpha: <strong id="count-alpha">0</strong></span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" id="btn-modal-back" onclick="modalBack()" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                Kembali
+            </button>
+            <button class="btn btn-outline-emerald" onclick="closeAddModal()">Batal</button>
+            <button class="btn btn-emerald" id="btn-modal-next" onclick="modalNext()">
+                Lanjut
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <button class="btn btn-emerald" id="btn-modal-save" onclick="saveAttendance()" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Simpan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: DETAIL ===================== -->
+<div id="detail-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeDetailModal()"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>Detail Absensi</h2>
+            <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-info">
+                <div class="info-row">
+                    <span class="info-label">Kelas</span>
+                    <span class="info-value" id="detail-kelas">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Jam Pelajaran</span>
+                    <span class="info-value" id="detail-jp">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Mata Pelajaran</span>
+                    <span class="info-value" id="detail-mapel">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tanggal</span>
+                    <span class="info-value" id="detail-tanggal">-</span>
+                </div>
+            </div>
+            <div class="detail-summary">
+                <span class="badge badge-success">Hadir: <strong id="detail-hadir">0</strong></span>
+                <span class="badge badge-warning">Sakit: <strong id="detail-sakit">0</strong></span>
+                <span class="badge badge-info">Izin: <strong id="detail-izin">0</strong></span>
+                <span class="badge badge-danger">Alpha: <strong id="detail-alpha">0</strong></span>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>NISN</th>
+                        <th>Nama</th>
+                        <th>Status</th>
+                        <th>Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody id="detail-table-body">
+                    <tr><td colspan="5" class="text-center"><div class="loading-spinner" style="margin: 20px auto;"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" onclick="printDetail()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print
+            </button>
+            <button class="btn btn-outline-emerald" onclick="closeDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: EXPORT ===================== -->
+<div id="export-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeExportModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Export Data Absensi</h2>
+            <button class="modal-close" onclick="closeExportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Kelas</label>
+                <select id="export-kelas" class="glass-input">
+                    <option value="">Semua Kelas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Dari Tanggal</label>
+                <input type="date" id="export-start" class="glass-input">
+            </div>
+            <div class="form-group">
+                <label>Sampai Tanggal</label>
+                <input type="date" id="export-end" class="glass-input">
+            </div>
+            <div class="form-group">
+                <label>Format Export</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="export-format" value="csv" checked>
+                        <span>📊 CSV (Excel)</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="export-format" value="pdf">
+                        <span>📄 PDF (Print)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" onclick="closeExportModal()">Batal</button>
+            <button class="btn btn-emerald" onclick="executeExport()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Download
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260208" defer></script>
+<script src="/static/js/apiConfig.js?v=20260208" defer></script>
+<script src="/static/js/apiFetch.js?v=20260208" defer></script>
+<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/auth.js?v=20260208" defer></script>
+<script src="/static/js/page-events.js?v=20260312c" defer></script>
+<script src="/static/js/attendance.js?v=20260312c" defer></script>
+
+<script>
+    // Baron Light Emerald Theme Init
+    window.addEventListener('load', function() {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = user.role || window.getUserRole?.() || 'guest';
+
+        document.body.setAttribute('data-role', role);
+
+        // Update topbar date
+        const dateEl = document.getElementById('topbar-date');
+        if (dateEl) {
+            const now = new Date();
+            const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', opts);
+        }
+
+        // Update user avatar initials
+        const avatarEl = document.getElementById('user-avatar-initials');
+        if (avatarEl && user.name) {
+            const words = user.name.trim().split(' ');
+            if (words.length >= 2) {
+                avatarEl.textContent = (words[0][0] + words[1][0]).toUpperCase();
+            } else {
+                avatarEl.textContent = user.name.substring(0, 2).toUpperCase();
+            }
+        }
+
+        // Update role display
+        const roleEl = document.getElementById('user-role-display');
+        if (roleEl) {
+            const roleDisplay = {
+                'superadmin': 'Super Admin',
+                'pimpinan': 'Pimpinan',
+                'guru': 'Guru',
+                'walisantri': 'Wali Santri'
+            };
+            roleEl.textContent = roleDisplay[role] || role || '-';
+        }
+    });
+</script>
+</body>
+</html>

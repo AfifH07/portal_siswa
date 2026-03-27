@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Portal Ponpes Baron</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dashboard Portal Ponpes Baron</h1>
+            <nav>
+                <span id="welcome-msg">Selamat datang</span>
+                <a href="#" onclick="window.location.href='/login/'">Logout</a>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="section">
+                <h2>Selamat Datang!</h2>
+                <div class="card">
+                    <h3>Informasi User</h3>
+                    <p>Username: <strong id="user-username">Loading...</strong></p>
+                    <p>Nama: <strong id="user-name">Loading...</strong></p>
+                    <p>Role: <strong id="user-role">Loading...</strong></p>
+                    <p>Email: <strong id="user-email">Loading...</strong></p>
+                </div>
+                
+                <div class="card">
+                    <h3>Aksi</h3>
+                    <ul>
+                        <li><a href="/login/">Logout</a></li>
+                    <li><a href="/api/docs/">API Documentation</a></li>
+                    <li><a href="/admin/">Django Admin</a></li>
+                    <li><a href="/api/schema/">API Schema</a></li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('user-username').textContent = user.username || 'N/A';
+        document.getElementById('user-name').textContent = user.name || 'N/A';
+        document.getElementById('user-role').textContent = user.role || 'N/A';
+        document.getElementById('user-email').textContent = user.email || 'N/A';
+        document.getElementById('welcome-msg').textContent = `Halo, ${user.name || 'User'}!`;
+    </script>
+</body>
+</html>

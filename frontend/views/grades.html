@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nilai - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260315" rel="stylesheet">
+    <link href="/static/css/grades-baron.css?v=20260315" rel="stylesheet">
+    <link href="/static/css/bento-dashboard.css?v=20260314" rel="stylesheet">
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout?.()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Kelola Nilai</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Nilai</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Admin/Guru Section -->
+        <section id="admin-section" class="admin-section">
+
+            <!-- Page Actions -->
+            <div class="page-actions">
+                <button onclick="window.openImportModal()" class="btn btn-emerald admin-only">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    </svg>
+                    Import Excel
+                </button>
+                <button onclick="window.exportGrades()" class="btn btn-outline-emerald admin-only">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Export Data
+                </button>
+            </div>
+
+            <!-- Stats Row - Reactive to filter changes -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">📈</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="average-score">0</div>
+                        <div class="stat-label">Rata-rata Nilai</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">✅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="ketuntasan-percentage">0%</div>
+                        <div class="stat-label">Ketuntasan</div>
+                        <div class="stat-sublabel">KKM ≥ 75</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-red">
+                    <div class="stat-icon-wrap">👤</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="unique-remedial-count">0</div>
+                        <div class="stat-label">Siswa Remedial</div>
+                        <div class="stat-sublabel">Unik, nilai &lt; 75</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">📚</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-mapel">0</div>
+                        <div class="stat-label">Total Mapel</div>
+                        <div class="stat-sublabel">Semester ini</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <!-- Trend Chart -->
+                <div class="glass-card chart-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📈</span> Tren Nilai per Semester</h3>
+                        <div class="card-badge live">Live</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribution Chart -->
+                <div class="glass-card chart-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📊</span> Distribusi Nilai</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap">
+                            <canvas id="distributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insight Section: Top Students & Lowest Subject -->
+            <div class="insights-row">
+                <!-- Top 3 Students -->
+                <div class="glass-card insight-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">🏆</span> Top 3 Siswa Berprestasi</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="top-students-list" id="top-students-list">
+                            <div class="loading-inline">Memuat data...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lowest Subject -->
+                <div class="glass-card insight-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📉</span> Mapel Rata-rata Terendah</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="lowest-subjects-list" id="lowest-subjects-list">
+                            <div class="loading-inline">Memuat data...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ketuntasan Doughnut -->
+                <div class="glass-card insight-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">🎯</span> Status Ketuntasan</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap chart-wrap-sm">
+                            <canvas id="ketuntasanChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Card -->
+            <div class="glass-card filters-card">
+                <div class="filters-grid">
+                    <div class="filter-group filter-search">
+                        <label for="search-input">Pencarian</label>
+                        <input type="text" id="search-input" class="filter-input" placeholder="Nama siswa atau NISN...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-kelas">Kelas</label>
+                        <select id="filter-kelas" class="filter-input">
+                            <option value="">Semua Kelas</option>
+                            <optgroup label="Kelas X">
+                                <option value="X A">X A</option>
+                                <option value="X B">X B</option>
+                                <option value="X C">X C</option>
+                                <option value="X D">X D</option>
+                            </optgroup>
+                            <optgroup label="Kelas XI">
+                                <option value="XI A">XI A</option>
+                                <option value="XI B">XI B</option>
+                            </optgroup>
+                            <optgroup label="Kelas XII">
+                                <option value="XII A">XII A</option>
+                                <option value="XII B">XII B</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-mata-pelajaran">Mata Pelajaran</label>
+                        <input type="text" id="filter-mata-pelajaran" class="filter-input" placeholder="Semua Mapel">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-semester">Semester</label>
+                        <select id="filter-semester" class="filter-input">
+                            <option value="">Semua</option>
+                            <option value="Ganjil">Ganjil</option>
+                            <option value="Genap">Genap</option>
+                        </select>
+                    </div>
+                    <div class="filter-group filter-actions">
+                        <button onclick="window.resetFilters()" class="btn btn-outline-emerald btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M1 4v6h6M23 20v-6h-6"/>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                            </svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📝</span> Data Nilai Siswa</h3>
+                    <div class="card-badge" id="grades-count-badge">0 Data</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="main-grades-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>NISN</th>
+                                <th>Nama</th>
+                                <th>Mapel</th>
+                                <th class="text-center">Nilai</th>
+                                <th>Jenis</th>
+                                <th>Kelas</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grades-table-body">
+                            <tr>
+                                <td colspan="9" class="text-center">
+                                    <div class="loading-spinner" style="margin: 20px auto;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <div class="pagination-info">
+                        Halaman <span id="current-page">1</span> dari <span id="total-pages">1</span>
+                    </div>
+                    <div class="pagination-controls">
+                        <button id="btn-prev" class="btn-pagination" disabled>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                            Prev
+                        </button>
+                        <span class="page-indicator">Hal <span id="current-page-num">1</span></span>
+                        <button id="btn-next" class="btn-pagination" disabled>
+                            Next
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Walisantri Section -->
+        <section id="walisantri-section" class="walisantri-section" style="display: none;">
+            <!-- Quick Actions for Walisantri -->
+            <div class="quick-actions-bar" id="walisantri-actions">
+                <button class="btn-action btn-primary" onclick="downloadRaporPDF()">
+                    <span class="btn-icon">📄</span>
+                    <span>Download Rapor PDF</span>
+                </button>
+                <button class="btn-action btn-secondary" onclick="downloadBLPReport()">
+                    <span class="btn-icon">📋</span>
+                    <span>Download Laporan BLP</span>
+                </button>
+                <button class="btn-action btn-outline" onclick="printRaporHTML()">
+                    <span class="btn-icon">🖨️</span>
+                    <span>Cetak Rapor</span>
+                </button>
+            </div>
+
+            <!-- Child Selector -->
+            <div class="child-selector-grades" id="child-selector-grades">
+                <!-- Will be populated by JS -->
+            </div>
+
+            <!-- Academic Insight Card -->
+            <div class="glass-card academic-insight-card" id="academic-insight">
+                <div class="insight-content">
+                    <div class="insight-icon">📊</div>
+                    <div class="insight-text">
+                        <h3 id="academic-insight-title">Memuat analisis...</h3>
+                        <p id="academic-insight-desc">Menganalisis performa akademik ananda</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row for Walisantri -->
+            <div class="walisantri-charts-row">
+                <!-- Academic Trend Line Chart -->
+                <div class="glass-card wali-chart-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📈</span> Tren Nilai Ananda</h3>
+                        <select class="filter-select" id="trend-period-filter">
+                            <option value="6">6 Bulan</option>
+                            <option value="12">1 Tahun</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap">
+                            <canvas id="academicTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject Strength Radar -->
+                <div class="glass-card wali-chart-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">🎯</span> Peta Kekuatan Mapel</h3>
+                        <span class="card-badge">Semester Ini</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap">
+                            <canvas id="subjectRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Performance Summary -->
+            <div class="glass-card subject-summary-card" id="subject-summary">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🏆</span> Ringkasan Performa</h3>
+                </div>
+                <div class="card-body">
+                    <div class="summary-grid">
+                        <!-- Best Subject -->
+                        <div class="summary-item best-subject">
+                            <div class="summary-badge best">Terbaik</div>
+                            <div class="summary-content">
+                                <span class="summary-mapel" id="best-subject-name">-</span>
+                                <span class="summary-value" id="best-subject-score">-</span>
+                            </div>
+                            <p class="summary-desc" id="best-subject-desc">-</p>
+                        </div>
+                        <!-- Needs Attention -->
+                        <div class="summary-item needs-attention">
+                            <div class="summary-badge attention">Perlu Perhatian</div>
+                            <div class="summary-content">
+                                <span class="summary-mapel" id="attention-subject-name">-</span>
+                                <span class="summary-value" id="attention-subject-score">-</span>
+                            </div>
+                            <p class="summary-desc" id="attention-subject-desc">-</p>
+                        </div>
+                        <!-- Overall Average -->
+                        <div class="summary-item overall-average">
+                            <div class="summary-badge overall">Rata-rata</div>
+                            <div class="summary-content">
+                                <span class="summary-mapel">Semua Mapel</span>
+                                <span class="summary-value" id="overall-average-score">-</span>
+                            </div>
+                            <p class="summary-desc" id="overall-average-desc">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Detail List -->
+            <div class="glass-card subject-detail-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📚</span> Detail Nilai per Mapel</h3>
+                    <select class="filter-select" id="subject-semester-filter">
+                        <option value="">Semester Ini</option>
+                        <option value="Ganjil">Ganjil</option>
+                        <option value="Genap">Genap</option>
+                    </select>
+                </div>
+                <div class="card-body">
+                    <div class="subject-list" id="subject-detail-list">
+                        <div class="loading-placeholder">Memuat data nilai...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="walisantri-content" id="walisantri-content">
+                <!-- Legacy content area, can be hidden or used for additional info -->
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<!-- ===================== MODAL: IMPORT EXCEL ===================== -->
+<div id="import-modal" class="modal">
+    <div class="modal-backdrop" onclick="window.closeImportModal()"></div>
+    <div class="modal-content modal-wizard">
+        <div class="modal-header">
+            <h2>Import Nilai dari Excel</h2>
+            <button class="modal-close" onclick="window.closeImportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step-wrap">
+                    <div class="step-dot active" id="import-dot-1">1</div>
+                    <div class="step-label">Konteks</div>
+                </div>
+                <div class="step-line" id="import-line-1"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="import-dot-2">2</div>
+                    <div class="step-label">Template</div>
+                </div>
+                <div class="step-line" id="import-line-2"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="import-dot-3">3</div>
+                    <div class="step-label">Upload</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Context -->
+            <div class="wizard-panel active" id="import-step-1">
+                <p class="step-desc">Pilih target kelas agar template Excel sesuai dengan daftar siswa.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Kelas <span class="required">*</span></label>
+                        <select id="import-kelas" class="glass-input" required>
+                            <option value="">Memuat kelas...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mata Pelajaran <span class="required">*</span></label>
+                        <input type="text" id="import-mata-pelajaran" class="glass-input" placeholder="Matematika" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Nilai</label>
+                        <select id="import-jenis" class="glass-input">
+                            <option value="UH">Ulangan Harian</option>
+                            <option value="UTS">UTS</option>
+                            <option value="UAS">UAS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select id="import-semester" class="glass-input">
+                            <option value="Ganjil">Ganjil</option>
+                            <option value="Genap">Genap</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tahun Ajaran</label>
+                        <input type="text" id="import-tahun-ajaran" class="glass-input" value="2024/2025" placeholder="2024/2025">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Template -->
+            <div class="wizard-panel" id="import-step-2" style="display: none;">
+                <div class="template-box">
+                    <div class="template-icon-large">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                            <path d="M12 18v-6M9 15l3 3 3-3"/>
+                        </svg>
+                    </div>
+                    <h3>Download Template Excel</h3>
+                    <p class="template-desc">Template berisi daftar siswa kelas <strong id="template-kelas-label">...</strong> untuk mata pelajaran <strong id="template-mapel-label">...</strong>.</p>
+                    <p class="template-hint">Isi kolom <strong>Nilai</strong> (0-100), lalu upload kembali di langkah berikutnya.</p>
+
+                    <button id="btn-download-template" onclick="window.downloadGradeTemplateFromModal()" class="btn-download-template">
+                        <span class="btn-download-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7,10 12,15 17,10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </span>
+                        <span class="btn-download-content">
+                            <span class="btn-download-label">Download Template</span>
+                            <span class="btn-download-filename" id="template-filename">Template_Nilai_Kelas_Mapel.xlsx</span>
+                        </span>
+                    </button>
+
+                    <div class="template-info">
+                        <div class="info-item">
+                            <span class="info-icon">📋</span>
+                            <span>Kolom NISN & Nama sudah terisi otomatis</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">🔒</span>
+                            <span>Kolom terkunci, fokus isi nilai saja</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Upload -->
+            <div class="wizard-panel" id="import-step-3" style="display: none;">
+                <div class="upload-area" id="upload-drop-zone">
+                    <div class="upload-icon">📤</div>
+                    <p>Drag & drop file Excel atau klik tombol di bawah</p>
+                    <input type="file" id="import-file" class="hidden-input" accept=".xlsx,.xls">
+                    <label for="import-file" class="btn btn-outline-emerald">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                        </svg>
+                        Pilih File
+                    </label>
+                    <p id="selected-file-name" class="file-name-display">Belum ada file dipilih</p>
+                </div>
+
+                <div id="import-summary" class="import-summary" style="display: none;">
+                    <div class="summary-header">
+                        <span class="summary-icon">✅</span>
+                        <span class="summary-text">Import Berhasil!</span>
+                    </div>
+                    <div class="summary-details" id="import-result-details"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" id="import-btn-back" onclick="window.goToImportStepBack()" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                Kembali
+            </button>
+            <button class="btn btn-outline-emerald" onclick="window.closeImportModal()">Batal</button>
+            <button class="btn btn-emerald" id="import-btn-next" onclick="window.goToImportStepNext()" disabled>
+                Lanjut
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <button class="btn btn-emerald" id="import-btn-upload" onclick="window.importGradesNow()" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                Mulai Import
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: EDIT GRADE ===================== -->
+<div id="edit-grade-modal" class="modal">
+    <div class="modal-backdrop" onclick="window.closeEditGradeModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Nilai</h2>
+            <button class="modal-close" onclick="window.closeEditGradeModal()">&times;</button>
+        </div>
+        <form id="edit-grade-form" class="modal-form">
+            <input type="hidden" id="edit-grade-id">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>NISN</label>
+                    <input type="text" id="edit-grade-nisn" class="glass-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Nama</label>
+                    <input type="text" id="edit-grade-nama" class="glass-input" readonly>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nilai <span class="required">*</span></label>
+                <input type="number" id="edit-grade-nilai" class="glass-input" min="0" max="100" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" onclick="window.closeEditGradeModal()" class="btn btn-outline-emerald">Batal</button>
+                <button type="submit" class="btn btn-emerald">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===================== MODAL: VIEW DETAIL ===================== -->
+<div id="view-modal" class="modal">
+    <div class="modal-backdrop" onclick="window.closeViewModal()"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>Detail Nilai</h2>
+            <button class="modal-close" onclick="window.closeViewModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="view-modal-body">
+            <div class="loading-spinner" style="margin: 40px auto;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" onclick="window.closeViewModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260208" defer></script>
+<script src="/static/js/apiConfig.js?v=20260208" defer></script>
+<script src="/static/js/apiFetch.js?v=20260208" defer></script>
+<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/auth.js?v=20260208" defer></script>
+<script src="/static/js/page-events.js?v=20260312c" defer></script>
+<script src="/static/js/grades.js?v=20260314b" defer></script>
+
+<script>
+    // Baron Light Emerald Theme Init
+    window.addEventListener('load', function() {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = user.role || window.getUserRole?.() || 'guest';
+
+        document.body.setAttribute('data-role', role);
+
+        // Update topbar date
+        const dateEl = document.getElementById('topbar-date');
+        if (dateEl) {
+            const now = new Date();
+            const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', opts);
+        }
+
+        // Update user avatar initials
+        const avatarEl = document.getElementById('user-avatar-initials');
+        if (avatarEl && user.name) {
+            const words = user.name.trim().split(' ');
+            if (words.length >= 2) {
+                avatarEl.textContent = (words[0][0] + words[1][0]).toUpperCase();
+            } else {
+                avatarEl.textContent = user.name.substring(0, 2).toUpperCase();
+            }
+        }
+
+        // Update role display
+        const roleEl = document.getElementById('user-role-display');
+        if (roleEl) {
+            const roleDisplay = {
+                'superadmin': 'Super Admin',
+                'pimpinan': 'Pimpinan',
+                'guru': 'Guru',
+                'walisantri': 'Wali Santri'
+            };
+            roleEl.textContent = roleDisplay[role] || role || '-';
+        }
+
+        // Apply role-based UI
+        applyRoleBasedUI(role);
+    });
+
+    function applyRoleBasedUI(role) {
+        const isWalisantri = role === 'walisantri';
+        const pageTitle = document.getElementById('page-title');
+
+        if (isWalisantri) {
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            document.getElementById('admin-section').style.display = 'none';
+            document.getElementById('walisantri-section').style.display = 'block';
+            if (pageTitle) pageTitle.textContent = 'Nilai Ananda';
+        } else {
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+            document.getElementById('admin-section').style.display = 'block';
+            document.getElementById('walisantri-section').style.display = 'none';
+            if (pageTitle) pageTitle.textContent = 'Kelola Nilai';
+        }
+    }
+
+    // ============================================
+    // PDF DOWNLOAD FUNCTIONS (Walisantri)
+    // ============================================
+    function getSelectedChildNISN() {
+        return localStorage.getItem('selected_child_nisn') || null;
+    }
+
+    function getSelectedChildNama() {
+        return localStorage.getItem('selected_child_nama') || 'Siswa';
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-message');
+        if (toast && toastMsg) {
+            toastMsg.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    }
+
+    async function downloadRaporPDF() {
+        const nisn = getSelectedChildNISN();
+        if (!nisn) {
+            showToast('Tidak ada data anak yang dipilih. Silakan kembali ke Dashboard.', 'error');
+            return;
+        }
+
+        const btn = event.target.closest('.btn-action');
+        const originalContent = btn.innerHTML;
+        btn.classList.add('loading');
+        btn.innerHTML = '<span class="btn-icon">⏳</span><span>Mengunduh...</span>';
+        btn.disabled = true;
+
+        const token = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch(`/api/kesantrian/download-rapor/${nisn}/`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Gagal mengunduh rapor');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Rapor_${getSelectedChildNama().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showToast('Rapor berhasil diunduh', 'success');
+        } catch (error) {
+            console.error('Download rapor error:', error);
+            showToast(error.message || 'Gagal mengunduh rapor', 'error');
+        } finally {
+            btn.classList.remove('loading');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    }
+
+    async function downloadBLPReport() {
+        const nisn = getSelectedChildNISN();
+        if (!nisn) {
+            showToast('Tidak ada data anak yang dipilih. Silakan kembali ke Dashboard.', 'error');
+            return;
+        }
+
+        const btn = event.target.closest('.btn-action');
+        const originalContent = btn.innerHTML;
+        btn.classList.add('loading');
+        btn.innerHTML = '<span class="btn-icon">⏳</span><span>Mengunduh...</span>';
+        btn.disabled = true;
+
+        const token = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch(`/api/kesantrian/download-blp/${nisn}/`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Gagal mengunduh laporan BLP');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BLP_${getSelectedChildNama().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showToast('Laporan BLP berhasil diunduh', 'success');
+        } catch (error) {
+            console.error('Download BLP error:', error);
+            showToast(error.message || 'Gagal mengunduh laporan BLP', 'error');
+        } finally {
+            btn.classList.remove('loading');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    }
+
+    function printRaporHTML() {
+        const nisn = getSelectedChildNISN();
+        if (!nisn) {
+            showToast('Tidak ada data anak yang dipilih. Silakan kembali ke Dashboard.', 'error');
+            return;
+        }
+
+        window.open(`/api/kesantrian/print-rapor-html/${nisn}/`, '_blank', 'width=900,height=700');
+    }
+</script>
+</body>
+</html>

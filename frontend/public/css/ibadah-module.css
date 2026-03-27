@@ -1,0 +1,755 @@
+/**
+ * Ibadah Module Styles - Portal Ponpes Baron v2.3
+ * Sholat Tracking & Worship History
+ */
+
+/* ====================================
+   ANALYTICS INSIGHT CARD
+   ==================================== */
+.analytics-insight-card {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid var(--emerald-200);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.insight-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.insight-icon {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
+.insight-text h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--emerald-700);
+}
+
+.insight-text p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--emerald-600);
+}
+
+.insight-text .trend-up {
+    color: #059669;
+    font-weight: 600;
+}
+
+.insight-text .trend-down {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.insight-text .trend-neutral {
+    color: #d97706;
+    font-weight: 600;
+}
+
+/* ====================================
+   GITHUB-STYLE HEATMAP
+   ==================================== */
+.heatmap-section {
+    margin-bottom: 24px;
+}
+
+.heatmap-section .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.heatmap-section .card-head h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.legend-text {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.legend-scale {
+    display: flex;
+    gap: 3px;
+}
+
+.legend-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-box.level-0 { background: #ebedf0; }
+.legend-box.level-1 { background: #9be9a8; }
+.legend-box.level-2 { background: #40c463; }
+.legend-box.level-3 { background: #30a14e; }
+.legend-box.level-4 { background: #216e39; }
+
+.heatmap-container {
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.heatmap-months {
+    display: flex;
+    margin-left: 32px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.heatmap-months span {
+    flex: 1;
+    min-width: 50px;
+}
+
+.heatmap-wrapper {
+    display: flex;
+    gap: 4px;
+}
+
+.heatmap-days {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 28px;
+    padding: 6px 0;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-rows: repeat(7, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: 14px;
+    gap: 3px;
+    min-height: 110px;
+}
+
+.heatmap-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.5);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+/* Level colors - level-0 must be visible on white background */
+.heatmap-cell.level-0 {
+    background: #ebedf0;
+    border: 1px solid #d0d7de;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03);
+}
+.heatmap-cell.level-0:hover {
+    background: #d8dce0;
+    border-color: #bfc5ca;
+}
+
+/* Placeholder cells - pre-start alignment, no interaction */
+.heatmap-cell.placeholder-cell {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.heatmap-cell.level-1 {
+    background: #9be9a8;
+    border: 1px solid transparent;
+}
+.heatmap-cell.level-2 {
+    background: #40c463;
+    border: 1px solid transparent;
+}
+.heatmap-cell.level-3 {
+    background: #30a14e;
+    border: 1px solid transparent;
+}
+.heatmap-cell.level-4 {
+    background: #216e39;
+    border: 1px solid transparent;
+}
+
+/* Heatmap tooltip */
+.heatmap-cell[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #24292f;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 100;
+    margin-bottom: 4px;
+}
+
+.heatmap-cell {
+    position: relative;
+}
+
+/* Heatmap Stats */
+.heatmap-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.hstat-item {
+    text-align: center;
+}
+
+.hstat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--emerald-600);
+}
+
+.hstat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+    .heatmap-stats {
+        gap: 24px;
+    }
+
+    .hstat-value {
+        font-size: 20px;
+    }
+
+    .insight-content {
+        flex-wrap: wrap;
+    }
+
+    .insight-text h3 {
+        font-size: 14px;
+    }
+}
+
+/* ====================================
+   CHILD SELECTOR (inherited from bento)
+   ==================================== */
+.child-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 4px;
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+}
+
+.child-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface-light);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 200px;
+    border: 2px solid transparent;
+}
+
+.child-tab:hover {
+    background: var(--emerald-50);
+}
+
+.child-tab.active {
+    background: var(--emerald-50);
+    border-color: var(--emerald-500);
+}
+
+.child-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--emerald-100);
+    color: var(--emerald-700);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.child-tab.active .child-avatar {
+    background: var(--emerald-500);
+    color: white;
+}
+
+.child-info h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.child-info span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ====================================
+   IBADAH SUMMARY GRID
+   ==================================== */
+.ibadah-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+    .ibadah-summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .ibadah-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.summary-card {
+    padding: 20px;
+}
+
+.summary-card .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.summary-card .card-head h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.summary-card .card-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+    background: var(--emerald-100);
+    color: var(--emerald-700);
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.summary-card.sc-primary .card-badge {
+    background: var(--emerald-100);
+    color: var(--emerald-700);
+}
+
+.summary-card.sc-gold .card-badge {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.summary-card.sc-purple .card-badge {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+/* Donut Container */
+.donut-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 16px;
+}
+
+.donut-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.donut-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.donut-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--text-main);
+}
+
+.donut-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Summary Stats */
+.summary-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--emerald-600);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.sc-gold .stat-value {
+    color: var(--baron-gold);
+}
+
+.sc-purple .stat-value {
+    color: #8b5cf6;
+}
+
+/* ====================================
+   WEEKLY SHOLAT GRID
+   ==================================== */
+.weekly-sholat-section {
+    margin-bottom: 24px;
+}
+
+.weekly-sholat-section .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.weekly-sholat-section .card-head h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.filter-select {
+    padding: 6px 12px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--emerald-500);
+}
+
+/* Sholat Grid Container - allow horizontal scroll for 14/30 days */
+.weekly-sholat-section .card-body {
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+/* Sholat Grid Table */
+.sholat-grid {
+    display: grid;
+    grid-template-columns: 60px repeat(7, minmax(36px, 1fr));
+    gap: 2px;
+    background: var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    min-width: max-content;
+}
+
+.sholat-grid-header,
+.sholat-grid-row {
+    display: contents;
+}
+
+.sholat-grid-cell {
+    background: var(--white);
+    padding: 12px 8px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.sholat-grid-cell.header {
+    background: var(--emerald-50);
+    font-weight: 600;
+    color: var(--emerald-700);
+}
+
+.sholat-grid-cell.waktu-label {
+    background: var(--surface-light);
+    font-weight: 600;
+    text-align: left;
+    padding-left: 16px;
+}
+
+/* Status Icons */
+.status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 14px;
+}
+
+.status-icon.hadir {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.status-icon.terlambat {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.status-icon.tidak_hadir,
+.status-icon.alpa {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.status-icon.izin,
+.status-icon.sakit {
+    background: #e0e7ff;
+    color: #4f46e5;
+}
+
+.status-icon.empty {
+    background: var(--surface-light);
+    color: var(--text-muted);
+}
+
+/* Loading Placeholder */
+.loading-placeholder {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+/* ====================================
+   HISTORY SECTION
+   ==================================== */
+.history-section {
+    margin-bottom: 24px;
+}
+
+.history-section .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.history-section .card-head h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--surface-light);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.history-item:hover {
+    background: var(--emerald-50);
+}
+
+.history-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.history-icon.sholat_wajib {
+    background: #d1fae5;
+}
+
+.history-icon.sholat_sunnah {
+    background: #fef3c7;
+}
+
+.history-icon.tilawah {
+    background: #e0e7ff;
+}
+
+.history-icon.dzikir {
+    background: #f3e8ff;
+}
+
+.history-icon.puasa {
+    background: #fce7f3;
+}
+
+.history-content {
+    flex: 1;
+}
+
+.history-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 2px;
+}
+
+.history-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.history-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: right;
+}
+
+.history-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.history-status.hadir {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.history-status.terlambat {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.history-status.tidak_hadir {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* ====================================
+   PAGE FOOTER
+   ==================================== */
+.page-footer {
+    text-align: center;
+    padding: 24px 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: 24px;
+}
+
+.footer-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.footer-copyright {
+    font-size: 12px;
+    color: var(--text-light);
+    margin: 4px 0 0;
+}
+
+/* ====================================
+   RESPONSIVE
+   ==================================== */
+@media (max-width: 768px) {
+    .sholat-grid {
+        font-size: 11px;
+    }
+
+    .sholat-grid-cell {
+        padding: 8px 4px;
+    }
+
+    .status-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+
+    .history-item {
+        flex-wrap: wrap;
+    }
+
+    .history-time {
+        width: 100%;
+        text-align: left;
+        margin-top: 8px;
+    }
+}

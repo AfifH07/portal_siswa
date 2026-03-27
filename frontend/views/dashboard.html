@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260326B" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <!-- Back to main website chip -->
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Dashboard</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Dashboard</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Walisantri Profile View (hidden by default) -->
+        <section id="walisantri-dashboard" class="walisantri-section">
+            <div id="walisantri-profile-content">
+                <div class="glass-card" style="padding: 40px; text-align: center;">
+                    <div class="loading-spinner"></div>
+                    <p class="text-muted" style="margin-top: 15px;">Memuat data ananda...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin/Guru/Pimpinan Dashboard -->
+        <section id="dashboard-section" class="admin-section">
+
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h2 id="welcome-title">Selamat Datang 👋</h2>
+                    <p>Portal Akademik <span class="highlight">Pondok Pesantren Baron</span> — Pantau perkembangan santri hari ini</p>
+                </div>
+                <div class="welcome-badge">
+                    <div class="wb-label">Kehadiran Hari Ini</div>
+                    <div class="wb-val" id="welcome-attendance">-</div>
+                    <div class="wb-sub" id="welcome-attendance-detail">Memuat data...</div>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">👥</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-students">-</div>
+                        <div class="stat-label">Total Santri</div>
+                        <div class="stat-delta delta-up" id="students-delta"></div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">📚</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-classes">-</div>
+                        <div class="stat-label">Total Kelas</div>
+                        <div class="stat-delta delta-up" id="classes-delta"></div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">📊</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="average-grade">-</div>
+                        <div class="stat-label">Rata-rata Nilai</div>
+                        <div class="stat-delta delta-up" id="grade-delta"></div>
+                    </div>
+                </div>
+                <div class="stat-card sc-purple">
+                    <div class="stat-icon-wrap">📖</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="hafalan-progress">-</div>
+                        <div class="stat-label">Rata-rata Hafalan Kolektif</div>
+                        <div class="stat-delta" id="hafalan-delta"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secondary Stats Row -->
+            <div class="stats-row-secondary">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">📅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="today-attendance">-</div>
+                        <div class="stat-label">Kehadiran Hari Ini</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <!-- Attendance Chart -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📈</span> Statistik Absensi 6 Bulan Terakhir</h3>
+                        <div class="card-badge">Live</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap">
+                            <canvas id="attendanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grade Distribution -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📊</span> Distribusi Nilai</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap">
+                            <canvas id="gradesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row -->
+            <div class="bottom-row">
+
+                <!-- Progress Table -->
+                <div class="glass-card table-section">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📋</span> Progress Tracking Santri</h3>
+                        <div class="card-badge badge-realtime" id="progress-count-badge">Memuat...</div>
+                    </div>
+
+                    <!-- Card Body: Scrollable Table Only -->
+                    <div class="card-body-table">
+                        <div class="table-scroll-container">
+                            <table class="data-table">
+                                <thead class="sticky-header">
+                                    <tr>
+                                        <th>Nama</th>
+                                        <th>Kelas</th>
+                                        <th>Hafalan</th>
+                                        <th>Akademik</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="progress-table-body">
+                                    <tr>
+                                        <td colspan="5" class="text-center"><div class="loading-spinner" style="margin: 20px auto;"></div></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card Footer: Outside scroll area -->
+                    <div class="card-footer-bar">
+                        <span class="footer-text" id="progress-footer-text">Menampilkan data terbaru</span>
+                        <a href="/students/" class="btn btn-outline-emerald btn-sm">
+                            <span>👥</span> Lihat Semua Santri
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">⚡</span> Aktivitas Terbaru</h3>
+                    </div>
+                    <div class="activity-list" id="recent-activity-list">
+                        <div style="padding: 30px; text-align: center;">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div><!-- /page-body -->
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts (order matters!) -->
+<script src="/static/js/utils.js?v=20260327B" defer></script>
+<script src="/static/js/apiConfig.js?v=20260327B" defer></script>
+<script src="/static/js/apiFetch.js?v=20260327B" defer></script>
+<script src="/static/js/auth-check.js?v=20260327B" defer></script>
+<script src="/static/js/auth.js?v=20260327B" defer></script>
+<script src="/static/js/page-events.js?v=20260327B" defer></script>
+<script src="/static/js/dashboard.js?v=20260327B" defer></script>
+
+<script>
+    // Baron Light Emerald Theme Init
+    window.addEventListener('load', function() {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = user.role || window.getUserRole?.() || 'guest';
+
+        document.body.setAttribute('data-role', role);
+
+        // Update topbar date
+        const dateEl = document.getElementById('topbar-date');
+        if (dateEl) {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', options);
+        }
+
+        // Update user avatar initials
+        const avatarEl = document.getElementById('user-avatar-initials');
+        if (avatarEl && user.name) {
+            const words = user.name.trim().split(' ');
+            if (words.length >= 2) {
+                avatarEl.textContent = (words[0][0] + words[1][0]).toUpperCase();
+            } else {
+                avatarEl.textContent = user.name.substring(0, 2).toUpperCase();
+            }
+        }
+
+        // Update role display
+        const roleEl = document.getElementById('user-role-display');
+        if (roleEl) {
+            const roleDisplay = {
+                'superadmin': 'Super Admin',
+                'pimpinan': 'Pimpinan',
+                'guru': 'Guru',
+                'walisantri': 'Wali Santri'
+            };
+            roleEl.textContent = roleDisplay[role] || role || '-';
+        }
+    });
+</script>
+</body>
+</html>

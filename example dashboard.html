@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* =============================================
+           BARON LIGHT EMERALD — Design Tokens
+           ============================================= */
+        :root {
+            --baron-gold:         #c8961c;
+            --baron-gold-light:   #f0bf4c;
+            --baron-gold-pale:    #fef3d0;
+
+            --emerald-50:   #f0faf7;
+            --emerald-100:  #d6f5ec;
+            --emerald-200:  #aeebd8;
+            --emerald-400:  #34c99a;
+            --emerald-500:  #1fa87a;
+            --emerald-600:  #178560;
+            --emerald-700:  #0f6347;
+            --emerald-800:  #0a4a34;
+            --emerald-900:  #062e20;
+
+            --bg-base:      #f2faf7;
+            --bg-surface:   #ffffff;
+            --bg-card:      #ffffff;
+
+            --text-main:    #0a2e20;
+            --text-sub:     #3d6b57;
+            --text-muted:   #7aaa94;
+
+            --border-light: rgba(15, 99, 71, 0.12);
+            --border-card:  rgba(15, 99, 71, 0.15);
+            --border-glow:  rgba(52, 201, 154, 0.35);
+
+            --shadow-sm:  0 1px 4px rgba(10, 74, 52, 0.07);
+            --shadow-md:  0 4px 16px rgba(10, 74, 52, 0.10);
+            --shadow-lg:  0 8px 32px rgba(10, 74, 52, 0.14);
+            --shadow-gold: 0 4px 16px rgba(200, 150, 28, 0.25);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --sidebar-w: 265px;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'DM Mono', monospace;
+            --transition: 0.22s cubic-bezier(.4,0,.2,1);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* =============================================
+           SIDEBAR
+           ============================================= */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: linear-gradient(180deg, #0f6347 0%, #0a4a34 60%, #062e20 100%);
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            box-shadow: 4px 0 24px rgba(6, 46, 32, 0.25);
+            overflow: hidden;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 160px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 265 160'%3E%3Cpath d='M0 80 Q66 30 132 80 Q198 130 265 80 L265 0 L0 0Z' fill='rgba(255,255,255,0.04)'/%3E%3C/svg%3E") no-repeat top center / cover;
+            pointer-events: none;
+        }
+
+        .sidebar-brand {
+            padding: 22px 20px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .brand-logo {
+            width: 44px; height: 44px;
+            background: var(--baron-gold);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-gold);
+        }
+
+        .brand-text { display: flex; flex-direction: column; }
+        .brand-name {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .brand-tagline {
+            color: var(--baron-gold-light);
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .back-chip {
+            margin: 14px 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            color: rgba(255,255,255,0.75);
+            font-size: 11.5px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .back-chip:hover { background: rgba(255,255,255,0.13); color: #fff; }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 18px 12px;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            color: rgba(255,255,255,0.35);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 0 10px;
+            margin: 14px 0 6px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 11px 14px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.72);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+        .nav-item .icon { font-size: 17px; line-height: 1; }
+        .nav-item:hover {
+            background: rgba(255,255,255,0.09);
+            color: #fff;
+            transform: translateX(3px);
+        }
+        .nav-item.active {
+            background: linear-gradient(90deg, var(--baron-gold) 0%, var(--baron-gold-light) 100%);
+            color: #1a1a1a;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(200, 150, 28, 0.4);
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .user-avatar {
+            width: 34px; height: 34px;
+            background: var(--emerald-400);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            font-family: var(--font-mono);
+        }
+        .user-meta { display: flex; flex-direction: column; }
+        .user-name { color: #fff; font-size: 13px; font-weight: 600; }
+        .user-role { color: rgba(255,255,255,0.5); font-size: 11px; }
+
+        .btn-logout {
+            width: 100%;
+            padding: 10px;
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 9px;
+            color: #fca5a5;
+            font-family: var(--font-main);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: var(--transition);
+        }
+        .btn-logout:hover { background: rgba(239,68,68,0.22); }
+
+        /* =============================================
+           MAIN LAYOUT
+           ============================================= */
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Topbar */
+        .topbar {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-light);
+            padding: 14px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+        .topbar-left h1 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .breadcrumb {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+        .breadcrumb span { color: var(--emerald-500); font-weight: 600; }
+
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+        .topbar-date {
+            font-size: 12.5px;
+            color: var(--text-sub);
+            background: var(--emerald-50);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 500;
+        }
+        .topbar-notif {
+            width: 36px; height: 36px;
+            background: var(--emerald-50);
+            border: 1px solid var(--border-light);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+        .topbar-notif:hover { background: var(--emerald-100); }
+        .notif-dot {
+            width: 8px; height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            position: absolute;
+            top: 7px; right: 7px;
+            border: 1.5px solid #fff;
+        }
+
+        /* Page Body */
+        .page-body { padding: 26px 30px; flex: 1; }
+
+        /* =============================================
+           PAGE ACTIONS
+           ============================================= */
+        .page-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: 9px;
+            font-family: var(--font-main);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--emerald-600), var(--emerald-500));
+            color: #fff;
+            box-shadow: 0 3px 12px rgba(23, 133, 96, 0.3);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--emerald-700), var(--emerald-600));
+            box-shadow: 0 5px 18px rgba(23, 133, 96, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--baron-gold), var(--baron-gold-light));
+            color: #1a1a1a;
+            box-shadow: 0 3px 12px rgba(200, 150, 28, 0.25);
+        }
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 18px rgba(200, 150, 28, 0.35);
+        }
+
+        .btn-secondary {
+            background: var(--bg-surface);
+            color: var(--text-sub);
+            border: 1px solid var(--border-card);
+        }
+        .btn-secondary:hover {
+            background: var(--emerald-50);
+            border-color: var(--border-glow);
+            color: var(--emerald-600);
+        }
+
+        .btn-outline-emerald {
+            background: transparent;
+            color: var(--emerald-600);
+            border: 1px solid var(--emerald-200);
+            padding: 6px 14px;
+            font-size: 12.5px;
+        }
+        .btn-outline-emerald:hover {
+            background: var(--emerald-50);
+            border-color: var(--emerald-400);
+        }
+
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* =============================================
+           STAT CARDS
+           ============================================= */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            animation: fadeUp .4s ease both;
+        }
+        .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+        /* Left accent bar */
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 100%;
+        }
+        .sc-green::after  { background: var(--emerald-500); }
+        .sc-gold::after   { background: var(--baron-gold); }
+        .sc-blue::after   { background: #3b82f6; }
+        .sc-red::after    { background: #ef4444; }
+
+        /* Staggered animation */
+        .stats-row .stat-card:nth-child(1) { animation-delay: .05s; }
+        .stats-row .stat-card:nth-child(2) { animation-delay: .10s; }
+        .stats-row .stat-card:nth-child(3) { animation-delay: .15s; }
+        .stats-row .stat-card:nth-child(4) { animation-delay: .20s; }
+
+        .stat-icon-wrap {
+            width: 50px; height: 50px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .sc-green .stat-icon-wrap { background: var(--emerald-50); border: 1px solid var(--emerald-200); }
+        .sc-gold  .stat-icon-wrap { background: var(--baron-gold-pale); border: 1px solid #f5d57a; }
+        .sc-blue  .stat-icon-wrap { background: #eff6ff; border: 1px solid #bfdbfe; }
+        .sc-red   .stat-icon-wrap { background: #fff1f1; border: 1px solid #fecaca; }
+
+        .stat-body { flex: 1; min-width: 0; }
+        .stat-val {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            color: var(--text-main);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* =============================================
+           GLASS CARD BASE
+           ============================================= */
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 22px;
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 17px 22px 15px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .card-head h3 {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            background: var(--emerald-50);
+            color: var(--emerald-600);
+            border: 1px solid var(--emerald-200);
+            letter-spacing: 0.3px;
+        }
+        .card-badge.live { 
+            background: rgba(31, 168, 122, 0.1);
+            color: var(--emerald-500);
+            border-color: var(--emerald-200);
+            position: relative;
+            padding-left: 20px;
+        }
+        .card-badge.live::before {
+            content: '';
+            position: absolute;
+            left: 8px; top: 50%;
+            transform: translateY(-50%);
+            width: 6px; height: 6px;
+            background: var(--emerald-400);
+            border-radius: 50%;
+            animation: pulse 1.5s ease infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+            50% { opacity: 0.5; transform: translateY(-50%) scale(1.4); }
+        }
+
+        .card-body { padding: 20px 22px; }
+
+        /* Chart */
+        .chart-wrap { height: 230px; position: relative; }
+
+        /* =============================================
+           FILTERS — POLISHED
+           ============================================= */
+        .filters-card { padding: 0; }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 16px;
+            padding: 20px 22px;
+            align-items: end;
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 6px; }
+
+        .filter-group label {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .filter-input {
+            padding: 9px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-card);
+            background: var(--bg-surface);
+            font-family: var(--font-main);
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-main);
+            transition: var(--transition);
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            box-shadow: var(--shadow-sm);
+        }
+
+        select.filter-input {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237aaa94' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        .filter-input:focus {
+            border-color: var(--emerald-400);
+            box-shadow: 0 0 0 3px rgba(52, 201, 154, 0.15);
+        }
+
+        .filter-input:hover { border-color: var(--emerald-300, #6edcbc); }
+
+        .filter-actions { justify-content: flex-end; }
+
+        /* =============================================
+           DATA TABLE
+           ============================================= */
+        .table-section { margin-bottom: 0; }
+
+        .table-container { overflow-x: auto; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 820px;
+        }
+
+        .data-table thead th {
+            background: var(--emerald-50);
+            color: var(--text-sub);
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--border-light);
+            white-space: nowrap;
+        }
+
+        .data-table tbody tr { transition: var(--transition); }
+        .data-table tbody tr:hover td { background: var(--emerald-50); }
+
+        .data-table tbody td {
+            padding: 13px 16px;
+            font-size: 13.5px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+
+        /* Date cell — highlighted */
+        .date-cell {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--emerald-700);
+        }
+        .date-cell .date-day { font-size: 11px; color: var(--text-muted); display: block; }
+
+        /* Number cells */
+        .num-cell {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            text-align: center;
+        }
+        .num-hadir  { color: var(--emerald-600); }
+        .num-sakit  { color: #d97706; }
+        .num-izin   { color: #3b82f6; }
+        .num-alpha  { color: #dc2626; }
+        .num-total  { color: var(--text-main); }
+
+        /* JP chips */
+        .jp-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px; height: 28px;
+            background: var(--emerald-50);
+            border: 1px solid var(--emerald-200);
+            border-radius: 7px;
+            font-size: 11.5px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--emerald-700);
+            margin-right: 3px;
+        }
+
+        /* Lihat button — polished */
+        .btn-lihat {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 14px;
+            border-radius: 7px;
+            font-family: var(--font-main);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--emerald-600);
+            background: var(--emerald-50);
+            border: 1px solid var(--emerald-200);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-lihat:hover {
+            background: var(--emerald-100);
+            border-color: var(--emerald-400);
+            color: var(--emerald-700);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(23, 133, 96, 0.15);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: rgba(31, 168, 122, 0.12);
+            color: var(--emerald-600);
+            border: 1px solid rgba(31, 168, 122, 0.25);
+        }
+        .badge-warning {
+            background: rgba(217, 119, 6, 0.12);
+            color: #b45309;
+            border: 1px solid rgba(217, 119, 6, 0.25);
+        }
+        .badge-info {
+            background: rgba(59, 130, 246, 0.12);
+            color: #1d4ed8;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.10);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.22);
+        }
+
+        /* =============================================
+           PAGINATION
+           ============================================= */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 22px;
+            border-top: 1px solid var(--border-light);
+            background: var(--emerald-50);
+        }
+        .pagination-info { font-size: 12.5px; color: var(--text-muted); font-weight: 500; }
+        .pagination-info span { color: var(--emerald-600); font-weight: 700; font-family: var(--font-mono); }
+        .pagination-controls { display: flex; align-items: center; gap: 10px; }
+        .pagination-controls > span {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-sub);
+            font-family: var(--font-mono);
+        }
+
+        /* =============================================
+           MODALS
+           ============================================= */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.open { display: flex; }
+
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 46, 32, 0.55);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-card);
+            box-shadow: var(--shadow-lg);
+            width: 90%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn .22s cubic-bezier(.34,1.56,.64,1) both;
+        }
+        .modal-large { max-width: 760px; }
+        .modal-wizard { max-width: 580px; }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.94) translateY(12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .modal-header h2 { font-size: 16px; font-weight: 700; color: var(--text-main); }
+
+        .modal-close {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            background: var(--emerald-50);
+            border: 1px solid var(--border-light);
+            color: var(--text-muted);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .modal-close:hover { background: var(--emerald-100); color: var(--text-main); }
+
+        .modal-body { padding: 22px; }
+        .modal-footer {
+            padding: 16px 22px;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            background: var(--emerald-50);
+        }
+
+        /* Forms inside modal */
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 7px;
+        }
+        .required { color: #ef4444; }
+
+        .glass-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-card);
+            background: var(--bg-surface);
+            font-family: var(--font-main);
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-main);
+            outline: none;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        select.glass-input {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237aaa94' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+        .glass-input:focus {
+            border-color: var(--emerald-400);
+            box-shadow: 0 0 0 3px rgba(52, 201, 154, 0.15);
+        }
+
+        /* Session selector */
+        .session-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .session-radio { cursor: pointer; }
+        .session-radio input[type="radio"] { display: none; }
+        .session-label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-card);
+            background: var(--bg-surface);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sub);
+            transition: var(--transition);
+        }
+        .session-radio input:checked + .session-label {
+            background: var(--emerald-50);
+            border-color: var(--emerald-400);
+            color: var(--emerald-700);
+            box-shadow: 0 0 0 2px rgba(52, 201, 154, 0.2);
+        }
+        .session-label:hover { background: var(--emerald-50); border-color: var(--emerald-200); }
+
+        /* JP chips selector */
+        .jp-chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+            background: var(--emerald-50);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            min-height: 52px;
+        }
+        .jp-chips-placeholder {
+            color: var(--text-muted);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .jp-chip-select {
+            padding: 6px 14px;
+            border-radius: 7px;
+            border: 1px solid var(--emerald-200);
+            background: #fff;
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--emerald-700);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .jp-chip-select.selected {
+            background: var(--emerald-600);
+            border-color: var(--emerald-600);
+            color: #fff;
+        }
+        .jp-hint {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Step indicator */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 22px;
+        }
+        .step-dot {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--emerald-50);
+            border: 2px solid var(--border-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11.5px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+        .step-dot.active { background: var(--emerald-600); border-color: var(--emerald-600); color: #fff; }
+        .step-dot.done   { background: var(--emerald-400); border-color: var(--emerald-400); color: #fff; }
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border-light);
+            transition: var(--transition);
+        }
+        .step-line.done { background: var(--emerald-400); }
+        .step-label { font-size: 11px; color: var(--text-muted); margin-top: 5px; text-align: center; }
+
+        /* Step content */
+        .modal-step { display: none; }
+        .modal-step.active { display: block; }
+
+        .step-info {
+            padding: 12px 16px;
+            background: var(--emerald-50);
+            border: 1px solid var(--emerald-200);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-sub);
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .quick-actions { margin-bottom: 14px; }
+
+        /* Students list */
+        .students-list {
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-sm);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .student-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--border-light);
+            transition: var(--transition);
+        }
+        .student-row:last-child { border-bottom: none; }
+        .student-row:hover { background: var(--emerald-50); }
+        .student-no {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 20px;
+        }
+        .student-name { flex: 1; font-size: 13.5px; font-weight: 600; color: var(--text-main); }
+        .student-nisn { font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono); }
+
+        .status-radios { display: flex; gap: 6px; }
+        .status-radio { cursor: pointer; }
+        .status-radio input { display: none; }
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid transparent;
+            transition: var(--transition);
+        }
+        .s-hadir  { border-color: var(--emerald-200); color: var(--text-muted); }
+        .s-sakit  { border-color: #fde68a; color: var(--text-muted); }
+        .s-izin   { border-color: #bfdbfe; color: var(--text-muted); }
+        .s-alpha  { border-color: #fecaca; color: var(--text-muted); }
+        .status-radio input:checked + .s-hadir { background: var(--emerald-500); border-color: var(--emerald-500); color: #fff; }
+        .status-radio input:checked + .s-sakit { background: #d97706; border-color: #d97706; color: #fff; }
+        .status-radio input:checked + .s-izin  { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+        .status-radio input:checked + .s-alpha { background: #ef4444; border-color: #ef4444; color: #fff; }
+
+        /* Summary bar */
+        .attendance-summary {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+            padding: 12px 16px;
+            background: var(--emerald-50);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+        }
+        .summary-item {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .summary-item strong { font-family: var(--font-mono); }
+        .summary-item.hadir { color: var(--emerald-600); }
+        .summary-item.sakit { color: #d97706; }
+        .summary-item.izin  { color: #3b82f6; }
+        .summary-item.alpha { color: #ef4444; }
+
+        /* Detail modal info rows */
+        .detail-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .info-row {
+            padding: 12px 14px;
+            background: var(--emerald-50);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+        }
+        .info-label { font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+        .info-value { font-size: 14px; font-weight: 700; color: var(--text-main); }
+
+        .detail-summary {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        /* Export radio */
+        .radio-group { display: flex; gap: 12px; margin-top: 4px; }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: var(--transition);
+            flex: 1;
+        }
+        .radio-option:has(input:checked) {
+            border-color: var(--emerald-400);
+            background: var(--emerald-50);
+            color: var(--emerald-700);
+        }
+        .radio-option input { accent-color: var(--emerald-500); }
+
+        /* =============================================
+           TOAST
+           ============================================= */
+        .toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: var(--text-main);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all .3s ease;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* Loading */
+        .loading-spinner {
+            width: 32px; height: 32px;
+            border: 2.5px solid var(--emerald-100);
+            border-top-color: var(--emerald-500);
+            border-radius: 50%;
+            animation: spin .9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-inline {
+            padding: 30px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13.5px;
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-card { animation: fadeUp .4s .2s ease both; }
+
+        /* Text helpers */
+        .text-center { text-align: center; }
+
+        /* =============================================
+           RESPONSIVE
+           ============================================= */
+        @media (max-width: 1200px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .filters-grid { grid-template-columns: 1fr 1fr; }
+            .filter-actions { grid-column: span 2; justify-content: flex-start; }
+        }
+        @media (max-width: 768px) {
+            .main { margin-left: 0; }
+            .sidebar { transform: translateX(-100%); }
+            .page-body { padding: 18px 16px; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .filters-grid { grid-template-columns: 1fr; }
+            .filter-actions { grid-column: 1; }
+            .detail-info { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <div class="nav-label">Menu Utama</div>
+        <a href="/dashboard" class="nav-item">
+            <span class="icon">📊</span> Dashboard
+        </a>
+        <a href="/students" class="nav-item">
+            <span class="icon">👥</span> Siswa
+        </a>
+        <a href="/attendance" class="nav-item active">
+            <span class="icon">📋</span> Absensi
+        </a>
+        <a href="/grades" class="nav-item">
+            <span class="icon">📝</span> Nilai
+        </a>
+        <a href="/hafalan" class="nav-item">
+            <span class="icon">📖</span> Hafalan
+        </a>
+        <div class="nav-label">Lainnya</div>
+        <a href="/evaluations" class="nav-item">
+            <span class="icon">⭐</span> Evaluasi
+        </a>
+        <a href="/berita" class="nav-item">
+            <span class="icon">📰</span> Berita Ponpes
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">SA</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Super Admin 1</div>
+                <div class="user-role" id="user-role-display">Super Admin</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout?.()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Kelola Absensi</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Absensi</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Sabtu, 21 Februari 2026</div>
+            <div class="topbar-notif">🔔<div class="notif-dot"></div></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <section id="admin-section" class="admin-section">
+
+            <!-- Page Actions -->
+            <div class="page-actions">
+                <button id="btn-add-attendance" onclick="openAddModal()" class="btn btn-primary">
+                    <span>➕</span> Input Absensi
+                </button>
+                <button onclick="openExportModal()" class="btn btn-success">
+                    <span>📥</span> Export
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">📋</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-records">3</div>
+                        <div class="stat-label">Total Record</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">✅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-hadir">115</div>
+                        <div class="stat-label">Hadir</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">🤒</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-sakit">0</div>
+                        <div class="stat-label">Sakit</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-red">
+                    <div class="stat-icon-wrap">❌</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-alpha">1</div>
+                        <div class="stat-label">Alpha</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Chart -->
+            <div class="glass-card chart-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📈</span> Statistik Kehadiran Mingguan</h3>
+                    <div class="card-badge live">Live</div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-wrap">
+                        <canvas id="weeklyAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="glass-card filters-card">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="filter-kelas">Kelas</label>
+                        <select id="filter-kelas" class="filter-input">
+                            <option value="">Semua Kelas</option>
+                            <option>XII B</option>
+                            <option>XII A</option>
+                            <option>XI A</option>
+                            <option>XI B</option>
+                            <option>X A</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-start">Dari Tanggal</label>
+                        <input type="date" id="filter-start" class="filter-input" value="2026-01-22">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-end">Sampai Tanggal</label>
+                        <input type="date" id="filter-end" class="filter-input" value="2026-02-21">
+                    </div>
+                    <div class="filter-group filter-actions">
+                        <button onclick="resetFilters()" class="btn btn-secondary">
+                            <span>🔄</span> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div id="teacher-view" class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Data Absensi</h3>
+                    <div class="card-badge">3 Record</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Kelas</th>
+                                <th>Jam Pelajaran</th>
+                                <th>Mata Pelajaran</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Hadir</th>
+                                <th class="text-center">Sakit</th>
+                                <th class="text-center">Izin</th>
+                                <th class="text-center">Alpha</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-table-body">
+                            <tr>
+                                <td>
+                                    <span class="date-cell">
+                                        14 Feb 2026
+                                        <span class="date-day">Sabtu</span>
+                                    </span>
+                                </td>
+                                <td><strong>XII B</strong></td>
+                                <td><span class="jp-chip">1</span></td>
+                                <td>Akhlak</td>
+                                <td class="num-cell num-total">27</td>
+                                <td class="num-cell num-hadir">25</td>
+                                <td class="num-cell num-sakit">0</td>
+                                <td class="num-cell num-izin">1</td>
+                                <td class="num-cell num-alpha">1</td>
+                                <td>
+                                    <button class="btn-lihat" onclick="openDetailModal(1)">
+                                        👁 Lihat
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="date-cell">
+                                        13 Feb 2026
+                                        <span class="date-day">Jumat</span>
+                                    </span>
+                                </td>
+                                <td><strong>XII A</strong></td>
+                                <td><span class="jp-chip">1</span></td>
+                                <td>Al-Quran</td>
+                                <td class="num-cell num-total">30</td>
+                                <td class="num-cell num-hadir">30</td>
+                                <td class="num-cell num-sakit">0</td>
+                                <td class="num-cell num-izin">0</td>
+                                <td class="num-cell num-alpha">0</td>
+                                <td>
+                                    <button class="btn-lihat" onclick="openDetailModal(2)">
+                                        👁 Lihat
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="date-cell">
+                                        8 Feb 2026
+                                        <span class="date-day">Minggu</span>
+                                    </span>
+                                </td>
+                                <td><strong>XII A</strong></td>
+                                <td>
+                                    <span class="jp-chip">6</span>
+                                    <span class="jp-chip">7</span>
+                                </td>
+                                <td>Bahasa Indonesia</td>
+                                <td class="num-cell num-total">30</td>
+                                <td class="num-cell num-hadir">60</td>
+                                <td class="num-cell num-sakit">0</td>
+                                <td class="num-cell num-izin">0</td>
+                                <td class="num-cell num-alpha">0</td>
+                                <td>
+                                    <button class="btn-lihat" onclick="openDetailModal(3)">
+                                        👁 Lihat
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <div class="pagination-info">
+                        Menampilkan <span>3</span> dari <span>3</span> data
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="btn btn-secondary btn-sm" disabled>← Prev</button>
+                        <span>Hal 1</span>
+                        <button class="btn btn-secondary btn-sm" disabled>Next →</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </div>
+</main>
+
+<!-- ===================== MODAL: INPUT ABSENSI ===================== -->
+<div id="add-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeAddModal()"></div>
+    <div class="modal-content modal-wizard">
+        <div class="modal-header">
+            <h2>Input Absensi Baru</h2>
+            <button class="modal-close" onclick="closeAddModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Step indicator -->
+            <div class="step-indicator" style="display:flex;align-items:center;gap:0;margin-bottom:22px;">
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div class="step-dot active" id="dot-1">1</div>
+                    <div class="step-label">Info Kelas</div>
+                </div>
+                <div class="step-line" id="line-1" style="flex:1;height:2px;background:var(--border-light);margin-bottom:14px;"></div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div class="step-dot" id="dot-2">2</div>
+                    <div class="step-label">Kehadiran</div>
+                </div>
+            </div>
+
+            <!-- Step 1 -->
+            <div id="modal-step-1" class="modal-step active">
+                <div class="form-group">
+                    <label for="input-kelas">Kelas <span class="required">*</span></label>
+                    <select id="input-kelas" class="glass-input">
+                        <option value="">-- Pilih Kelas --</option>
+                        <option>XII A</option>
+                        <option>XII B</option>
+                        <option>XI A</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="input-mapel">Mata Pelajaran <span class="required">*</span></label>
+                    <select id="input-mapel" class="glass-input">
+                        <option value="">-- Pilih Mata Pelajaran --</option>
+                        <option>Al-Quran</option>
+                        <option>Akhlak</option>
+                        <option>Bahasa Indonesia</option>
+                        <option>Matematika</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="input-tanggal">Tanggal <span class="required">*</span></label>
+                    <input type="date" id="input-tanggal" class="glass-input">
+                </div>
+                <div class="form-group">
+                    <label>Sesi & Jam Pelajaran <span class="required">*</span></label>
+                    <div class="session-selector">
+                        <label class="session-radio">
+                            <input type="radio" name="sesi" value="pagi">
+                            <span class="session-label"><span>🌅</span> Pagi</span>
+                        </label>
+                        <label class="session-radio">
+                            <input type="radio" name="sesi" value="siang">
+                            <span class="session-label"><span>☀️</span> Siang</span>
+                        </label>
+                        <label class="session-radio">
+                            <input type="radio" name="sesi" value="sore">
+                            <span class="session-label"><span>🌇</span> Sore</span>
+                        </label>
+                    </div>
+                    <div class="jp-chips-container" id="jp-chips-container">
+                        <div class="jp-chips-placeholder"><span>👆</span> Pilih sesi terlebih dahulu</div>
+                    </div>
+                    <div class="jp-hint">Pilih sesi, lalu pilih jam pelajaran</div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div id="modal-step-2" class="modal-step">
+                <div class="step-info">
+                    XII A &nbsp;|&nbsp; Al-Quran &nbsp;|&nbsp; 21 Feb 2026
+                    <div style="margin-top:4px;font-size:12px;"><strong>Jam Pelajaran:</strong> JP 1, 2</div>
+                </div>
+                <div class="quick-actions">
+                    <button type="button" class="btn btn-primary btn-sm">✅ Semua Hadir</button>
+                </div>
+                <div class="students-list" id="students-list">
+                    <div class="student-row">
+                        <span class="student-no">1</span>
+                        <div>
+                            <div class="student-name">Ahmad Fauzi</div>
+                            <div class="student-nisn">3210001234</div>
+                        </div>
+                        <div class="status-radios">
+                            <label class="status-radio"><input type="radio" name="s1" value="H" checked><span class="status-pill s-hadir">H</span></label>
+                            <label class="status-radio"><input type="radio" name="s1" value="S"><span class="status-pill s-sakit">S</span></label>
+                            <label class="status-radio"><input type="radio" name="s1" value="I"><span class="status-pill s-izin">I</span></label>
+                            <label class="status-radio"><input type="radio" name="s1" value="A"><span class="status-pill s-alpha">A</span></label>
+                        </div>
+                    </div>
+                    <div class="student-row">
+                        <span class="student-no">2</span>
+                        <div>
+                            <div class="student-name">Siti Rahmah</div>
+                            <div class="student-nisn">3210001235</div>
+                        </div>
+                        <div class="status-radios">
+                            <label class="status-radio"><input type="radio" name="s2" value="H" checked><span class="status-pill s-hadir">H</span></label>
+                            <label class="status-radio"><input type="radio" name="s2" value="S"><span class="status-pill s-sakit">S</span></label>
+                            <label class="status-radio"><input type="radio" name="s2" value="I"><span class="status-pill s-izin">I</span></label>
+                            <label class="status-radio"><input type="radio" name="s2" value="A"><span class="status-pill s-alpha">A</span></label>
+                        </div>
+                    </div>
+                    <div class="student-row">
+                        <span class="student-no">3</span>
+                        <div>
+                            <div class="student-name">Muhammad Yusuf</div>
+                            <div class="student-nisn">3210001236</div>
+                        </div>
+                        <div class="status-radios">
+                            <label class="status-radio"><input type="radio" name="s3" value="H"><span class="status-pill s-hadir">H</span></label>
+                            <label class="status-radio"><input type="radio" name="s3" value="S"><span class="status-pill s-sakit">S</span></label>
+                            <label class="status-radio"><input type="radio" name="s3" value="I"><span class="status-pill s-izin">I</span></label>
+                            <label class="status-radio"><input type="radio" name="s3" value="A" checked><span class="status-pill s-alpha">A</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="attendance-summary">
+                    <span class="summary-item hadir">Hadir: <strong>2</strong></span>
+                    <span class="summary-item sakit">Sakit: <strong>0</strong></span>
+                    <span class="summary-item izin">Izin: <strong>0</strong></span>
+                    <span class="summary-item alpha">Alpha: <strong>1</strong></span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="btn-modal-back" style="display:none;">← Kembali</button>
+            <button class="btn btn-secondary" onclick="closeAddModal()">Batal</button>
+            <button class="btn btn-primary" id="btn-modal-next" onclick="demoNextStep()">Lanjut →</button>
+            <button class="btn btn-primary" id="btn-modal-save" style="display:none;">💾 Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: DETAIL ===================== -->
+<div id="detail-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeDetailModal()"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>Detail Absensi</h2>
+            <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-info">
+                <div class="info-row"><span class="info-label">Kelas</span><span class="info-value">XII B</span></div>
+                <div class="info-row"><span class="info-label">Jam Pelajaran</span><span class="info-value">JP 1</span></div>
+                <div class="info-row"><span class="info-label">Mata Pelajaran</span><span class="info-value">Akhlak</span></div>
+                <div class="info-row"><span class="info-label">Tanggal</span><span class="info-value">14 Februari 2026</span></div>
+            </div>
+            <div class="detail-summary">
+                <span class="badge badge-success">Hadir: <strong>25</strong></span>
+                <span class="badge badge-warning">Sakit: <strong>0</strong></span>
+                <span class="badge badge-info">Izin: <strong>1</strong></span>
+                <span class="badge badge-danger">Alpha: <strong>1</strong></span>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>NISN</th>
+                        <th>Nama</th>
+                        <th>Status</th>
+                        <th>Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="num-cell">1</td>
+                        <td style="font-family:var(--font-mono);font-size:12.5px;">3210001234</td>
+                        <td><strong>Ahmad Fauzi</strong></td>
+                        <td><span class="badge badge-success">Hadir</span></td>
+                        <td style="color:var(--text-muted);font-size:13px;">—</td>
+                    </tr>
+                    <tr>
+                        <td class="num-cell">2</td>
+                        <td style="font-family:var(--font-mono);font-size:12.5px;">3210001235</td>
+                        <td><strong>Siti Rahmah</strong></td>
+                        <td><span class="badge badge-success">Hadir</span></td>
+                        <td style="color:var(--text-muted);font-size:13px;">—</td>
+                    </tr>
+                    <tr>
+                        <td class="num-cell">3</td>
+                        <td style="font-family:var(--font-mono);font-size:12.5px;">3210001236</td>
+                        <td><strong>Muhammad Yusuf</strong></td>
+                        <td><span class="badge badge-danger">Alpha</span></td>
+                        <td style="color:var(--text-muted);font-size:13px;">Tidak ada keterangan</td>
+                    </tr>
+                    <tr>
+                        <td class="num-cell">4</td>
+                        <td style="font-family:var(--font-mono);font-size:12.5px;">3210001237</td>
+                        <td><strong>Nur Aisyah</strong></td>
+                        <td><span class="badge badge-info">Izin</span></td>
+                        <td style="color:var(--text-muted);font-size:13px;">Keperluan keluarga</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary">🖨️ Print</button>
+            <button class="btn btn-secondary" onclick="closeDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: EXPORT ===================== -->
+<div id="export-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeExportModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Export Data Absensi</h2>
+            <button class="modal-close" onclick="closeExportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Kelas</label>
+                <select class="glass-input">
+                    <option value="">Semua Kelas</option>
+                    <option>XII A</option>
+                    <option>XII B</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Dari Tanggal</label>
+                <input type="date" class="glass-input" value="2026-01-22">
+            </div>
+            <div class="form-group">
+                <label>Sampai Tanggal</label>
+                <input type="date" class="glass-input" value="2026-02-21">
+            </div>
+            <div class="form-group">
+                <label>Format Export</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="export-format" value="csv" checked>
+                        <span>📊 CSV (Excel)</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="export-format" value="pdf">
+                        <span>📄 PDF (Print)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeExportModal()">Batal</button>
+            <button class="btn btn-primary">📥 Download</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- ===================== CHART + INTERACTIONS ===================== -->
+<script>
+    // Chart
+    const ctx = document.getElementById('weeklyAttendanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Min. 15', 'Sen. 16', 'Sel. 17', 'Rab. 18', 'Kam. 19', 'Jum. 20', 'Sab. 21'],
+            datasets: [
+                {
+                    label: 'Hadir',
+                    data: [92, 88, 95, 91, 94, 90, 96],
+                    borderColor: '#1fa87a',
+                    backgroundColor: 'rgba(31, 168, 122, 0.08)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#1fa87a',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.4,
+                    fill: true,
+                },
+                {
+                    label: 'Sakit',
+                    data: [3, 5, 2, 4, 2, 4, 2],
+                    borderColor: '#d97706',
+                    backgroundColor: 'rgba(217, 119, 6, 0.05)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#d97706',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.4,
+                },
+                {
+                    label: 'Izin',
+                    data: [2, 3, 1, 2, 2, 3, 1],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3b82f6',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.4,
+                },
+                {
+                    label: 'Alpha',
+                    data: [1, 2, 0, 1, 0, 1, 1],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#ef4444',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.4,
+                },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        color: '#3d6b57',
+                        font: { family: "'Plus Jakarta Sans'", size: 11.5, weight: '600' },
+                        boxWidth: 10,
+                        borderRadius: 3,
+                        padding: 14,
+                        usePointStyle: true,
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#0a2e20',
+                    titleColor: '#aeebd8',
+                    bodyColor: 'rgba(255,255,255,0.8)',
+                    padding: 12,
+                    borderRadius: 10,
+                    borderColor: 'rgba(52,201,154,0.2)',
+                    borderWidth: 1,
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#7aaa94', font: { family: "'Plus Jakarta Sans'", size: 11.5 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(15, 99, 71, 0.07)' },
+                    ticks: {
+                        color: '#7aaa94',
+                        font: { family: "'Plus Jakarta Sans'", size: 11 },
+                    }
+                }
+            }
+        }
+    });
+
+    // Modal helpers
+    function openAddModal()    { document.getElementById('add-modal').classList.add('open'); }
+    function closeAddModal()   { document.getElementById('add-modal').classList.remove('open'); resetModalStep(); }
+    function openDetailModal() { document.getElementById('detail-modal').classList.add('open'); }
+    function closeDetailModal(){ document.getElementById('detail-modal').classList.remove('open'); }
+    function openExportModal() { document.getElementById('export-modal').classList.add('open'); }
+    function closeExportModal(){ document.getElementById('export-modal').classList.remove('open'); }
+
+    // Demo step wizard
+    let currentStep = 1;
+    function demoNextStep() {
+        if (currentStep === 1) {
+            document.getElementById('modal-step-1').classList.remove('active');
+            document.getElementById('modal-step-2').classList.add('active');
+            document.getElementById('dot-1').classList.remove('active');
+            document.getElementById('dot-1').classList.add('done');
+            document.getElementById('dot-2').classList.add('active');
+            document.getElementById('line-1').style.background = 'var(--emerald-400)';
+            document.getElementById('btn-modal-back').style.display = '';
+            document.getElementById('btn-modal-next').style.display = 'none';
+            document.getElementById('btn-modal-save').style.display = '';
+            currentStep = 2;
+        }
+    }
+    function resetModalStep() {
+        currentStep = 1;
+        document.getElementById('modal-step-1').classList.add('active');
+        document.getElementById('modal-step-2').classList.remove('active');
+        document.getElementById('dot-1').className = 'step-dot active';
+        document.getElementById('dot-2').className = 'step-dot';
+        document.getElementById('line-1').style.background = 'var(--border-light)';
+        document.getElementById('btn-modal-back').style.display = 'none';
+        document.getElementById('btn-modal-next').style.display = '';
+        document.getElementById('btn-modal-save').style.display = 'none';
+    }
+
+    // Date
+    const dateEl = document.getElementById('topbar-date');
+    if (dateEl) {
+        const now = new Date();
+        const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', opts);
+    }
+
+    // Session radio → JP chips demo
+    document.querySelectorAll('input[name="sesi"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const container = document.getElementById('jp-chips-container');
+            const jps = this.value === 'pagi' ? [1,2,3,4] : this.value === 'siang' ? [5,6,7] : [8,9,10];
+            container.innerHTML = jps.map(j =>
+                `<button type="button" class="jp-chip-select" onclick="this.classList.toggle('selected')">${j}</button>`
+            ).join('');
+        });
+    });
+</script>
+</body>
+</html>

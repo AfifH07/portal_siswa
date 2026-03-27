@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Wali Santri - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260315" rel="stylesheet">
+    <link href="/static/css/bento-dashboard.css?v=20260315" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-role="walisantri">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Wali Santri</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">W</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">Wali Santri</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1>Dashboard Wali Santri</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Dashboard</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <!-- Child Selector (Multi-child) -->
+        <div class="child-selector" id="child-selector">
+            <!-- Will be populated by JS -->
+            <div class="child-tab active" data-loading="true">
+                <div class="child-avatar">...</div>
+                <div class="child-info">
+                    <h4>Memuat data...</h4>
+                    <span>Mohon tunggu</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-bar" id="quick-actions">
+            <button class="btn-action btn-primary" onclick="downloadRaporPDF()">
+                <span class="btn-icon">📄</span>
+                <span>Download Rapor PDF</span>
+            </button>
+            <button class="btn-action btn-secondary" onclick="downloadBLPReport()">
+                <span class="btn-icon">📋</span>
+                <span>Download Laporan BLP</span>
+            </button>
+            <button class="btn-action btn-outline" onclick="printRaporHTML()">
+                <span class="btn-icon">🖨️</span>
+                <span>Cetak Rapor</span>
+            </button>
+        </div>
+
+        <!-- Dynamic Insight Banner -->
+        <div class="insight-banner" id="insight-banner">
+            <div class="insight-banner-inner">
+                <div class="insight-icon" id="insight-icon">📊</div>
+                <div class="insight-content">
+                    <div class="insight-title" id="insight-title">Memuat analisis...</div>
+                    <div class="insight-details" id="insight-details">
+                        <span class="insight-tag insight-loading">Menganalisis data ananda</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bento Grid Dashboard -->
+        <div class="bento-grid bento-grid-main" id="dashboard-content">
+
+            <!-- ROW 1: Tunggakan (Large) + BLP Summary -->
+            <!-- Tunggakan Card - Span 5 -->
+            <div class="bento-card bento-card-tunggakan bento-span-5 bento-row-2" id="card-tunggakan">
+                <!-- Status Badge (top-right corner) -->
+                <div class="tunggakan-badge badge-lunas" id="tunggakan-badge">✓ LUNAS</div>
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon">💳</div>
+                            <h3>Tagihan SPP</h3>
+                        </div>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="tunggakan-amount">
+                            <span class="currency">Rp</span>
+                            <span id="tunggakan-value">0</span>
+                        </div>
+                        <div class="tunggakan-details">
+                            <div class="tunggakan-detail-item">
+                                <div class="tunggakan-detail-label">Keterangan</div>
+                                <div class="tunggakan-detail-value" id="tunggakan-months">-</div>
+                            </div>
+                            <div class="tunggakan-detail-item">
+                                <div class="tunggakan-detail-label">Jatuh Tempo</div>
+                                <div class="tunggakan-detail-value" id="tunggakan-due">-</div>
+                            </div>
+                            <div class="tunggakan-detail-item">
+                                <div class="tunggakan-detail-label">Status</div>
+                                <div class="tunggakan-detail-value" id="tunggakan-status">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLP Summary Card - Span 4 (Clickable) -->
+            <div class="bento-card bento-card-blp bento-span-4 bento-row-2 bento-clickable" id="card-blp" onclick="navigateToDetail('blp')" title="Klik untuk melihat detail BLP">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon">📋</div>
+                            <h3>Skor BLP Terbaru</h3>
+                        </div>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="blp-score-display">
+                            <span class="blp-score-value" id="blp-score">0</span>
+                            <span class="blp-score-max">/ 125</span>
+                        </div>
+                        <div class="blp-predikat mumtaz" id="blp-predikat">MUMTAZ</div>
+                        <div class="blp-domains" id="blp-domains">
+                            <div class="blp-domain-item">
+                                <div class="blp-domain-label">Akhlak</div>
+                                <div class="blp-domain-score" id="blp-akhlak">0/25</div>
+                            </div>
+                            <div class="blp-domain-item">
+                                <div class="blp-domain-label">Ibadah</div>
+                                <div class="blp-domain-score" id="blp-ibadah">0/30</div>
+                            </div>
+                            <div class="blp-domain-item">
+                                <div class="blp-domain-label">Akademik</div>
+                                <div class="blp-domain-score" id="blp-akademik">0/20</div>
+                            </div>
+                            <div class="blp-domain-item">
+                                <div class="blp-domain-label">Disiplin</div>
+                                <div class="blp-domain-score" id="blp-disiplin">0/20</div>
+                            </div>
+                            <div class="blp-domain-item">
+                                <div class="blp-domain-label">Sosial</div>
+                                <div class="blp-domain-score" id="blp-sosial">0/15</div>
+                            </div>
+                            <div class="blp-domain-item">
+                                <div class="blp-domain-label">P. Diri</div>
+                                <div class="blp-domain-score" id="blp-pdiri">0/15</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sertifikasi Badges - Span 3 -->
+            <div class="bento-card bento-span-3 bento-row-2" id="card-badges">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: var(--baron-gold-pale);">🏅</div>
+                            <h3>Sertifikasi</h3>
+                        </div>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="badges-grid" id="badges-grid">
+                            <div class="badge-item" id="badge-tartil">
+                                <div class="badge-icon">📖</div>
+                                <div class="badge-name">Guru Tartil</div>
+                                <div class="badge-status locked">Belum</div>
+                            </div>
+                            <div class="badge-item" id="badge-tahfidz">
+                                <div class="badge-icon">🌙</div>
+                                <div class="badge-name">Tahfidz 5 Juz</div>
+                                <div class="badge-status locked">Belum</div>
+                            </div>
+                            <div class="badge-item" id="badge-khidmat">
+                                <div class="badge-icon">🤲</div>
+                                <div class="badge-name">Khidmat</div>
+                                <div class="badge-status locked">Belum</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: Donut Chart Cluster (Presensi) - Full Width (Clickable) -->
+            <div class="bento-card bento-span-12 bento-clickable" id="card-attendance" onclick="navigateToDetail('attendance')" title="Klik untuk melihat detail presensi">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: var(--emerald-100);">📊</div>
+                            <h3>Ringkasan Presensi (30 Hari Terakhir)</h3>
+                        </div>
+                        <span class="card-badge">Live Data</span>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="donut-cluster" id="donut-cluster">
+                            <!-- Sholat -->
+                            <div class="donut-item sholat">
+                                <div class="donut-chart-mini">
+                                    <canvas id="chart-sholat"></canvas>
+                                    <div class="donut-center-text" id="pct-sholat">0%</div>
+                                </div>
+                                <div class="donut-label">Sholat</div>
+                            </div>
+                            <!-- KBM -->
+                            <div class="donut-item kbm">
+                                <div class="donut-chart-mini">
+                                    <canvas id="chart-kbm"></canvas>
+                                    <div class="donut-center-text" id="pct-kbm">0%</div>
+                                </div>
+                                <div class="donut-label">KBM</div>
+                            </div>
+                            <!-- Diniyah -->
+                            <div class="donut-item diniyah">
+                                <div class="donut-chart-mini">
+                                    <canvas id="chart-diniyah"></canvas>
+                                    <div class="donut-center-text" id="pct-diniyah">0%</div>
+                                </div>
+                                <div class="donut-label">Diniyah</div>
+                            </div>
+                            <!-- Halaqoh -->
+                            <div class="donut-item halaqoh">
+                                <div class="donut-chart-mini">
+                                    <canvas id="chart-halaqoh"></canvas>
+                                    <div class="donut-center-text" id="pct-halaqoh">0%</div>
+                                </div>
+                                <div class="donut-label">Halaqoh</div>
+                            </div>
+                            <!-- Puasa -->
+                            <div class="donut-item puasa">
+                                <div class="donut-chart-mini">
+                                    <canvas id="chart-puasa"></canvas>
+                                    <div class="donut-center-text" id="pct-puasa">0%</div>
+                                </div>
+                                <div class="donut-label">Puasa Sunnah</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: Academic Summary + Hafalan Progress -->
+            <!-- Academic Summary - Span 6 (Clickable) -->
+            <div class="bento-card bento-span-6 bento-clickable" id="card-academic" onclick="navigateToDetail('academic')" title="Klik untuk melihat detail nilai akademik">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: #dbeafe;">📚</div>
+                            <h3>Nilai Akademik</h3>
+                        </div>
+                        <span class="card-badge">Lihat Detail →</span>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="stats-row" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 0;">
+                            <div class="stat-card sc-green" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" id="academic-avg">0</div>
+                                    <div class="stat-label">Rata-rata</div>
+                                </div>
+                            </div>
+                            <div class="stat-card sc-blue" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" id="academic-rank">-</div>
+                                    <div class="stat-label">Peringkat</div>
+                                </div>
+                            </div>
+                            <div class="stat-card sc-gold" style="padding: 14px;">
+                                <div class="stat-body">
+                                    <div class="stat-val" id="academic-subjects">0</div>
+                                    <div class="stat-label">Mata Pelajaran</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hafalan Progress - Span 6 (Clickable) -->
+            <div class="bento-card bento-span-6 bento-clickable" id="card-hafalan" onclick="navigateToDetail('hafalan')" title="Klik untuk melihat detail hafalan">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: #f3e8ff;">📖</div>
+                            <h3>Progress Hafalan</h3>
+                        </div>
+                        <span class="card-badge">Lihat Detail →</span>
+                    </div>
+                    <div class="bento-card-body">
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 36px; font-weight: 800; font-family: var(--font-mono); color: var(--emerald-600);">
+                                    <span id="hafalan-current">0</span>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted);">dari <span id="hafalan-target">0</span> juz</div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="mini-progress">
+                                    <div class="mini-track" style="height: 12px;">
+                                        <div class="mini-fill fill-good" id="hafalan-bar" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="mini-pct" id="hafalan-pct">0%</span>
+                                </div>
+                                <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                                    Terakhir setor: <strong id="hafalan-last">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 4: Recent Pembinaan & Incidents (Clickable) -->
+            <div class="bento-card bento-span-12 bento-clickable" id="card-pembinaan" onclick="navigateToDetail('pembinaan')" title="Klik untuk melihat catatan pembinaan">
+                <div class="bento-card-inner">
+                    <div class="bento-card-header">
+                        <div class="bento-card-title">
+                            <div class="bento-card-icon" style="background: #fef3c7;">📝</div>
+                            <h3>Catatan Pembinaan Terbaru</h3>
+                            <span class="incident-count-badge" id="incident-count-badge" style="display: none;">0</span>
+                        </div>
+                        <span class="card-badge">Lihat Semua →</span>
+                    </div>
+                    <div class="bento-card-body">
+                        <div class="activity-list" id="pembinaan-list">
+                            <div class="activity-item">
+                                <div class="activity-dot dot-green">📋</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Memuat data pembinaan...</div>
+                                    <div class="activity-sub">Mohon tunggu</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Core Dependencies (order matters!) -->
+<script src="/static/js/utils.js?v=20260327B"></script>
+<script src="/static/js/apiConfig.js?v=20260327B"></script>
+<script src="/static/js/apiFetch.js?v=20260327B"></script>
+<script src="/static/js/auth-check.js?v=20260327B"></script>
+<!-- Page-specific JS -->
+<script src="/static/js/dashboard-parent.js?v=20260327B"></script>
+</body>
+</html>

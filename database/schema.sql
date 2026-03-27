@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  role ENUM('superadmin', 'admin', 'user') NOT NULL DEFAULT 'user',
+  role ENUM('superadmin', 'pimpinan', 'guru', 'walisantri', 'pendaftar') NOT NULL DEFAULT 'pendaftar',
   name VARCHAR(100) NOT NULL,
   nisn VARCHAR(20),
   email VARCHAR(100),
@@ -126,4 +126,4 @@ VALUES ('admin', '$2a$10$YourHashedPasswordHere', 'superadmin', 'Super Admin', '
 ON DUPLICATE KEY UPDATE username=username;
 
 -- Insert sample data for testing (optional)
--- INSERT INTO students (nisn, nama, kelas, program) VALUES ('1234567890', 'Contoh Siswa', 'X-A', 'IPA');
+-- INSERT INTO students (nisn, nama, kelas, program) VALUES ('1234567890', 'Contoh Siswa', 'X A', 'Reguler');

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Siswa - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260314c" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260312c" rel="stylesheet">
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Kelola Siswa</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Siswa</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Walisantri View (hidden by default) -->
+        <section class="walisantri-view" id="walisantri-view">
+            <div class="walisantri-info" id="walisantri-content">
+                <div class="glass-card" style="padding: 40px; text-align: center;">
+                    <div class="loading-spinner"></div>
+                    <p class="text-muted" style="margin-top: 15px;">Memuat data ananda...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin View -->
+        <section class="admin-view" id="admin-view">
+
+            <!-- Header Actions -->
+            <div class="page-actions admin-actions">
+                <button id="btn-add-student" onclick="window.openAddModal()" class="btn btn-primary">
+                    <span>➕</span> Tambah Siswa
+                </button>
+                <button onclick="window.openImportModal()" class="btn btn-success">
+                    <span>📤</span> Import Excel
+                </button>
+                <button onclick="window.exportToExcel()" class="btn btn-secondary">
+                    <span>📥</span> Export Excel
+                </button>
+                <button onclick="window.openKenaikanKelasModal()" class="btn btn-warning">
+                    <span>🎓</span> Kenaikan Kelas
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">👥</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-students">0</div>
+                        <div class="stat-label">Total Santri</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">✅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="active-students">0</div>
+                        <div class="stat-label">Santri Aktif</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">📈</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="hafalan-above">0</div>
+                        <div class="stat-label">Hafalan &gt; Target</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-red">
+                    <div class="stat-icon-wrap">📉</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="hafalan-below">0</div>
+                        <div class="stat-label">Hafalan &lt; Target</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🔍</span> Filter &amp; Pencarian</h3>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="search-input">Cari Siswa</label>
+                        <input type="text" id="search-input" placeholder="Masukkan NISN atau Nama" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-class">Kelas</label>
+                        <select id="filter-class" class="filter-input">
+                            <option value="">Semua Kelas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-program">Program</label>
+                        <select id="filter-program" class="filter-input">
+                            <option value="">Semua Program</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-status">Status</label>
+                        <select id="filter-status" class="filter-input">
+                            <option value="">Semua Status</option>
+                            <option value="true">Aktif</option>
+                            <option value="false">Tidak Aktif</option>
+                        </select>
+                    </div>
+                    <div class="filter-group filter-actions">
+                        <button onclick="window.resetFilters()" class="btn btn-secondary btn-sm">
+                            🔄 Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Daftar Siswa</h3>
+                    <div class="card-badge" id="table-count-badge">0 data</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>NISN</th>
+                                <th>Nama</th>
+                                <th>Kelas</th>
+                                <th>Program</th>
+                                <th>Status</th>
+                                <th>Hafalan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-table-body">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="loading-spinner" style="margin: 30px auto;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button onclick="window.loadPreviousPage()" id="btn-prev" class="btn btn-secondary btn-sm" disabled>
+                        ◀ Sebelumnya
+                    </button>
+                    <div class="pagination-info">
+                        Halaman <span id="current-page">1</span> dari <span id="total-pages">1</span>
+                        (Total: <span id="total-count">0</span> data)
+                    </div>
+                    <button onclick="window.loadNextPage()" id="btn-next" class="btn btn-secondary btn-sm" disabled>
+                        Selanjutnya ▶
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </div><!-- /page-body -->
+</main>
+
+<!-- Modal Add/Edit Student -->
+<div id="student-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Tambah Siswa</h2>
+            <button onclick="window.closeModal()" class="btn-close">&times;</button>
+        </div>
+        <form id="student-form" class="modal-form">
+            <input type="hidden" id="student-nisn-readonly">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="student-nisn">NISN <span class="required">*</span></label>
+                    <input type="text" id="student-nisn" name="nisn" required class="form-input" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="student-nama">Nama Lengkap <span class="required">*</span></label>
+                    <input type="text" id="student-nama" name="nama" required class="form-input" maxlength="100">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="student-kelas">Kelas</label>
+                    <select id="student-kelas" name="kelas" class="form-input">
+                        <option value="">Pilih Kelas</option>
+                        <optgroup label="Kelas X">
+                            <option value="X A">X A</option>
+                            <option value="X B">X B</option>
+                            <option value="X C">X C</option>
+                            <option value="X D">X D</option>
+                        </optgroup>
+                        <optgroup label="Kelas XI">
+                            <option value="XI A">XI A</option>
+                            <option value="XI B">XI B</option>
+                            <option value="XI C">XI C</option>
+                            <option value="XI D">XI D</option>
+                        </optgroup>
+                        <optgroup label="Kelas XII">
+                            <option value="XII A">XII A</option>
+                            <option value="XII B">XII B</option>
+                            <option value="XII C">XII C</option>
+                            <option value="XII D">XII D</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="student-program">Program</label>
+                    <select id="student-program" name="program" class="form-input">
+                        <option value="">Pilih Program</option>
+                        <option value="Reguler">Reguler</option>
+                        <option value="Tahfidz">Tahfidz</option>
+                        <option value="Khusus">Khusus</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="student-email">Email</label>
+                    <input type="email" id="student-email" name="email" class="form-input" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="student-phone">No. HP</label>
+                    <input type="text" id="student-phone" name="phone" class="form-input" maxlength="20">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="wali-nama">Nama Wali</label>
+                    <input type="text" id="wali-nama" name="wali_nama" class="form-input" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="wali-phone">No. HP Wali</label>
+                    <input type="text" id="wali-phone" name="wali_phone" class="form-input" maxlength="20">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tanggal-masuk">Tanggal Masuk</label>
+                    <input type="date" id="tanggal-masuk" name="tanggal_masuk" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="student-aktif">Status</label>
+                    <select id="student-aktif" name="aktif" class="form-input">
+                        <option value="true">Aktif</option>
+                        <option value="false">Tidak Aktif</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="target-hafalan">Target Hafalan (Juz)</label>
+                    <input type="number" id="target-hafalan" name="target_hafalan" class="form-input" min="0" max="30" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="current-hafalan">Hafalan Saat Ini (Juz)</label>
+                    <input type="number" id="current-hafalan" name="current_hafalan" class="form-input" min="0" value="0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="target-nilai">Target Nilai</label>
+                <input type="number" id="target-nilai" name="target_nilai" class="form-input" min="0" max="100" value="75">
+            </div>
+
+            <div class="form-actions">
+                <button type="button" onclick="window.closeModal()" class="btn btn-secondary">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal View Student Detail -->
+<div id="view-modal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>Detail Siswa</h2>
+            <button onclick="window.closeViewModal()" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body" id="view-modal-body">
+            <div class="loading-spinner" style="margin: 30px auto;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Modal Import Excel -->
+<div id="import-modal" class="modal">
+    <div class="modal-backdrop" onclick="window.closeImportModal()"></div>
+    <div class="modal-content modal-wizard">
+        <div class="modal-header">
+            <h2>Import Siswa dari Excel</h2>
+            <button class="btn-close" onclick="window.closeImportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step-wrap">
+                    <div class="step-dot active" id="import-dot-1">1</div>
+                    <div class="step-label">Template</div>
+                </div>
+                <div class="step-line" id="import-line-1"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="import-dot-2">2</div>
+                    <div class="step-label">Upload</div>
+                </div>
+                <div class="step-line" id="import-line-2"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="import-dot-3">3</div>
+                    <div class="step-label">Hasil</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Download Template -->
+            <div id="import-step-1" class="wizard-step active">
+                <div class="wizard-content">
+                    <div class="info-box info-box-primary">
+                        <h4>📋 Petunjuk Import Data Siswa</h4>
+                        <p>Download template Excel yang sudah disiapkan dengan format yang benar:</p>
+                        <ul>
+                            <li><strong>NISN</strong> - Nomor Induk Siswa (wajib, unik)</li>
+                            <li><strong>Nama</strong> - Nama lengkap siswa (wajib)</li>
+                            <li><strong>Kelas</strong> - Contoh: X A, XI B, XII C</li>
+                            <li><strong>Program</strong> - Reguler / Tahfidz / Khusus</li>
+                            <li><strong>Status</strong> - Aktif / Tidak Aktif</li>
+                        </ul>
+                        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                            <strong>Tips:</strong> Untuk NISN yang diawali angka 0, tambahkan tanda petik (') di depan. Contoh: '0012345678
+                        </p>
+                    </div>
+                    <div class="template-action">
+                        <button onclick="window.downloadStudentTemplate()" class="btn btn-success">
+                            <span>📥</span> Download Template Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Upload File -->
+            <div id="import-step-2" class="wizard-step" style="display: none;">
+                <div class="wizard-content">
+                    <div class="upload-zone" id="upload-zone">
+                        <div class="upload-icon">📁</div>
+                        <p>Drag & Drop file Excel di sini</p>
+                        <p class="text-muted">atau</p>
+                        <label for="import-file" class="btn btn-primary">Pilih File</label>
+                        <input type="file" id="import-file" accept=".xlsx,.xls" style="display: none;" onchange="window.handleFileSelect(event)">
+                    </div>
+                    <div class="selected-file" id="selected-file-info" style="display: none;">
+                        <span class="file-icon">📄</span>
+                        <span class="file-name" id="selected-file-name">-</span>
+                        <button class="btn-remove-file" onclick="window.removeSelectedFile()">&times;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Result -->
+            <div id="import-step-3" class="wizard-step" style="display: none;">
+                <div class="wizard-content">
+                    <div id="import-result" class="import-result">
+                        <div class="loading-spinner"></div>
+                        <p>Mengimport data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="import-btn-back" onclick="window.goToImportStepBack()" style="display: none;">← Kembali</button>
+            <button class="btn btn-secondary" onclick="window.closeImportModal()">Batal</button>
+            <button class="btn btn-primary" id="import-btn-next" onclick="window.goToImportStepNext()">Lanjut →</button>
+            <button class="btn btn-success" id="import-btn-upload" onclick="window.importStudentsNow()" style="display: none;">🚀 Mulai Import</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Kenaikan Kelas -->
+<div id="kenaikan-kelas-modal" class="modal">
+    <div class="modal-backdrop" onclick="window.closeKenaikanKelasModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🎓 Kenaikan Kelas</h2>
+            <button class="btn-close" onclick="window.closeKenaikanKelasModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="info-box info-box-warning">
+                <h4>⚠️ Perhatian</h4>
+                <p>Fitur ini akan mengubah kelas secara massal untuk semua siswa aktif di kelas yang dipilih.</p>
+            </div>
+
+            <form id="kenaikan-kelas-form" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="kelas-asal">Kelas Asal <span class="required">*</span></label>
+                        <select id="kelas-asal" name="kelas_asal" class="form-input" required>
+                            <option value="">Pilih Kelas Asal</option>
+                            <optgroup label="Kelas X">
+                                <option value="X A">X A</option>
+                                <option value="X B">X B</option>
+                                <option value="X C">X C</option>
+                                <option value="X D">X D</option>
+                            </optgroup>
+                            <optgroup label="Kelas XI">
+                                <option value="XI A">XI A</option>
+                                <option value="XI B">XI B</option>
+                                <option value="XI C">XI C</option>
+                                <option value="XI D">XI D</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="kelas-tujuan">Kelas Tujuan <span class="required">*</span></label>
+                        <select id="kelas-tujuan" name="kelas_tujuan" class="form-input" required>
+                            <option value="">Pilih Kelas Tujuan</option>
+                            <optgroup label="Kelas XI">
+                                <option value="XI A">XI A</option>
+                                <option value="XI B">XI B</option>
+                                <option value="XI C">XI C</option>
+                                <option value="XI D">XI D</option>
+                            </optgroup>
+                            <optgroup label="Kelas XII">
+                                <option value="XII A">XII A</option>
+                                <option value="XII B">XII B</option>
+                                <option value="XII C">XII C</option>
+                                <option value="XII D">XII D</option>
+                            </optgroup>
+                            <optgroup label="Lulus">
+                                <option value="LULUS">Alumni / Lulus</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="kenaikan-preview" class="kenaikan-preview" style="display: none;">
+                    <div class="preview-header">
+                        <h4>Preview Siswa yang Akan Naik Kelas</h4>
+                        <span class="preview-count" id="preview-count">0 siswa</span>
+                    </div>
+                    <div class="preview-list" id="preview-list">
+                        <!-- Akan diisi dinamis -->
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="window.closeKenaikanKelasModal()">Batal</button>
+            <button type="button" class="btn btn-primary" onclick="window.previewKenaikanKelas()">👁️ Preview</button>
+            <button type="button" class="btn btn-success" id="btn-proses-kenaikan" onclick="window.prosesKenaikanKelas()" disabled>🎓 Proses Kenaikan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260208" defer></script>
+<script src="/static/js/apiConfig.js?v=20260208" defer></script>
+<script src="/static/js/apiFetch.js?v=20260208" defer></script>
+<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/auth.js?v=20260208" defer></script>
+<script src="/static/js/page-events.js?v=20260208" defer></script>
+<script src="/static/js/students.js?v=20260312c" defer></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = user.role || window.getUserRole?.() || 'guest';
+        const btnAddStudent = document.getElementById('btn-add-student');
+
+        document.body.setAttribute('data-role', role);
+
+        // Update topbar date
+        const dateEl = document.getElementById('topbar-date');
+        if (dateEl) {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', options);
+        }
+
+        // Update user avatar initials
+        const avatarEl = document.getElementById('user-avatar-initials');
+        if (avatarEl && user.name) {
+            const words = user.name.trim().split(' ');
+            if (words.length >= 2) {
+                avatarEl.textContent = (words[0][0] + words[1][0]).toUpperCase();
+            } else {
+                avatarEl.textContent = user.name.substring(0, 2).toUpperCase();
+            }
+        }
+
+        // Update role display
+        const roleEl = document.getElementById('user-role-display');
+        if (roleEl) {
+            const roleDisplay = {
+                'superadmin': 'Super Admin',
+                'pimpinan': 'Pimpinan',
+                'guru': 'Guru',
+                'walisantri': 'Wali Santri'
+            };
+            roleEl.textContent = roleDisplay[role] || role || '-';
+        }
+
+        // Role-based access enforcement
+        if (role === 'walisantri') {
+            // Walisantri cannot access students page - redirect to dashboard
+            window.location.href = '/dashboard';
+            return;
+        }
+
+        // Admin/Guru/Pimpinan access
+        const canCreate = ['superadmin', 'guru'].includes(role);
+        if (btnAddStudent && !canCreate) {
+            btnAddStudent.style.display = 'none';
+        }
+
+        // Initialize admin view
+        if (window.switchView) window.switchView('admin');
+    });
+</script>
+</body>
+</html>

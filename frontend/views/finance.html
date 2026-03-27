@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keuangan - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme - SAME AS DASHBOARD -->
+    <link href="/static/css/baron-emerald.css?v=20260314c" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* ============================================
+           FINANCE MODULE - SYNCED WITH DASHBOARD
+           Minimal overrides, using baron-emerald.css
+           ============================================ */
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 0;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: var(--transition);
+            font-family: var(--font-main);
+        }
+
+        .tab-btn:hover { color: var(--emerald-600); }
+        .tab-btn.active {
+            color: var(--emerald-600);
+            border-bottom-color: var(--emerald-500);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Filter Row */
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .filter-row select,
+        .filter-row input {
+            padding: 10px 14px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: var(--font-main);
+            background: white;
+            min-width: 150px;
+            transition: var(--transition);
+        }
+
+        .filter-row select:focus,
+        .filter-row input:focus {
+            outline: none;
+            border-color: var(--emerald-500);
+            box-shadow: 0 0 0 3px rgba(31, 168, 122, 0.1);
+        }
+
+        /* Generate SPP Section - Matches Dashboard Welcome Banner */
+        .generate-spp-section {
+            background: linear-gradient(135deg, var(--emerald-700) 0%, var(--emerald-600) 50%, var(--emerald-500) 100%);
+            border-radius: var(--radius-lg);
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .generate-spp-section::before {
+            content: '';
+            position: absolute;
+            right: -30px; top: -40px;
+            width: 150px; height: 150px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+        }
+
+        .generate-spp-section .info h4 {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .generate-spp-section .info p {
+            color: rgba(255,255,255,0.75);
+            font-size: 13px;
+        }
+
+        .btn-generate-spp {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+            font-family: var(--font-main);
+        }
+
+        .btn-generate-spp:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn-generate-spp:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-generate-spp .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Invoice Cell - Monospace like Dashboard */
+        .invoice-cell {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--emerald-700);
+            background: var(--emerald-50);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--emerald-100);
+            display: inline-block;
+            letter-spacing: 0.3px;
+        }
+
+        /* Student Cell - Match Dashboard Progress Table */
+        .student-cell .student-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-main);
+            margin-bottom: 1px;
+        }
+
+        .student-cell .student-nisn {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* Nominal Styling - Dashboard Consistent */
+        .nominal {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .nominal.positive { color: var(--emerald-600); }
+        .nominal.negative { color: #dc2626; }
+
+        /* Table Action Buttons - Small & Consistent with Dashboard */
+        .table-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 6px 10px;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            text-decoration: none;
+            font-family: var(--font-main);
+            white-space: nowrap;
+        }
+
+        .action-btn .btn-icon { font-size: 12px; }
+        .action-btn .btn-label { font-size: 11px; }
+
+        /* View/Invoice - Blue tint */
+        .action-btn.action-view {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+        .action-btn.action-view:hover {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        /* Pay Button - Green */
+        .action-btn.action-pay {
+            background: rgba(31, 168, 122, 0.1);
+            color: var(--emerald-600);
+            border-color: rgba(31, 168, 122, 0.25);
+        }
+        .action-btn.action-pay:hover {
+            background: var(--emerald-500);
+            color: white;
+            border-color: var(--emerald-500);
+        }
+
+        /* Edit Button */
+        .action-btn.action-edit {
+            background: rgba(31, 168, 122, 0.1);
+            color: var(--emerald-600);
+            border-color: rgba(31, 168, 122, 0.25);
+        }
+        .action-btn.action-edit:hover {
+            background: var(--emerald-500);
+            color: white;
+        }
+
+        /* Delete Button */
+        .action-btn.action-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        .action-btn.action-delete:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        /* Verify Button */
+        .action-btn.action-verify {
+            background: var(--emerald-500);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+        }
+        .action-btn.action-verify:hover {
+            background: var(--emerald-600);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(31, 168, 122, 0.3);
+        }
+
+        /* Status Badges - Consistent with Dashboard */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-lunas {
+            background: rgba(31, 168, 122, 0.12);
+            color: var(--emerald-600);
+            border: 1px solid rgba(31, 168, 122, 0.25);
+        }
+
+        .badge-sebagian {
+            background: rgba(200, 150, 28, 0.12);
+            color: #a37215;
+            border: 1px solid rgba(200, 150, 28, 0.3);
+        }
+
+        .badge-belum {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .badge-overdue {
+            background: rgba(185, 28, 28, 0.15);
+            color: #b91c1c;
+            border: 1px solid rgba(185, 28, 28, 0.3);
+            animation: pulse-subtle 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .badge-pending {
+            background: rgba(200, 150, 28, 0.12);
+            color: #a37215;
+            border: 1px solid rgba(200, 150, 28, 0.3);
+        }
+
+        .badge-verified {
+            background: rgba(31, 168, 122, 0.12);
+            color: var(--emerald-600);
+            border: 1px solid rgba(31, 168, 122, 0.25);
+        }
+
+        /* Verification Cards */
+        .verification-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .verification-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .verification-card:hover {
+            box-shadow: var(--shadow-sm);
+        }
+
+        .verification-card.verified {
+            border-color: var(--emerald-200);
+            background: var(--emerald-50);
+        }
+
+        .verification-card .bukti-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            border: 1px solid var(--border-light);
+            cursor: pointer;
+        }
+
+        .verification-card .info { flex: 1; }
+
+        .verification-card .info .nama {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .verification-card .info .detail {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .verification-card .nominal-wrap { text-align: right; }
+
+        /* Bukti Placeholder - when image fails to load */
+        .bukti-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-sm);
+            background: var(--emerald-50);
+            border: 1px dashed var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--text-muted);
+        }
+
+        .verification-card .nominal-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--emerald-600);
+        }
+
+        .verification-card .tanggal {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            width: 32px; height: 32px;
+            border: none;
+            background: transparent;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-radius: 50%;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: var(--emerald-50);
+            color: var(--text-main);
+        }
+
+        .modal-body { padding: 22px; }
+
+        .modal-footer {
+            padding: 16px 22px;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Bank Info Card */
+        .bank-info-card {
+            background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
+            color: white;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .bank-info-card .bank-name {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+
+        .bank-info-card .account-number {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        .bank-info-card .account-name {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .btn-copy {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: var(--transition);
+        }
+
+        .btn-copy:hover { background: rgba(255,255,255,0.3); }
+
+        /* Form Styles */
+        .form-group { margin-bottom: 16px; }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: var(--font-main);
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--emerald-500);
+            box-shadow: 0 0 0 3px rgba(31, 168, 122, 0.1);
+        }
+
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--emerald-400);
+            background: var(--emerald-50);
+        }
+
+        .file-upload-area.has-file {
+            border-color: var(--emerald-500);
+            background: var(--emerald-50);
+        }
+
+        .file-upload-area input {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-upload-area .upload-icon { font-size: 32px; margin-bottom: 8px; }
+        .file-upload-area .upload-text { color: var(--text-muted); font-size: 13px; }
+        .file-upload-area .file-name { color: var(--emerald-600); font-weight: 600; margin-top: 6px; }
+
+        .file-preview {
+            max-width: 150px;
+            max-height: 100px;
+            border-radius: var(--radius-sm);
+            margin-top: 8px;
+        }
+
+        /* Invoice Slip Modal */
+        .invoice-slip-modal {
+            background: white;
+            max-width: 380px;
+        }
+
+        .invoice-header {
+            background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+
+        .invoice-logo { font-size: 32px; margin-bottom: 8px; }
+        .invoice-brand h2 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+        .invoice-brand p { font-size: 11px; opacity: 0.85; }
+
+        .invoice-title {
+            text-align: center;
+            padding: 14px;
+            background: var(--emerald-50);
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .invoice-title h3 { font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+        .invoice-number { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--emerald-600); }
+
+        .invoice-body { padding: 16px; }
+
+        .invoice-info-table {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .invoice-info-table td {
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        .invoice-info-table .label { color: var(--text-muted); width: 80px; }
+        .invoice-info-table .value { font-weight: 600; color: var(--text-main); }
+
+        .invoice-divider {
+            border-top: 1px dashed var(--border-light);
+            margin: 12px 0;
+            position: relative;
+        }
+
+        .invoice-items { margin-bottom: 12px; }
+
+        .invoice-items-table {
+            width: 100%;
+            font-size: 12px;
+        }
+
+        .invoice-items-table td { padding: 4px 0; }
+
+        .invoice-summary {
+            background: var(--emerald-50);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+        }
+
+        .invoice-summary-table {
+            width: 100%;
+            font-size: 12px;
+        }
+
+        .invoice-summary-table td { padding: 3px 0; }
+        .invoice-summary-table .label { color: var(--text-muted); }
+        .invoice-summary-table .value { text-align: right; font-weight: 600; }
+        .invoice-summary-table .total .value { font-size: 16px; color: var(--emerald-600); }
+        .invoice-summary-table .sisa .value { color: #dc2626; }
+
+        .invoice-status { text-align: center; margin-bottom: 12px; }
+
+        .invoice-footer {
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            padding-top: 12px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .invoice-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            padding: 12px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        /* Walisantri View */
+        .ws-hero-card {
+            background: linear-gradient(135deg, var(--emerald-700) 0%, var(--emerald-600) 50%, var(--emerald-500) 100%);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .ws-hero-card::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 200px; height: 200px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+
+        .ws-hero-card .hero-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+
+        .ws-hero-card .hero-value {
+            font-size: 36px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+        }
+
+        .ws-hero-card .hero-sub {
+            font-size: 12px;
+            margin-top: 6px;
+            opacity: 0.85;
+        }
+
+        /* Summary Cards Grid */
+        .walisantri-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .summary-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .summary-card .value {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            margin-bottom: 4px;
+        }
+
+        .summary-card .value.positive { color: var(--emerald-600); }
+        .summary-card .value.negative { color: #dc2626; }
+
+        .summary-card .label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Accordion */
+        .accordion {
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .accordion-item { border-bottom: 1px solid var(--border-light); }
+        .accordion-item:last-child { border-bottom: none; }
+
+        .accordion-header {
+            width: 100%;
+            padding: 14px 18px;
+            background: white;
+            border: none;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+
+        .accordion-header:hover { background: var(--emerald-50); }
+        .accordion-header.active { background: var(--emerald-50); color: var(--emerald-700); }
+
+        .accordion-header .icon {
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .accordion-header.active .icon { transform: rotate(180deg); }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: white;
+        }
+
+        .accordion-content.active { max-height: 400px; }
+
+        .accordion-body {
+            padding: 14px 18px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-sub);
+        }
+
+        .accordion-body ol { margin-left: 18px; }
+        .accordion-body li { margin-bottom: 6px; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .pagination button {
+            padding: 8px 14px;
+            border: 1px solid var(--border-light);
+            background: white;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: var(--font-main);
+            transition: var(--transition);
+        }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: var(--emerald-500);
+            color: var(--emerald-600);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .page-info {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Success Overlay */
+        .success-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(31, 168, 122, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .success-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .success-overlay .checkmark {
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: bounceIn 0.5s ease;
+        }
+
+        .success-overlay .success-text {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state .empty-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; }
+        .empty-state .empty-desc { font-size: 13px; color: var(--text-muted); max-width: 300px; margin: 0 auto 16px; }
+
+        .empty-state .empty-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: var(--emerald-500);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .empty-state .empty-action:hover {
+            background: var(--emerald-600);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .walisantri-summary { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .generate-spp-section { flex-direction: column; text-align: center; }
+            .walisantri-summary { grid-template-columns: 1fr; }
+            .filter-row { flex-direction: column; }
+            .filter-row select, .filter-row input { width: 100%; }
+        }
+    </style>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar - SAME AS DASHBOARD -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1>Keuangan</h1>
+            <div class="breadcrumb">Portal Ponpes Baron › <span>Keuangan</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="current-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- ==================== ADMIN VIEW ==================== -->
+        <section id="admin-view" style="display: none;">
+
+            <!-- Stats Row - DASHBOARD STYLE -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">💰</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-tagihan">Rp 0</div>
+                        <div class="stat-label">Total Tagihan</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">✅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-terbayar">Rp 0</div>
+                        <div class="stat-label">Total Terbayar</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-red">
+                    <div class="stat-icon-wrap">⏰</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-tunggakan">Rp 0</div>
+                        <div class="stat-label">Tunggakan</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">🔔</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="pending-count">0</div>
+                        <div class="stat-label">Pending Verifikasi</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate SPP Section -->
+            <div class="generate-spp-section" id="generate-spp-section" style="display: none;">
+                <div class="info">
+                    <h4>📋 Generate Tagihan SPP</h4>
+                    <p>Buat tagihan bulanan untuk semua siswa aktif</p>
+                </div>
+                <button class="btn-generate-spp" id="btn-generate-spp" onclick="generateSPP()">
+                    <span class="btn-text">➕ Generate SPP</span>
+                </button>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="tagihan">📋 Tagihan</button>
+                <button class="tab-btn" data-tab="verifikasi">🔔 Verifikasi</button>
+                <button class="tab-btn" data-tab="pembayaran">💳 Pembayaran</button>
+                <button class="tab-btn" data-tab="tarif">📑 Tarif</button>
+            </div>
+
+            <!-- Tab: Tagihan -->
+            <div id="tab-tagihan" class="tab-content active">
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📋</span> Daftar Tagihan</h3>
+                        <div class="card-badge">All</div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="card-body" style="padding-bottom: 0;">
+                        <div class="filter-row">
+                            <select id="filter-kelas">
+                                <option value="">Semua Kelas</option>
+                            </select>
+                            <select id="filter-status">
+                                <option value="">Semua Status</option>
+                                <option value="lunas">Lunas</option>
+                                <option value="sebagian">Sebagian</option>
+                                <option value="belum_bayar">Belum Bayar</option>
+                                <option value="lewat_jatuh_tempo">Lewat Jatuh Tempo</option>
+                            </select>
+                            <select id="filter-bulan">
+                                <option value="">Semua Bulan</option>
+                                <option value="1">Januari</option>
+                                <option value="2">Februari</option>
+                                <option value="3">Maret</option>
+                                <option value="4">April</option>
+                                <option value="5">Mei</option>
+                                <option value="6">Juni</option>
+                                <option value="7">Juli</option>
+                                <option value="8">Agustus</option>
+                                <option value="9">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                            <input type="text" id="search-tagihan" placeholder="🔍 Cari nama/NISN...">
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>No. Invoice</th>
+                                    <th>Siswa</th>
+                                    <th>Kelas</th>
+                                    <th>Tarif</th>
+                                    <th>Periode</th>
+                                    <th>Total</th>
+                                    <th>Terbayar</th>
+                                    <th>Sisa</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tagihan-table-body">
+                                <tr>
+                                    <td colspan="11" class="text-center">
+                                        <div class="loading-spinner" style="margin: 20px auto;"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination">
+                        <button id="btn-prev-tagihan" onclick="loadTagihanPage('prev')">← Prev</button>
+                        <span class="page-info">Halaman <span id="current-page-tagihan">1</span> dari <span id="total-pages-tagihan">1</span></span>
+                        <button id="btn-next-tagihan" onclick="loadTagihanPage('next')">Next →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Verifikasi -->
+            <div id="tab-verifikasi" class="tab-content">
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">🔔</span> Pembayaran Menunggu Verifikasi</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="verification-list" id="verification-list">
+                            <div class="loading-spinner" style="margin: 20px auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Pembayaran -->
+            <div id="tab-pembayaran" class="tab-content">
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">💳</span> Riwayat Pembayaran</h3>
+                    </div>
+
+                    <div class="card-body" style="padding-bottom: 0;">
+                        <div class="filter-row">
+                            <select id="filter-verifikasi">
+                                <option value="">Semua Status</option>
+                                <option value="true">Terverifikasi</option>
+                                <option value="false">Belum Verifikasi</option>
+                            </select>
+                            <select id="filter-metode">
+                                <option value="">Semua Metode</option>
+                                <option value="tunai">Tunai</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="qris">QRIS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tanggal</th>
+                                    <th>Siswa</th>
+                                    <th>Tarif</th>
+                                    <th>Nominal</th>
+                                    <th>Metode</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pembayaran-table-body">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <div class="loading-spinner" style="margin: 20px auto;"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Tarif -->
+            <div id="tab-tarif" class="tab-content">
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📑</span> Master Tarif</h3>
+                        <button class="btn-outline-emerald" onclick="openTarifModal()">
+                            ➕ Tambah Tarif
+                        </button>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nama Tarif</th>
+                                    <th>Kategori</th>
+                                    <th>Frekuensi</th>
+                                    <th>Nominal</th>
+                                    <th>Tahun Ajaran</th>
+                                    <th>Kelas</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tarif-table-body">
+                                <tr>
+                                    <td colspan="9" class="text-center">
+                                        <div class="loading-spinner" style="margin: 20px auto;"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== WALISANTRI VIEW ==================== -->
+        <section id="walisantri-view" style="display: none;">
+
+            <!-- Hero Card -->
+            <div class="ws-hero-card">
+                <div class="hero-label">Total Tunggakan Ananda</div>
+                <div class="hero-value" id="ws-hero-tunggakan">Rp 0</div>
+                <div class="hero-sub">Segera lakukan pembayaran</div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="walisantri-summary">
+                <div class="summary-card">
+                    <div class="value positive" id="ws-total-tagihan">Rp 0</div>
+                    <div class="label">Total Tagihan</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value positive" id="ws-total-terbayar">Rp 0</div>
+                    <div class="label">Total Terbayar</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value" id="ws-tagihan-count">0</div>
+                    <div class="label">Jumlah Tagihan</div>
+                </div>
+            </div>
+
+            <!-- Tagihan List -->
+            <div class="glass-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Daftar Tagihan Ananda</h3>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="data-table ws-tagihan-table">
+                        <thead>
+                            <tr>
+                                <th>No. Invoice</th>
+                                <th>Keterangan</th>
+                                <th>Periode</th>
+                                <th>Nominal</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ws-tagihan-tbody">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="loading-spinner" style="margin: 20px auto;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payment Tutorial -->
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>📖 Cara Melakukan Pembayaran</span>
+                        <span class="icon">▼</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ol>
+                                <li>Klik tombol <strong>"Bayar"</strong> pada tagihan yang ingin dibayar</li>
+                                <li>Transfer ke rekening yang tertera di popup</li>
+                                <li>Upload bukti transfer (foto struk/screenshot)</li>
+                                <li>Klik <strong>"Kirim Bukti"</strong></li>
+                                <li>Tunggu verifikasi dari bendahara (maks 1x24 jam)</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </div><!-- /page-body -->
+</main>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Modal: Bayar -->
+<div class="modal-overlay" id="modal-bayar">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>💳 Pembayaran</h3>
+            <button class="modal-close" onclick="closeModal('modal-bayar')">×</button>
+        </div>
+        <div class="modal-body">
+            <!-- Tagihan Info -->
+            <div style="margin-bottom: 16px; padding: 12px; background: var(--emerald-50); border-radius: 8px;">
+                <div style="font-size: 13px; color: var(--text-muted);">Tagihan:</div>
+                <div style="font-weight: 600;" id="modal-tagihan-nama">-</div>
+                <div style="font-size: 13px; color: var(--text-muted);" id="modal-tagihan-periode">-</div>
+                <div style="font-size: 18px; font-weight: 700; color: var(--emerald-600); margin-top: 4px;" id="modal-tagihan-sisa">Rp 0</div>
+            </div>
+
+            <!-- Bank Info -->
+            <div class="bank-info-card">
+                <div class="bank-name">Bank Syariah Indonesia (BSI)</div>
+                <div class="account-number">
+                    7181234567
+                    <button class="btn-copy" onclick="copyToClipboard('7181234567')">📋 Salin</button>
+                </div>
+                <div class="account-name">YPP BARON</div>
+            </div>
+
+            <input type="hidden" id="bayar-tagihan-id">
+
+            <form onsubmit="submitPembayaran(event)">
+                <div class="form-group">
+                    <label>Nominal Pembayaran</label>
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-weight: 600;">Rp</span>
+                        <input type="text" id="bayar-nominal" style="padding-left: 36px;" placeholder="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Metode Pembayaran</label>
+                    <select id="bayar-metode">
+                        <option value="transfer">Transfer Bank</option>
+                        <option value="qris">QRIS</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Upload Bukti Transfer</label>
+                    <div class="file-upload-area" id="upload-area">
+                        <input type="file" id="bayar-bukti" accept="image/*" onchange="previewBukti(this)" required>
+                        <div class="upload-icon">📤</div>
+                        <div class="upload-text">Klik atau drag file ke sini</div>
+                        <div class="file-name" id="file-name"></div>
+                        <img id="file-preview" class="file-preview" style="display: none;">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-outline-emerald" onclick="closeModal('modal-bayar')">Batal</button>
+            <button class="btn-outline-emerald" style="background: var(--emerald-500); color: white;" id="btn-submit-bayar" onclick="submitPembayaran()">
+                <span class="btn-text">Kirim Bukti</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Preview Bukti -->
+<div class="modal-overlay" id="modal-preview-bukti">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3>📷 Bukti Pembayaran</h3>
+            <button class="modal-close" onclick="closeModal('modal-preview-bukti')">×</button>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <img id="preview-bukti-img" style="max-width: 100%; border-radius: 8px;">
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Invoice Slip -->
+<div class="modal-overlay" id="modal-invoice-slip">
+    <div class="modal-content invoice-slip-modal">
+        <div class="invoice-header">
+            <div class="invoice-logo">🕌</div>
+            <div class="invoice-brand">
+                <h2>PONDOK PESANTREN BARON</h2>
+                <p>Jl. Raya Baron No. 123, Nganjuk</p>
+            </div>
+        </div>
+
+        <div class="invoice-title">
+            <h3>SLIP TAGIHAN</h3>
+            <div class="invoice-number" id="slip-invoice-no">-</div>
+        </div>
+
+        <div class="invoice-body">
+            <table class="invoice-info-table">
+                <tr><td class="label">Tanggal</td><td class="value" id="slip-tanggal">-</td></tr>
+                <tr><td class="label">Siswa</td><td class="value" id="slip-siswa">-</td></tr>
+                <tr><td class="label">NISN</td><td class="value" id="slip-nisn">-</td></tr>
+                <tr><td class="label">Kelas</td><td class="value" id="slip-kelas">-</td></tr>
+            </table>
+
+            <div class="invoice-divider"></div>
+
+            <div class="invoice-items">
+                <table class="invoice-items-table" id="slip-items">
+                    <!-- Items will be rendered here -->
+                </table>
+            </div>
+
+            <div class="invoice-summary">
+                <table class="invoice-summary-table">
+                    <tr class="total"><td class="label">Total</td><td class="value" id="slip-total">Rp 0</td></tr>
+                    <tr><td class="label">Terbayar</td><td class="value" id="slip-terbayar">Rp 0</td></tr>
+                    <tr class="sisa"><td class="label">Sisa</td><td class="value" id="slip-sisa">Rp 0</td></tr>
+                </table>
+            </div>
+
+            <div class="invoice-status" id="slip-status-container">
+                <!-- Status badge will be rendered here -->
+            </div>
+
+            <div class="invoice-footer">
+                Dokumen ini digenerate secara otomatis oleh sistem.<br>
+                Terima kasih atas kepercayaan Anda.
+            </div>
+        </div>
+
+        <div class="invoice-actions">
+            <button class="btn-outline-emerald" onclick="closeModal('modal-invoice-slip')">Tutup</button>
+            <button class="btn-outline-emerald" style="background: var(--emerald-500); color: white;" onclick="printInvoice()">🖨️ Cetak</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Tarif (Add/Edit) -->
+<div class="modal-overlay" id="modal-tarif">
+    <div class="modal-content" style="max-width: 550px;">
+        <div class="modal-header">
+            <h3 id="modal-tarif-title">➕ Tambah Tarif Baru</h3>
+            <button class="modal-close" onclick="closeModal('modal-tarif')">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="tarif-form" onsubmit="submitTarif(event)">
+                <input type="hidden" id="tarif-id">
+
+                <div class="form-group">
+                    <label>Nama Tarif <span style="color: #dc2626;">*</span></label>
+                    <input type="text" id="tarif-nama" placeholder="Contoh: SPP Kelas X, Uang Gedung 2025" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Kategori <span style="color: #dc2626;">*</span></label>
+                        <select id="tarif-kategori" required>
+                            <option value="spp">SPP (Bulanan)</option>
+                            <option value="gedung">Uang Gedung (Tahunan)</option>
+                            <option value="seragam">Seragam</option>
+                            <option value="buku">Buku & Perlengkapan</option>
+                            <option value="kegiatan">Kegiatan Sekolah</option>
+                            <option value="wisuda">Wisuda/Kelulusan</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Frekuensi <span style="color: #dc2626;">*</span></label>
+                        <select id="tarif-frekuensi" required>
+                            <option value="bulanan">Bulanan</option>
+                            <option value="semester">Per Semester</option>
+                            <option value="tahunan">Tahunan</option>
+                            <option value="sekali">Sekali Bayar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nominal <span style="color: #dc2626;">*</span></label>
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-weight: 600;">Rp</span>
+                        <input type="text" id="tarif-nominal" style="padding-left: 36px;" placeholder="0" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Tahun Ajaran <span style="color: #dc2626;">*</span></label>
+                        <input type="text" id="tarif-tahun-ajaran" placeholder="2025/2026" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kelas (Opsional)</label>
+                        <input type="text" id="tarif-kelas" placeholder="Kosongkan untuk semua kelas">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Deskripsi (Opsional)</label>
+                    <textarea id="tarif-deskripsi" rows="2" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); font-family: var(--font-main); font-size: 14px; resize: vertical;" placeholder="Keterangan tambahan..."></textarea>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="tarif-aktif" style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="tarif-aktif" style="margin-bottom: 0; cursor: pointer;">Tarif Aktif</label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-outline-emerald" onclick="closeModal('modal-tarif')">Batal</button>
+            <button class="btn-outline-emerald" style="background: var(--emerald-500); color: white;" id="btn-submit-tarif" onclick="submitTarif()">
+                <span class="btn-text">Simpan Tarif</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Overlay -->
+<div class="success-overlay" id="success-overlay">
+    <div class="checkmark">✅</div>
+    <div class="success-text" id="success-text">Berhasil!</div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260312c" defer></script>
+<script src="/static/js/apiConfig.js?v=20260312c" defer></script>
+<script src="/static/js/apiFetch.js?v=20260312c" defer></script>
+<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/auth.js?v=20260312c" defer></script>
+<script src="/static/js/finance.js?v=20260312c" defer></script>
+
+<script>
+    // Initialize date display
+    window.addEventListener('load', function() {
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', options);
+        }
+    });
+</script>
+</body>
+</html>

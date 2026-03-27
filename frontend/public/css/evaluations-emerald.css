@@ -1,0 +1,283 @@
+/* ============================================
+   EVALUATIONS PAGE - Deep Emerald Enhancements
+   Extends deep-emerald.css base theme
+   ============================================ */
+
+/* Active Filters Display */
+.active-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 20px;
+    background: rgba(245, 166, 35, 0.08);
+    border: 1px solid rgba(245, 166, 35, 0.2);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 20px;
+}
+
+.filter-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(245, 166, 35, 0.15);
+    border: 1px solid rgba(245, 166, 35, 0.3);
+    border-radius: 20px;
+    color: var(--amber-light);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.filter-clear-btn {
+    padding: 6px 14px;
+    background: rgba(244, 91, 105, 0.15);
+    border: 1px solid rgba(244, 91, 105, 0.3);
+    border-radius: 20px;
+    color: var(--rose-light);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    margin-left: auto;
+}
+
+.filter-clear-btn:hover {
+    background: rgba(244, 91, 105, 0.25);
+}
+
+/* Kategori Badge */
+.badge-kategori {
+    background: rgba(167, 139, 250, 0.15);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    color: var(--purple-light);
+    font-size: 10px;
+}
+
+/* Jenis Selector */
+.jenis-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.jenis-radio {
+    cursor: pointer;
+}
+
+.jenis-radio input {
+    display: none;
+}
+
+.jenis-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: rgba(31, 216, 164, 0.03);
+    border: 2px solid var(--border-input);
+    border-radius: var(--border-radius-lg);
+    transition: all var(--transition-normal);
+}
+
+.jenis-radio input:checked + .jenis-label {
+    border-color: var(--amber);
+    background: rgba(245, 166, 35, 0.1);
+    box-shadow: 0 0 20px rgba(245, 166, 35, 0.2);
+}
+
+.jenis-radio.prestasi input:checked + .jenis-label {
+    border-color: var(--teal);
+    background: rgba(31, 216, 164, 0.1);
+    box-shadow: 0 0 20px rgba(31, 216, 164, 0.2);
+}
+
+.jenis-radio.pelanggaran input:checked + .jenis-label {
+    border-color: var(--rose);
+    background: rgba(244, 91, 105, 0.1);
+    box-shadow: 0 0 20px rgba(244, 91, 105, 0.2);
+}
+
+.jenis-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.jenis-text {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.jenis-desc {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Kategori Chips */
+.kategori-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.kategori-chip {
+    cursor: pointer;
+}
+
+.kategori-chip input {
+    display: none;
+}
+
+.kategori-chip span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: rgba(31, 216, 164, 0.05);
+    border: 1px solid var(--border-input);
+    border-radius: 25px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+}
+
+.kategori-chip input:checked + span {
+    background: rgba(245, 166, 35, 0.15);
+    border-color: var(--amber);
+    color: var(--text-primary);
+    box-shadow: 0 0 15px rgba(245, 166, 35, 0.2);
+}
+
+.kategori-chip:hover span {
+    background: rgba(31, 216, 164, 0.08);
+}
+
+/* Step Info */
+.step-info {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.glass-card-mini {
+    background: rgba(31, 216, 164, 0.08);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-sm);
+    padding: 12px 18px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* Photo Preview */
+.photo-preview {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.photo-preview img {
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+/* Evaluation Cards (Walisantri View) */
+.evaluation-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-md);
+    padding: 20px;
+    margin-bottom: 12px;
+    transition: all var(--transition-normal);
+}
+
+.evaluation-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+}
+
+.evaluation-card.prestasi {
+    border-left: 4px solid var(--teal);
+}
+
+.evaluation-card.pelanggaran {
+    border-left: 4px solid var(--rose);
+}
+
+.evaluation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.evaluation-date {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.evaluation-name {
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.evaluation-summary {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.evaluation-note {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.evaluation-teacher {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+/* Table Header */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.table-header h3 {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .jenis-selector {
+        grid-template-columns: 1fr;
+    }
+
+    .evaluation-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

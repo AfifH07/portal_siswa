@@ -22,32 +22,27 @@ portal-siswa/
 ├── backend_django/           # Django Backend
 │   ├── manage.py
 │   ├── requirements.txt
-│   ├── .env.example
+│   ├── venv/                # Python virtual environment
 │   ├── backend_django/      # Django settings package
-│   │   ├── __init__.py
 │   │   ├── settings.py
-│   │   ├── urls.py
-│   │   ├── wsgi.py
-│   │   └── asgi.py
-│   ├── apps/               # Django apps
-│   │   ├── accounts/       # Auth & users
-│   │   ├── students/       # Student management
-│   │   ├── attendance/     # Attendance system
-│   │   ├── grades/         # Grades system
-│   │   ├── evaluations/    # Evaluations + upload
-│   │   └── dashboard/      # Statistics
-│   ├── media/              # File uploads
-│   ├── static/             # Static files (optional)
-│   └── database/          # Migrations & seed scripts
-├── frontend/               # Frontend static files
+│   │   └── urls.py
+│   └── apps/               # Django apps
+│       ├── accounts/       # Auth, Users, JWT, Permissions
+│       ├── students/       # CRUD Siswa
+│       ├── attendance/     # Sistem Absensi
+│       ├── grades/         # Sistem Nilai
+│       ├── evaluations/    # Evaluasi + Upload Foto
+│       └── dashboard/      # Statistik Dashboard
+├── frontend/               # Frontend (Native HTML/CSS/JS)
 │   ├── public/
-│   │   ├── css/
-│   │   ├── js/
-│   │   └── assets/
-│   └── views/
-│       └── index.html
-├── legacy_node_backend/     # Old Node.js backend (archived)
-├── docker-compose.yml
+│   │   ├── css/           # Stylesheets
+│   │   └── js/            # JavaScript modules
+│   └── views/             # HTML pages
+├── database/              # SQL Schema & Migrations
+├── docs/                  # Dokumentasi lengkap
+├── archive/               # File arsip
+├── docker-compose.yml     # Docker configuration
+├── Dockerfile
 └── README.md
 ```
 
@@ -267,14 +262,20 @@ curl -X GET http://localhost:8000/api/dashboard/stats \
 
 | Model | Description |
 |-------|-------------|
-| users | Custom user model dengan role (superadmin/admin/user) |
-| students | Data student (NISN, nama, kelas, program) |
-| attendance | Record kehadiran (nisn, tanggal, waktu, status, keterangan) |
-| grades | Nilai (nisn, mata_pelajaran, nilai, semester, tahun_ajaran, jenis_ujian) |
-| evaluations | Evaluasi student dengan foto upload |
-| schedules | Jadwal guru |
-| reset_tokens | Token reset password |
-| attendance_draft | Draft data kehadiran |
+| User | Custom user model dengan role (superadmin/pimpinan/guru/walisantri) |
+| Student | Data siswa (NISN, nama, kelas, program, alamat, dll) |
+| Attendance | Record kehadiran (nisn, tanggal, waktu, status, keterangan) |
+| Grade | Nilai (nisn, mata_pelajaran, nilai, semester, tahun_ajaran, jenis) |
+| Evaluation | Evaluasi siswa dengan foto upload |
+
+## 👥 Role & Permissions
+
+| Role | Akses |
+|------|-------|
+| superadmin | Full access - manage users, all data |
+| pimpinan | View all data, manage grades & attendance |
+| guru | Manage attendance & grades untuk kelasnya |
+| walisantri | View data anaknya saja (readonly) |
 
 ## 📤 File Upload
 

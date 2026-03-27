@@ -44,3 +44,11 @@ legacy_node_backend/
 # Backup
 *.bak
 *.backup
+
+# Personal & Data Files
+*.pdf
+data nilai/
+archive/
+.claude/
+*.csv
+nul

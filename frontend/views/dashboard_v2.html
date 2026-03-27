@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard v2.2 - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Base Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260314c" rel="stylesheet">
+
+    <!-- Dashboard v2.2 Styles -->
+    <link href="/static/css/dashboard_v2.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <button id="btn-logout" class="logout-btn">
+            <span class="icon">🚪</span> Keluar
+        </button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<main class="main-content">
+
+    <!-- ========== HEADER ========== -->
+    <header class="page-header">
+        <div class="header-left">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Selamat datang, <span id="user-name">—</span></p>
+        </div>
+        <div class="header-right">
+            <!-- Student Selector (for walisantri multi-child) -->
+            <div class="student-selector-wrapper" id="student-selector-wrapper">
+                <label for="student-selector" class="selector-label">Pilih Anak:</label>
+                <select id="student-selector" class="student-selector">
+                    <option value="">— Pilih Santri —</option>
+                    <!-- Options populated by JS -->
+                </select>
+            </div>
+
+            <!-- Print Button -->
+            <button id="print-rapor-btn" class="btn-print" title="Cetak Rapor">
+                <span class="btn-icon">🖨️</span>
+                <span class="btn-text">Cetak Rapor</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ========== BENTO BOX LAYOUT ========== -->
+    <div class="bento-container">
+
+        <!-- ====== TOP ROW: 2 Large Columns ====== -->
+        <div class="bento-row bento-row-top">
+
+            <!-- LEFT COLUMN: IPK/Academic Card -->
+            <div id="ipk-card" class="bento-card bento-large clipped-card card-academic">
+                <div class="card-header">
+                    <div class="card-icon academic-icon">📚</div>
+                    <div class="card-title-group">
+                        <h2 class="card-title">Nilai Akademik</h2>
+                        <span class="card-badge">Semester Ganjil</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- IPK Display -->
+                    <div class="metric-hero">
+                        <span class="metric-value" id="ipk-value">—</span>
+                        <span class="metric-label">IPK</span>
+                    </div>
+                    <!-- Academic Radar Chart Placeholder -->
+                    <div class="chart-container">
+                        <canvas id="academic-radar-chart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span class="footer-stat">
+                        <span class="stat-icon">📊</span>
+                        <span id="total-subjects">—</span> Mata Pelajaran
+                    </span>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Diniyah Card -->
+            <div id="diniyah-card" class="bento-card bento-large clipped-card card-diniyah">
+                <div class="card-header">
+                    <div class="card-icon diniyah-icon">🕌</div>
+                    <div class="card-title-group">
+                        <h2 class="card-title">Nilai Diniyah</h2>
+                        <span class="card-badge badge-gold">Tahfidz & Keagamaan</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Diniyah Average Display -->
+                    <div class="metric-hero metric-gold">
+                        <span class="metric-value" id="diniyah-value">—</span>
+                        <span class="metric-label">Rata-rata</span>
+                    </div>
+                    <!-- Diniyah Bar Chart Placeholder -->
+                    <div class="chart-container">
+                        <canvas id="diniyah-bar-chart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span class="footer-stat">
+                        <span class="stat-icon">📖</span>
+                        <span id="total-diniyah">—</span> Mata Pelajaran
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ====== BOTTOM ROW: Grid of Smaller Cards ====== -->
+        <div class="bento-row bento-row-bottom">
+
+            <!-- Hafalan Progress Card -->
+            <div id="hafalan-card" class="bento-card bento-medium clipped-card card-hafalan">
+                <div class="card-header">
+                    <div class="card-icon hafalan-icon">📖</div>
+                    <h2 class="card-title">Progress Hafalan</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Circular Progress -->
+                    <div class="progress-ring-container">
+                        <svg class="progress-ring" width="120" height="120">
+                            <circle class="progress-ring-bg" cx="60" cy="60" r="52"></circle>
+                            <circle class="progress-ring-fill" cx="60" cy="60" r="52" id="hafalan-ring"></circle>
+                        </svg>
+                        <div class="progress-ring-text">
+                            <span class="ring-value" id="hafalan-percent">—%</span>
+                            <span class="ring-label">Tercapai</span>
+                        </div>
+                    </div>
+                    <!-- Stats -->
+                    <div class="hafalan-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="hafalan-tercapai">—</span>
+                            <span class="stat-label">Juz Tercapai</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="hafalan-target">—</span>
+                            <span class="stat-label">Target Juz</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Radial Chart Card -->
+            <div id="attendance-card" class="bento-card bento-medium clipped-card card-attendance">
+                <div class="card-header">
+                    <div class="card-icon attendance-icon">📋</div>
+                    <h2 class="card-title">Kehadiran</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Radial Chart Placeholder -->
+                    <div class="chart-container chart-radial">
+                        <canvas id="attendance-radial-chart"></canvas>
+                    </div>
+                    <!-- Attendance Stats -->
+                    <div class="attendance-legend">
+                        <div class="legend-item">
+                            <span class="legend-dot dot-hadir"></span>
+                            <span class="legend-label">Hadir</span>
+                            <span class="legend-value" id="att-hadir">—</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot dot-izin"></span>
+                            <span class="legend-label">Izin</span>
+                            <span class="legend-value" id="att-izin">—</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot dot-sakit"></span>
+                            <span class="legend-label">Sakit</span>
+                            <span class="legend-value" id="att-sakit">—</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot dot-alpha"></span>
+                            <span class="legend-label">Alpha</span>
+                            <span class="legend-value" id="att-alpha">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ibadah/Sholat Tracker Card -->
+            <div id="ibadah-card" class="bento-card bento-medium clipped-card card-ibadah">
+                <div class="card-header">
+                    <div class="card-icon ibadah-icon">🕋</div>
+                    <h2 class="card-title">Sholat Berjamaah</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Week Grid -->
+                    <div class="sholat-grid">
+                        <div class="sholat-header">
+                            <span>Waktu</span>
+                            <span>Sen</span>
+                            <span>Sel</span>
+                            <span>Rab</span>
+                            <span>Kam</span>
+                            <span>Jum</span>
+                            <span>Sab</span>
+                            <span>Min</span>
+                        </div>
+                        <div class="sholat-row" data-waktu="subuh">
+                            <span class="waktu-label">Subuh</span>
+                            <span class="sholat-cell" data-day="1"></span>
+                            <span class="sholat-cell" data-day="2"></span>
+                            <span class="sholat-cell" data-day="3"></span>
+                            <span class="sholat-cell" data-day="4"></span>
+                            <span class="sholat-cell" data-day="5"></span>
+                            <span class="sholat-cell" data-day="6"></span>
+                            <span class="sholat-cell" data-day="7"></span>
+                        </div>
+                        <div class="sholat-row" data-waktu="dzuhur">
+                            <span class="waktu-label">Dzuhur</span>
+                            <span class="sholat-cell" data-day="1"></span>
+                            <span class="sholat-cell" data-day="2"></span>
+                            <span class="sholat-cell" data-day="3"></span>
+                            <span class="sholat-cell" data-day="4"></span>
+                            <span class="sholat-cell" data-day="5"></span>
+                            <span class="sholat-cell" data-day="6"></span>
+                            <span class="sholat-cell" data-day="7"></span>
+                        </div>
+                        <div class="sholat-row" data-waktu="ashar">
+                            <span class="waktu-label">Ashar</span>
+                            <span class="sholat-cell" data-day="1"></span>
+                            <span class="sholat-cell" data-day="2"></span>
+                            <span class="sholat-cell" data-day="3"></span>
+                            <span class="sholat-cell" data-day="4"></span>
+                            <span class="sholat-cell" data-day="5"></span>
+                            <span class="sholat-cell" data-day="6"></span>
+                            <span class="sholat-cell" data-day="7"></span>
+                        </div>
+                        <div class="sholat-row" data-waktu="maghrib">
+                            <span class="waktu-label">Maghrib</span>
+                            <span class="sholat-cell" data-day="1"></span>
+                            <span class="sholat-cell" data-day="2"></span>
+                            <span class="sholat-cell" data-day="3"></span>
+                            <span class="sholat-cell" data-day="4"></span>
+                            <span class="sholat-cell" data-day="5"></span>
+                            <span class="sholat-cell" data-day="6"></span>
+                            <span class="sholat-cell" data-day="7"></span>
+                        </div>
+                        <div class="sholat-row" data-waktu="isya">
+                            <span class="waktu-label">Isya</span>
+                            <span class="sholat-cell" data-day="1"></span>
+                            <span class="sholat-cell" data-day="2"></span>
+                            <span class="sholat-cell" data-day="3"></span>
+                            <span class="sholat-cell" data-day="4"></span>
+                            <span class="sholat-cell" data-day="5"></span>
+                            <span class="sholat-cell" data-day="6"></span>
+                            <span class="sholat-cell" data-day="7"></span>
+                        </div>
+                    </div>
+                    <!-- Weekly Summary -->
+                    <div class="ibadah-summary">
+                        <span class="summary-value" id="ibadah-percent">—%</span>
+                        <span class="summary-label">Kehadiran Minggu Ini</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Behavior Score Card -->
+            <div id="behavior-card" class="bento-card bento-small clipped-card card-behavior">
+                <div class="card-header">
+                    <div class="card-icon behavior-icon">⭐</div>
+                    <h2 class="card-title">Skor Perilaku</h2>
+                </div>
+                <div class="card-body">
+                    <div class="score-display">
+                        <span class="score-value" id="behavior-score">—</span>
+                        <span class="score-grade" id="behavior-grade">—</span>
+                    </div>
+                    <div class="score-breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Prestasi</span>
+                            <span class="breakdown-value positive" id="prestasi-count">+—</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Pelanggaran</span>
+                            <span class="breakdown-value negative" id="pelanggaran-count">-—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <!-- /bento-container -->
+
+</main>
+
+<!-- ===================== SCRIPTS ===================== -->
+<!-- Note: No API logic yet - skeleton only -->
+<script>
+    // Placeholder: Dashboard v2.2 will be wired up in next phase
+    console.log('Dashboard v2.2 Skeleton Loaded');
+
+    // Hide student selector for non-walisantri (placeholder logic)
+    // document.getElementById('student-selector-wrapper').style.display = 'none';
+</script>
+
+</body>
+</html>

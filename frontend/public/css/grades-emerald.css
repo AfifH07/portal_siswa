@@ -1,0 +1,485 @@
+/* ============================================
+   GRADES PAGE - Deep Emerald Enhancements
+   Extends deep-emerald.css base theme
+   ============================================ */
+
+/* Table Header Styling */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.table-header h3 {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Responsive Stats Override for Grades */
+@media (min-width: 1024px) {
+    .stats-section {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+/* Grade Value Mono Font */
+.grade-mono {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Import Summary Styles */
+.import-summary {
+    background: rgba(31, 216, 164, 0.08);
+    border: 1px solid rgba(31, 216, 164, 0.25);
+    border-radius: var(--border-radius-md);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.import-summary.error {
+    background: rgba(244, 91, 105, 0.08);
+    border-color: rgba(244, 91, 105, 0.25);
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.summary-icon {
+    font-size: 24px;
+}
+
+.summary-text {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.summary-details {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.summary-details ul {
+    margin: 10px 0 0;
+    padding-left: 20px;
+}
+
+.summary-details li {
+    margin-bottom: 5px;
+}
+
+/* File Name Display */
+.file-name-display {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 12px;
+    font-style: italic;
+}
+
+.file-name-display.has-file {
+    color: var(--teal);
+    font-weight: 600;
+    font-style: normal;
+}
+
+/* Hidden Input */
+.hidden-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Walisantri Styles */
+.walisantri-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.walisantri-info .glass-card {
+    padding: 24px;
+}
+
+/* Grade Cards for Walisantri */
+.grade-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--border-radius-md);
+    padding: 20px;
+    margin-bottom: 12px;
+    transition: all var(--transition-normal);
+}
+
+.grade-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+}
+
+.grade-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.grade-card-subject {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.grade-card-value {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 8px;
+}
+
+.grade-card-value.pass {
+    background: rgba(31, 216, 164, 0.15);
+    color: var(--teal-light);
+}
+
+.grade-card-value.fail {
+    background: rgba(244, 91, 105, 0.15);
+    color: var(--rose-light);
+}
+
+.grade-card-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.grade-card-meta span {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* Bulk Entry Section */
+.bulk-entry-section {
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.bulk-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.bulk-entry-header h3 {
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.bulk-entry-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.bulk-entry-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(31, 216, 164, 0.03);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+/* Bulk Input Fields */
+.bulk-input,
+.bulk-table .input-grade {
+    width: 80px;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: 6px;
+    color: var(--text-primary);
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    transition: all var(--transition-fast);
+}
+
+.bulk-input:focus,
+.bulk-table .input-grade:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(31, 216, 164, 0.15);
+}
+
+.bulk-input.invalid,
+.bulk-table .input-grade.invalid {
+    border-color: var(--rose);
+    background: rgba(244, 91, 105, 0.1);
+}
+
+.bulk-ket,
+.bulk-table .input-keterangan {
+    width: 150px;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.bulk-summary {
+    display: flex;
+    gap: 30px;
+    padding: 14px 20px;
+    background: rgba(31, 216, 164, 0.05);
+    border-radius: var(--border-radius-sm);
+    margin-top: 16px;
+    border: 1px solid var(--border-subtle);
+}
+
+.bulk-summary span {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.bulk-summary strong {
+    color: var(--teal);
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+/* Grade Input Table in Modal */
+.grade-input-table {
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    border-radius: var(--border-radius-sm);
+}
+
+.grade-input-field {
+    width: 80px;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: 6px;
+    color: var(--text-primary);
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    transition: all var(--transition-fast);
+}
+
+.grade-input-field:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(31, 216, 164, 0.15);
+}
+
+.grade-input-field.valid {
+    border-color: var(--teal);
+    background: rgba(31, 216, 164, 0.1);
+}
+
+.grade-input-field.invalid {
+    border-color: var(--rose);
+    background: rgba(244, 91, 105, 0.1);
+}
+
+/* Grade Summary in Modal */
+.grade-summary {
+    display: flex;
+    gap: 24px;
+    padding: 12px 18px;
+    background: rgba(31, 216, 164, 0.05);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.grade-summary span {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.grade-summary strong {
+    color: var(--teal);
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+/* Template Instructions */
+.template-instructions {
+    background: rgba(74, 158, 255, 0.08);
+    border: 1px solid rgba(74, 158, 255, 0.2);
+    border-radius: var(--border-radius-md);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.template-instructions h4 {
+    color: var(--blue-light);
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.template-instructions ol {
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding-left: 20px;
+    margin: 0;
+}
+
+.template-instructions li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.template-instructions strong {
+    color: var(--text-primary);
+}
+
+/* Edit Grade Modal */
+#edit-grade-modal .glass-input[readonly] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* View Detail Grid */
+.view-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.view-detail-grid .detail-item {
+    background: rgba(31, 216, 164, 0.05);
+    padding: 14px 16px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.view-detail-grid .detail-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.view-detail-grid .detail-value {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* Grade Info Badge in Modal */
+.grade-input-header {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.grade-info-badge {
+    background: rgba(31, 216, 164, 0.08);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-sm);
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.grade-info-badge .info-label {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.grade-info-badge .info-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Mini Table */
+.mini-table {
+    max-height: 350px;
+    overflow-y: auto;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 16px;
+}
+
+.mini-table .data-table {
+    margin: 0;
+}
+
+.mini-table .data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+/* Download Template Section */
+.download-template-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-subtle);
+    text-align: center;
+}
+
+.template-hint {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .bulk-entry-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .bulk-entry-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .bulk-summary {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .grade-card-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .grade-card-value {
+        align-self: flex-start;
+    }
+}

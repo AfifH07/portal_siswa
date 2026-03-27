@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ibadah Ananda - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260315" rel="stylesheet">
+    <link href="/static/css/ibadah-module.css?v=20260314b" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Ibadah Ananda</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Ibadah</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <!-- Child Selector (for walisantri with multiple children) -->
+        <div class="child-selector" id="child-selector">
+            <div class="child-tab active" data-loading="true">
+                <div class="child-avatar">...</div>
+                <div class="child-info">
+                    <h4>Memuat data...</h4>
+                    <span>Mohon tunggu</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Insight Card -->
+        <section class="glass-card analytics-insight-card" id="analytics-insight">
+            <div class="insight-content">
+                <div class="insight-icon">📈</div>
+                <div class="insight-text">
+                    <h3 id="insight-title">Memuat analisis...</h3>
+                    <p id="insight-desc">Menganalisis kedisiplinan sholat ananda</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- GitHub-Style Heatmap Calendar -->
+        <section class="glass-card heatmap-section" id="heatmap-section">
+            <div class="card-head">
+                <h3>Konsistensi Sholat Berjamaah</h3>
+                <span class="card-badge">3 Bulan Terakhir</span>
+            </div>
+            <div class="card-body">
+                <div class="heatmap-legend">
+                    <span class="legend-text">Kurang</span>
+                    <div class="legend-scale">
+                        <span class="legend-box level-0"></span>
+                        <span class="legend-box level-1"></span>
+                        <span class="legend-box level-2"></span>
+                        <span class="legend-box level-3"></span>
+                        <span class="legend-box level-4"></span>
+                    </div>
+                    <span class="legend-text">Baik</span>
+                </div>
+                <div class="heatmap-container" id="heatmap-container">
+                    <div class="heatmap-months" id="heatmap-months"></div>
+                    <div class="heatmap-wrapper">
+                        <div class="heatmap-days">
+                            <span>Sen</span>
+                            <span>Rab</span>
+                            <span>Jum</span>
+                        </div>
+                        <div class="heatmap-grid" id="heatmap-grid">
+                            <div class="loading-placeholder">
+                                <span>Memuat heatmap...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="heatmap-stats" id="heatmap-stats">
+                    <div class="hstat-item">
+                        <span class="hstat-value" id="total-hadir-90">0</span>
+                        <span class="hstat-label">Total Hadir</span>
+                    </div>
+                    <div class="hstat-item">
+                        <span class="hstat-value" id="streak-terbaik">0</span>
+                        <span class="hstat-label">Streak Terbaik</span>
+                    </div>
+                    <div class="hstat-item">
+                        <span class="hstat-value" id="avg-per-minggu">0</span>
+                        <span class="hstat-label">Rata-rata/Minggu</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ibadah Summary Cards -->
+        <section class="ibadah-summary-grid" id="ibadah-summary">
+            <!-- Sholat Wajib Donut -->
+            <div class="glass-card summary-card sc-primary">
+                <div class="card-head">
+                    <h3>Sholat Wajib</h3>
+                    <span class="card-badge">7 Hari Terakhir</span>
+                </div>
+                <div class="card-body">
+                    <div class="donut-container">
+                        <canvas id="chart-sholat-wajib"></canvas>
+                        <div class="donut-center">
+                            <span class="donut-value" id="sholat-wajib-pct">0%</span>
+                            <span class="donut-label">Kehadiran</span>
+                        </div>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="sholat-hadir">0</span>
+                            <span class="stat-label">Hadir</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="sholat-total">0</span>
+                            <span class="stat-label">Total</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sholat Sunnah -->
+            <div class="glass-card summary-card sc-gold">
+                <div class="card-head">
+                    <h3>Sholat Sunnah</h3>
+                    <span class="card-badge">Bulan Ini</span>
+                </div>
+                <div class="card-body">
+                    <div class="donut-container">
+                        <canvas id="chart-sholat-sunnah"></canvas>
+                        <div class="donut-center">
+                            <span class="donut-value" id="sholat-sunnah-pct">0%</span>
+                            <span class="donut-label">Konsistensi</span>
+                        </div>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="dhuha-count">0</span>
+                            <span class="stat-label">Dhuha</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="tahajud-count">0</span>
+                            <span class="stat-label">Tahajud</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tilawah & Dzikir -->
+            <div class="glass-card summary-card sc-purple">
+                <div class="card-head">
+                    <h3>Tilawah & Dzikir</h3>
+                    <span class="card-badge">Bulan Ini</span>
+                </div>
+                <div class="card-body">
+                    <div class="donut-container">
+                        <canvas id="chart-tilawah"></canvas>
+                        <div class="donut-center">
+                            <span class="donut-value" id="tilawah-pct">0%</span>
+                            <span class="donut-label">Konsistensi</span>
+                        </div>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="tilawah-count">0</span>
+                            <span class="stat-label">Tilawah</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="dzikir-count">0</span>
+                            <span class="stat-label">Dzikir</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Weekly Sholat Grid -->
+        <section class="glass-card weekly-sholat-section" id="weekly-sholat">
+            <div class="card-head">
+                <h3>Rekap Sholat 5 Waktu (7 Hari Terakhir)</h3>
+                <select class="filter-select" id="filter-period">
+                    <option value="7">7 Hari</option>
+                    <option value="14">14 Hari</option>
+                    <option value="30">30 Hari</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div class="sholat-grid" id="sholat-grid">
+                    <!-- Will be populated by JS -->
+                    <div class="loading-placeholder">
+                        <span>Memuat data sholat...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Daily History -->
+        <section class="glass-card history-section" id="history-section">
+            <div class="card-head">
+                <h3>Riwayat Ibadah Harian</h3>
+                <select class="filter-select" id="filter-jenis">
+                    <option value="">Semua Jenis</option>
+                    <option value="sholat_wajib">Sholat Wajib</option>
+                    <option value="sholat_sunnah">Sholat Sunnah</option>
+                    <option value="tilawah">Tilawah</option>
+                    <option value="dzikir">Dzikir</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div class="history-list" id="history-list">
+                    <!-- Will be populated by JS -->
+                    <div class="loading-placeholder">
+                        <span>Memuat riwayat...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <p class="footer-text">Portal Ponpes Baron - Tracking Ibadah Santri</p>
+            <p class="footer-copyright">2024/2025</p>
+        </footer>
+    </div>
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260313c" defer></script>
+<script src="/static/js/apiConfig.js?v=20260313c" defer></script>
+<script src="/static/js/apiFetch.js?v=20260313c" defer></script>
+<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/auth.js?v=20260313c" defer></script>
+<script src="/static/js/ibadah.js?v=20260314" defer></script>
+</body>
+</html>
