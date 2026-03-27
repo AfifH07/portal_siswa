@@ -26,7 +26,6 @@ window.addEventListener('load', async function() {
     const btnLogin = document.querySelector('.btn-login');
     const btnText = document.querySelector('.btn-text');
     const btnLoader = document.querySelector('.btn-loader');
-    const forgotPasswordLink = document.getElementById('forgot-password');
     
     if (togglePassword) {
         togglePassword.addEventListener('click', function() {
@@ -53,13 +52,9 @@ window.addEventListener('load', async function() {
         });
     }
     
-    if (forgotPasswordLink) {
-        forgotPasswordLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('Fitur reset password belum tersedia. Silakan hubungi admin.');
-        });
-    }
-    
+    // Forgot password link - no interceptor needed, uses native href navigation
+    // The link in login.html points directly to /forgot-password/
+
     checkAuthAndRedirect();
 });
 
