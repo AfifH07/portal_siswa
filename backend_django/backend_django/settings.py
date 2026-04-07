@@ -3,6 +3,7 @@ from pathlib import Path
 from datetime import timedelta
 from django.conf import settings as django_settings
 from decouple import config
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -104,25 +105,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend_django.wsgi.application'
 
-# Database
-if DEBUG:
-    # Use SQLite for development
+# Database Configuration
+# Uses DATABASE_URL if available (production), falls back to SQLite (development)
+# Format: postgres://USER:PASSWORD@HOST:PORT/DBNAME
+DATABASE_URL = config('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    # Production: Use PostgreSQL via DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    # Development: Use SQLite (no DATABASE_URL set)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    # Use PostgreSQL for production
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='portal_siswa'),
-            'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASS', default=''),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
         }
     }
 
