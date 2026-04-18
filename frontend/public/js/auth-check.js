@@ -101,7 +101,7 @@ async function checkAuthAndRedirect() {
             if (data.role === 'pendaftar') {
                 window.location.href = '/registration';
             } else {
-                window.location.href = `/dashboard/?role=${data.role}`;
+                window.location.href = '/dashboard/';
             }
             return { success: true, user: data };
         }
@@ -291,7 +291,7 @@ function checkPageAccess() {
         if (userRole === 'pendaftar') {
             window.location.href = '/registration';
         } else {
-            window.location.href = `/dashboard/?role=${userRole}`;
+            window.location.href = '/dashboard/';
         }
     }
 }
@@ -512,11 +512,7 @@ function createRoleBasedNav() {
     function createNavItem(item) {
         const link = document.createElement('a');
 
-        if (item.href === '/dashboard/') {
-            link.href = `/dashboard/?role=${userRole}`;
-        } else {
-            link.href = item.href;
-        }
+        link.href = item.href;
 
         link.className = 'nav-item';
         if (item.id) link.id = item.id;

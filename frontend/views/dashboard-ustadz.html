@@ -17,6 +17,42 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Role Validation (Ustadz Dashboard) -->
+    <script>
+        (function() {
+            const allowedRoles = ['guru', 'musyrif', 'wali_kelas', 'bk'];
+            const verifiedRole = sessionStorage.getItem('verified_role');
+            const timestamp = parseInt(sessionStorage.getItem('verified_timestamp') || '0');
+            const isRecent = (Date.now() - timestamp) < 5000;
+
+            sessionStorage.removeItem('verified_role');
+            sessionStorage.removeItem('verified_timestamp');
+
+            if (isRecent && allowedRoles.includes(verifiedRole)) {
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            fetch('/api/users/me/', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!allowedRoles.includes(data.role)) {
+                    window.location.href = '/dashboard/';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/login';
+            });
+        })();
+    </script>
 </head>
 <body data-role="guru">
 

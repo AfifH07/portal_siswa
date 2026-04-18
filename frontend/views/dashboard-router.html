@@ -43,9 +43,8 @@
     </div>
 
     <script>
-        // Dashboard Router - redirects to role-specific dashboard
-        (function() {
-            const role = localStorage.getItem('user_role');
+        // Dashboard Router - validates role via API (secure)
+        (async function() {
             const token = localStorage.getItem('access_token');
 
             if (!token) {
@@ -53,26 +52,68 @@
                 return;
             }
 
-            if (!role) {
-                // No role cached, fetch from API
-                fetch('/api/users/me/', {
+            try {
+                // ALWAYS fetch role from API - this is the authenticated source
+                const response = await fetch('/api/users/me/', {
                     headers: { 'Authorization': `Bearer ${token}` }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.role) {
-                        localStorage.setItem('user_role', data.role);
-                        window.location.href = `/dashboard/?role=${data.role}`;
-                    } else {
-                        window.location.href = '/login';
-                    }
-                })
-                .catch(() => {
-                    window.location.href = '/login';
                 });
-            } else {
-                // Role exists, redirect immediately
-                window.location.href = `/dashboard/?role=${role}`;
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // Try refresh token
+                        const refreshToken = localStorage.getItem('refresh_token');
+                        if (refreshToken) {
+                            const refreshResp = await fetch('/api/auth/token/refresh/', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ refresh: refreshToken })
+                            });
+                            if (refreshResp.ok) {
+                                const refreshData = await refreshResp.json();
+                                localStorage.setItem('access_token', refreshData.access);
+                                window.location.reload();
+                                return;
+                            }
+                        }
+                    }
+                    throw new Error('Auth failed');
+                }
+
+                const data = await response.json();
+                const role = data.role;
+
+                if (!role) {
+                    throw new Error('No role');
+                }
+
+                // Update localStorage with VERIFIED role from server
+                localStorage.setItem('user_role', role);
+                localStorage.setItem('user', JSON.stringify(data));
+
+                // Store verified role in sessionStorage for template validation
+                sessionStorage.setItem('verified_role', role);
+                sessionStorage.setItem('verified_timestamp', Date.now().toString());
+
+                // Redirect to role-specific dashboard URL
+                const dashboardMap = {
+                    'walisantri': '/dashboard/parent/',
+                    'guru': '/dashboard/ustadz/',
+                    'musyrif': '/dashboard/ustadz/',
+                    'wali_kelas': '/dashboard/ustadz/',
+                    'bk': '/dashboard/ustadz/',
+                    'superadmin': '/dashboard/admin/',
+                    'pimpinan': '/dashboard/admin/',
+                    'bendahara': '/dashboard/admin/',
+                };
+
+                const targetUrl = dashboardMap[role] || '/dashboard/admin/';
+                window.location.href = targetUrl;
+
+            } catch (error) {
+                console.error('Dashboard router error:', error);
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                window.location.href = '/login';
             }
         })();
     </script>
