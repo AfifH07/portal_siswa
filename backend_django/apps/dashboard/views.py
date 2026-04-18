@@ -25,14 +25,10 @@ def unified_dashboard(request):
     """
     Single entry point for /dashboard/.
 
-    Renders dashboard-router.html which:
-    1. Validates JWT token via API call
-    2. Gets authentic role from server (not localStorage)
-    3. Dynamically loads the appropriate dashboard content
-
-    Security: Role is determined by authenticated API, not URL params.
+    Langsung render dashboard.html - template akan adapt via JS
+    berdasarkan role dari API /users/me/
     """
-    return render(request, 'dashboard-router.html')
+    return render(request, 'dashboard.html')
 
 
 # Alias for backwards compatibility

@@ -16,45 +16,6 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-    <!-- Role Validation (Admin Dashboard) -->
-    <script>
-        (function() {
-            const allowedRoles = ['superadmin', 'pimpinan', 'bendahara'];
-            const verifiedRole = sessionStorage.getItem('verified_role');
-            const timestamp = parseInt(sessionStorage.getItem('verified_timestamp') || '0');
-            const isRecent = (Date.now() - timestamp) < 5000; // 5 second window
-
-            // Clear session storage after use
-            sessionStorage.removeItem('verified_role');
-            sessionStorage.removeItem('verified_timestamp');
-
-            if (isRecent && allowedRoles.includes(verifiedRole)) {
-                // Valid access via router
-                return;
-            }
-
-            // Direct access - validate via API
-            const token = localStorage.getItem('access_token');
-            if (!token) {
-                window.location.href = '/login';
-                return;
-            }
-
-            fetch('/api/users/me/', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (!allowedRoles.includes(data.role)) {
-                    window.location.href = '/dashboard/';
-                }
-            })
-            .catch(() => {
-                window.location.href = '/login';
-            });
-        })();
-    </script>
 </head>
 <body data-role="">
 
