@@ -14,10 +14,12 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='index.html')),
 
     # ==========================================
-    # UNIFIED DASHBOARD
-    # Single entry point - renders template based on ?role= param
+    # DASHBOARD ROUTES (Role-based templates)
     # ==========================================
     path('dashboard/', unified_dashboard, name='dashboard'),
+    path('dashboard/admin/', TemplateView.as_view(template_name='dashboard.html'), name='dashboard-admin'),
+    path('dashboard/parent/', TemplateView.as_view(template_name='dashboard-parent.html'), name='dashboard-parent'),
+    path('dashboard/ustadz/', TemplateView.as_view(template_name='dashboard-ustadz.html'), name='dashboard-ustadz'),
 
     # ==========================================
     # MODULE PAGES
@@ -26,6 +28,8 @@ urlpatterns = [
     path('attendance/', TemplateView.as_view(template_name='attendance.html')),  # Presensi
     path('grades/', TemplateView.as_view(template_name='grades.html')),          # Akademik
     path('hafalan/', hafalan_view, name='hafalan'),
+    path('hafalan/manager/', TemplateView.as_view(template_name='kesantrian/hafalan-dashboard.html'), name='hafalan-manager'),
+    path('hafalan/view/', TemplateView.as_view(template_name='hafalan.html'), name='hafalan-view'),
     path('evaluations/', TemplateView.as_view(template_name='evaluations.html')),
     path('registration/', TemplateView.as_view(template_name='registration.html')),
     path('finance/', TemplateView.as_view(template_name='finance.html')),        # Tagihan

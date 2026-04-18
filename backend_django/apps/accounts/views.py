@@ -381,8 +381,7 @@ def user_assignments_view(request, user_id):
 
         assignments = Assignment.objects.filter(user=target_user).values(
             'id', 'assignment_type', 'kelas', 'mata_pelajaran',
-            'halaqoh_id', 'hari', 'jam_mulai', 'jam_selesai',
-            'periode_mulai', 'periode_selesai', 'status', 'metadata'
+            'halaqoh_id', 'hari', 'tahun_ajaran', 'semester', 'status', 'catatan'
         )
 
         # Add display labels

@@ -3194,26 +3194,9 @@ def hafalan_view(request):
     """
     Role-based hafalan page routing.
 
-    Template mapping:
-    - pimpinan, superadmin, wali_kelas -> kesantrian/hafalan-dashboard.html (Manager Dashboard)
-    - walisantri -> hafalan.html (Parent view - existing)
-    - Other roles -> hafalan.html (default)
-
-    The ?role= query param is set by frontend after JWT validation (same pattern as unified_dashboard).
+    Renders hafalan-router.html which validates via API and redirects.
     """
-    role = request.GET.get('role', None)
-
-    # If no role provided, show router page (or default template)
-    if not role:
-        return render(request, 'hafalan-router.html')
-
-    # Manager roles -> Dashboard view
-    manager_roles = ['pimpinan', 'superadmin', 'wali_kelas']
-    if role in manager_roles:
-        return render(request, 'kesantrian/hafalan-dashboard.html')
-
-    # Walisantri and other roles -> Standard hafalan view
-    return render(request, 'hafalan.html')
+    return render(request, 'hafalan-router.html')
 
 
 @api_view(['GET'])

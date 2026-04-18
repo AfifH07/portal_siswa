@@ -23,47 +23,16 @@ from apps.accounts.permissions import IsSuperAdmin, IsPimpinan, IsGuru, IsWalisa
 
 def unified_dashboard(request):
     """
-    Single entry point for /dashboard/ that renders the appropriate
-    dashboard template based on user role.
+    Single entry point for /dashboard/.
 
-    Flow:
-    1. Check ?role= query param (set by frontend after JWT validation)
-    2. If no role param -> show router page to detect role from localStorage
-    3. Render role-specific dashboard template
+    Renders dashboard-router.html which:
+    1. Validates JWT token via API call
+    2. Gets authentic role from server (not localStorage)
+    3. Dynamically loads the appropriate dashboard content
 
-    Templates:
-    - walisantri -> dashboard-parent.html (Bento UI for parents)
-    - guru/musyrif/wali_kelas/bk -> dashboard-ustadz.html (Ustadz dashboard)
-    - superadmin/pimpinan/bendahara -> dashboard.html (Admin dashboard)
+    Security: Role is determined by authenticated API, not URL params.
     """
-    # Get role from query param (set by JS after JWT validation)
-    role = request.GET.get('role', None)
-
-    # If no role provided, show router page that will detect and redirect
-    if not role:
-        return render(request, 'dashboard-router.html')
-
-    # Role-to-template mapping
-    template_map = {
-        # Wali Santri -> Parent Dashboard (Bento UI)
-        'walisantri': 'dashboard-parent.html',
-
-        # Ustadz/Guru -> Ustadz Dashboard
-        'guru': 'dashboard-ustadz.html',
-        'musyrif': 'dashboard-ustadz.html',
-        'wali_kelas': 'dashboard-ustadz.html',
-        'bk': 'dashboard-ustadz.html',
-
-        # Admin roles -> Admin Dashboard
-        'superadmin': 'dashboard.html',
-        'pimpinan': 'dashboard.html',
-        'bendahara': 'dashboard.html',
-    }
-
-    # Get template or default to generic dashboard
-    template = template_map.get(role, 'dashboard.html')
-
-    return render(request, template)
+    return render(request, 'dashboard-router.html')
 
 
 # Alias for backwards compatibility
@@ -513,7 +482,7 @@ def ustadz_dashboard_summary(request):
             status='active'
         ).values(
             'id', 'assignment_type', 'kelas', 'mata_pelajaran',
-            'halaqoh_id', 'hari', 'jam_mulai', 'jam_selesai'
+            'halaqoh_id', 'hari', 'tahun_ajaran', 'semester'
         )
 
         # Get evaluation summary
