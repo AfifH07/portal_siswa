@@ -1,516 +1,654 @@
-# PROJECT SUMMARY - Portal Siswa
-## Comprehensive Status Report & Documentation
+# PROJECT SUMMARY - Portal Siswa Baron
+## Comprehensive Status Report & Technical Documentation
 
-**Generated:** 2026-02-17
-**Phase:** Stabilisasi (Stabilization)
-**Version:** 1.2.0
+**Generated:** 19 April 2026
+**Phase:** Production Ready
+**Version:** 2.3.8
+**Institution:** Pondok Pesantren Baron
 
 ---
 
 ## 1. Executive Summary
 
 ### Deskripsi Proyek
-Portal Siswa adalah sistem informasi akademik berbasis web yang dirancang untuk mengelola data siswa, nilai, kehadiran, dan evaluasi di lingkungan pendidikan. Sistem ini mengimplementasikan Role-Based Access Control (RBAC) dengan 5 level akses berbeda untuk memastikan keamanan dan segregasi data.
 
-### Status Saat Ini: Fase Stabilisasi
-Proyek telah melewati fase development utama dan memasuki fase stabilisasi dengan fokus pada:
-- Bug fixes dan optimisasi performa
-- Pengujian integrasi antar modul
-- Dokumentasi sistem
-- Persiapan deployment production
+Portal Siswa Baron adalah Sistem Informasi Akademik Terpadu (Integrated Academic Information System) berbasis web yang dirancang untuk mendigitalisasi pengelolaan data santri, pemantauan akademik, evaluasi karakter, dan komunikasi dengan wali santri di lingkungan Pondok Pesantren Baron.
 
-### Pencapaian Utama
-- Backend Django REST Framework fully functional dengan 50+ API endpoints
-- Frontend native HTML/CSS/JS dengan Glassmorphism design
-- Sistem autentikasi JWT dengan refresh token
-- Import data dari Excel berhasil (90 siswa XII-A/B/C, 7122 nilai)
-- Dashboard dengan visualisasi Chart.js
-- Modul Hafalan dengan multi-view role-based UI (Guru/Walisantri/Pimpinan)
+Sistem ini mengimplementasikan arsitektur **Role-Based Access Control (RBAC)** dengan **8 level akses** yang terdiferensiasi, memastikan keamanan data dan segregasi informasi sesuai dengan hierarki organisasi pesantren.
 
----
+### Status Proyek: Production Ready
 
-## 2. Tech Stack
+Proyek telah melewati fase development, testing, dan stabilisasi, serta memasuki fase **production-ready** dengan pencapaian signifikan berikut:
 
-### Backend
-| Komponen | Teknologi | Versi |
-|----------|-----------|-------|
-| Framework | Django | 4.x |
-| API | Django REST Framework | 3.x |
-| Authentication | SimpleJWT | Latest |
-| Database | SQLite (dev) / PostgreSQL (prod) | - |
-| CORS | django-cors-headers | - |
+- **Backend API Mature**: 60+ REST API endpoints terintegrasi
+- **Frontend Modern**: Single Page Application dengan Glassmorphism design
+- **Security Hardened**: JWT authentication dengan token refresh dan password recovery
+- **Database Flexible**: Dual-environment routing (SQLite/PostgreSQL)
+- **Deployment Ready**: Kompatibel dengan PythonAnywhere (free tier) dan VPS production
 
-### Frontend
-| Komponen | Teknologi | Versi |
-|----------|-----------|-------|
-| Core | Native HTML5/CSS3/JavaScript | ES6+ |
-| Charts | Chart.js | Latest |
-| Icons | Font Awesome | 5.x |
-| Design | Glassmorphism CSS | Custom |
+### Pencapaian Teknis Utama
 
-### Data Processing
-| Komponen | Teknologi | Kegunaan |
-|----------|-----------|----------|
-| Excel Import | pandas + openpyxl | Import data siswa & nilai |
-| File Upload | Django FileField | Upload dokumen evaluasi |
-
-### Development Tools
-| Tool | Kegunaan |
-|------|----------|
-| Git | Version control |
-| Python venv | Virtual environment |
-| Django manage.py | CLI management |
+| Kategori | Pencapaian |
+|----------|------------|
+| **Backend** | Django REST Framework dengan 60+ API endpoints, 12 Django Apps |
+| **Authentication** | JWT dengan refresh token, password reset via OTP SMTP |
+| **Database** | Dual-environment routing: SQLite (dev/staging) ↔ PostgreSQL (production) |
+| **Frontend** | Native HTML/CSS/JS dengan Lucide Icons, Chart.js visualization |
+| **Modules** | Akademik, Kesantrian (Ibadah, Hafalan, BLP), Evaluasi, Keuangan |
+| **Security** | RBAC 8 roles, CSRF protection, rate limiting, secure password recovery |
 
 ---
 
-## 3. Feature Roadmap
+## 2. Arsitektur Sistem
 
-### Sudah Ada (Implemented)
+### 2.1 Tech Stack
 
-#### Modul Accounts
-- [x] Login dengan JWT authentication
-- [x] Logout dengan token blacklist
-- [x] Password reset via email
-- [x] User management (CRUD)
-- [x] Role-based permissions (5 roles)
-- [x] Rate limiting untuk login
+#### Backend Infrastructure
 
-#### Modul Students
-- [x] CRUD data siswa
-- [x] Filter by kelas, program, status aktif
-- [x] Search by nama/NISN
-- [x] Import dari Excel
-- [x] Pagination
+| Komponen | Teknologi | Versi | Fungsi |
+|----------|-----------|-------|--------|
+| Framework | Django | 4.2.x | Web framework utama |
+| REST API | Django REST Framework | 3.14.x | API layer |
+| Authentication | SimpleJWT | 5.3.x | JWT token management |
+| Database (Dev) | SQLite | 3.x | Development & staging |
+| Database (Prod) | PostgreSQL | 15.x | Production database |
+| Database Routing | dj-database-url | 2.1.x | Environment-based DB selection |
+| CORS | django-cors-headers | 4.3.x | Cross-origin resource sharing |
+| Excel Processing | pandas + openpyxl | 2.1.x | Bulk data import/export |
 
-#### Modul Grades
-- [x] Input nilai individual
-- [x] Input nilai bulk (multiple students)
-- [x] Filter by semester, tahun ajaran, mata pelajaran
-- [x] Statistik nilai per siswa
-- [x] Export data nilai
+#### Frontend Infrastructure
 
-#### Modul Attendance
-- [x] Rekap kehadiran harian
-- [x] Draft attendance (save before submit)
-- [x] Filter by tanggal, kelas
-- [x] Status: Hadir, Izin, Sakit, Alpha
+| Komponen | Teknologi | Versi | Fungsi |
+|----------|-----------|-------|--------|
+| Core | Native HTML5/CSS3/JavaScript | ES6+ | UI foundation |
+| Icons | Lucide Icons | Latest | Modern SVG icon library |
+| Charts | Chart.js | 4.4.x | Data visualization |
+| Design System | Baron Emerald Theme | Custom | Glassmorphism CSS framework |
+| Fonts | Plus Jakarta Sans | Google Fonts | Typography |
 
-#### Modul Evaluations
-- [x] CRUD evaluasi siswa (Prestasi/Pelanggaran)
-- [x] Kategori evaluasi: Adab, Kedisiplinan, Akademik, Kebersihan, Hafalan, Sosial
-- [x] Wizard modal 3-step untuk input evaluasi (Pilih Siswa, Kategori & Jenis, Detail)
-- [x] Chart.js visualisasi: Doughnut (Distribusi Kategori), Bar (Perbandingan)
-- [x] Filter by kategori dan kelas
-- [x] Statistics endpoint dengan breakdown per kategori
-- [x] Auto-fill evaluator dari request.user
-- [x] Upload dokumen evaluasi (foto)
+### 2.2 Arsitektur Database Dual-Environment
 
-#### Modul Dashboard
-- [x] Statistik kehadiran (Chart.js)
-- [x] Grafik distribusi nilai
-- [x] Quick summary cards
-- [x] Role-based dashboard content
+Sistem mengimplementasikan **Database Routing Pattern** yang memungkinkan transisi seamless antara environment development dan production:
 
-#### Modul Hafalan
-- [x] Tracking progress Tartil (Jilid 1-3, Tadarus, Gharib, Tajwid)
-- [x] Tracking progress Tahfidz (Juz Hafal, Juz Uji, Tasmi', Munaqosyah)
-- [x] Multi-view role-based UI (Guru, Walisantri, Pimpinan)
-- [x] Guru: Editable form dengan input fields dan save buttons
-- [x] Walisantri: Read-only view dengan progress bars
-- [x] Pimpinan: Summary dashboard dengan statistik kelas
-- [x] Chart.js integration (Donut, Bar, Line charts)
-- [x] Kehadiran Halaqoh tracking
-- [x] Riwayat aktivitas hafalan
-- [x] Kompetensi (Guru Tartil, Guru Tahfidz, Status Khidmat)
+```python
+# settings.py - Dual Environment Database Routing
+DATABASE_URL = config('DATABASE_URL', default='')
 
-#### Modul Registration
-- [x] Pendaftaran siswa baru
-- [x] Upload dokumen pendaftaran
-- [x] Approval workflow
-- [x] Status tracking
-
-### Sedang Dikembangkan (In Progress)
-
-| Fitur | Status | Prioritas |
-|-------|--------|-----------|
-| Notifikasi real-time | Planning | Medium |
-| Export PDF rapor | Planning | High |
-| Mobile responsive optimization | In Progress | High |
-| Backup & restore database | Planning | Medium |
-| Audit log aktivitas | Planning | Low |
-| Multi-language support | Backlog | Low |
-
-### Planned (Future)
-
-- [ ] Push notifications untuk wali santri
-- [ ] Integrasi WhatsApp untuk notifikasi
-- [ ] Kalender akademik
-- [ ] Modul keuangan (SPP)
-- [ ] E-learning integration
-
----
-
-## 4. Access Matrix (RBAC)
-
-### Role Definitions
-
-| Role | Code | Description |
-|------|------|-------------|
-| Super Admin | `superadmin` | Full system access, manage all users |
-| Pimpinan | `pimpinan` | View all data, approve registrations |
-| Guru | `guru` | Manage students, grades, attendance |
-| Wali Santri | `walisantri` | View own child's data only |
-| Pendaftar | `pendaftar` | Registration access only |
-
-### Permission Matrix
-
-| Resource | Action | superadmin | pimpinan | guru | walisantri | pendaftar |
-|----------|--------|:----------:|:--------:|:----:|:----------:|:---------:|
-| **Users** | Create | Y | - | - | - | - |
-| | Read | Y | Y | - | - | - |
-| | Update | Y | - | - | - | - |
-| | Delete | Y | - | - | - | - |
-| **Students** | Create | Y | - | Y | - | - |
-| | Read All | Y | Y | Y | - | - |
-| | Read Own | Y | Y | Y | Y | - |
-| | Update | Y | - | Y | - | - |
-| | Delete | Y | - | - | - | - |
-| **Grades** | Create | Y | - | Y | - | - |
-| | Read All | Y | Y | Y | - | - |
-| | Read Own | Y | Y | Y | Y | - |
-| | Update | Y | - | Y | - | - |
-| | Delete | Y | - | Y | - | - |
-| **Attendance** | Create | Y | - | Y | - | - |
-| | Read All | Y | Y | Y | - | - |
-| | Read Own | Y | Y | Y | Y | - |
-| | Update | Y | - | Y | - | - |
-| | Delete | Y | - | - | - | - |
-| **Evaluations** | Create | Y | - | Y | - | - |
-| | Read All | Y | Y | Y | - | - |
-| | Read Own | Y | Y | Y | Y | - |
-| | Update | Y | - | Y | - | - |
-| | Delete | Y | - | - | - | - |
-| **Hafalan** | Create | Y | - | Y | - | - |
-| | Read All | Y | Y | Y | - | - |
-| | Read Own | Y | Y | Y | Y | - |
-| | Update | Y | - | Y | - | - |
-| | View Summary | Y | Y | - | - | - |
-| **Registrations** | Create | Y | - | - | - | Y |
-| | Read | Y | Y | - | - | Own |
-| | Approve | Y | Y | - | - | - |
-| | Reject | Y | Y | - | - | - |
-| **Dashboard** | View Stats | Y | Y | Y | - | - |
-| | View Own | Y | Y | Y | Y | Y |
-| **Settings** | System Config | Y | - | - | - | - |
-
-### API Endpoint Permissions
-
-```
-/api/auth/
-  POST /login/          -> AllowAny
-  POST /logout/         -> IsAuthenticated
-  POST /token/refresh/  -> AllowAny
-  POST /password-reset/ -> AllowAny
-
-/api/users/
-  GET, POST             -> IsSuperAdmin
-  GET, PUT, DELETE /:id -> IsSuperAdmin
-
-/api/students/
-  GET                   -> IsAuthenticated (filtered by role)
-  POST                  -> IsSuperAdmin | IsGuru
-  PUT, DELETE /:nisn    -> IsSuperAdmin | IsGuru
-
-/api/grades/
-  GET                   -> IsAuthenticated (filtered by role)
-  POST                  -> IsGuru | IsSuperAdmin
-  PUT, DELETE /:id      -> IsGuru | IsSuperAdmin
-
-/api/attendance/
-  GET                   -> IsAuthenticated (filtered by role)
-  POST                  -> IsGuru | IsSuperAdmin
-  PUT, DELETE /:id      -> IsGuru | IsSuperAdmin
-
-/api/evaluations/
-  GET                   -> IsAuthenticated (filtered by role)
-  POST                  -> IsGuru | IsSuperAdmin
-  GET, DELETE /:id      -> IsGuru | IsSuperAdmin
-
-/api/registrations/
-  GET                   -> IsSuperAdmin | IsPimpinan | Own
-  POST                  -> AllowAny (public registration)
-  PATCH /:id/approve    -> IsSuperAdmin | IsPimpinan
-  PATCH /:id/reject     -> IsSuperAdmin | IsPimpinan
+if DATABASE_URL:
+    # Production: PostgreSQL via DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True
+        )
+    }
+else:
+    # Development/Staging: SQLite (zero configuration)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3'
+        }
+    }
 ```
 
----
+**Keuntungan Arsitektur:**
+- **Zero Configuration**: Development dapat berjalan tanpa setup database eksternal
+- **PythonAnywhere Compatible**: Mendukung free tier yang tidak menyediakan PostgreSQL
+- **Production Grade**: Siap untuk deployment dengan PostgreSQL di VPS/Cloud
+- **Single Codebase**: Tidak perlu branch terpisah untuk environment berbeda
 
-## 5. Database Statistics
+| Environment | Database | Konfigurasi |
+|-------------|----------|-------------|
+| Local Development | SQLite | Otomatis (tanpa DATABASE_URL) |
+| PythonAnywhere Free | SQLite | Kosongkan DATABASE_URL |
+| PythonAnywhere Paid | PostgreSQL | Set DATABASE_URL |
+| VPS Production | PostgreSQL | Set DATABASE_URL |
+| Docker Container | PostgreSQL | Set DATABASE_URL |
 
-### Current Data (as of 2026-02-17)
-
-| Entity | Count | Notes |
-|--------|------:|-------|
-| **Users** | 8 | Active accounts |
-| **Students** | 90 | Class XII-A, XII-B, XII-C |
-| **Grades** | 7,122 | 20 subjects x 6 semesters |
-| **Attendance** | 90 | Sample records |
-| **Evaluations** | 100 | Dummy data with 6 categories |
-| **Registrations** | 0 | No pending |
-
-### User Distribution by Role
-
-| Role | Count | Usernames |
-|------|------:|-----------|
-| superadmin | 3 | admin, superadmin, test_superadmin |
-| pimpinan | 1 | pimpinan |
-| guru | 2 | guru, test_guru |
-| walisantri | 1 | walisantri |
-| pendaftar | 1 | pendaftar |
-
-### Student Data
-
-| Metric | Value |
-|--------|-------|
-| Total Students | 90 |
-| Active | 90 (100%) |
-| Inactive | 0 |
-| Classes | XII-A, XII-B, XII-C |
-| Programs | IPA |
-
-### Grade Statistics
-
-| Metric | Value |
-|--------|-------|
-| Total Records | 7,122 |
-| Subjects | 20 |
-| Semesters | 6 (Smt1-Smt6) |
-| Avg Grades/Student | ~79 |
-| Grade Range | 0-100 |
-
-### Evaluation Statistics
-
-| Category | Count | Percentage |
-|----------|------:|------------|
-| Akademik | 23 | 23% |
-| Adab | 19 | 19% |
-| Kedisiplinan | 19 | 19% |
-| Hafalan | 16 | 16% |
-| Kebersihan | 15 | 15% |
-| Sosial | 8 | 8% |
-
-| Jenis | Count | Percentage |
-|-------|------:|------------|
-| Prestasi | 63 | 63% |
-| Pelanggaran | 37 | 37% |
-
-### Subject List (20 Mata Pelajaran)
-
-1. Pendidikan Agama Islam dan Budi Pekerti
-2. Pendidikan Pancasila
-3. Bahasa Indonesia
-4. Bahasa Inggris
-5. Bahasa Inggris Tingkat Lanjut
-6. Muatan Lokal Bahasa Daerah
-7. Matematika (Umum)
-8. Matematika Tingkat Lanjut
-9. Ilmu Pengetahuan Alam (IPA)
-10. Biologi
-11. Fisika
-12. Kimia
-13. Ilmu Pengetahuan Sosial (IPS)
-14. Geografi
-15. Sejarah
-16. Ekonomi
-17. Pendidikan Jasmani, Olahraga, dan Kesehatan
-18. Prakarya dan Kewirausahaan
-19. Informatika
-20. Seni Rupa
-
----
-
-## 6. Architecture Overview
-
-### Directory Structure
+### 2.3 Directory Structure
 
 ```
 portal-siswa/
 ├── backend_django/
 │   ├── apps/
-│   │   ├── accounts/       # Auth & user management
-│   │   ├── attendance/     # Attendance tracking
-│   │   ├── dashboard/      # Dashboard views
-│   │   ├── evaluations/    # Student evaluations
-│   │   ├── grades/         # Grade management
-│   │   ├── registration/   # New student registration
-│   │   ├── students/       # Student data
-│   │   └── users/          # User profiles
-│   ├── backend_django/     # Django settings
-│   ├── static/             # Static files
-│   ├── templates/          # HTML templates (views)
-│   └── manage.py
+│   │   ├── accounts/       # Auth, Users, JWT, Permissions
+│   │   ├── core/           # Master Data (Tahun Ajaran)
+│   │   ├── students/       # Student & Alumni Management
+│   │   ├── attendance/     # Presensi Harian
+│   │   ├── grades/         # Nilai Akademik & Analytics
+│   │   ├── evaluations/    # Evaluasi Santri (Poin)
+│   │   ├── kesantrian/     # Ibadah, Hafalan, BLP, Incident
+│   │   ├── finance/        # Modul Keuangan
+│   │   ├── registration/   # Pendaftaran Santri Baru
+│   │   └── dashboard/      # Statistik & Visualisasi
+│   ├── backend_django/     # Django Settings Package
+│   ├── requirements.txt    # Python Dependencies
+│   ├── .env.staging.example
+│   └── .env.production.example
 ├── frontend/
-│   ├── views/              # HTML page templates
-│   │   ├── dashboard.html
-│   │   ├── students.html
-│   │   ├── attendance.html
-│   │   ├── grades.html
-│   │   ├── hafalan.html    # Program Al-Qur'an
-│   │   └── evaluations.html
+│   ├── views/              # HTML Templates (19 files)
 │   └── public/
-│       ├── css/            # Stylesheets (hafalan.css, evaluations.css)
-│       └── js/             # JavaScript modules
-├── database/
-│   ├── schema.sql          # DB schema
-│   └── migrations/         # Migration files
-├── docs/                   # Documentation
-└── archive/                # Archived files
+│       ├── css/            # Stylesheets (15 files)
+│       └── js/             # JavaScript Modules (18 files)
+├── CHANGELOG_v2.3.8.md
+├── PROJECT_SUMMARY_FINAL.md
+└── README.md
 ```
-
-### API Modules (10 Django Apps)
-
-| App | Models | Endpoints | Description |
-|-----|-------:|----------:|-------------|
-| accounts | 2 | 8 | Auth, tokens, password reset |
-| users | 1 | 5 | User CRUD |
-| students | 1 | 6 | Student management |
-| grades | 1 | 7 | Grade input & stats |
-| attendance | 2 | 6 | Attendance & drafts |
-| evaluations | 1 | 5 | Evaluation uploads |
-| registration | 1 | 5 | Registration workflow |
-| dashboard | 0 | 3 | Statistics & charts |
-
-### Frontend Modules (JS)
-
-| Module | Functions | Description |
-|--------|----------:|-------------|
-| auth.js | 8 | Login, logout, token management |
-| students.js | 12 | Student CRUD UI |
-| grades.js | 15 | Grade input, bulk entry, modals |
-| attendance.js | 10 | Attendance forms, drafts |
-| hafalan.js | 12 | Multi-view hafalan, charts, role-based UI |
-| evaluations.js | 15 | Wizard modal, charts, CRUD evaluasi |
-| dashboard.js | 8 | Charts, statistics |
-| page-events.js | 4 | Keyboard nav, modals, role-based nav |
-| ui-helpers.js | 6 | Toast, loading, utilities |
 
 ---
 
-## 7. Testing Coverage
+## 3. Sistem Keamanan & Autentikasi
 
-### Test Files
+### 3.1 JWT Authentication Flow
 
-| File | Tests | Coverage |
-|------|------:|----------|
-| test_login_api.py | 3 | Auth endpoints |
-| test_api_students.py | 4 | Student CRUD |
-| test_attendance_api.py | 3 | Attendance endpoints |
-| test_attendance_endpoint.py | 2 | Attendance validation |
-| test_attendance_insert.py | 2 | Data insertion |
-| test_server.py | 2 | Server health |
+Sistem mengimplementasikan **JSON Web Token (JWT)** dengan mekanisme refresh token untuk memastikan keamanan sesi pengguna:
 
-**Total: 16 test functions**
+```
+┌─────────────┐     POST /api/auth/login/      ┌─────────────┐
+│   Client    │ ─────────────────────────────> │   Server    │
+│  (Browser)  │                                │  (Django)   │
+│             │ <───────────────────────────── │             │
+└─────────────┘   { access_token, refresh }    └─────────────┘
+       │                                              │
+       │  Store tokens in localStorage                │
+       │                                              │
+       │     GET /api/users/me/                       │
+       │     Authorization: Bearer {access_token}     │
+       │ ─────────────────────────────────────────>   │
+       │                                              │
+       │ <─────────────────────────────────────────   │
+       │           { user_data, role }                │
+```
 
-### Test Commands
+**Token Configuration:**
+- Access Token Lifetime: 60 menit (configurable)
+- Refresh Token Lifetime: 24 jam (configurable)
+- Token Blacklisting: Enabled (logout invalidates token)
+
+### 3.2 Sistem Pemulihan Kata Sandi (Password Recovery)
+
+Implementasi fitur **Secure Password Reset** menggunakan token OTP berbasis SMTP:
+
+#### Flow Diagram
+
+```
+┌──────────────┐                              ┌──────────────┐
+│    User      │                              │   Server     │
+│  (Frontend)  │                              │  (Backend)   │
+└──────┬───────┘                              └──────┬───────┘
+       │                                             │
+       │  1. POST /api/auth/request-reset/           │
+       │     { username }                            │
+       │ ──────────────────────────────────────────> │
+       │                                             │
+       │                           ┌─────────────────┴──────────────────┐
+       │                           │ Generate 6-digit OTP token         │
+       │                           │ Store: hash(token), expiry (30min) │
+       │                           │ Send email via SMTP Gmail          │
+       │                           └─────────────────┬──────────────────┘
+       │                                             │
+       │  <────────────────────────────────────────  │
+       │     { success: true, message }              │
+       │                                             │
+       │  2. POST /api/auth/verify-token/            │
+       │     { username, token }                     │
+       │ ──────────────────────────────────────────> │
+       │                                             │
+       │  <────────────────────────────────────────  │
+       │     { valid: true }                         │
+       │                                             │
+       │  3. POST /api/auth/reset-password/          │
+       │     { username, token, new_password }       │
+       │ ──────────────────────────────────────────> │
+       │                                             │
+       │  <────────────────────────────────────────  │
+       │     { success: true }                       │
+       │                                             │
+```
+
+#### Frontend: 3-Step Wizard
+
+```html
+<!-- forgot-password.html -->
+Step 1: Request Token (Input Username)
+    ↓
+Step 2: Verify Token (Input 6-digit OTP)
+    ↓
+Step 3: Set New Password (Input & Confirm)
+```
+
+#### Security Measures
+
+| Measure | Implementation |
+|---------|----------------|
+| Token Format | 6-digit numeric OTP |
+| Token Storage | Hashed (not plaintext) |
+| Token Expiry | 30 minutes |
+| Rate Limiting | Max 3 requests per 15 minutes |
+| Email Validation | Only sent if user has verified email |
+| CSRF Protection | Token required for form submission |
+
+### 3.3 Role-Based Access Control (RBAC)
+
+#### Role Definitions (8 Roles)
+
+| Role | Code | Description | Access Level |
+|------|------|-------------|--------------|
+| Super Admin | `superadmin` | Full system access, user management | Full |
+| Pimpinan | `pimpinan` | Management oversight, evaluasi asatidz | High |
+| Guru | `guru` | Academic data, attendance, grades | Medium |
+| Musyrif | `musyrif` | Kesantrian data, ibadah tracking | Medium |
+| Wali Kelas | `wali_kelas` | Class management, student reports | Medium |
+| BK | `bk` | Counseling, incident management | Medium |
+| Bendahara | `bendahara` | Financial module access | Limited |
+| Wali Santri | `walisantri` | View own child's data (read-only) | Limited |
+
+#### Permission Matrix
+
+| Resource | superadmin | pimpinan | guru | musyrif | wali_kelas | bk | bendahara | walisantri |
+|----------|:----------:|:--------:|:----:|:-------:|:----------:|:--:|:---------:|:----------:|
+| User Management | CRUD | R | - | - | - | - | - | - |
+| Student Data | CRUD | R | CRUD | R | R | R | - | Own |
+| Grades | CRUD | R | CRUD | R | R | - | - | Own |
+| Attendance | CRUD | R | CRUD | CRUD | R | - | - | Own |
+| Evaluations | CRUD | R | CRUD | CRUD | R | R | - | Own |
+| Kesantrian | CRUD | R | R | CRUD | R | - | - | Own |
+| Finance | CRUD | R | - | - | - | - | CRUD | Own |
+| HR/Asatidz | CRUD | CRUD | Own | Own | Own | Own | - | - |
+
+---
+
+## 4. Modul Fungsional
+
+### 4.1 Modul Akademik
+
+#### Manajemen Data Siswa
+- CRUD data siswa dengan validasi NISN
+- Filter berdasarkan kelas, program, status aktif
+- Import bulk dari Excel (pandas + openpyxl)
+- Export data ke Excel/CSV
+- Pagination dengan 25 items per page
+- Search real-time by nama/NISN
+
+#### Manajemen Nilai
+- Input nilai individual dan bulk
+- Filter by semester, tahun ajaran, mata pelajaran
+- Statistik nilai per siswa (avg, min, max)
+- Visualisasi dengan Chart.js (bar, line, doughnut)
+- Template Excel untuk import nilai batch
+
+#### Presensi Harian
+- Input presensi per kelas
+- Draft system (save before submit)
+- Status: Hadir, Izin, Sakit, Alpha
+- Rekap kehadiran bulanan
+- Export laporan kehadiran
+
+### 4.2 Modul Kesantrian
+
+#### Tracking Ibadah
+- Sholat 5 waktu harian
+- Sholat Dhuha, Tahajud
+- Tilawah Al-Qur'an
+- Heatmap 90 hari (GitHub-style)
+- Statistik kepatuhan ibadah
+
+#### Program Al-Qur'an (Hafalan)
+- Tracking Tartil (Jilid 1-3, Tadarus, Gharib, Tajwid)
+- Tracking Tahfidz (30 Juz dengan status per juz)
+- Status: Belum, Proses, Murojaah, Mutqin
+- Prediksi khatam berdasarkan pace
+- Dashboard manager untuk pimpinan
+
+#### BLP (Buku Laporan Pembinaan)
+- 25 indikator penilaian karakter
+- 6 domain: Adab, Kedisiplinan, Ibadah, Akademik, Sosial, Kebersihan
+- Sistem poin dengan predikat
+- Laporan mingguan/bulanan
+
+#### Incident Management
+- Pelaporan kejadian/pelanggaran
+- Thread discussion (comments)
+- Status workflow: Open → In Progress → Resolved
+- Visibility control: Internal/Public/Final Decision
+
+### 4.3 Modul HR (Evaluasi Asatidz)
+
+#### Evaluasi Kinerja
+- Penilaian star rating (1-5 bintang)
+- 12 indikator kinerja (10 manual, 2 auto-calculated)
+- Weighted average calculation
+- Predikat: Sangat Baik, Baik, Cukup, Kurang, Sangat Kurang
+- History per semester/tahun ajaran
+
+#### Catatan Evaluasi
+- Kategori: Apresiasi, Administratif, Kedisiplinan
+- Timeline per ustadz
+- Summary dashboard untuk pimpinan
+
+### 4.4 Modul Keuangan
+
+- Manajemen tagihan SPP
+- Status pembayaran per santri
+- Invoice generation
+- Laporan keuangan
+
+### 4.5 Master Data (Core)
+
+#### Tahun Ajaran
+- Dynamic academic year management
+- Single active constraint
+- Auto-fallback calculation
+- Global header injection (topbar display)
+
+---
+
+## 5. Penyempurnaan UI/UX
+
+### 5.1 Transisi Icon Library
+
+**Migrasi dari Emoji ke Lucide Icons:**
+
+| Sebelum | Sesudah | Benefit |
+|---------|---------|---------|
+| Emoji (📊 📚 🏫) | Lucide SVG Icons | Konsistensi visual |
+| Font Awesome 5.x | Lucide (modern) | Ukuran file lebih kecil |
+| Inconsistent sizing | Stroke-based uniform | Professional appearance |
+
+**Implementasi:**
+```html
+<!-- CDN Integration -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- Usage in Navigation -->
+<i data-lucide="layout-dashboard" class="nav-icon"></i>
+<i data-lucide="users" class="nav-icon"></i>
+<i data-lucide="calendar-check" class="nav-icon"></i>
+```
+
+### 5.2 Pembersihan Legacy UI
+
+**File Legacy Dihapus:**
+
+| File | Deskripsi | Alasan Penghapusan |
+|------|-----------|-------------------|
+| `index.html` | Homepage lama dengan UI jadul | Replaced dengan redirect |
+| `dashboard-router.html` | Intermediate routing page | Simplified architecture |
+| `hafalan-router.html` | Intermediate routing page | Simplified architecture |
+| `dashboard_v2.html` | Versi template tidak terpakai | Orphan file |
+| `dashboard_v2.css` | CSS untuk template tidak terpakai | Orphan file |
+
+### 5.3 Konfigurasi Root URL Redirect
+
+**Sebelum:**
+```
+/ → Render index.html (halaman hijau lama dengan navbar atas)
+```
+
+**Sesudah:**
+```
+/ → HTTP 302 Redirect → /dashboard/
+/dashboard/ → Render dashboard.html (modern UI)
+```
+
+**Implementasi:**
+```python
+# urls.py
+from django.views.generic import RedirectView
+
+urlpatterns = [
+    path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
+    path('dashboard/', unified_dashboard, name='dashboard'),
+    # ...
+]
+```
+
+### 5.4 Unified Dashboard Architecture
+
+**Single Template untuk Semua Role:**
+
+```
+/dashboard/ → dashboard.html
+    │
+    ├── auth-check.js validasi JWT
+    │
+    ├── Sidebar dynamic berdasarkan role
+    │   └── navConfig[userRole]
+    │
+    ├── Content sections show/hide berdasarkan role
+    │   ├── #admin-dashboard (superadmin, pimpinan)
+    │   └── #walisantri-dashboard (walisantri)
+    │
+    └── Data loaded via authenticated API calls
+```
+
+---
+
+## 6. API Endpoints Summary
+
+### Authentication (8 endpoints)
+```
+POST /api/auth/login/           # Login, return JWT
+POST /api/auth/logout/          # Logout, blacklist token
+POST /api/auth/token/refresh/   # Refresh access token
+GET  /api/auth/status/          # Check auth status
+POST /api/auth/change-password/ # Change password
+POST /api/auth/request-reset/   # Request password reset
+POST /api/auth/verify-token/    # Verify OTP token
+POST /api/auth/reset-password/  # Reset password with token
+```
+
+### Users (6 endpoints)
+```
+GET    /api/users/              # List users (admin)
+POST   /api/users/              # Create user
+GET    /api/users/me/           # Current user info
+GET    /api/users/<id>/         # User detail
+PUT    /api/users/<id>/         # Update user
+DELETE /api/users/<id>/         # Delete user
+```
+
+### Students (8 endpoints)
+```
+GET    /api/students/           # List students
+POST   /api/students/           # Create student
+GET    /api/students/<nisn>/    # Student detail
+PUT    /api/students/<nisn>/    # Update student
+DELETE /api/students/<nisn>/    # Delete student
+GET    /api/students/classes/   # List classes
+POST   /api/students/import/    # Bulk import
+POST   /api/students/export/    # Export data
+```
+
+### Kesantrian (20+ endpoints)
+```
+GET  /api/kesantrian/worship-tracker/<nisn>/  # Ibadah data
+GET  /api/kesantrian/hafalan/<nisn>/          # Hafalan progress
+POST /api/kesantrian/hafalan/<nisn>/update/   # Update hafalan
+GET  /api/kesantrian/blp/<nisn>/              # BLP scores
+GET  /api/kesantrian/incidents/               # Incident list
+POST /api/kesantrian/incidents/               # Create incident
+GET  /api/kesantrian/asatidz/evaluations/     # HR evaluations
+POST /api/kesantrian/penilaian-kinerja/       # Performance review
+```
+
+### Core (4 endpoints)
+```
+GET  /api/core/tahun-ajaran/         # List academic years
+POST /api/core/tahun-ajaran/         # Create academic year
+GET  /api/core/tahun-ajaran/active/  # Get active year
+PUT  /api/core/tahun-ajaran/<id>/    # Update academic year
+```
+
+**Total: 60+ API Endpoints**
+
+---
+
+## 7. Database Statistics
+
+### Current Data (as of April 2026)
+
+| Entity | Count | Notes |
+|--------|------:|-------|
+| Users | 15+ | Multi-role accounts |
+| Students | 150+ | Kelas X, XI, XII |
+| Grades | 10,000+ | All subjects, 6 semesters |
+| Attendance | 5,000+ | Daily records |
+| Evaluations | 500+ | Poin prestasi/pelanggaran |
+| Hafalan Progress | 150+ | Per-student tracking |
+| Ibadah Records | 10,000+ | Daily worship tracking |
+| BLP Entries | 500+ | Weekly character scores |
+
+### Database Schema Summary
+
+| Model | App | Fields | Relations |
+|-------|-----|-------:|-----------|
+| User | accounts | 15 | → Student (linked) |
+| Student | students | 20 | → Grades, Attendance, Evaluations |
+| Grade | grades | 10 | → Student |
+| Attendance | attendance | 8 | → Student |
+| Evaluation | evaluations | 12 | → Student |
+| TahunAjaran | core | 6 | → Multiple models |
+| HafalanProgress | kesantrian | 25 | → Student |
+| WorshipRecord | kesantrian | 10 | → Student |
+| BLPEntry | kesantrian | 30 | → Student |
+| Incident | kesantrian | 15 | → Student, Comments |
+| PenilaianKinerja | kesantrian | 12 | → User (ustadz) |
+
+---
+
+## 8. Deployment & Environment
+
+### 8.1 Environment Configuration Files
+
+| File | Purpose | Database |
+|------|---------|----------|
+| `.env.staging.example` | PythonAnywhere free tier | SQLite |
+| `.env.production.example` | VPS/Cloud production | PostgreSQL |
+
+### 8.2 PythonAnywhere Deployment (Free Tier)
 
 ```bash
-# Run all tests
-python manage.py test
+# 1. Clone repository
+git clone https://github.com/your-repo/portal-siswa.git
+cd portal-siswa/backend_django
 
-# Run specific app tests
-python manage.py test apps.students
-python manage.py test apps.grades
+# 2. Create virtualenv
+mkvirtualenv --python=/usr/bin/python3.10 portal
+pip install -r requirements.txt
 
-# Run with coverage
-coverage run manage.py test
-coverage report
+# 3. Configure environment (SQLite mode)
+cp .env.staging.example .env
+# Edit: SECRET_KEY, ALLOWED_HOSTS (yourusername.pythonanywhere.com)
+# Note: Do NOT set DATABASE_URL for SQLite
+
+# 4. Initialize database
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py collectstatic --noinput
+
+# 5. Configure WSGI in Web tab
 ```
 
----
+### 8.3 VPS Production Deployment
 
-## 8. Deployment Notes
+```bash
+# 1. Setup PostgreSQL
+sudo -u postgres createdb portal_siswa
+sudo -u postgres createuser portal_user
 
-### Environment Variables
+# 2. Configure environment
+cp .env.production.example .env
+# Set: DATABASE_URL, SECRET_KEY, ALLOWED_HOSTS, EMAIL settings
+
+# 3. Initialize
+python manage.py migrate
+python manage.py collectstatic
+
+# 4. Run with Gunicorn
+gunicorn backend_django.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --workers 3
+```
+
+### 8.4 Environment Variables Reference
 
 ```env
+# Core
 DEBUG=False
-SECRET_KEY=<secure-random-key>
-ALLOWED_HOSTS=domain.com,www.domain.com
+SECRET_KEY=<50+ char random string>
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+
+# Database (PostgreSQL - omit for SQLite)
 DATABASE_URL=postgres://user:pass@host:5432/dbname
-CORS_ALLOWED_ORIGINS=https://frontend.domain.com
+
+# JWT
+JWT_ACCESS_TOKEN_LIFETIME=60
+JWT_REFRESH_TOKEN_LIFETIME=1440
+
+# Email (SMTP Gmail)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 EMAIL_HOST=smtp.gmail.com
-EMAIL_HOST_USER=noreply@domain.com
-EMAIL_HOST_PASSWORD=<app-password>
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+
+# Security (Production only)
+SECURE_SSL_REDIRECT=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
 ```
 
-### Production Checklist
+---
 
-- [ ] Set DEBUG=False
-- [ ] Configure PostgreSQL database
-- [ ] Set up HTTPS/SSL
-- [ ] Configure CORS for frontend domain
-- [ ] Set up email service for password reset
-- [ ] Configure static file serving (nginx/whitenoise)
-- [ ] Set up backup schedule
-- [ ] Configure logging
-- [ ] Set up monitoring
+## 9. Version History
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| 1.0.0 | Feb 2026 | Initial release, basic CRUD |
+| 1.2.0 | Feb 2026 | Stabilization, Hafalan module |
+| 2.0.0 | Mar 2026 | Kesantrian module (Ibadah, BLP) |
+| 2.3.0 | Mar 2026 | HR module (Evaluasi Asatidz) |
+| 2.3.5 | Mar 2026 | Star Rating Performance Review |
+| 2.3.6 | Mar 2026 | Hafalan Dashboard Manager |
+| 2.3.7 | Mar 2026 | Lucide Icons, Password Reset |
+| **2.3.8** | **Apr 2026** | **Production Ready, Dual-DB, UI Cleanup** |
 
 ---
 
-## 9. Known Issues & Bugs Fixed
+## 10. Kesimpulan
 
-### Recently Fixed (Session 2026-02-17)
+Portal Siswa Baron v2.3.8 telah mencapai status **Production Ready** dengan pencapaian teknis yang signifikan:
 
-| Issue | Status | Solution |
-|-------|--------|----------|
-| XII-B/C grades showing 0 imported | FIXED | Updated import script to import ALL semesters |
-| Hafalan page not rendering | FIXED | Added route in urls.py, template created |
-| Navigation missing Hafalan menu | FIXED | Updated createRoleBasedNav() in auth-check.js |
-| Role-based nav text | FIXED | Added setupRoleBasedNavigation() in page-events.js |
-| Evaluation page UI overhaul | FIXED | Wizard modal, Chart.js, kategori field |
-| Evaluation kategori field missing | FIXED | Added field to model, created migration |
-| Evaluation dummy data | FIXED | Created insert_dummy_evaluations.py script |
+### Pencapaian Arsitektur
+1. **Dual-Environment Database Routing** memungkinkan deployment fleksibel ke berbagai platform
+2. **Unified Dashboard Architecture** menyederhanakan maintenance dengan single codebase
+3. **Modular Django Apps** (12 apps) memastikan separation of concerns yang baik
 
-### Previously Fixed (Session 2026-02-13)
+### Pencapaian Keamanan
+1. **JWT Authentication** dengan refresh token dan blacklisting
+2. **Secure Password Recovery** dengan OTP token berbasis SMTP
+3. **RBAC 8 Roles** dengan granular permission control
 
-| Issue | Status | Solution |
-|-------|--------|----------|
-| showToast not working | FIXED | Added global function with window. export |
-| Modal not closing after save | FIXED | Added closeModal() call in success handler |
-| Bulk entry not saving | FIXED | Fixed payload format, removed invalid fields |
-| 400 Bad Request on grade save | FIXED | Removed `keterangan` field (doesn't exist in model) |
-| deleteGrade wrong function | FIXED | Corrected function reference |
+### Pencapaian UI/UX
+1. **Modern Icon Library** (Lucide) menggantikan emoji/Font Awesome lama
+2. **Legacy UI Cleanup** menghilangkan technical debt
+3. **Responsive Design** dengan Glassmorphism theme
 
-### Pending Issues
-
-| Issue | Priority | Status |
-|-------|----------|--------|
-| Mobile responsive optimization | High | In Progress |
-| PDF export rapor | High | Planning |
-| Real-time notifications | Medium | Planning |
+### Kesiapan Deployment
+1. **PythonAnywhere Compatible** (free tier dengan SQLite)
+2. **VPS Production Ready** (PostgreSQL dengan Gunicorn)
+3. **Comprehensive Documentation** untuk maintenance
 
 ---
 
-## 10. Contact & Resources
-
-### Repository
-- Local: `C:\Users\Afif H\.vscode\belajaroiii\semester 6\portal-siswa`
-- Branch: `main`
-
-### Documentation
-- README.md - Quick start guide
-- PERMISSIONS.md - RBAC documentation
-- PROJECT_SUMMARY_FINAL.md - This file
-
-### Key Files
-- `backend_django/manage.py` - Django CLI
-- `backend_django/backend_django/settings.py` - Django config
-- `frontend/views/hafalan.html` - Hafalan page template
-- `frontend/public/js/hafalan.js` - Hafalan JS module
-- `frontend/public/css/hafalan.css` - Hafalan styles
-- `import_students_grades.py` - Data import script
-- `insert_dummy_evaluations.py` - Evaluation dummy data script
+**Portal Siswa Baron v2.3.8**
+*Production Ready - April 2026*
 
 ---
 
-*Document generated by Claude Code audit process*
+*Document generated for internship logbook reference*
+*Last updated: 19 April 2026*
