@@ -15,9 +15,8 @@ let inputData = {
     jam_ke: [],
     students: [],
     records: {},
-    // NEW: Step 3 data (v2.3.9)
+    // Step 3 data (v2.3.9) - guru_pengganti auto dari request.user
     tipe_pengajar: 'guru_asli',
-    guru_pengganti: null,
     materi: '',
     capaian_pembelajaran: '',
     catatan: ''
@@ -29,9 +28,6 @@ let weeklyChart = null;
 // Session & JP Selection State
 let selectedSession = null;
 let selectedJP = [];
-
-// Guru list for dropdown (cached)
-let guruList = [];
 
 // JP mapping by session (9 JP per hari)
 // Pagi: JP 1 (Tahfidz)
@@ -498,6 +494,7 @@ function updateJPHint() {
 
 /**
  * Initialize pengajar selector (Step 3) - v2.3.9
+ * Updated: Auto-use logged-in user as guru pengganti (no dropdown)
  */
 function initPengajarSelector() {
     const pengajarRadios = document.querySelectorAll('input[name="tipe_pengajar"]');
@@ -509,13 +506,10 @@ function initPengajarSelector() {
 
             if (this.value === 'guru_pengganti') {
                 penggantiFields.style.display = 'block';
-                // Load guru list if not already loaded
-                if (guruList.length === 0) {
-                    loadGuruOptions();
-                }
+                // Display current user info
+                displayCurrentUserAsGuruPengganti();
             } else {
                 penggantiFields.style.display = 'none';
-                inputData.guru_pengganti = null;
             }
 
             // Re-init Lucide icons for newly visible elements
@@ -527,44 +521,40 @@ function initPengajarSelector() {
 }
 
 /**
- * Load guru options for dropdown
+ * Display current logged-in user as guru pengganti
+ * Backend will automatically use request.user
  */
-async function loadGuruOptions() {
-    const select = document.getElementById('input-guru-pengganti');
-    if (!select) return;
+function displayCurrentUserAsGuruPengganti() {
+    const nameEl = document.getElementById('pengganti-user-name');
+    const roleEl = document.getElementById('pengganti-user-role');
 
-    select.innerHTML = '<option value="">Memuat...</option>';
+    if (!nameEl || !roleEl) return;
 
-    try {
-        // Fetch users with guru role
-        const response = await window.apiFetch('/users/?role=guru');
+    // Get user data from localStorage (set by auth-check.js)
+    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
 
-        if (!response.ok) throw new Error('Failed to load guru');
+    const displayName = userData.full_name || userData.nama || userData.username || 'User';
+    const roleDisplay = getRoleDisplayName(userData.role || 'guru');
 
-        const data = await response.json();
+    nameEl.textContent = displayName;
+    roleEl.textContent = roleDisplay;
+}
 
-        // Handle different response formats
-        let users = [];
-        if (data.success && data.data) {
-            users = data.data;
-        } else if (data.results) {
-            users = data.results;
-        } else if (Array.isArray(data)) {
-            users = data;
-        }
-
-        guruList = users;
-
-        select.innerHTML = '<option value="">-- Pilih Guru Pengganti --</option>';
-        users.forEach(user => {
-            const displayName = user.full_name || user.nama || user.username;
-            select.innerHTML += `<option value="${user.id}">${displayName}</option>`;
-        });
-
-    } catch (error) {
-        console.error('Error loading guru:', error);
-        select.innerHTML = '<option value="">Gagal memuat data guru</option>';
-    }
+/**
+ * Get display name for role
+ */
+function getRoleDisplayName(role) {
+    const roleMap = {
+        'superadmin': 'Super Admin',
+        'pimpinan': 'Pimpinan',
+        'guru': 'Guru',
+        'musyrif': 'Musyrif',
+        'wali_kelas': 'Wali Kelas',
+        'bk': 'Guru BK',
+        'bendahara': 'Bendahara',
+        'walisantri': 'Wali Santri'
+    };
+    return roleMap[role] || role;
 }
 
 /**
@@ -1022,7 +1012,6 @@ function resetModalStep() {
 
     // Reset inputData step 3 values
     inputData.tipe_pengajar = 'guru_asli';
-    inputData.guru_pengganti = null;
     inputData.materi = '';
     inputData.capaian_pembelajaran = '';
     inputData.catatan = '';
@@ -1297,17 +1286,7 @@ async function saveAttendance() {
     // === Collect Step 3 values ===
     const tipePengajarRadio = document.querySelector('input[name="tipe_pengajar"]:checked');
     const tipePengajar = tipePengajarRadio ? tipePengajarRadio.value : 'guru_asli';
-
-    let guruPengganti = null;
-    if (tipePengajar === 'guru_pengganti') {
-        const guruSelect = document.getElementById('input-guru-pengganti');
-        guruPengganti = guruSelect ? guruSelect.value : null;
-
-        if (!guruPengganti) {
-            showToast('Pilih guru pengganti terlebih dahulu', 'warning');
-            return;
-        }
-    }
+    // NOTE: guru_pengganti tidak dikirim - backend otomatis pakai request.user
 
     const materiInput = document.getElementById('input-materi');
     const capaianInput = document.getElementById('input-capaian');
@@ -1330,9 +1309,8 @@ async function saveAttendance() {
             mata_pelajaran: inputData.mapel,
             jam_ke: inputData.jam_ke,
             attendance_data: attendanceList,
-            // NEW: Step 3 fields (v2.3.9)
+            // Step 3 fields (v2.3.9) - guru_pengganti otomatis dari request.user
             tipe_pengajar: tipePengajar,
-            guru_pengganti: guruPengganti ? parseInt(guruPengganti) : null,
             materi: materi,
             capaian_pembelajaran: capaianPembelajaran,
             catatan: catatan

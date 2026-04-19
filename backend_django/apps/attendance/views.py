@@ -169,7 +169,6 @@ def save_batch_attendance(request):
 
     # === NEW FIELDS v2.3.9 (session-level) ===
     tipe_pengajar = request.data.get('tipe_pengajar', 'guru_asli')
-    guru_pengganti_id = request.data.get('guru_pengganti')
     capaian_pembelajaran = request.data.get('capaian_pembelajaran', '')
     materi = request.data.get('materi', '')
     catatan = request.data.get('catatan', '')
@@ -178,17 +177,10 @@ def save_batch_attendance(request):
     if tipe_pengajar not in ['guru_asli', 'guru_pengganti']:
         tipe_pengajar = 'guru_asli'
 
-    # Resolve guru_pengganti FK
+    # Auto-use request.user as guru_pengganti (no manual selection needed)
     guru_pengganti = None
-    if tipe_pengajar == 'guru_pengganti' and guru_pengganti_id:
-        from apps.accounts.models import User
-        try:
-            guru_pengganti = User.objects.get(id=guru_pengganti_id)
-        except User.DoesNotExist:
-            return Response({
-                'success': False,
-                'message': f'Guru pengganti dengan ID {guru_pengganti_id} tidak ditemukan'
-            }, status=status.HTTP_400_BAD_REQUEST)
+    if tipe_pengajar == 'guru_pengganti':
+        guru_pengganti = request.user
     # === END NEW FIELDS ===
 
     # Determine source of metadata

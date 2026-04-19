@@ -364,16 +364,20 @@
                     </div>
                 </div>
 
-                <!-- Fields untuk Guru Pengganti (hidden by default) -->
+                <!-- Info Card Guru Pengganti (hidden by default) -->
                 <div id="guru-pengganti-fields" class="pengganti-fields" style="display: none;">
-                    <div class="form-group">
-                        <label for="input-guru-pengganti">
-                            <i data-lucide="users" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
-                            Guru Pengganti <span class="required">*</span>
-                        </label>
-                        <select id="input-guru-pengganti" class="glass-input">
-                            <option value="">-- Pilih Guru Pengganti --</option>
-                        </select>
+                    <div class="pengganti-info-card">
+                        <div class="pengganti-info-icon">
+                            <i data-lucide="user-check"></i>
+                        </div>
+                        <div class="pengganti-info-content">
+                            <div class="pengganti-info-label">Anda akan tercatat sebagai guru pengganti sesi ini</div>
+                            <div class="pengganti-info-user">
+                                <span id="pengganti-user-name">-</span>
+                                <span class="pengganti-role-badge" id="pengganti-user-role">-</span>
+                            </div>
+                        </div>
+                        <div class="pengganti-info-badge">+5 Poin</div>
                     </div>
                 </div>
 
