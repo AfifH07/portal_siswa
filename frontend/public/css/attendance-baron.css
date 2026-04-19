@@ -1148,4 +1148,162 @@ select.glass-input {
     .detail-info { grid-template-columns: 1fr; }
     .session-selector { flex-direction: column; }
     .radio-group { flex-direction: column; }
+    .pengajar-selector { flex-direction: column; }
+}
+
+/* =============================================
+   STEP 3: PENGAJAR SELECTOR - v2.3.9
+   ============================================= */
+
+/* Pengajar Radio Cards */
+.pengajar-selector {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.pengajar-radio {
+    flex: 1;
+    cursor: pointer;
+}
+
+.pengajar-radio input[type="radio"] {
+    display: none;
+}
+
+.pengajar-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px;
+    border-radius: var(--radius-md, 12px);
+    border: 2px solid var(--border-card);
+    background: var(--bg-surface);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+}
+
+.pengajar-radio input:checked + .pengajar-card {
+    border-color: var(--emerald-500);
+    background: linear-gradient(135deg, var(--emerald-50) 0%, rgba(52, 201, 154, 0.08) 100%);
+    box-shadow: 0 0 0 3px rgba(52, 201, 154, 0.15),
+                0 4px 12px rgba(23, 133, 96, 0.12);
+}
+
+.pengajar-card:hover {
+    border-color: var(--emerald-300);
+    background: var(--emerald-50);
+    transform: translateY(-2px);
+}
+
+.pengajar-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    transition: color 0.2s ease;
+}
+
+.pengajar-radio input:checked + .pengajar-card .pengajar-icon {
+    color: var(--emerald-600);
+}
+
+.pengajar-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.pengajar-desc {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+/* Pengganti Fields Container */
+.pengganti-fields {
+    margin-bottom: 18px;
+    padding: 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-sm);
+    animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pengganti-fields .form-group {
+    margin-bottom: 0;
+}
+
+.pengganti-fields .form-group label {
+    color: #92400e;
+}
+
+/* Dokumentasi Section */
+.dokumentasi-section {
+    margin-top: 8px;
+}
+
+.section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.divider-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-light), transparent);
+}
+
+.divider-text {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+/* Optional Badge */
+.optional-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--emerald-50);
+    border: 1px solid var(--emerald-200);
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--emerald-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Textarea improvements */
+textarea.glass-input {
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+}
+
+textarea.glass-input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
 }

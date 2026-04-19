@@ -14,14 +14,24 @@ let inputData = {
     tanggal: '',
     jam_ke: [],
     students: [],
-    records: {}
+    records: {},
+    // NEW: Step 3 data (v2.3.9)
+    tipe_pengajar: 'guru_asli',
+    guru_pengganti: null,
+    materi: '',
+    capaian_pembelajaran: '',
+    catatan: ''
 };
 let modalStep = 1;
+const TOTAL_STEPS = 3; // Updated for 3 steps
 let weeklyChart = null;
 
 // Session & JP Selection State
 let selectedSession = null;
 let selectedJP = [];
+
+// Guru list for dropdown (cached)
+let guruList = [];
 
 // JP mapping by session (9 JP per hari)
 // Pagi: JP 1 (Tahfidz)
@@ -73,7 +83,13 @@ document.addEventListener('DOMContentLoaded', function() {
     updateAttendanceCards(); // Load today's stats by default
     initSessionSelector();
     initFilterListeners();
+    initPengajarSelector(); // NEW: Step 3 init
     adjustUIForRole();
+
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
 
 /**
@@ -477,6 +493,77 @@ function updateJPHint() {
         const jpLabels = selectedJP.map(j => `JP ${j}`).join(', ');
         hintEl.textContent = `Terpilih: ${jpLabels}`;
         hintEl.style.color = EMERALD_COLORS.emerald600;
+    }
+}
+
+/**
+ * Initialize pengajar selector (Step 3) - v2.3.9
+ */
+function initPengajarSelector() {
+    const pengajarRadios = document.querySelectorAll('input[name="tipe_pengajar"]');
+    const penggantiFields = document.getElementById('guru-pengganti-fields');
+
+    pengajarRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            inputData.tipe_pengajar = this.value;
+
+            if (this.value === 'guru_pengganti') {
+                penggantiFields.style.display = 'block';
+                // Load guru list if not already loaded
+                if (guruList.length === 0) {
+                    loadGuruOptions();
+                }
+            } else {
+                penggantiFields.style.display = 'none';
+                inputData.guru_pengganti = null;
+            }
+
+            // Re-init Lucide icons for newly visible elements
+            if (typeof lucide !== 'undefined') {
+                setTimeout(() => lucide.createIcons(), 50);
+            }
+        });
+    });
+}
+
+/**
+ * Load guru options for dropdown
+ */
+async function loadGuruOptions() {
+    const select = document.getElementById('input-guru-pengganti');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Memuat...</option>';
+
+    try {
+        // Fetch users with guru role
+        const response = await window.apiFetch('/users/?role=guru');
+
+        if (!response.ok) throw new Error('Failed to load guru');
+
+        const data = await response.json();
+
+        // Handle different response formats
+        let users = [];
+        if (data.success && data.data) {
+            users = data.data;
+        } else if (data.results) {
+            users = data.results;
+        } else if (Array.isArray(data)) {
+            users = data;
+        }
+
+        guruList = users;
+
+        select.innerHTML = '<option value="">-- Pilih Guru Pengganti --</option>';
+        users.forEach(user => {
+            const displayName = user.full_name || user.nama || user.username;
+            select.innerHTML += `<option value="${user.id}">${displayName}</option>`;
+        });
+
+    } catch (error) {
+        console.error('Error loading guru:', error);
+        select.innerHTML = '<option value="">Gagal memuat data guru</option>';
     }
 }
 
@@ -887,28 +974,63 @@ function closeAddModal() {
 function resetModalStep() {
     modalStep = 1;
 
+    // Reset all step contents
     const step1 = document.getElementById('modal-step-1');
     const step2 = document.getElementById('modal-step-2');
+    const step3 = document.getElementById('modal-step-3');
     if (step1) step1.classList.add('active');
     if (step2) step2.classList.remove('active');
+    if (step3) step3.classList.remove('active');
 
+    // Reset step indicator dots
     const dot1 = document.getElementById('dot-1');
     const dot2 = document.getElementById('dot-2');
+    const dot3 = document.getElementById('dot-3');
     const line1 = document.getElementById('line-1');
+    const line2 = document.getElementById('line-2');
     if (dot1) { dot1.className = 'step-dot active'; }
     if (dot2) { dot2.className = 'step-dot'; }
+    if (dot3) { dot3.className = 'step-dot'; }
     if (line1) { line1.classList.remove('done'); }
+    if (line2) { line2.classList.remove('done'); }
 
+    // Reset buttons
     const btnBack = document.getElementById('btn-modal-back');
     const btnNext = document.getElementById('btn-modal-next');
     const btnSave = document.getElementById('btn-modal-save');
     if (btnBack) btnBack.style.display = 'none';
     if (btnNext) btnNext.style.display = '';
     if (btnSave) btnSave.style.display = 'none';
+
+    // Reset step 3 fields
+    const pengajarRadios = document.querySelectorAll('input[name="tipe_pengajar"]');
+    pengajarRadios.forEach(radio => {
+        radio.checked = radio.value === 'guru_asli';
+    });
+    const penggantiFields = document.getElementById('guru-pengganti-fields');
+    if (penggantiFields) penggantiFields.style.display = 'none';
+
+    const guruSelect = document.getElementById('input-guru-pengganti');
+    if (guruSelect) guruSelect.value = '';
+
+    const materiInput = document.getElementById('input-materi');
+    const capaianInput = document.getElementById('input-capaian');
+    const catatanInput = document.getElementById('input-catatan-guru');
+    if (materiInput) materiInput.value = '';
+    if (capaianInput) capaianInput.value = '';
+    if (catatanInput) catatanInput.value = '';
+
+    // Reset inputData step 3 values
+    inputData.tipe_pengajar = 'guru_asli';
+    inputData.guru_pengganti = null;
+    inputData.materi = '';
+    inputData.capaian_pembelajaran = '';
+    inputData.catatan = '';
 }
 
 async function modalNext() {
     if (modalStep === 1) {
+        // === STEP 1 → STEP 2 ===
         const kelas = document.getElementById('input-kelas').value;
         const mapel = document.getElementById('input-mapel').value;
         const tanggal = document.getElementById('input-tanggal').value;
@@ -955,14 +1077,52 @@ async function modalNext() {
         if (dot2) { dot2.classList.add('active'); }
         if (line1) { line1.classList.add('done'); }
 
+        // Show back & next, hide save
+        document.getElementById('btn-modal-back').style.display = '';
+        document.getElementById('btn-modal-next').style.display = '';
+        document.getElementById('btn-modal-save').style.display = 'none';
+
+    } else if (modalStep === 2) {
+        // === STEP 2 → STEP 3 ===
+        // Validate all students have status
+        const unfilled = inputData.students.filter(s => !inputData.records[s.nisn]?.status);
+        if (unfilled.length > 0) {
+            showToast(`${unfilled.length} siswa belum diisi statusnya`, 'warning');
+            return;
+        }
+
+        // Update step 3 info display
+        document.getElementById('step3-kelas-info').textContent = inputData.kelas;
+        document.getElementById('step3-mapel-info').textContent = inputData.mapel;
+        document.getElementById('step3-tanggal-info').textContent = formatDate(inputData.tanggal);
+
+        // Update step indicator
+        modalStep = 3;
+        document.getElementById('modal-step-2').classList.remove('active');
+        document.getElementById('modal-step-3').classList.add('active');
+
+        const dot2 = document.getElementById('dot-2');
+        const dot3 = document.getElementById('dot-3');
+        const line2 = document.getElementById('line-2');
+        if (dot2) { dot2.classList.remove('active'); dot2.classList.add('done'); }
+        if (dot3) { dot3.classList.add('active'); }
+        if (line2) { line2.classList.add('done'); }
+
+        // Show back & save, hide next
         document.getElementById('btn-modal-back').style.display = '';
         document.getElementById('btn-modal-next').style.display = 'none';
         document.getElementById('btn-modal-save').style.display = '';
+
+        // Re-init Lucide icons for step 3
+        if (typeof lucide !== 'undefined') {
+            setTimeout(() => lucide.createIcons(), 50);
+        }
     }
 }
 
 function modalBack() {
     if (modalStep === 2) {
+        // === STEP 2 → STEP 1 ===
         modalStep = 1;
         document.getElementById('modal-step-1').classList.add('active');
         document.getElementById('modal-step-2').classList.remove('active');
@@ -975,6 +1135,24 @@ function modalBack() {
         if (line1) { line1.classList.remove('done'); }
 
         document.getElementById('btn-modal-back').style.display = 'none';
+        document.getElementById('btn-modal-next').style.display = '';
+        document.getElementById('btn-modal-save').style.display = 'none';
+
+    } else if (modalStep === 3) {
+        // === STEP 3 → STEP 2 ===
+        modalStep = 2;
+        document.getElementById('modal-step-3').classList.remove('active');
+        document.getElementById('modal-step-2').classList.add('active');
+
+        const dot2 = document.getElementById('dot-2');
+        const dot3 = document.getElementById('dot-3');
+        const line2 = document.getElementById('line-2');
+        if (dot2) { dot2.classList.add('active'); dot2.classList.remove('done'); }
+        if (dot3) { dot3.classList.remove('active'); }
+        if (line2) { line2.classList.remove('done'); }
+
+        // Show back & next, hide save
+        document.getElementById('btn-modal-back').style.display = '';
         document.getElementById('btn-modal-next').style.display = '';
         document.getElementById('btn-modal-save').style.display = 'none';
     }
@@ -1116,6 +1294,29 @@ async function saveAttendance() {
         return;
     }
 
+    // === Collect Step 3 values ===
+    const tipePengajarRadio = document.querySelector('input[name="tipe_pengajar"]:checked');
+    const tipePengajar = tipePengajarRadio ? tipePengajarRadio.value : 'guru_asli';
+
+    let guruPengganti = null;
+    if (tipePengajar === 'guru_pengganti') {
+        const guruSelect = document.getElementById('input-guru-pengganti');
+        guruPengganti = guruSelect ? guruSelect.value : null;
+
+        if (!guruPengganti) {
+            showToast('Pilih guru pengganti terlebih dahulu', 'warning');
+            return;
+        }
+    }
+
+    const materiInput = document.getElementById('input-materi');
+    const capaianInput = document.getElementById('input-capaian');
+    const catatanInput = document.getElementById('input-catatan-guru');
+
+    const materi = materiInput ? materiInput.value.trim() : '';
+    const capaianPembelajaran = capaianInput ? capaianInput.value.trim() : '';
+    const catatan = catatanInput ? catatanInput.value.trim() : '';
+
     try {
         const attendanceList = inputData.students.map(s => ({
             nisn: s.nisn,
@@ -1123,15 +1324,23 @@ async function saveAttendance() {
             keterangan: inputData.records[s.nisn].keterangan || ''
         }));
 
+        const requestBody = {
+            kelas: inputData.kelas,
+            tanggal: inputData.tanggal,
+            mata_pelajaran: inputData.mapel,
+            jam_ke: inputData.jam_ke,
+            attendance_data: attendanceList,
+            // NEW: Step 3 fields (v2.3.9)
+            tipe_pengajar: tipePengajar,
+            guru_pengganti: guruPengganti ? parseInt(guruPengganti) : null,
+            materi: materi,
+            capaian_pembelajaran: capaianPembelajaran,
+            catatan: catatan
+        };
+
         const response = await window.apiFetch('/attendance/batch/', {
             method: 'POST',
-            body: JSON.stringify({
-                kelas: inputData.kelas,
-                tanggal: inputData.tanggal,
-                mata_pelajaran: inputData.mapel,
-                jam_ke: inputData.jam_ke,
-                attendance_data: attendanceList
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) throw new Error('Failed to save');
@@ -1141,10 +1350,12 @@ async function saveAttendance() {
         if (data.success) {
             const jpCount = inputData.jam_ke.length;
             const studentCount = inputData.students.length;
-            showToast(`Absensi berhasil disimpan (${studentCount} siswa × ${jpCount} JP)`, 'success');
+            const pengajarInfo = tipePengajar === 'guru_pengganti' ? ' (Guru Pengganti)' : '';
+            showToast(`Absensi berhasil disimpan (${studentCount} siswa × ${jpCount} JP)${pengajarInfo}`, 'success');
             closeAddModal();
             loadAttendanceData();
             loadWeeklyChartData();
+            updateAttendanceCards();
         } else {
             throw new Error(data.message || 'Failed to save');
         }

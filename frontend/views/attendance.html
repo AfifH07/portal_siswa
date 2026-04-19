@@ -8,8 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <!-- Baron Light Emerald Theme -->
-    <link href="/static/css/baron-emerald.css?v=20260327" rel="stylesheet">
-    <link href="/static/css/attendance-baron.css?v=20260327" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260419" rel="stylesheet">
+    <link href="/static/css/attendance-baron.css?v=20260419" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -249,7 +249,7 @@
             <button class="modal-close" onclick="closeAddModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <!-- Step indicator -->
+            <!-- Step indicator (3 steps) -->
             <div class="step-indicator">
                 <div class="step-wrap">
                     <div class="step-dot active" id="dot-1">1</div>
@@ -259,6 +259,11 @@
                 <div class="step-wrap">
                     <div class="step-dot" id="dot-2">2</div>
                     <div class="step-label">Kehadiran</div>
+                </div>
+                <div class="step-line" id="line-2"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="dot-3">3</div>
+                    <div class="step-label">Pengajar</div>
                 </div>
             </div>
 
@@ -328,6 +333,84 @@
                     <span class="summary-item sakit">Sakit: <strong id="count-sakit">0</strong></span>
                     <span class="summary-item izin">Izin: <strong id="count-izin">0</strong></span>
                     <span class="summary-item alpha">Alpha: <strong id="count-alpha">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Step 3: Pengajar & Dokumentasi -->
+            <div id="modal-step-3" class="modal-step">
+                <div class="step-info">
+                    <span id="step3-kelas-info">-</span> &nbsp;|&nbsp; <span id="step3-mapel-info">-</span> &nbsp;|&nbsp; <span id="step3-tanggal-info">-</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipe Pengajar <span class="required">*</span></label>
+                    <div class="pengajar-selector">
+                        <label class="pengajar-radio">
+                            <input type="radio" name="tipe_pengajar" value="guru_asli" checked>
+                            <span class="pengajar-card">
+                                <i data-lucide="user-check" class="pengajar-icon"></i>
+                                <span class="pengajar-label">Guru Asli</span>
+                                <span class="pengajar-desc">Mengajar sesuai jadwal</span>
+                            </span>
+                        </label>
+                        <label class="pengajar-radio">
+                            <input type="radio" name="tipe_pengajar" value="guru_pengganti">
+                            <span class="pengajar-card">
+                                <i data-lucide="user-plus" class="pengajar-icon"></i>
+                                <span class="pengajar-label">Guru Pengganti</span>
+                                <span class="pengajar-desc">Menggantikan guru lain</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Fields untuk Guru Pengganti (hidden by default) -->
+                <div id="guru-pengganti-fields" class="pengganti-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="input-guru-pengganti">
+                            <i data-lucide="users" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+                            Guru Pengganti <span class="required">*</span>
+                        </label>
+                        <select id="input-guru-pengganti" class="glass-input">
+                            <option value="">-- Pilih Guru Pengganti --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dokumentasi Pembelajaran (selalu tampil) -->
+                <div class="dokumentasi-section">
+                    <div class="section-divider">
+                        <span class="divider-line"></span>
+                        <span class="divider-text">
+                            <i data-lucide="file-text" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+                            Dokumentasi Pembelajaran
+                        </span>
+                        <span class="divider-line"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-materi">
+                            <i data-lucide="book-open" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+                            Materi yang Diajarkan
+                        </label>
+                        <input type="text" id="input-materi" class="glass-input" placeholder="Contoh: Bab 5 - Integral Tak Tentu" maxlength="255">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-capaian">
+                            <i data-lucide="target" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+                            Capaian Pembelajaran
+                        </label>
+                        <textarea id="input-capaian" class="glass-input" rows="3" placeholder="Deskripsikan capaian pembelajaran yang dicapai siswa pada sesi ini..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-catatan-guru">
+                            <i data-lucide="message-square" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+                            Catatan Guru <span class="optional-badge">Opsional</span>
+                        </label>
+                        <textarea id="input-catatan-guru" class="glass-input" rows="2" placeholder="Catatan tambahan (misal: siswa yang perlu remedial, kondisi kelas, dll)"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -464,7 +547,7 @@
 <script src="/static/js/auth-check.js?v=20260321C" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/attendance.js?v=20260312c" defer></script>
+<script src="/static/js/attendance.js?v=20260419" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init

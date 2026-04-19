@@ -14,6 +14,13 @@ class Attendance(models.Model):
     - Sore: JP 8-9
 
     Unique constraint: (nisn, tanggal, jam_ke) - satu record per siswa per jam
+
+    Fields tambahan v2.3.9:
+    - tipe_pengajar: guru_asli atau guru_pengganti
+    - guru_pengganti: FK ke User (jika tipe_pengajar='guru_pengganti')
+    - capaian_pembelajaran: Capaian pembelajaran yang dicapai
+    - materi: Materi yang diajarkan
+    - catatan: Catatan tambahan dari guru
     """
 
     # Choices untuk jam_ke
@@ -29,6 +36,12 @@ class Attendance(models.Model):
         (9, 'JP 9 (Sore)'),
     ]
 
+    # Choices untuk tipe_pengajar
+    TIPE_PENGAJAR_CHOICES = [
+        ('guru_asli', 'Guru Asli'),
+        ('guru_pengganti', 'Guru Pengganti'),
+    ]
+
     nisn = models.ForeignKey(Student, on_delete=models.CASCADE, db_column='nisn')
     tanggal = models.DateField()
     jam_ke = models.PositiveSmallIntegerField(
@@ -39,6 +52,40 @@ class Attendance(models.Model):
     mata_pelajaran = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=50)
     keterangan = models.TextField(blank=True, null=True)
+
+    # === NEW FIELDS v2.3.9 ===
+    tipe_pengajar = models.CharField(
+        max_length=20,
+        choices=TIPE_PENGAJAR_CHOICES,
+        default='guru_asli',
+        help_text="Apakah yang mengajar guru asli atau pengganti"
+    )
+    guru_pengganti = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='attendance_as_pengganti',
+        help_text="Diisi jika tipe_pengajar='guru_pengganti'"
+    )
+    capaian_pembelajaran = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Capaian pembelajaran yang dicapai pada sesi ini"
+    )
+    materi = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Materi yang diajarkan"
+    )
+    catatan = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Catatan tambahan dari guru"
+    )
+    # === END NEW FIELDS ===
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

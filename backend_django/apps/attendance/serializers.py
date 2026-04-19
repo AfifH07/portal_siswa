@@ -14,14 +14,33 @@ class AttendanceSerializer(serializers.ModelSerializer):
     student_kelas = serializers.CharField(source='nisn.kelas', read_only=True)
     jam_label = serializers.SerializerMethodField()
     waktu_kategori = serializers.CharField(read_only=True)
+    # New fields v2.3.9
+    tipe_pengajar_display = serializers.SerializerMethodField()
+    guru_pengganti_nama = serializers.SerializerMethodField()
 
     class Meta:
         model = Attendance
-        fields = ['id', 'nisn', 'tanggal', 'jam_ke', 'jam_label', 'waktu_kategori', 'mata_pelajaran', 'status', 'keterangan', 'created_at', 'updated_at', 'student_name', 'student_kelas']
+        fields = [
+            'id', 'nisn', 'tanggal', 'jam_ke', 'jam_label', 'waktu_kategori',
+            'mata_pelajaran', 'status', 'keterangan',
+            # New fields v2.3.9
+            'tipe_pengajar', 'tipe_pengajar_display', 'guru_pengganti', 'guru_pengganti_nama',
+            'capaian_pembelajaran', 'materi', 'catatan',
+            # Timestamps & relations
+            'created_at', 'updated_at', 'student_name', 'student_kelas'
+        ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_jam_label(self, obj):
         return Attendance.get_jam_label(obj.jam_ke)
+
+    def get_tipe_pengajar_display(self, obj):
+        return obj.get_tipe_pengajar_display() if obj.tipe_pengajar else 'Guru Asli'
+
+    def get_guru_pengganti_nama(self, obj):
+        if obj.guru_pengganti:
+            return obj.guru_pengganti.get_full_name() or obj.guru_pengganti.username
+        return None
 
     def validate(self, data):
         status = data.get('status')
@@ -33,19 +52,35 @@ class AttendanceSerializer(serializers.ModelSerializer):
 class AttendanceCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attendance
-        fields = ['nisn', 'tanggal', 'jam_ke', 'mata_pelajaran', 'status', 'keterangan']
+        fields = [
+            'nisn', 'tanggal', 'jam_ke', 'mata_pelajaran', 'status', 'keterangan',
+            # New fields v2.3.9
+            'tipe_pengajar', 'guru_pengganti', 'capaian_pembelajaran', 'materi', 'catatan'
+        ]
 
     def validate(self, data):
         nisn = data.get('nisn')
         tanggal = data.get('tanggal')
         jam_ke = data.get('jam_ke', 1)
         status = data.get('status')
+        tipe_pengajar = data.get('tipe_pengajar', 'guru_asli')
+        guru_pengganti = data.get('guru_pengganti')
 
         if status not in ['Hadir', 'Sakit', 'Izin', 'Alpha']:
             raise serializers.ValidationError({'status': 'Status harus Hadir, Sakit, Izin, atau Alpha'})
 
         if jam_ke < 1 or jam_ke > 9:
             raise serializers.ValidationError({'jam_ke': 'Jam pelajaran harus antara 1-9'})
+
+        # Validate guru_pengganti logic
+        if tipe_pengajar == 'guru_pengganti' and not guru_pengganti:
+            raise serializers.ValidationError({
+                'guru_pengganti': 'Guru pengganti harus diisi jika tipe_pengajar adalah guru_pengganti'
+            })
+
+        if tipe_pengajar == 'guru_asli' and guru_pengganti:
+            # Clear guru_pengganti if tipe is guru_asli
+            data['guru_pengganti'] = None
 
         existing = Attendance.objects.filter(
             nisn=nisn,
@@ -62,12 +97,33 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 class AttendanceUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attendance
-        fields = ['status', 'keterangan']
+        fields = [
+            'status', 'keterangan',
+            # New fields v2.3.9
+            'tipe_pengajar', 'guru_pengganti', 'capaian_pembelajaran', 'materi', 'catatan'
+        ]
 
     def validate_status(self, value):
         if value not in ['Hadir', 'Sakit', 'Izin', 'Alpha']:
             raise serializers.ValidationError('Status harus Hadir, Sakit, Izin, atau Alpha')
         return value
+
+    def validate(self, data):
+        tipe_pengajar = data.get('tipe_pengajar')
+        guru_pengganti = data.get('guru_pengganti')
+
+        # Only validate if both fields are being updated
+        if tipe_pengajar == 'guru_pengganti' and guru_pengganti is None:
+            # Check if existing record has guru_pengganti
+            if self.instance and not self.instance.guru_pengganti:
+                raise serializers.ValidationError({
+                    'guru_pengganti': 'Guru pengganti harus diisi jika tipe_pengajar adalah guru_pengganti'
+                })
+
+        if tipe_pengajar == 'guru_asli' and guru_pengganti:
+            data['guru_pengganti'] = None
+
+        return data
 
 
 class AttendanceStatsSerializer(serializers.Serializer):

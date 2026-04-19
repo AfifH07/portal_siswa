@@ -138,7 +138,13 @@ def save_batch_attendance(request):
         "draft_id": 123,
         "attendance_data": [
             {"nisn": "xxx", "status": "Hadir", "keterangan": ""}
-        ]
+        ],
+        // Optional new fields v2.3.9 (session-level, same for all students):
+        "tipe_pengajar": "guru_asli" | "guru_pengganti",
+        "guru_pengganti": <user_id>,  // Required if tipe_pengajar="guru_pengganti"
+        "capaian_pembelajaran": "...",
+        "materi": "...",
+        "catatan": "..."
     }
 
     Mode 2 - Direct (tanpa draft):
@@ -149,11 +155,41 @@ def save_batch_attendance(request):
         "jam_ke": [2, 3],  // Array - akan disimpan untuk SETIAP jam
         "attendance_data": [
             {"nisn": "xxx", "status": "Hadir", "keterangan": ""}
-        ]
+        ],
+        // Optional new fields v2.3.9:
+        "tipe_pengajar": "guru_asli" | "guru_pengganti",
+        "guru_pengganti": <user_id>,
+        "capaian_pembelajaran": "...",
+        "materi": "...",
+        "catatan": "..."
     }
     """
     draft_id = request.data.get('draft_id')
     attendance_data = request.data.get('attendance_data', [])
+
+    # === NEW FIELDS v2.3.9 (session-level) ===
+    tipe_pengajar = request.data.get('tipe_pengajar', 'guru_asli')
+    guru_pengganti_id = request.data.get('guru_pengganti')
+    capaian_pembelajaran = request.data.get('capaian_pembelajaran', '')
+    materi = request.data.get('materi', '')
+    catatan = request.data.get('catatan', '')
+
+    # Validate tipe_pengajar
+    if tipe_pengajar not in ['guru_asli', 'guru_pengganti']:
+        tipe_pengajar = 'guru_asli'
+
+    # Resolve guru_pengganti FK
+    guru_pengganti = None
+    if tipe_pengajar == 'guru_pengganti' and guru_pengganti_id:
+        from apps.accounts.models import User
+        try:
+            guru_pengganti = User.objects.get(id=guru_pengganti_id)
+        except User.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': f'Guru pengganti dengan ID {guru_pengganti_id} tidak ditemukan'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    # === END NEW FIELDS ===
 
     # Determine source of metadata
     if draft_id:
@@ -239,6 +275,12 @@ def save_batch_attendance(request):
                     existing.status = status_val
                     existing.keterangan = keterangan
                     existing.mata_pelajaran = mata_pelajaran
+                    # Update new fields v2.3.9
+                    existing.tipe_pengajar = tipe_pengajar
+                    existing.guru_pengganti = guru_pengganti
+                    existing.capaian_pembelajaran = capaian_pembelajaran or existing.capaian_pembelajaran
+                    existing.materi = materi or existing.materi
+                    existing.catatan = catatan or existing.catatan
                     existing.save()
                     updated_count += 1
                 else:
@@ -248,7 +290,13 @@ def save_batch_attendance(request):
                         jam_ke=jam,
                         mata_pelajaran=mata_pelajaran,
                         status=status_val,
-                        keterangan=keterangan
+                        keterangan=keterangan,
+                        # New fields v2.3.9
+                        tipe_pengajar=tipe_pengajar,
+                        guru_pengganti=guru_pengganti,
+                        capaian_pembelajaran=capaian_pembelajaran,
+                        materi=materi,
+                        catatan=catatan
                     )
                     saved_count += 1
 
@@ -258,6 +306,41 @@ def save_batch_attendance(request):
         except Exception as e:
             error_count += 1
             errors.append(f'Error: {str(e)}')
+
+    # === AUTO POIN GURU PIKET v2.3.9 ===
+    # Create EmployeeEvaluation record for guru_pengganti (+5 poin)
+    if tipe_pengajar == 'guru_pengganti' and guru_pengganti and (saved_count > 0 or updated_count > 0):
+        try:
+            from apps.kesantrian.models import EmployeeEvaluation
+            from apps.kesantrian.signals import get_current_tahun_ajaran, get_current_semester
+
+            # Format tanggal for keterangan
+            tanggal_str = tanggal.strftime('%d/%m/%Y') if hasattr(tanggal, 'strftime') else str(tanggal)
+            jam_str = ', '.join(map(str, jam_ke_list))
+
+            EmployeeEvaluation.objects.create(
+                user=guru_pengganti,
+                tanggal=tanggal,
+                jenis='tugas_tambahan',
+                poin=5,
+                keterangan=f"Guru Piket - {kelas} - {tanggal_str} (JP {jam_str})",
+                tahun_ajaran=get_current_tahun_ajaran(),
+                semester=get_current_semester(),
+                created_by=f'SYSTEM_ATTENDANCE_{request.user.username}'
+            )
+
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(
+                f"[AUTO-PIKET] Created +5 poin for {guru_pengganti.username}: "
+                f"Piket kelas {kelas} tanggal {tanggal_str}"
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"[AUTO-PIKET] Failed to create evaluation: {str(e)}")
+            # Don't fail the whole operation, just log the error
+    # === END AUTO POIN ===
 
     # Delete draft if used
     if draft_id:
