@@ -173,7 +173,7 @@ class TitipanTugasSerializer(serializers.ModelSerializer):
 
     def get_guru_nama(self, obj):
         if obj.guru:
-            return obj.guru.get_full_name() or obj.guru.username
+            return obj.guru.name or obj.guru.username
         return None
 
     def get_guru_piket_nama(self, obj):
