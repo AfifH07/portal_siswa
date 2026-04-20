@@ -9,7 +9,7 @@
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260420" rel="stylesheet">
     <link href="/static/css/students-baron.css?v=20260420" rel="stylesheet">
-    <link href="/static/css/jurnal-piket.css?v=20260420C" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260420D" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -161,26 +161,19 @@
     </div>
 </div>
 
-<!-- Tandai Dikerjakan Modal -->
-<div class="modal" id="tandai-modal">
-    <div class="modal-backdrop" onclick="closeTandaiModal()"></div>
-    <div class="modal-content modal-sm">
+<!-- Titipan Detail Modal -->
+<div class="modal" id="titipan-detail-modal">
+    <div class="modal-backdrop" onclick="closeTitipanDetailModal()"></div>
+    <div class="modal-content">
         <div class="modal-header">
-            <h2>Tandai Dikerjakan</h2>
-            <button class="btn-close" onclick="closeTandaiModal()">&times;</button>
+            <h2 id="titipan-modal-title">Detail Titipan Tugas</h2>
+            <button class="btn-close" onclick="closeTitipanDetailModal()">&times;</button>
         </div>
-        <div class="modal-body">
-            <p id="tandai-info" class="tandai-info"></p>
-            <div class="filter-group">
-                <label for="input-catatan-piket">Catatan (opsional)</label>
-                <textarea id="input-catatan-piket" class="filter-input textarea-input" rows="3" placeholder="Catatan pelaksanaan tugas..."></textarea>
-            </div>
+        <div class="modal-body" id="titipan-modal-body">
+            <!-- Detail content rendered by JS -->
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeTandaiModal()">Batal</button>
-            <button class="btn btn-primary" id="btn-konfirmasi-tandai" onclick="konfirmasiTandai()">
-                <span>✓</span> Konfirmasi
-            </button>
+        <div class="modal-footer" id="titipan-modal-footer">
+            <button class="btn btn-secondary" onclick="closeTitipanDetailModal()">Tutup</button>
         </div>
     </div>
 </div>
@@ -192,6 +185,6 @@
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/jurnal-piket.js?v=20260420B" defer></script>
+<script src="/static/js/jurnal-piket.js?v=20260420C" defer></script>
 </body>
 </html>

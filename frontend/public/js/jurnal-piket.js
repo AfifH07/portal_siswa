@@ -304,18 +304,8 @@ function createTitipanCardHtml(item) {
     const statusClass = item.status === 'dikerjakan' ? 'handled' : 'pending';
     const iconName = item.status === 'dikerjakan' ? 'check-circle' : 'clock';
 
-    const actionBtn = item.status === 'menunggu'
-        ? `<button class="btn btn-amber btn-sm" onclick="openTandaiModal(${item.id})">
-               <i data-lucide="check-square"></i>
-               Tandai Dikerjakan
-           </button>`
-        : `<span class="guru-piket-info">
-               <i data-lucide="user-check"></i>
-               ${escapeHtml(item.guru_piket_nama || '-')}
-           </span>`;
-
     return `
-        <div class="titipan-card ${statusClass}">
+        <div class="titipan-card ${statusClass}" onclick="openTitipanDetailModal(${item.id})" style="cursor: pointer;">
             <div class="titipan-icon">
                 <i data-lucide="${iconName}"></i>
             </div>
@@ -328,36 +318,130 @@ function createTitipanCardHtml(item) {
                     <span class="status-badge ${item.status}">${escapeHtml(item.status_display)}</span>
                 </div>
                 <div class="titipan-title">${escapeHtml(item.kelas)} — ${escapeHtml(item.mata_pelajaran)}</div>
-                <div class="titipan-desc">${escapeHtml(item.deskripsi_tugas)}</div>
-                ${item.catatan_piket ? `<div class="titipan-catatan"><strong>Catatan Piket:</strong> ${escapeHtml(item.catatan_piket)}</div>` : ''}
+                <div class="titipan-desc">${escapeHtml(truncateText(item.deskripsi_tugas, 100))}</div>
             </div>
             <div class="titipan-actions">
-                ${actionBtn}
+                <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openTitipanDetailModal(${item.id})">
+                    <i data-lucide="eye"></i>
+                    Detail
+                </button>
             </div>
         </div>
     `;
 }
 
-function openTandaiModal(titipanId) {
+// ============================================
+// TITIPAN DETAIL MODAL
+// ============================================
+
+function openTitipanDetailModal(titipanId) {
     selectedTitipanId = titipanId;
     const item = titipanData.find(t => t.id === titipanId);
 
     if (!item) return;
 
-    const modal = document.getElementById('tandai-modal');
-    const info = document.getElementById('tandai-info');
-    const catatan = document.getElementById('input-catatan-piket');
+    const modal = document.getElementById('titipan-detail-modal');
+    const modalTitle = document.getElementById('titipan-modal-title');
+    const modalBody = document.getElementById('titipan-modal-body');
+    const modalFooter = document.getElementById('titipan-modal-footer');
 
-    if (!modal) return;
+    if (!modal || !modalBody) return;
 
-    if (info) {
-        info.innerHTML = `Anda akan menandai tugas <strong>${escapeHtml(item.kelas)} — ${escapeHtml(item.mata_pelajaran)}</strong> dari <strong>${escapeHtml(item.guru_nama)}</strong> sebagai dikerjakan.`;
+    modalTitle.textContent = `${item.kelas} — ${item.mata_pelajaran}`;
+
+    const statusClass = item.status === 'dikerjakan' ? 'handled' : 'pending';
+    const statusText = item.status_display || (item.status === 'dikerjakan' ? 'Dikerjakan' : 'Menunggu');
+
+    // Build modal body content
+    let bodyHtml = `
+        <div class="detail-grid">
+            <div class="detail-row">
+                <div class="detail-label">Dititipkan oleh</div>
+                <div class="detail-value">${escapeHtml(item.guru_nama || '-')}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Kelas</div>
+                <div class="detail-value">${escapeHtml(item.kelas)}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Mata Pelajaran</div>
+                <div class="detail-value">${escapeHtml(item.mata_pelajaran)}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Tanggal Berlaku</div>
+                <div class="detail-value">${formatDate(item.tanggal_berlaku)}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Status</div>
+                <div class="detail-value">
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-title">
+                <i data-lucide="file-text"></i>
+                Deskripsi Tugas
+            </div>
+            <div class="detail-text-box">${escapeHtml(item.deskripsi_tugas)}</div>
+        </div>
+    `;
+
+    // If status is dikerjakan, show guru piket info and catatan
+    if (item.status === 'dikerjakan') {
+        bodyHtml += `
+            <div class="detail-section">
+                <div class="detail-section-title">
+                    <i data-lucide="user-check"></i>
+                    Dikerjakan oleh
+                </div>
+                <div class="detail-text-box guru-piket-box">${escapeHtml(item.guru_piket_nama || '-')}</div>
+            </div>
+        `;
+
+        if (item.catatan_piket) {
+            bodyHtml += `
+                <div class="detail-section">
+                    <div class="detail-section-title">
+                        <i data-lucide="message-square"></i>
+                        Catatan Guru Piket
+                    </div>
+                    <div class="detail-text-box">${escapeHtml(item.catatan_piket)}</div>
+                </div>
+            `;
+        }
+
+        // Footer for dikerjakan - just close button
+        modalFooter.innerHTML = `
+            <button class="btn btn-secondary" onclick="closeTitipanDetailModal()">Tutup</button>
+        `;
+    } else {
+        // Status menunggu - show form to tandai
+        bodyHtml += `
+            <div class="detail-section tandai-section">
+                <div class="detail-section-title">
+                    <i data-lucide="edit-3"></i>
+                    Tandai Sebagai Dikerjakan
+                </div>
+                <div class="filter-group">
+                    <label for="modal-catatan-piket">Catatan Piket (opsional)</label>
+                    <textarea id="modal-catatan-piket" class="filter-input textarea-input" rows="3" placeholder="Catatan pelaksanaan tugas..."></textarea>
+                </div>
+            </div>
+        `;
+
+        // Footer for menunggu - close + tandai buttons
+        modalFooter.innerHTML = `
+            <button class="btn btn-secondary" onclick="closeTitipanDetailModal()">Tutup</button>
+            <button class="btn btn-primary" id="btn-modal-tandai" onclick="tandaiFromModal()">
+                <i data-lucide="check-circle"></i>
+                Tandai Sudah Dikerjakan
+            </button>
+        `;
     }
 
-    if (catatan) {
-        catatan.value = '';
-    }
-
+    modalBody.innerHTML = bodyHtml;
     modal.classList.add('show');
 
     // Re-init Lucide icons
@@ -366,12 +450,68 @@ function openTandaiModal(titipanId) {
     }
 }
 
-function closeTandaiModal() {
-    const modal = document.getElementById('tandai-modal');
+function closeTitipanDetailModal() {
+    const modal = document.getElementById('titipan-detail-modal');
     if (modal) {
         modal.classList.remove('show');
     }
     selectedTitipanId = null;
+}
+
+async function tandaiFromModal() {
+    if (!selectedTitipanId) return;
+
+    const catatan = document.getElementById('modal-catatan-piket')?.value?.trim() || '';
+    const btnTandai = document.getElementById('btn-modal-tandai');
+
+    // Disable button
+    if (btnTandai) {
+        btnTandai.disabled = true;
+        btnTandai.innerHTML = '<i data-lucide="loader"></i> Memproses...';
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    try {
+        const response = await window.apiFetch(`/attendance/titipan-tugas/${selectedTitipanId}/tandai/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                catatan_piket: catatan
+            })
+        });
+
+        if (!response || !response.ok) {
+            const errorData = await response?.json();
+            throw new Error(errorData?.message || 'Gagal menandai tugas');
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('Tugas berhasil ditandai sebagai dikerjakan', 'success');
+            closeTitipanDetailModal();
+            // Reload data
+            await loadJurnalPiket();
+        } else {
+            throw new Error(result.message || 'Unknown error');
+        }
+
+    } catch (error) {
+        console.error('[JurnalPiket] Error marking titipan:', error);
+        showToast(error.message || 'Gagal menandai tugas', 'error');
+    } finally {
+        if (btnTandai) {
+            btnTandai.disabled = false;
+            btnTandai.innerHTML = '<i data-lucide="check-circle"></i> Tandai Sudah Dikerjakan';
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    }
 }
 
 async function konfirmasiTandai() {
@@ -447,6 +587,19 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+    return date.toLocaleDateString('id-ID', options);
+}
+
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
 function showToast(message, type = 'info') {
     // Simple toast - you can enhance this
     console.log(`[Toast] ${type}: ${message}`);
@@ -457,6 +610,6 @@ function showToast(message, type = 'info') {
 window.loadJurnalPiket = loadJurnalPiket;
 window.openDetailModal = openDetailModal;
 window.closeDetailModal = closeDetailModal;
-window.openTandaiModal = openTandaiModal;
-window.closeTandaiModal = closeTandaiModal;
-window.konfirmasiTandai = konfirmasiTandai;
+window.openTitipanDetailModal = openTitipanDetailModal;
+window.closeTitipanDetailModal = closeTitipanDetailModal;
+window.tandaiFromModal = tandaiFromModal;

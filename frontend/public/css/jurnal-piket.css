@@ -339,6 +339,49 @@ textarea.filter-input {
     box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
 }
 
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-main);
+}
+
+.btn-outline:hover {
+    background: var(--bg-muted);
+    border-color: var(--emerald-300);
+    color: var(--emerald-600);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-detail:hover {
+    background: var(--emerald-50);
+    border-color: var(--emerald-300);
+    color: var(--emerald-600);
+}
+
+.btn-detail svg {
+    width: 14px;
+    height: 14px;
+}
+
 /* =============================================
    MODAL ENHANCEMENTS
    ============================================= */
@@ -421,6 +464,61 @@ textarea.filter-input {
     font-size: 14px;
     line-height: 1.6;
     color: var(--text-sub);
+}
+
+.detail-text-box.guru-piket-box {
+    border-left-color: #22c55e;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    color: #15803d;
+    font-weight: 600;
+}
+
+/* Tandai Section in Modal */
+.tandai-section {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.tandai-section .detail-section-title {
+    color: #92400e;
+}
+
+.tandai-section .filter-group {
+    margin-top: 12px;
+}
+
+.tandai-section .filter-group label {
+    color: #92400e;
+    font-weight: 600;
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+
+/* =============================================
+   CLICKABLE TABLE ROWS
+   ============================================= */
+
+.riwayat-row {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.riwayat-row:hover {
+    background: var(--emerald-50);
+}
+
+.riwayat-row:hover td {
+    color: var(--emerald-700);
+}
+
+.text-muted {
+    color: var(--text-muted);
+    font-style: italic;
 }
 
 /* =============================================
