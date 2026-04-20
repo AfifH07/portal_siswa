@@ -531,7 +531,7 @@ function displayCurrentUserAsGuruPengganti() {
     if (!nameEl || !roleEl) return;
 
     // Get user data from localStorage (set by auth-check.js)
-    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
 
     const displayName = userData.name || userData.full_name || userData.username || 'User';
     const roleDisplay = getRoleDisplayName(userData.role || 'guru');
