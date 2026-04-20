@@ -241,13 +241,13 @@ function getAllowedPages(role) {
 
     // Fallback: hardcoded defaults (kept in sync with backend)
     const roleAccess = {
-        'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
-        'pimpinan': ['/', '/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
-        'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
-        'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
-        'wali_kelas': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/evaluasi-asatidz', '/case-management'],
-        'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/evaluasi-asatidz', '/case-management'],
-        'bendahara': ['/', '/dashboard', '/jurnal-piket', '/finance'],
+        'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
+        'pimpinan': ['/', '/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
+        'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
+        'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
+        'wali_kelas': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/grades', '/hafalan', '/evaluations', '/evaluasi-asatidz', '/case-management'],
+        'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/grades', '/hafalan', '/evaluations', '/evaluasi-asatidz', '/case-management'],
+        'bendahara': ['/', '/dashboard', '/jurnal-piket', '/titipan-tugas', '/finance'],
         'walisantri': ['/', '/dashboard', '/dashboard/walisantri', '/dashboard/parent', '/attendance', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/case-management'],
         'pendaftar': ['/registration']
     };
@@ -382,6 +382,7 @@ function createRoleBasedNav() {
                 { href: '/students', icon: 'users', label: 'Siswa' },
                 { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
+                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/grades', icon: 'file-text', label: 'Nilai' },
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
             ],
@@ -402,6 +403,7 @@ function createRoleBasedNav() {
                 { href: '/students', icon: 'users', label: 'Data Siswa' },
                 { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
+                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/grades', icon: 'file-text', label: 'Nilai' },
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
             ],
@@ -419,6 +421,7 @@ function createRoleBasedNav() {
                 { href: '/students', icon: 'users', label: 'Data Santri' },
                 { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
+                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/grades', icon: 'file-text', label: 'Nilai' }
             ],
             kesantrian: [
@@ -435,6 +438,7 @@ function createRoleBasedNav() {
                 { href: '/students', icon: 'users', label: 'Data Santri' },
                 { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
+                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/grades', icon: 'file-text', label: 'Nilai' }
             ],
             kesantrian: [
@@ -451,6 +455,7 @@ function createRoleBasedNav() {
                 { href: '/students', icon: 'users', label: 'Data Santri' },
                 { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
+                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/grades', icon: 'file-text', label: 'Nilai' },
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
             ],
@@ -464,6 +469,7 @@ function createRoleBasedNav() {
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
                 { href: '/students', icon: 'users', label: 'Data Santri' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
+                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/case-management', icon: 'folder-open', label: 'Pembinaan' }
             ],
             other: [
@@ -474,7 +480,8 @@ function createRoleBasedNav() {
         'bendahara': {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
-                { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' }
+                { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
+                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' }
             ],
             other: [
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }

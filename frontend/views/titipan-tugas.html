@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titipan Tugas - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260420" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260420" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout?.()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Titipan Tugas</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Titipan Tugas</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Form Input Titipan Tugas -->
+        <div class="glass-card">
+            <div class="card-head">
+                <h3>
+                    <i data-lucide="plus-circle"></i>
+                    Buat Titipan Tugas Baru
+                </h3>
+            </div>
+            <div class="card-body">
+                <form id="form-titipan" class="form-titipan">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="input-kelas-mapel">
+                                <i data-lucide="book-marked" class="filter-icon"></i>
+                                Kelas & Mata Pelajaran
+                            </label>
+                            <select id="input-kelas-mapel" class="filter-input" required>
+                                <option value="">-- Pilih Kelas & Mapel --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-tanggal">
+                                <i data-lucide="calendar" class="filter-icon"></i>
+                                Tanggal Berlaku
+                            </label>
+                            <input type="date" id="input-tanggal" class="filter-input" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-deskripsi">
+                            <i data-lucide="file-text" class="filter-icon"></i>
+                            Deskripsi Tugas
+                        </label>
+                        <textarea id="input-deskripsi" class="filter-input textarea-input" rows="4" placeholder="Jelaskan tugas yang harus dikerjakan oleh siswa..." required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-emerald" id="btn-simpan">
+                            <i data-lucide="save"></i>
+                            Simpan Titipan Tugas
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Riwayat Titipan Tugas -->
+        <div class="glass-card">
+            <div class="card-head">
+                <h3>
+                    <i data-lucide="history"></i>
+                    Riwayat Titipan Tugas Saya
+                </h3>
+                <button class="btn btn-outline-emerald btn-sm" onclick="loadRiwayat()">
+                    <i data-lucide="refresh-cw"></i>
+                    Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table-riwayat" id="table-riwayat">
+                        <thead>
+                            <tr>
+                                <th>Tanggal Berlaku</th>
+                                <th>Kelas</th>
+                                <th>Mata Pelajaran</th>
+                                <th>Status</th>
+                                <th>Guru Piket</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-riwayat">
+                            <!-- Data will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="empty-state" style="display: none;">
+                    <i data-lucide="inbox"></i>
+                    <p>Belum ada titipan tugas</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- Detail Modal -->
+<div class="modal" id="detail-modal">
+    <div class="modal-overlay" onclick="closeDetailModal()"></div>
+    <div class="modal-container modal-md">
+        <div class="modal-header">
+            <h2 id="modal-title">Detail Titipan Tugas</h2>
+            <button class="modal-close" onclick="closeDetailModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <!-- Detail content -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" onclick="closeDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260208" defer></script>
+<script src="/static/js/apiConfig.js?v=20260208" defer></script>
+<script src="/static/js/apiFetch.js?v=20260208" defer></script>
+<script src="/static/js/auth-check.js?v=20260420" defer></script>
+<script src="/static/js/auth.js?v=20260208" defer></script>
+<script src="/static/js/page-events.js?v=20260312c" defer></script>
+<script src="/static/js/titipan-tugas.js?v=20260420" defer></script>
+</body>
+</html>

@@ -5,6 +5,8 @@
 
 // State
 let jurnalData = [];
+let titipanData = [];
+let selectedTitipanId = null;
 
 // ============================================
 // INITIALIZATION
@@ -54,6 +56,7 @@ async function loadJurnalPiket() {
 
         if (result.success) {
             jurnalData = result.data || [];
+            titipanData = result.titipan_tugas || [];
 
             // Update stats
             updateStats(result.summary);
@@ -63,6 +66,9 @@ async function loadJurnalPiket() {
 
             // Render list
             renderJurnalList(jurnalData);
+
+            // Render titipan tugas
+            renderTitipanList(titipanData);
         } else {
             throw new Error(result.message || 'Unknown error');
         }
@@ -256,6 +262,172 @@ function closeDetailModal() {
 }
 
 // ============================================
+// TITIPAN TUGAS
+// ============================================
+
+function renderTitipanList(data) {
+    const container = document.getElementById('titipan-list');
+    const emptyState = document.getElementById('titipan-empty');
+    const badge = document.getElementById('titipan-badge');
+
+    if (!container) return;
+
+    // Clear existing items (except empty state)
+    const items = container.querySelectorAll('.titipan-card');
+    items.forEach(item => item.remove());
+
+    // Update badge
+    if (badge) {
+        const menunggu = data.filter(t => t.status === 'menunggu').length;
+        badge.textContent = `${data.length} Tugas${menunggu > 0 ? ` (${menunggu} menunggu)` : ''}`;
+    }
+
+    if (!data || data.length === 0) {
+        if (emptyState) emptyState.style.display = 'flex';
+        return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+
+    data.forEach((item) => {
+        const cardHtml = createTitipanCardHtml(item);
+        container.insertAdjacentHTML('beforeend', cardHtml);
+    });
+
+    // Re-init Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function createTitipanCardHtml(item) {
+    const statusClass = item.status === 'dikerjakan' ? 'handled' : 'pending';
+    const iconName = item.status === 'dikerjakan' ? 'check-circle' : 'clock';
+
+    const actionBtn = item.status === 'menunggu'
+        ? `<button class="btn btn-amber btn-sm" onclick="openTandaiModal(${item.id})">
+               <i data-lucide="check-square"></i>
+               Tandai Dikerjakan
+           </button>`
+        : `<span class="guru-piket-info">
+               <i data-lucide="user-check"></i>
+               ${escapeHtml(item.guru_piket_nama || '-')}
+           </span>`;
+
+    return `
+        <div class="titipan-card ${statusClass}">
+            <div class="titipan-icon">
+                <i data-lucide="${iconName}"></i>
+            </div>
+            <div class="titipan-content">
+                <div class="titipan-header">
+                    <span class="titipan-guru">
+                        <i data-lucide="user"></i>
+                        ${escapeHtml(item.guru_nama || 'Guru')}
+                    </span>
+                    <span class="status-badge ${item.status}">${escapeHtml(item.status_display)}</span>
+                </div>
+                <div class="titipan-title">${escapeHtml(item.kelas)} — ${escapeHtml(item.mata_pelajaran)}</div>
+                <div class="titipan-desc">${escapeHtml(item.deskripsi_tugas)}</div>
+                ${item.catatan_piket ? `<div class="titipan-catatan"><strong>Catatan Piket:</strong> ${escapeHtml(item.catatan_piket)}</div>` : ''}
+            </div>
+            <div class="titipan-actions">
+                ${actionBtn}
+            </div>
+        </div>
+    `;
+}
+
+function openTandaiModal(titipanId) {
+    selectedTitipanId = titipanId;
+    const item = titipanData.find(t => t.id === titipanId);
+
+    if (!item) return;
+
+    const modal = document.getElementById('tandai-modal');
+    const info = document.getElementById('tandai-info');
+    const catatan = document.getElementById('input-catatan-piket');
+
+    if (!modal) return;
+
+    if (info) {
+        info.innerHTML = `Anda akan menandai tugas <strong>${escapeHtml(item.kelas)} — ${escapeHtml(item.mata_pelajaran)}</strong> dari <strong>${escapeHtml(item.guru_nama)}</strong> sebagai dikerjakan.`;
+    }
+
+    if (catatan) {
+        catatan.value = '';
+    }
+
+    modal.classList.add('show');
+
+    // Re-init Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function closeTandaiModal() {
+    const modal = document.getElementById('tandai-modal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+    selectedTitipanId = null;
+}
+
+async function konfirmasiTandai() {
+    if (!selectedTitipanId) return;
+
+    const catatan = document.getElementById('input-catatan-piket')?.value?.trim() || '';
+    const btnKonfirmasi = document.getElementById('btn-konfirmasi-tandai');
+
+    // Disable button
+    if (btnKonfirmasi) {
+        btnKonfirmasi.disabled = true;
+        btnKonfirmasi.innerHTML = '<i data-lucide="loader"></i> Memproses...';
+    }
+
+    try {
+        const response = await window.apiFetch(`/attendance/titipan-tugas/${selectedTitipanId}/tandai/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                catatan_piket: catatan
+            })
+        });
+
+        if (!response || !response.ok) {
+            const errorData = await response?.json();
+            throw new Error(errorData?.message || 'Gagal menandai tugas');
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('Tugas berhasil ditandai sebagai dikerjakan', 'success');
+            closeTandaiModal();
+            // Reload data
+            await loadJurnalPiket();
+        } else {
+            throw new Error(result.message || 'Unknown error');
+        }
+
+    } catch (error) {
+        console.error('[JurnalPiket] Error marking titipan:', error);
+        showToast(error.message || 'Gagal menandai tugas', 'error');
+    } finally {
+        if (btnKonfirmasi) {
+            btnKonfirmasi.disabled = false;
+            btnKonfirmasi.innerHTML = '<i data-lucide="check"></i> Konfirmasi';
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    }
+}
+
+// ============================================
 // UTILITIES
 // ============================================
 
@@ -285,3 +457,6 @@ function showToast(message, type = 'info') {
 window.loadJurnalPiket = loadJurnalPiket;
 window.openDetailModal = openDetailModal;
 window.closeDetailModal = closeDetailModal;
+window.openTandaiModal = openTandaiModal;
+window.closeTandaiModal = closeTandaiModal;
+window.konfirmasiTandai = konfirmasiTandai;

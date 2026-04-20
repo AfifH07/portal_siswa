@@ -7,12 +7,13 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from calendar import monthrange
 
-from .models import Attendance, AttendanceDraft
+from .models import Attendance, AttendanceDraft, TitipanTugas
 from .serializers import (
     AttendanceSerializer, AttendanceCreateSerializer,
     AttendanceUpdateSerializer, AttendanceDraftSerializer,
     AttendanceStatsSerializer, AttendanceStatsSummarySerializer,
-    MonthlyAttendanceSerializer
+    MonthlyAttendanceSerializer, TitipanTugasSerializer,
+    TitipanTugasCreateSerializer, TitipanTugasTandaiSerializer
 )
 from apps.accounts.permissions import IsSuperAdmin, IsPimpinan, IsGuru
 
@@ -1019,6 +1020,22 @@ def jurnal_piket(request):
     handled = sum(1 for r in result if r['status'] == 'handled')
     pending = sum(1 for r in result if r['status'] == 'pending')
 
+    # Get titipan tugas for this date
+    titipan_qs = TitipanTugas.objects.filter(tanggal_berlaku=tanggal).select_related('guru', 'guru_piket')
+    titipan_list = []
+    for t in titipan_qs:
+        titipan_list.append({
+            'id': t.id,
+            'guru_nama': t.guru.get_full_name() or t.guru.username if t.guru else None,
+            'kelas': t.kelas,
+            'mata_pelajaran': t.mata_pelajaran,
+            'deskripsi_tugas': t.deskripsi_tugas,
+            'status': t.status,
+            'status_display': t.get_status_display(),
+            'guru_piket_nama': t.guru_piket.get_full_name() or t.guru_piket.username if t.guru_piket else None,
+            'catatan_piket': t.catatan_piket
+        })
+
     return Response({
         'success': True,
         'tanggal': tanggal.strftime('%Y-%m-%d'),
@@ -1026,7 +1043,195 @@ def jurnal_piket(request):
         'summary': {
             'total_sesi': total_sesi,
             'sudah_ditangani': handled,
-            'belum_pengganti': pending
+            'belum_pengganti': pending,
+            'titipan_total': len(titipan_list),
+            'titipan_menunggu': sum(1 for t in titipan_list if t['status'] == 'menunggu')
         },
+        'data': result,
+        'titipan_tugas': titipan_list
+    })
+
+
+# =============================================================
+# TITIPAN TUGAS
+# =============================================================
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def titipan_tugas_list_create(request):
+    """
+    GET: List titipan tugas (filter by tanggal_berlaku, status)
+    POST: Create titipan tugas (auto-set guru=request.user, tahun_ajaran=active)
+    """
+    if request.method == 'GET':
+        queryset = TitipanTugas.objects.all()
+
+        # Filter by tanggal_berlaku
+        tanggal = request.query_params.get('tanggal_berlaku')
+        if tanggal:
+            try:
+                tanggal_obj = datetime.strptime(tanggal, '%Y-%m-%d').date()
+                queryset = queryset.filter(tanggal_berlaku=tanggal_obj)
+            except ValueError:
+                pass
+
+        # Filter by status
+        status_filter = request.query_params.get('status')
+        if status_filter in ['menunggu', 'dikerjakan']:
+            queryset = queryset.filter(status=status_filter)
+
+        # Filter by kelas
+        kelas = request.query_params.get('kelas')
+        if kelas:
+            queryset = queryset.filter(kelas=kelas)
+
+        serializer = TitipanTugasSerializer(queryset, many=True)
+        return Response({
+            'success': True,
+            'count': queryset.count(),
+            'data': serializer.data
+        })
+
+    elif request.method == 'POST':
+        serializer = TitipanTugasCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            # Get active tahun_ajaran
+            from apps.core.models import TahunAjaran
+            tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+            if not tahun_ajaran:
+                return Response({
+                    'success': False,
+                    'message': 'Tidak ada tahun ajaran aktif'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            titipan = serializer.save(
+                guru=request.user,
+                tahun_ajaran=tahun_ajaran
+            )
+            return Response({
+                'success': True,
+                'message': 'Titipan tugas berhasil dibuat',
+                'data': TitipanTugasSerializer(titipan).data
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'success': False,
+            'message': 'Data tidak valid',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def titipan_tugas_tandai(request, pk):
+    """
+    Mark titipan tugas as dikerjakan by guru piket.
+    Auto-set guru_piket=request.user, status='dikerjakan'
+    """
+    try:
+        titipan = TitipanTugas.objects.get(pk=pk)
+    except TitipanTugas.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Titipan tugas tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    if titipan.status == 'dikerjakan':
+        return Response({
+            'success': False,
+            'message': 'Titipan tugas sudah dikerjakan sebelumnya'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = TitipanTugasTandaiSerializer(titipan, data=request.data, partial=True)
+    if serializer.is_valid():
+        titipan = serializer.save(
+            guru_piket=request.user,
+            status='dikerjakan'
+        )
+        return Response({
+            'success': True,
+            'message': 'Titipan tugas berhasil ditandai sebagai dikerjakan',
+            'data': TitipanTugasSerializer(titipan).data
+        })
+    return Response({
+        'success': False,
+        'message': 'Data tidak valid',
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def titipan_tugas_detail(request, pk):
+    """
+    Get detail of a titipan tugas.
+    """
+    try:
+        titipan = TitipanTugas.objects.get(pk=pk)
+    except TitipanTugas.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Titipan tugas tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = TitipanTugasSerializer(titipan)
+    return Response({
+        'success': True,
+        'data': serializer.data
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def titipan_tugas_kelas_saya(request):
+    """
+    Get list of kelas & mata pelajaran assigned to current user.
+    Returns unique combinations of (kelas, mata_pelajaran) from active KBM assignments.
+    """
+    from apps.accounts.models import Assignment
+    from apps.core.models import TahunAjaran
+
+    # Get active tahun ajaran
+    tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+    if not tahun_ajaran:
+        return Response({
+            'success': True,
+            'data': []
+        })
+
+    # Get user's active KBM assignments
+    assignments = Assignment.objects.filter(
+        user=request.user,
+        assignment_type='kbm',
+        status='active',
+        tahun_ajaran=tahun_ajaran.nama
+    ).values('kelas', 'mata_pelajaran').distinct()
+
+    result = []
+    for a in assignments:
+        if a['kelas'] and a['mata_pelajaran']:
+            result.append({
+                'kelas': a['kelas'],
+                'mata_pelajaran': a['mata_pelajaran'],
+                'label': f"{a['kelas']} — {a['mata_pelajaran']}"
+            })
+
+    return Response({
+        'success': True,
         'data': result
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def titipan_tugas_riwayat(request):
+    """
+    Get titipan tugas created by current user (riwayat guru).
+    """
+    queryset = TitipanTugas.objects.filter(guru=request.user).order_by('-tanggal_berlaku', '-created_at')
+
+    serializer = TitipanTugasSerializer(queryset, many=True)
+    return Response({
+        'success': True,
+        'count': queryset.count(),
+        'data': serializer.data
     })

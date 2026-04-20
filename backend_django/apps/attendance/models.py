@@ -162,3 +162,65 @@ def normalize_attendance_draft_kelas(sender, instance, **kwargs):
         normalized = normalize_kelas_format(instance.kelas)
         if normalized != instance.kelas:
             instance.kelas = normalized
+
+
+class TitipanTugas(models.Model):
+    """
+    Model untuk titipan tugas dari guru yang berhalangan mengajar.
+    Guru piket dapat menandai tugas sebagai dikerjakan.
+    """
+    STATUS_CHOICES = [
+        ('menunggu', 'Menunggu'),
+        ('dikerjakan', 'Dikerjakan'),
+    ]
+
+    guru = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='titipan_tugas',
+        help_text="Guru yang menitipkan tugas"
+    )
+    kelas = models.CharField(max_length=20)
+    mata_pelajaran = models.CharField(max_length=100)
+    tanggal_berlaku = models.DateField(help_text="Tanggal tugas harus dikerjakan")
+    deskripsi_tugas = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='menunggu'
+    )
+    guru_piket = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tugas_dikerjakan',
+        help_text="Guru piket yang mengerjakan tugas"
+    )
+    catatan_piket = models.TextField(null=True, blank=True)
+    tahun_ajaran = models.ForeignKey(
+        'core.TahunAjaran',
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'titipan_tugas'
+        ordering = ['tanggal_berlaku', 'kelas']
+        verbose_name = 'Titipan Tugas'
+        verbose_name_plural = 'Titipan Tugas'
+
+    def __str__(self):
+        return f"{self.kelas} - {self.mata_pelajaran} ({self.tanggal_berlaku})"
+
+
+@receiver(pre_save, sender=TitipanTugas)
+def normalize_titipan_tugas_kelas(sender, instance, **kwargs):
+    """
+    Pre-save signal to normalize kelas field in TitipanTugas model.
+    """
+    if instance.kelas:
+        normalized = normalize_kelas_format(instance.kelas)
+        if normalized != instance.kelas:
+            instance.kelas = normalized

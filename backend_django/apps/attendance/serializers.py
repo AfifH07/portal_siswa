@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Attendance, AttendanceDraft
+from .models import Attendance, AttendanceDraft, TitipanTugas
 
 
 class AttendanceDraftSerializer(serializers.ModelSerializer):
@@ -152,3 +152,52 @@ class MonthlyAttendanceSerializer(serializers.Serializer):
     year = serializers.IntegerField()
     attendance_data = AttendanceStatsSerializer(many=True)
     summary = AttendanceStatsSummarySerializer()
+
+
+class TitipanTugasSerializer(serializers.ModelSerializer):
+    guru_nama = serializers.SerializerMethodField()
+    guru_piket_nama = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
+    tahun_ajaran_nama = serializers.CharField(source='tahun_ajaran.nama', read_only=True)
+
+    class Meta:
+        model = TitipanTugas
+        fields = [
+            'id', 'guru', 'guru_nama', 'kelas', 'mata_pelajaran',
+            'tanggal_berlaku', 'deskripsi_tugas', 'status', 'status_display',
+            'guru_piket', 'guru_piket_nama', 'catatan_piket',
+            'tahun_ajaran', 'tahun_ajaran_nama',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'guru', 'guru_piket', 'tahun_ajaran', 'created_at', 'updated_at']
+
+    def get_guru_nama(self, obj):
+        if obj.guru:
+            return obj.guru.get_full_name() or obj.guru.username
+        return None
+
+    def get_guru_piket_nama(self, obj):
+        if obj.guru_piket:
+            return obj.guru_piket.get_full_name() or obj.guru_piket.username
+        return None
+
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+
+
+class TitipanTugasCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TitipanTugas
+        fields = ['kelas', 'mata_pelajaran', 'tanggal_berlaku', 'deskripsi_tugas']
+
+    def validate_tanggal_berlaku(self, value):
+        from datetime import date
+        if value < date.today():
+            raise serializers.ValidationError('Tanggal berlaku tidak boleh di masa lalu')
+        return value
+
+
+class TitipanTugasTandaiSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TitipanTugas
+        fields = ['catatan_piket']

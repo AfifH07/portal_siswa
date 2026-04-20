@@ -131,6 +131,26 @@
             </div>
         </div>
 
+        <!-- Titipan Tugas Section -->
+        <div class="glass-card" id="titipan-section">
+            <div class="card-head">
+                <h3>
+                    <i data-lucide="bookmark"></i>
+                    Titipan Tugas Hari Ini
+                </h3>
+                <div class="card-badge titipan-badge" id="titipan-badge">0 Tugas</div>
+            </div>
+            <div class="card-body">
+                <div id="titipan-list" class="titipan-list">
+                    <!-- Items will be rendered here -->
+                    <div class="empty-state" id="titipan-empty">
+                        <i data-lucide="clipboard-x"></i>
+                        <p>Tidak ada titipan tugas untuk tanggal ini</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </main>
 
@@ -153,11 +173,41 @@
     </div>
 </div>
 
+<!-- Tandai Dikerjakan Modal -->
+<div class="modal" id="tandai-modal">
+    <div class="modal-overlay" onclick="closeTandaiModal()"></div>
+    <div class="modal-container modal-sm">
+        <div class="modal-header">
+            <h2>Tandai Dikerjakan</h2>
+            <button class="modal-close" onclick="closeTandaiModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p id="tandai-info" class="tandai-info"></p>
+            <div class="form-group">
+                <label for="input-catatan-piket">
+                    <i data-lucide="message-square" class="filter-icon"></i>
+                    Catatan (opsional)
+                </label>
+                <textarea id="input-catatan-piket" class="filter-input textarea-input" rows="3" placeholder="Catatan pelaksanaan tugas..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" onclick="closeTandaiModal()">Batal</button>
+            <button class="btn btn-emerald" id="btn-konfirmasi-tandai" onclick="konfirmasiTandai()">
+                <i data-lucide="check"></i>
+                Konfirmasi
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Scripts -->
 <script src="/static/js/utils.js?v=20260208" defer></script>
 <script src="/static/js/apiConfig.js?v=20260208" defer></script>
 <script src="/static/js/apiFetch.js?v=20260208" defer></script>
-<script src="/static/js/auth-check.js?v=20260321C" defer></script>
+<script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
 <script src="/static/js/jurnal-piket.js?v=20260420" defer></script>
