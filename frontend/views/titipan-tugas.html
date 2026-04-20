@@ -8,7 +8,8 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260420" rel="stylesheet">
-    <link href="/static/css/jurnal-piket.css?v=20260420B" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260420" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260420C" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -64,83 +65,62 @@
     <div class="page-body">
 
         <!-- Form Input Titipan Tugas -->
-        <div class="glass-card">
+        <div class="glass-card filters-card">
             <div class="card-head">
-                <h3>
-                    <i data-lucide="plus-circle"></i>
-                    Buat Titipan Tugas Baru
-                </h3>
+                <h3><span class="ch-icon">➕</span> Buat Titipan Tugas Baru</h3>
             </div>
-            <div class="card-body">
-                <form id="form-titipan" class="form-titipan">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="input-kelas-mapel">
-                                <i data-lucide="book-marked" class="filter-icon"></i>
-                                Kelas & Mata Pelajaran
-                            </label>
-                            <select id="input-kelas-mapel" class="filter-input" required>
-                                <option value="">-- Pilih Kelas & Mapel --</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="input-tanggal">
-                                <i data-lucide="calendar" class="filter-icon"></i>
-                                Tanggal Berlaku
-                            </label>
-                            <input type="date" id="input-tanggal" class="filter-input" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-deskripsi">
-                            <i data-lucide="file-text" class="filter-icon"></i>
-                            Deskripsi Tugas
-                        </label>
-                        <textarea id="input-deskripsi" class="filter-input textarea-input" rows="4" placeholder="Jelaskan tugas yang harus dikerjakan oleh siswa..." required></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-emerald" id="btn-simpan">
-                            <i data-lucide="save"></i>
-                            Simpan Titipan Tugas
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <form id="form-titipan" class="filters-grid form-titipan-grid">
+                <div class="filter-group">
+                    <label for="input-kelas-mapel">Kelas & Mata Pelajaran</label>
+                    <select id="input-kelas-mapel" class="filter-input" required>
+                        <option value="">-- Pilih Kelas & Mapel --</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="input-tanggal">Tanggal Berlaku</label>
+                    <input type="date" id="input-tanggal" class="filter-input" required>
+                </div>
+                <div class="filter-group filter-group-full">
+                    <label for="input-deskripsi">Deskripsi Tugas</label>
+                    <textarea id="input-deskripsi" class="filter-input textarea-input" rows="3" placeholder="Jelaskan tugas yang harus dikerjakan oleh siswa..." required></textarea>
+                </div>
+                <div class="filter-group filter-actions">
+                    <button type="submit" class="btn btn-primary" id="btn-simpan">
+                        <span>💾</span> Simpan Titipan
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- Riwayat Titipan Tugas -->
-        <div class="glass-card">
+        <div class="glass-card table-section">
             <div class="card-head">
-                <h3>
-                    <i data-lucide="history"></i>
-                    Riwayat Titipan Tugas Saya
-                </h3>
-                <button class="btn btn-outline-emerald btn-sm" onclick="loadRiwayat()">
-                    <i data-lucide="refresh-cw"></i>
-                    Refresh
-                </button>
+                <h3><span class="ch-icon">📋</span> Riwayat Titipan Tugas Saya</h3>
+                <div class="card-badge" id="riwayat-badge">0 data</div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table-riwayat" id="table-riwayat">
-                        <thead>
-                            <tr>
-                                <th>Tanggal Berlaku</th>
-                                <th>Kelas</th>
-                                <th>Mata Pelajaran</th>
-                                <th>Status</th>
-                                <th>Guru Piket</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-riwayat">
-                            <!-- Data will be rendered here -->
-                        </tbody>
-                    </table>
-                </div>
-                <div class="empty-state" id="empty-state" style="display: none;">
-                    <i data-lucide="inbox"></i>
-                    <p>Belum ada titipan tugas</p>
-                </div>
+            <div class="table-container">
+                <table class="data-table" id="table-riwayat">
+                    <thead>
+                        <tr>
+                            <th>Tanggal Berlaku</th>
+                            <th>Kelas</th>
+                            <th>Mata Pelajaran</th>
+                            <th>Status</th>
+                            <th>Guru Piket</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-riwayat">
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <div class="loading-spinner" style="margin: 30px auto;"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <div class="empty-icon">📭</div>
+                <p>Belum ada titipan tugas</p>
             </div>
         </div>
 
@@ -149,19 +129,17 @@
 
 <!-- Detail Modal -->
 <div class="modal" id="detail-modal">
-    <div class="modal-overlay" onclick="closeDetailModal()"></div>
-    <div class="modal-container modal-md">
+    <div class="modal-backdrop" onclick="closeDetailModal()"></div>
+    <div class="modal-content">
         <div class="modal-header">
             <h2 id="modal-title">Detail Titipan Tugas</h2>
-            <button class="modal-close" onclick="closeDetailModal()">
-                <i data-lucide="x"></i>
-            </button>
+            <button class="btn-close" onclick="closeDetailModal()">&times;</button>
         </div>
         <div class="modal-body" id="modal-body">
             <!-- Detail content -->
         </div>
         <div class="modal-footer">
-            <button class="btn btn-outline-emerald" onclick="closeDetailModal()">Tutup</button>
+            <button class="btn btn-secondary" onclick="closeDetailModal()">Tutup</button>
         </div>
     </div>
 </div>
@@ -173,6 +151,6 @@
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/titipan-tugas.js?v=20260420" defer></script>
+<script src="/static/js/titipan-tugas.js?v=20260420B" defer></script>
 </body>
 </html>

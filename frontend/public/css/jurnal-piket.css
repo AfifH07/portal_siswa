@@ -1,236 +1,83 @@
 /**
- * Jurnal Piket Styles - Portal Ponpes Baron v2.3.9
- * ================================================
+ * Jurnal Piket & Titipan Tugas Styles - Portal Ponpes Baron v2.3.9
+ * ================================================================
+ * Extends students-baron.css styles
  */
 
-/* Base Button */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-    border: none;
-}
+/* =============================================
+   FILTER GRID VARIANTS
+   ============================================= */
 
-.btn svg {
-    width: 16px;
-    height: 16px;
-}
-
-.btn-emerald {
-    background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
-    color: white;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.btn-emerald:hover {
-    background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-}
-
-.btn-emerald:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Filter Card */
-.filter-card {
-    margin-bottom: 20px;
-}
-
-.filter-row {
+.filters-grid-simple {
     display: flex;
-    align-items: flex-end;
     gap: 16px;
-    flex-wrap: wrap;
+    padding: 20px 22px;
+    align-items: end;
 }
 
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+.form-titipan-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 20px 22px;
+    align-items: end;
 }
 
-.filter-group label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--gray-600);
+.form-titipan-grid .filter-group-full {
+    grid-column: 1 / -1;
 }
 
-.filter-icon {
-    width: 14px;
-    height: 14px;
+.form-titipan-grid .filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
 }
 
-.filter-input {
-    padding: 10px 14px;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    min-width: 180px;
-    background: white;
-    transition: all 0.2s;
-    font-family: inherit;
-    color: var(--gray-900);
-}
-
-.filter-input:focus {
-    outline: none;
-    border-color: var(--emerald-500);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-/* Select dropdown styling */
-select.filter-input {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 40px;
-    cursor: pointer;
-}
-
-select.filter-input:hover {
-    border-color: var(--gray-300);
-}
-
-/* Textarea styling */
 textarea.filter-input {
     resize: vertical;
-    min-height: 100px;
+    min-height: 80px;
+    font-family: var(--font-main);
     line-height: 1.5;
 }
 
-/* Stats Row */
-.stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+/* =============================================
+   BADGE VARIANTS
+   ============================================= */
+
+.badge-warning {
+    background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+    color: #92400e !important;
 }
 
-.stat-card {
+/* =============================================
+   EMPTY STATE
+   ============================================= */
+
+.empty-state {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 20px;
-    background: white;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--gray-100);
-    box-shadow: var(--shadow-sm);
-}
-
-.stat-card.sc-blue {
-    border-left: 4px solid #3b82f6;
-}
-
-.stat-card.sc-green {
-    border-left: 4px solid #22c55e;
-}
-
-.stat-card.sc-amber {
-    border-left: 4px solid #f59e0b;
-}
-
-.stat-icon-wrap {
-    width: 44px;
-    height: 44px;
-    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background: var(--gray-50);
+    padding: 50px 20px;
+    text-align: center;
+    color: var(--text-muted);
 }
 
-.stat-card.sc-blue .stat-icon-wrap {
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
 }
 
-.stat-card.sc-green .stat-icon-wrap {
-    background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
-}
-
-.stat-card.sc-amber .stat-icon-wrap {
-    background: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
-}
-
-.stat-icon-wrap svg {
-    width: 22px;
-    height: 22px;
-}
-
-.stat-body {
-    flex: 1;
-}
-
-.stat-val {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--gray-900);
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 13px;
-    color: var(--gray-500);
-    margin-top: 4px;
-}
-
-/* Card Head */
-.card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--gray-100);
-}
-
-.card-head h3 {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--gray-800);
+.empty-state p {
+    font-size: 14px;
     margin: 0;
+    color: var(--text-muted);
 }
 
-.card-head h3 svg {
-    width: 18px;
-    height: 18px;
-    color: var(--emerald-600);
-}
+/* =============================================
+   JURNAL LIST ITEMS
+   ============================================= */
 
-.card-badge {
-    padding: 4px 12px;
-    background: var(--emerald-50);
-    color: var(--emerald-700);
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 20px;
-}
-
-.card-body {
-    padding: 20px;
-}
-
-/* Jurnal List */
 .jurnal-list {
     display: flex;
     flex-direction: column;
@@ -241,16 +88,15 @@ textarea.filter-input {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 16px;
-    background: var(--gray-50);
+    padding: 16px 20px;
+    background: var(--bg-base);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
-    border: 1px solid var(--gray-100);
-    transition: all 0.2s;
+    transition: var(--transition);
 }
 
 .jurnal-item:hover {
-    background: white;
-    border-color: var(--emerald-200);
+    border-color: var(--emerald-300);
     box-shadow: var(--shadow-sm);
 }
 
@@ -269,22 +115,16 @@ textarea.filter-input {
     align-items: center;
     justify-content: center;
     border-radius: 12px;
+    font-size: 22px;
     flex-shrink: 0;
 }
 
 .jurnal-item.status-handled .jurnal-icon {
     background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
 }
 
 .jurnal-item.status-pending .jurnal-icon {
     background: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
-}
-
-.jurnal-icon svg {
-    width: 24px;
-    height: 24px;
 }
 
 .jurnal-content {
@@ -295,7 +135,7 @@ textarea.filter-input {
 .jurnal-title {
     font-size: 15px;
     font-weight: 600;
-    color: var(--gray-900);
+    color: var(--text-main);
     margin-bottom: 4px;
 }
 
@@ -303,389 +143,87 @@ textarea.filter-input {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    font-size: 13px;
-    color: var(--gray-500);
+    font-size: 12px;
+    color: var(--text-muted);
 }
 
-.jurnal-meta-item {
+.jurnal-meta span {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.jurnal-meta-item svg {
-    width: 14px;
-    height: 14px;
-}
-
-.jurnal-meta-item.guru-pengganti {
-    color: var(--emerald-600);
-    font-weight: 500;
-}
-
 .jurnal-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex-shrink: 0;
-}
-
-.status-badge {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.status-badge.handled {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
-}
-
-.status-badge.pending {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
 }
 
 .jurnal-actions {
     flex-shrink: 0;
 }
 
-.btn-detail {
-    display: flex;
+/* =============================================
+   STATUS BADGES (Consistent with students)
+   ============================================= */
+
+.status-badge {
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: white;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--gray-700);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-detail:hover {
-    border-color: var(--emerald-500);
-    color: var(--emerald-600);
-}
-
-.btn-detail svg {
-    width: 14px;
-    height: 14px;
-}
-
-/* Empty State */
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-    color: var(--gray-400);
-}
-
-.empty-state svg {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 12px;
-    opacity: 0.5;
-}
-
-.empty-state p {
-    font-size: 14px;
-    margin: 0;
-}
-
-/* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal.show {
-    display: flex;
-}
-
-.modal-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-}
-
-.modal-container {
-    position: relative;
-    background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.modal-md {
-    width: 100%;
-    max-width: 550px;
-    margin: 20px;
-}
-
-.modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 24px;
-    border-bottom: 1px solid var(--gray-100);
-}
-
-.modal-header h2 {
-    font-size: 18px;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--gray-900);
-    margin: 0;
-}
-
-.modal-close {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--gray-100);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.modal-close:hover {
-    background: var(--gray-200);
-}
-
-.modal-close svg {
-    width: 18px;
-    height: 18px;
-    color: var(--gray-600);
-}
-
-.modal-body {
-    padding: 24px;
-    overflow-y: auto;
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 16px 24px;
-    border-top: 1px solid var(--gray-100);
-}
-
-/* Detail Info Grid */
-.detail-grid {
-    display: grid;
-    gap: 16px;
-}
-
-.detail-row {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    gap: 12px;
-    align-items: start;
-}
-
-.detail-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--gray-500);
-}
-
-.detail-value {
-    font-size: 14px;
-    color: var(--gray-900);
-}
-
-.detail-value.empty {
-    color: var(--gray-400);
-    font-style: italic;
-}
-
-.detail-section {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--gray-100);
-}
-
-.detail-section-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--gray-800);
-    margin-bottom: 12px;
-}
-
-.detail-section-title svg {
-    width: 16px;
-    height: 16px;
-    color: var(--emerald-600);
-}
-
-.detail-text-box {
-    padding: 14px;
-    background: var(--gray-50);
-    border-radius: var(--radius-sm);
-    border-left: 3px solid var(--emerald-500);
-    font-size: 14px;
-    color: var(--gray-700);
-    line-height: 1.6;
-}
-
-.detail-text-box.empty {
-    color: var(--gray-400);
-    font-style: italic;
-    border-left-color: var(--gray-300);
-}
-
-/* Form Titipan Tugas */
-.form-titipan {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-group label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--gray-600);
-}
-
-.form-group .filter-input {
-    width: 100%;
-    min-width: 0;
-}
-
-.textarea-input {
-    resize: vertical;
-    min-height: 100px;
-    font-family: inherit;
-    line-height: 1.5;
-}
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: 8px;
-}
-
-/* Table Riwayat */
-.table-responsive {
-    overflow-x: auto;
-}
-
-.table-riwayat {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.table-riwayat th,
-.table-riwayat td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--gray-100);
-}
-
-.table-riwayat th {
-    background: var(--gray-50);
-    font-weight: 600;
-    color: var(--gray-700);
-    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
-.table-riwayat tbody tr {
-    cursor: pointer;
-    transition: all 0.2s;
+.status-badge.handled,
+.status-badge.dikerjakan {
+    background: rgba(34, 197, 94, 0.1);
+    color: #15803d;
 }
 
-.table-riwayat tbody tr:hover {
-    background: var(--gray-50);
+.status-badge.pending,
+.status-badge.menunggu {
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
 }
 
-.text-muted {
-    color: var(--gray-400);
-    font-style: italic;
-}
+/* =============================================
+   TITIPAN TUGAS CARDS
+   ============================================= */
 
-.btn-sm {
-    padding: 6px 12px;
-    font-size: 12px;
-}
-
-.btn-outline-emerald {
-    background: transparent;
-    border: 1px solid var(--emerald-500);
-    color: var(--emerald-600);
-}
-
-.btn-outline-emerald:hover {
-    background: var(--emerald-50);
-}
-
-/* Titipan Tugas Section */
 .titipan-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.titipan-badge {
-    background: #fef3c7;
-    color: #92400e;
-}
-
 .titipan-card {
     display: flex;
     gap: 16px;
-    padding: 16px;
-    background: var(--gray-50);
+    padding: 16px 20px;
+    background: var(--bg-base);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
-    border: 1px solid var(--gray-100);
-    transition: all 0.2s;
+    transition: var(--transition);
 }
 
 .titipan-card:hover {
-    background: white;
-    border-color: var(--emerald-200);
+    border-color: var(--emerald-300);
     box-shadow: var(--shadow-sm);
 }
 
-.titipan-card.handled {
+.titipan-card.handled,
+.titipan-card.dikerjakan {
     border-left: 4px solid #22c55e;
 }
 
-.titipan-card.pending {
+.titipan-card.pending,
+.titipan-card.menunggu {
     border-left: 4px solid #f59e0b;
 }
 
@@ -697,14 +235,17 @@ textarea.filter-input {
     justify-content: center;
     border-radius: 12px;
     flex-shrink: 0;
+    font-size: 22px;
 }
 
-.titipan-card.handled .titipan-icon {
+.titipan-card.handled .titipan-icon,
+.titipan-card.dikerjakan .titipan-icon {
     background: rgba(34, 197, 94, 0.1);
     color: #22c55e;
 }
 
-.titipan-card.pending .titipan-icon {
+.titipan-card.pending .titipan-icon,
+.titipan-card.menunggu .titipan-icon {
     background: rgba(245, 158, 11, 0.1);
     color: #f59e0b;
 }
@@ -731,7 +272,7 @@ textarea.filter-input {
     align-items: center;
     gap: 4px;
     font-size: 12px;
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 .titipan-guru svg {
@@ -742,13 +283,13 @@ textarea.filter-input {
 .titipan-title {
     font-size: 15px;
     font-weight: 600;
-    color: var(--gray-900);
+    color: var(--text-main);
     margin-bottom: 6px;
 }
 
 .titipan-desc {
     font-size: 13px;
-    color: var(--gray-600);
+    color: var(--text-sub);
     line-height: 1.5;
     margin-bottom: 6px;
 }
@@ -782,32 +323,120 @@ textarea.filter-input {
     height: 16px;
 }
 
-.btn-amber {
+/* =============================================
+   BUTTON VARIANTS
+   ============================================= */
+
+.btn-warning {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
-    border: none;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
-.btn-amber:hover {
+.btn-warning:hover {
     background: linear-gradient(135deg, #d97706, #b45309);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
 }
 
-/* Modal Small */
-.modal-sm {
-    width: 100%;
+/* =============================================
+   MODAL ENHANCEMENTS
+   ============================================= */
+
+.modal-sm .modal-content {
     max-width: 420px;
-    margin: 20px;
 }
 
 .tandai-info {
     font-size: 14px;
-    color: var(--gray-700);
+    color: var(--text-sub);
     margin-bottom: 16px;
     line-height: 1.5;
 }
 
-/* Responsive */
+/* =============================================
+   DETAIL MODAL CONTENT
+   ============================================= */
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 14px;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.detail-value.empty {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.detail-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+}
+
+.detail-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 10px;
+}
+
+.detail-section-title svg {
+    width: 16px;
+    height: 16px;
+    color: var(--emerald-500);
+}
+
+.detail-text-box {
+    background: var(--bg-base);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--emerald-500);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-sub);
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+
 @media (max-width: 768px) {
+    .filters-grid-simple {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-titipan-grid {
+        grid-template-columns: 1fr;
+    }
+
     .jurnal-item {
         flex-direction: column;
         align-items: flex-start;
@@ -822,18 +451,9 @@ textarea.filter-input {
         margin-top: 12px;
     }
 
-    .btn-detail {
+    .jurnal-actions .btn {
         width: 100%;
         justify-content: center;
-    }
-
-    .detail-row {
-        grid-template-columns: 1fr;
-        gap: 4px;
-    }
-
-    .stats-row {
-        grid-template-columns: 1fr;
     }
 
     .titipan-card {
@@ -850,7 +470,7 @@ textarea.filter-input {
         justify-content: center;
     }
 
-    .form-row {
+    .detail-grid {
         grid-template-columns: 1fr;
     }
 }

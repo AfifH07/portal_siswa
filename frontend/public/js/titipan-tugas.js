@@ -208,18 +208,25 @@ function renderRiwayat(data) {
     const tbody = document.getElementById('tbody-riwayat');
     const emptyState = document.getElementById('empty-state');
     const table = document.getElementById('table-riwayat');
+    const badge = document.getElementById('riwayat-badge');
+    const tableContainer = table?.closest('.table-container');
 
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
+    // Update badge
+    if (badge) {
+        badge.textContent = `${data?.length || 0} data`;
+    }
+
     if (!data || data.length === 0) {
-        if (table) table.style.display = 'none';
+        if (tableContainer) tableContainer.style.display = 'none';
         if (emptyState) emptyState.style.display = 'flex';
         return;
     }
 
-    if (table) table.style.display = '';
+    if (tableContainer) tableContainer.style.display = '';
     if (emptyState) emptyState.style.display = 'none';
 
     data.forEach((item, index) => {

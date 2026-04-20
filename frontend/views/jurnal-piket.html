@@ -8,7 +8,8 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260420" rel="stylesheet">
-    <link href="/static/css/jurnal-piket.css?v=20260420B" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260420" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260420C" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -64,46 +65,41 @@
     <div class="page-body">
 
         <!-- Date Filter -->
-        <div class="glass-card filter-card">
-            <div class="filter-row">
+        <div class="glass-card filters-card">
+            <div class="card-head">
+                <h3><span class="ch-icon">🔍</span> Filter Tanggal</h3>
+            </div>
+            <div class="filters-grid filters-grid-simple">
                 <div class="filter-group">
-                    <label for="filter-tanggal">
-                        <i data-lucide="calendar" class="filter-icon"></i>
-                        Tanggal
-                    </label>
+                    <label for="filter-tanggal">Tanggal</label>
                     <input type="date" id="filter-tanggal" class="filter-input">
                 </div>
-                <button id="btn-refresh" class="btn btn-emerald" onclick="loadJurnalPiket()">
-                    <i data-lucide="refresh-cw"></i>
-                    Refresh
-                </button>
+                <div class="filter-group filter-actions">
+                    <button id="btn-refresh" class="btn btn-secondary" onclick="loadJurnalPiket()">
+                        <span>🔄</span> Refresh
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Summary Stats -->
         <div class="stats-row">
             <div class="stat-card sc-blue">
-                <div class="stat-icon-wrap">
-                    <i data-lucide="clipboard-list"></i>
-                </div>
+                <div class="stat-icon-wrap">📋</div>
                 <div class="stat-body">
                     <div class="stat-val" id="stat-total">0</div>
                     <div class="stat-label">Total Sesi</div>
                 </div>
             </div>
             <div class="stat-card sc-green">
-                <div class="stat-icon-wrap">
-                    <i data-lucide="check-circle"></i>
-                </div>
+                <div class="stat-icon-wrap">✅</div>
                 <div class="stat-body">
                     <div class="stat-val" id="stat-handled">0</div>
                     <div class="stat-label">Sudah Ditangani</div>
                 </div>
             </div>
-            <div class="stat-card sc-amber">
-                <div class="stat-icon-wrap">
-                    <i data-lucide="alert-circle"></i>
-                </div>
+            <div class="stat-card sc-gold">
+                <div class="stat-icon-wrap">⚠️</div>
                 <div class="stat-body">
                     <div class="stat-val" id="stat-pending">0</div>
                     <div class="stat-label">Belum Ada Pengganti</div>
@@ -112,19 +108,16 @@
         </div>
 
         <!-- Jurnal List -->
-        <div class="glass-card">
+        <div class="glass-card table-section">
             <div class="card-head">
-                <h3>
-                    <i data-lucide="list"></i>
-                    Daftar Sesi Piket
-                </h3>
+                <h3><span class="ch-icon">📋</span> Daftar Sesi Piket</h3>
                 <div class="card-badge" id="tanggal-badge">Hari Ini</div>
             </div>
             <div class="card-body">
                 <div id="jurnal-list" class="jurnal-list">
                     <!-- Items will be rendered here -->
                     <div class="empty-state" id="empty-state">
-                        <i data-lucide="inbox"></i>
+                        <div class="empty-icon">📭</div>
                         <p>Tidak ada data jurnal piket untuk tanggal ini</p>
                     </div>
                 </div>
@@ -132,19 +125,16 @@
         </div>
 
         <!-- Titipan Tugas Section -->
-        <div class="glass-card" id="titipan-section">
+        <div class="glass-card table-section" id="titipan-section">
             <div class="card-head">
-                <h3>
-                    <i data-lucide="bookmark"></i>
-                    Titipan Tugas Hari Ini
-                </h3>
-                <div class="card-badge titipan-badge" id="titipan-badge">0 Tugas</div>
+                <h3><span class="ch-icon">📌</span> Titipan Tugas Hari Ini</h3>
+                <div class="card-badge badge-warning" id="titipan-badge">0 Tugas</div>
             </div>
             <div class="card-body">
                 <div id="titipan-list" class="titipan-list">
                     <!-- Items will be rendered here -->
                     <div class="empty-state" id="titipan-empty">
-                        <i data-lucide="clipboard-x"></i>
+                        <div class="empty-icon">📭</div>
                         <p>Tidak ada titipan tugas untuk tanggal ini</p>
                     </div>
                 </div>
@@ -156,48 +146,40 @@
 
 <!-- Detail Modal -->
 <div class="modal" id="detail-modal">
-    <div class="modal-overlay" onclick="closeDetailModal()"></div>
-    <div class="modal-container modal-md">
+    <div class="modal-backdrop" onclick="closeDetailModal()"></div>
+    <div class="modal-content">
         <div class="modal-header">
             <h2 id="modal-title">Detail Sesi</h2>
-            <button class="modal-close" onclick="closeDetailModal()">
-                <i data-lucide="x"></i>
-            </button>
+            <button class="btn-close" onclick="closeDetailModal()">&times;</button>
         </div>
         <div class="modal-body" id="modal-body">
             <!-- Detail content -->
         </div>
         <div class="modal-footer">
-            <button class="btn btn-outline-emerald" onclick="closeDetailModal()">Tutup</button>
+            <button class="btn btn-secondary" onclick="closeDetailModal()">Tutup</button>
         </div>
     </div>
 </div>
 
 <!-- Tandai Dikerjakan Modal -->
 <div class="modal" id="tandai-modal">
-    <div class="modal-overlay" onclick="closeTandaiModal()"></div>
-    <div class="modal-container modal-sm">
+    <div class="modal-backdrop" onclick="closeTandaiModal()"></div>
+    <div class="modal-content modal-sm">
         <div class="modal-header">
             <h2>Tandai Dikerjakan</h2>
-            <button class="modal-close" onclick="closeTandaiModal()">
-                <i data-lucide="x"></i>
-            </button>
+            <button class="btn-close" onclick="closeTandaiModal()">&times;</button>
         </div>
         <div class="modal-body">
             <p id="tandai-info" class="tandai-info"></p>
-            <div class="form-group">
-                <label for="input-catatan-piket">
-                    <i data-lucide="message-square" class="filter-icon"></i>
-                    Catatan (opsional)
-                </label>
+            <div class="filter-group">
+                <label for="input-catatan-piket">Catatan (opsional)</label>
                 <textarea id="input-catatan-piket" class="filter-input textarea-input" rows="3" placeholder="Catatan pelaksanaan tugas..."></textarea>
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-outline-emerald" onclick="closeTandaiModal()">Batal</button>
-            <button class="btn btn-emerald" id="btn-konfirmasi-tandai" onclick="konfirmasiTandai()">
-                <i data-lucide="check"></i>
-                Konfirmasi
+            <button class="btn btn-secondary" onclick="closeTandaiModal()">Batal</button>
+            <button class="btn btn-primary" id="btn-konfirmasi-tandai" onclick="konfirmasiTandai()">
+                <span>✓</span> Konfirmasi
             </button>
         </div>
     </div>
@@ -210,6 +192,6 @@
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/jurnal-piket.js?v=20260420" defer></script>
+<script src="/static/js/jurnal-piket.js?v=20260420B" defer></script>
 </body>
 </html>
