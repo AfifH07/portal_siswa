@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jurnal Piket - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260420" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260420" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout?.()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Jurnal Piket</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Jurnal Piket</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Date Filter -->
+        <div class="glass-card filter-card">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="filter-tanggal">
+                        <i data-lucide="calendar" class="filter-icon"></i>
+                        Tanggal
+                    </label>
+                    <input type="date" id="filter-tanggal" class="filter-input">
+                </div>
+                <button id="btn-refresh" class="btn btn-emerald" onclick="loadJurnalPiket()">
+                    <i data-lucide="refresh-cw"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="stats-row">
+            <div class="stat-card sc-blue">
+                <div class="stat-icon-wrap">
+                    <i data-lucide="clipboard-list"></i>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-val" id="stat-total">0</div>
+                    <div class="stat-label">Total Sesi</div>
+                </div>
+            </div>
+            <div class="stat-card sc-green">
+                <div class="stat-icon-wrap">
+                    <i data-lucide="check-circle"></i>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-val" id="stat-handled">0</div>
+                    <div class="stat-label">Sudah Ditangani</div>
+                </div>
+            </div>
+            <div class="stat-card sc-amber">
+                <div class="stat-icon-wrap">
+                    <i data-lucide="alert-circle"></i>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-val" id="stat-pending">0</div>
+                    <div class="stat-label">Belum Ada Pengganti</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jurnal List -->
+        <div class="glass-card">
+            <div class="card-head">
+                <h3>
+                    <i data-lucide="list"></i>
+                    Daftar Sesi Piket
+                </h3>
+                <div class="card-badge" id="tanggal-badge">Hari Ini</div>
+            </div>
+            <div class="card-body">
+                <div id="jurnal-list" class="jurnal-list">
+                    <!-- Items will be rendered here -->
+                    <div class="empty-state" id="empty-state">
+                        <i data-lucide="inbox"></i>
+                        <p>Tidak ada data jurnal piket untuk tanggal ini</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- Detail Modal -->
+<div class="modal" id="detail-modal">
+    <div class="modal-overlay" onclick="closeDetailModal()"></div>
+    <div class="modal-container modal-md">
+        <div class="modal-header">
+            <h2 id="modal-title">Detail Sesi</h2>
+            <button class="modal-close" onclick="closeDetailModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <!-- Detail content -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" onclick="closeDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/static/js/auth-check.js?v=20260420"></script>
+<script src="/static/js/jurnal-piket.js?v=20260420"></script>
+</body>
+</html>

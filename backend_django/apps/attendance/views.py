@@ -906,3 +906,127 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save()
+
+
+# ============================================
+# JURNAL PIKET - v2.3.9
+# ============================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def jurnal_piket(request):
+    """
+    GET /api/attendance/jurnal-piket/?tanggal=YYYY-MM-DD
+
+    Menampilkan daftar sesi mengajar hari ini yang:
+    1. tipe_pengajar = 'guru_pengganti' (sudah ada pengganti), ATAU
+    2. Ada siswa dengan status tidak_hadir/izin/sakit (indikasi guru tidak hadir)
+
+    Grouped by: kelas + mata_pelajaran + jam_ke
+    """
+    from django.db.models import Count, F
+    from apps.students.models import Student
+
+    # Get tanggal parameter (default: hari ini)
+    tanggal_str = request.query_params.get('tanggal')
+    if tanggal_str:
+        try:
+            tanggal = datetime.strptime(tanggal_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({
+                'success': False,
+                'message': 'Format tanggal tidak valid (gunakan YYYY-MM-DD)'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        tanggal = timezone.now().date()
+
+    # Query attendance records for the date
+    # Group by kelas, mata_pelajaran, jam_ke to get unique sessions
+    attendance_qs = Attendance.objects.filter(tanggal=tanggal)
+
+    # Get distinct sessions (kelas + mapel + jam_ke)
+    sessions = attendance_qs.values(
+        'nisn__kelas', 'mata_pelajaran', 'jam_ke',
+        'tipe_pengajar', 'guru_pengganti', 'guru_pengganti__name',
+        'materi', 'capaian_pembelajaran', 'catatan'
+    ).annotate(
+        total_siswa=Count('id'),
+        hadir=Count('id', filter=Q(status__iexact='Hadir')),
+        tidak_hadir=Count('id', filter=Q(status__iexact='Tidak Hadir')),
+        izin=Count('id', filter=Q(status__iexact='Izin')),
+        sakit=Count('id', filter=Q(status__iexact='Sakit')),
+        alpha=Count('id', filter=Q(status__iexact='Alpha'))
+    ).order_by('nisn__kelas', 'jam_ke')
+
+    # Filter: hanya sesi dengan guru_pengganti ATAU ada ketidakhadiran massal
+    result = []
+    for session in sessions:
+        kelas = session['nisn__kelas']
+        mapel = session['mata_pelajaran']
+        jam_ke = session['jam_ke']
+        tipe = session['tipe_pengajar']
+        guru_pengganti_id = session['guru_pengganti']
+        guru_pengganti_name = session['guru_pengganti__name']
+
+        # Hitung persentase ketidakhadiran
+        total = session['total_siswa']
+        absen = session['tidak_hadir'] + session['izin'] + session['sakit'] + session['alpha']
+        persen_absen = (absen / total * 100) if total > 0 else 0
+
+        # Include jika:
+        # 1. Ada guru pengganti, ATAU
+        # 2. Ketidakhadiran > 50% (indikasi kelas kosong/guru tidak hadir)
+        is_piket = tipe == 'guru_pengganti'
+        is_kosong = persen_absen > 50
+
+        if is_piket or is_kosong:
+            # Determine status
+            if is_piket:
+                status_text = 'Sudah Ditangani'
+                status_code = 'handled'
+            else:
+                status_text = 'Belum Ada Pengganti'
+                status_code = 'pending'
+
+            # Get JP label
+            jp_labels = {
+                1: 'JP 1 (Pagi)',
+                2: 'JP 2', 3: 'JP 3', 4: 'JP 4', 5: 'JP 5', 6: 'JP 6', 7: 'JP 7',
+                8: 'JP 8 (Sore)', 9: 'JP 9 (Sore)'
+            }
+
+            result.append({
+                'kelas': kelas,
+                'mata_pelajaran': mapel,
+                'jam_ke': jam_ke,
+                'jam_ke_label': jp_labels.get(jam_ke, f'JP {jam_ke}'),
+                'tipe_pengajar': tipe,
+                'guru_pengganti_id': guru_pengganti_id,
+                'guru_pengganti_nama': guru_pengganti_name,
+                'materi': session['materi'] or '',
+                'capaian_pembelajaran': session['capaian_pembelajaran'] or '',
+                'catatan': session['catatan'] or '',
+                'total_siswa': total,
+                'hadir': session['hadir'],
+                'tidak_hadir': absen,
+                'persen_hadir': round((session['hadir'] / total * 100) if total > 0 else 0, 1),
+                'status': status_code,
+                'status_display': status_text
+            })
+
+    # Summary stats
+    total_sesi = len(result)
+    handled = sum(1 for r in result if r['status'] == 'handled')
+    pending = sum(1 for r in result if r['status'] == 'pending')
+
+    return Response({
+        'success': True,
+        'tanggal': tanggal.strftime('%Y-%m-%d'),
+        'tanggal_display': tanggal.strftime('%d %B %Y'),
+        'summary': {
+            'total_sesi': total_sesi,
+            'sudah_ditangani': handled,
+            'belum_pengganti': pending
+        },
+        'data': result
+    })
