@@ -1198,12 +1198,13 @@ def titipan_tugas_kelas_saya(request):
             'data': []
         })
 
-    # Get user's active KBM assignments
+    # Get user's active teaching assignments (exclude piket & wali_kelas)
     assignments = Assignment.objects.filter(
         user=request.user,
-        assignment_type='kbm',
         status='active',
         tahun_ajaran=tahun_ajaran.nama
+    ).exclude(
+        assignment_type__in=['piket', 'wali_kelas']
     ).values('kelas', 'mata_pelajaran').distinct()
 
     result = []
