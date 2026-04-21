@@ -6,7 +6,7 @@ Includes Universal Print Engine for rapor generation.
 """
 
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count, Q, Avg
@@ -3361,10 +3361,11 @@ def hafalan_dashboard_stats(request):
 
 from .models import IzinGuru
 from .serializers import IzinGuruSerializer, IzinGuruCreateSerializer
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
 @api_view(['GET', 'POST'])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 @permission_classes([IsAuthenticated])
 def izin_guru_list_create(request):
     """
