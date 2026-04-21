@@ -106,8 +106,12 @@ window.apiFetch = async function(path, options = {}) {
     // Determine if this is a critical auth endpoint that should trigger logout on 401
     const isCriticalAuthEndpoint = path.includes('users/me') || path.includes('auth/status');
 
+    // Check if body is FormData - don't set Content-Type for multipart uploads
+    const isFormData = options.body instanceof FormData;
+
     const headers = {
-        'Content-Type': 'application/json',
+        // Don't set Content-Type for FormData - browser will set it with boundary
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...options.headers
     };
 
