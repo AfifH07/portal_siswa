@@ -252,6 +252,19 @@ async function handleSubmit(e) {
         formData.append('keterangan', keterangan);
         formData.append('foto_surat', fotoInput.files[0]);
 
+        // Debug FormData contents
+        console.log('=== DEBUG FORM DATA ===');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(key, '→ File:', value.name,
+                            'size:', value.size,
+                            'type:', value.type);
+            } else {
+                console.log(key, '→', value);
+            }
+        }
+        console.log('=== END DEBUG ===');
+
         const response = await window.apiFetch('/kesantrian/izin-guru/', {
             method: 'POST',
             body: formData
