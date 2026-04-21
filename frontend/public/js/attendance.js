@@ -69,6 +69,14 @@ const EMERALD_COLORS = {
     borderLight: 'rgba(15, 99, 71, 0.07)'
 };
 
+// Utility: Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     loadClassOptions();
@@ -504,12 +512,20 @@ function initPengajarSelector() {
         radio.addEventListener('change', function() {
             inputData.tipe_pengajar = this.value;
 
+            const titipanSection = document.getElementById('titipan-tugas-section');
+
             if (this.value === 'guru_pengganti') {
                 penggantiFields.style.display = 'block';
                 // Display current user info
                 displayCurrentUserAsGuruPengganti();
+                // Fetch and display titipan tugas for current class
+                if (titipanSection) {
+                    titipanSection.style.display = 'block';
+                    fetchTitipanTugas();
+                }
             } else {
                 penggantiFields.style.display = 'none';
+                if (titipanSection) titipanSection.style.display = 'none';
             }
 
             // Re-init Lucide icons for newly visible elements
@@ -518,6 +534,123 @@ function initPengajarSelector() {
             }
         });
     });
+}
+
+/**
+ * Fetch titipan tugas for current class and date
+ */
+async function fetchTitipanTugas() {
+    const container = document.getElementById('titipan-tugas-container');
+    const emptyState = document.getElementById('titipan-empty');
+
+    if (!container) return;
+
+    // Show loading
+    container.innerHTML = `
+        <div class="titipan-loading">
+            <div class="loading-spinner"></div>
+            <span>Memuat titipan tugas...</span>
+        </div>
+    `;
+    if (emptyState) emptyState.style.display = 'none';
+
+    try {
+        // Get current date and class
+        const tanggal = inputData.tanggal || new Date().toISOString().split('T')[0];
+        const kelas = inputData.kelas;
+
+        if (!kelas) {
+            container.innerHTML = '';
+            if (emptyState) {
+                emptyState.innerHTML = `
+                    <i data-lucide="alert-circle"></i>
+                    <span>Pilih kelas terlebih dahulu</span>
+                `;
+                emptyState.style.display = 'flex';
+            }
+            return;
+        }
+
+        // Fetch titipan tugas
+        const response = await window.apiFetch(`/attendance/titipan-tugas/?tanggal=${tanggal}`);
+
+        if (!response || !response.ok) {
+            throw new Error('Gagal memuat titipan tugas');
+        }
+
+        const result = await response.json();
+        const allTitipan = result.data || result.results || result || [];
+
+        // Filter by current class
+        const titipanForClass = allTitipan.filter(t => t.kelas === kelas);
+
+        if (titipanForClass.length === 0) {
+            container.innerHTML = '';
+            if (emptyState) {
+                emptyState.innerHTML = `
+                    <i data-lucide="inbox"></i>
+                    <span>Tidak ada titipan tugas untuk kelas ${kelas} hari ini</span>
+                `;
+                emptyState.style.display = 'flex';
+            }
+        } else {
+            container.innerHTML = titipanForClass.map(renderTitipanCard).join('');
+            if (emptyState) emptyState.style.display = 'none';
+        }
+
+        // Re-init Lucide icons
+        if (typeof lucide !== 'undefined') {
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+    } catch (error) {
+        console.error('[Attendance] Error fetching titipan tugas:', error);
+        container.innerHTML = `
+            <div class="titipan-error">
+                <i data-lucide="alert-triangle"></i>
+                <span>Gagal memuat titipan tugas</span>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Render single titipan tugas card
+ */
+function renderTitipanCard(titipan) {
+    const jamKe = titipan.jam_ke || '-';
+    const mapel = titipan.mata_pelajaran || '-';
+    const guruNama = titipan.guru_nama || titipan.guru?.name || 'Guru';
+    const deskripsi = titipan.deskripsi_tugas || titipan.catatan || '-';
+    const status = titipan.status || 'pending';
+
+    const statusBadge = status === 'selesai'
+        ? '<span class="titipan-status-badge selesai">Selesai</span>'
+        : '<span class="titipan-status-badge pending">Menunggu</span>';
+
+    return `
+        <div class="titipan-card">
+            <div class="titipan-card-header">
+                <div class="titipan-card-icon">
+                    <i data-lucide="clipboard-list"></i>
+                </div>
+                <div class="titipan-card-title">
+                    <span class="titipan-mapel">${escapeHtml(mapel)}</span>
+                    <span class="titipan-jam">JP ${jamKe}</span>
+                </div>
+                ${statusBadge}
+            </div>
+            <div class="titipan-card-body">
+                <div class="titipan-from">
+                    <i data-lucide="user"></i>
+                    <span>Dari: <strong>${escapeHtml(guruNama)}</strong></span>
+                </div>
+                <div class="titipan-desc">
+                    "${escapeHtml(deskripsi)}"
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 /**
@@ -999,6 +1132,10 @@ function resetModalStep() {
     });
     const penggantiFields = document.getElementById('guru-pengganti-fields');
     if (penggantiFields) penggantiFields.style.display = 'none';
+
+    // Reset titipan tugas section
+    const titipanSection = document.getElementById('titipan-tugas-section');
+    if (titipanSection) titipanSection.style.display = 'none';
 
     const guruSelect = document.getElementById('input-guru-pengganti');
     if (guruSelect) guruSelect.value = '';

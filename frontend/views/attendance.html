@@ -9,7 +9,7 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260419" rel="stylesheet">
-    <link href="/static/css/attendance-baron.css?v=20260419" rel="stylesheet">
+    <link href="/static/css/attendance-baron.css?v=20260421" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -381,6 +381,25 @@
                     </div>
                 </div>
 
+                <!-- Titipan Tugas Section (hidden by default, shown when guru_pengganti selected) -->
+                <div id="titipan-tugas-section" class="titipan-tugas-section" style="display: none;">
+                    <div class="titipan-header">
+                        <i data-lucide="clipboard-list"></i>
+                        <span>Titipan Tugas untuk Kelas Ini</span>
+                    </div>
+                    <div id="titipan-tugas-container" class="titipan-container">
+                        <!-- Cards will be rendered here -->
+                        <div class="titipan-loading">
+                            <div class="loading-spinner"></div>
+                            <span>Memuat titipan tugas...</span>
+                        </div>
+                    </div>
+                    <div id="titipan-empty" class="titipan-empty" style="display: none;">
+                        <i data-lucide="inbox"></i>
+                        <span>Tidak ada titipan tugas untuk kelas ini hari ini</span>
+                    </div>
+                </div>
+
                 <!-- Dokumentasi Pembelajaran (selalu tampil) -->
                 <div class="dokumentasi-section">
                     <div class="section-divider">
@@ -551,7 +570,7 @@
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/attendance.js?v=20260419" defer></script>
+<script src="/static/js/attendance.js?v=20260421" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init
