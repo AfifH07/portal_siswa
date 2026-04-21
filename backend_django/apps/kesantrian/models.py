@@ -1338,7 +1338,6 @@ class IncidentComment(models.Model):
                 'pimpinan': 'Mudir/Pimpinan',
                 'guru': 'Guru/Ustadz',
                 'musyrif': 'Musyrif',
-                'wali_kelas': 'Wali Kelas',
                 'bk': 'Guru BK',
             }
             self.author_role_display = role_map.get(self.author.role, self.author.role)

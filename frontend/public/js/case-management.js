@@ -272,7 +272,7 @@
             // Build URL based on user role
             let url = '/kesantrian/incidents/summary/';
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'wali_kelas', 'bk'];
+            const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'];
 
             console.log('[CaseManagement] ===== SUMMARY FETCH =====');
             console.log('[CaseManagement] User role:', user.role);
@@ -382,7 +382,7 @@
 
             // Get user info
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'wali_kelas', 'bk'];
+            const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'];
 
             console.log('[CaseManagement] ===== FETCH DEBUG =====');
             console.log('[CaseManagement] User:', user);
@@ -1529,7 +1529,7 @@
         // ========== ROLE-BASED UI VISIBILITY (Parent View Constraints) ==========
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const isWalisantri = user.role === 'walisantri';
-        const isAdmin = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'wali_kelas', 'bk'].includes(user.role);
+        const isAdmin = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'].includes(user.role);
 
         console.log('[CaseManagement] User role:', user.role, '| isWalisantri:', isWalisantri, '| isAdmin:', isAdmin);
 
@@ -2039,7 +2039,7 @@
         console.log('[CaseManagement] User username:', user.username);
 
         // Admin roles - auto-load all incidents
-        const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'wali_kelas', 'bk'];
+        const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'];
 
         // Check if incident-list element exists (we're on the right page)
         const incidentList = document.getElementById('incident-list');

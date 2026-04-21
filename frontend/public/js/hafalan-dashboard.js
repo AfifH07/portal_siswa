@@ -113,11 +113,11 @@
 
             console.log('[HafalanDashboard] 👤 User role:', userRole);
 
-            const allowedRoles = ['superadmin', 'pimpinan', 'wali_kelas'];
+            const allowedRoles = ['superadmin', 'pimpinan'];
 
             if (userRole && !allowedRoles.includes(userRole)) {
                 console.warn('[HafalanDashboard] ⛔ Unauthorized role:', userRole);
-                showError('Akses ditolak. Halaman ini hanya untuk Pimpinan dan Wali Kelas.');
+                showError('Akses ditolak. Halaman ini hanya untuk Pimpinan.');
                 return;
             }
 

@@ -245,7 +245,6 @@ function getAllowedPages(role) {
         'pimpinan': ['/', '/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
         'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
         'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
-        'wali_kelas': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/evaluasi-asatidz', '/case-management'],
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/evaluasi-asatidz', '/case-management'],
         'bendahara': ['/', '/dashboard', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/finance'],
         'walisantri': ['/', '/dashboard', '/dashboard/walisantri', '/dashboard/parent', '/attendance', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/case-management'],
@@ -453,22 +452,6 @@ function createRoleBasedNav() {
                 { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' }
             ]
         },
-        'wali_kelas': {
-            main: [
-                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
-                { href: '/students', icon: 'users', label: 'Data Santri' },
-                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
-                { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
-                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
-                { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
-                { href: '/grades', icon: 'file-text', label: 'Nilai' },
-                { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
-            ],
-            other: [
-                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
-                { href: '/case-management', icon: 'folder-open', label: 'Pembinaan' }
-            ]
-        },
         'bk': {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
@@ -625,7 +608,6 @@ function updateUserRoleDisplay() {
         'pimpinan': 'Pimpinan',
         'guru': 'Guru/Ustadz',
         'musyrif': 'Musyrif',
-        'wali_kelas': 'Wali Kelas',
         'bk': 'Guru BK',
         'bendahara': 'Bendahara',
         'walisantri': 'Wali Santri',

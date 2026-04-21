@@ -463,7 +463,7 @@ def ustadz_dashboard_summary(request):
     """
     user = request.user
 
-    allowed_roles = ['guru', 'musyrif', 'wali_kelas', 'superadmin', 'pimpinan']
+    allowed_roles = ['guru', 'musyrif', 'superadmin', 'pimpinan']
     if user.role not in allowed_roles:
         return Response({
             'success': False,

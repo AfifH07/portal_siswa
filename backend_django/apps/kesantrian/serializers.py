@@ -452,7 +452,7 @@ class InvalRecordCreateSerializer(serializers.ModelSerializer):
         guru_absent = data.get('guru_absent')
         guru_pengganti = data.get('guru_pengganti')
 
-        allowed_roles = ['guru', 'musyrif', 'wali_kelas', 'pimpinan']
+        allowed_roles = ['guru', 'musyrif', 'pimpinan']
 
         if guru_absent and guru_absent.role not in allowed_roles:
             raise serializers.ValidationError({
@@ -585,7 +585,6 @@ class IncidentSerializer(serializers.ModelSerializer):
             'superadmin': 'Administrator',
             'pimpinan': 'Pimpinan/Mudir',
             'guru': 'Guru/Ustadz',
-            'wali_kelas': 'Wali Kelas',
             'bk': 'Guru BK',
             'musyrif': 'Musyrif',
         }
@@ -639,7 +638,6 @@ class IncidentListSerializer(serializers.ModelSerializer):
             'superadmin': 'Administrator',
             'pimpinan': 'Pimpinan/Mudir',
             'guru': 'Guru/Ustadz',
-            'wali_kelas': 'Wali Kelas',
             'bk': 'Guru BK',
             'musyrif': 'Musyrif',
         }

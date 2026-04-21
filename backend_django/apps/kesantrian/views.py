@@ -551,8 +551,7 @@ def get_rapor_data(request, nisn):
 
     Security:
     - walisantri: Only allowed if NISN is in linked_student_nisns
-    - wali_kelas: Allowed for students in their assigned class
-    - superadmin/pimpinan: Allowed for all students
+    - superadmin/pimpinan/guru/musyrif: Allowed for all students
 
     Query params:
     - semester: 'Ganjil' or 'Genap' (default: 'Ganjil')
@@ -569,16 +568,6 @@ def get_rapor_data(request, nisn):
                 {'success': False, 'message': 'Anda tidak memiliki akses ke data ini'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role == 'wali_kelas':
-        try:
-            student_check = Student.objects.get(nisn=nisn)
-            if user.kelas and student_check.kelas != user.kelas:
-                return Response(
-                    {'success': False, 'message': 'Siswa tidak berada di kelas Anda'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        except Student.DoesNotExist:
-            pass
     elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
@@ -635,17 +624,6 @@ def get_rapor_html(request, nisn):
                 {'success': False, 'message': 'Anda tidak memiliki akses ke data ini'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role == 'wali_kelas':
-        # Check if student is in admin's assigned class
-        try:
-            student_check = Student.objects.get(nisn=nisn)
-            if user.kelas and student_check.kelas != user.kelas:
-                return Response(
-                    {'success': False, 'message': 'Siswa tidak berada di kelas Anda'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        except Student.DoesNotExist:
-            pass
     elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
@@ -831,7 +809,7 @@ def get_behavior_summary(request, nisn):
                 {'success': False, 'message': 'Anda tidak memiliki akses ke data ini'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif', 'wali_kelas']:
+    elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN
@@ -893,7 +871,7 @@ def get_student_metrics(request, nisn):
                 {'success': False, 'message': 'Anda tidak memiliki akses ke data ini'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif', 'wali_kelas']:
+    elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN
@@ -981,14 +959,14 @@ def blp_list_create(request):
     - status: Filter by status (draft/submitted/locked)
 
     Permissions:
-    - musyrif, guru, wali_kelas: Can create/view
+    - musyrif, guru: Can create/view
     - walisantri: Can view own children only
     - superadmin, pimpinan: Full access
     """
     user = request.user
 
     # Check permissions
-    allowed_roles = ['musyrif', 'guru', 'wali_kelas', 'superadmin', 'pimpinan']
+    allowed_roles = ['musyrif', 'guru', 'superadmin', 'pimpinan']
 
     if request.method == 'GET':
         # Walisantri can view their children's BLP
@@ -1087,7 +1065,7 @@ def blp_detail(request, pk):
         )
 
     # Security check
-    allowed_roles = ['musyrif', 'guru', 'wali_kelas', 'superadmin', 'pimpinan']
+    allowed_roles = ['musyrif', 'guru', 'superadmin', 'pimpinan']
 
     if user.role == 'walisantri':
         linked_nisns = user.get_linked_students()
@@ -1206,7 +1184,7 @@ def blp_student_history(request, nisn):
                 {'success': False, 'message': 'Anda tidak memiliki akses ke data ini'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role not in ['musyrif', 'guru', 'wali_kelas', 'superadmin', 'pimpinan']:
+    elif user.role not in ['musyrif', 'guru', 'superadmin', 'pimpinan']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN
@@ -1286,7 +1264,7 @@ def inval_list_create(request):
     """
     user = request.user
 
-    allowed_roles = ['guru', 'musyrif', 'wali_kelas', 'superadmin', 'pimpinan']
+    allowed_roles = ['guru', 'musyrif', 'superadmin', 'pimpinan']
 
     if user.role not in allowed_roles:
         return Response(
@@ -1367,7 +1345,7 @@ def inval_detail(request, pk):
     """Get inval record detail."""
     user = request.user
 
-    allowed_roles = ['guru', 'musyrif', 'wali_kelas', 'superadmin', 'pimpinan']
+    allowed_roles = ['guru', 'musyrif', 'superadmin', 'pimpinan']
 
     if user.role not in allowed_roles:
         return Response(
@@ -1477,7 +1455,7 @@ def employee_evaluation_list(request):
     # Only admin roles can view all, teachers can view their own
     if user.role in ['superadmin', 'pimpinan']:
         queryset = EmployeeEvaluation.objects.all()
-    elif user.role in ['guru', 'musyrif', 'wali_kelas']:
+    elif user.role in ['guru', 'musyrif']:
         # Can view their own evaluations
         queryset = EmployeeEvaluation.objects.filter(user=user)
     else:
@@ -1617,8 +1595,7 @@ def download_rapor_pdf(request, nisn):
 
     Security:
     - walisantri: Only allowed if NISN is in linked_student_nisns
-    - wali_kelas: Allowed for students in their assigned class
-    - superadmin/pimpinan/guru: Allowed for all students
+    - superadmin/pimpinan/guru/musyrif: Allowed for all students
     """
     user = request.user
 
@@ -1630,16 +1607,6 @@ def download_rapor_pdf(request, nisn):
                 {'success': False, 'message': 'Anda tidak memiliki akses ke data ini'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role == 'wali_kelas':
-        try:
-            student_check = Student.objects.get(nisn=nisn)
-            if user.kelas and student_check.kelas != user.kelas:
-                return Response(
-                    {'success': False, 'message': 'Siswa tidak berada di kelas Anda'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        except Student.DoesNotExist:
-            pass
     elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
@@ -1706,7 +1673,7 @@ def download_blp_pdf(request, nisn):
                 {'success': False, 'message': 'Anda tidak memiliki akses ke data ini'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif', 'wali_kelas']:
+    elif user.role not in ['superadmin', 'pimpinan', 'guru', 'musyrif']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN
@@ -1842,14 +1809,14 @@ def incident_list_create(request):
 
     Permissions:
     - walisantri: Can only view their children's incidents (public comments only)
-    - guru/musyrif/wali_kelas: Can create and view all
+    - guru/musyrif: Can create and view all
     - pimpinan/superadmin: Full access
     """
     import logging
     logger = logging.getLogger(__name__)
 
     user = request.user
-    allowed_create_roles = ['guru', 'musyrif', 'wali_kelas', 'superadmin', 'pimpinan']
+    allowed_create_roles = ['guru', 'musyrif', 'superadmin', 'pimpinan']
 
     if request.method == 'GET':
         # Debug logging
@@ -2178,7 +2145,6 @@ def incident_comments(request, incident_id):
             'superadmin': 'Administrator',
             'pimpinan': 'Pimpinan/Mudir',
             'guru': 'Guru/Ustadz',
-            'wali_kelas': 'Wali Kelas',
             'bk': 'Guru BK',
             'musyrif': 'Musyrif',
         }
@@ -2297,7 +2263,7 @@ def asatidz_evaluation_list_create(request):
     """
     GET: List evaluasi asatidz dengan RBAC
         - Pimpinan/Superadmin: Lihat semua
-        - Ustadz (guru/musyrif/wali_kelas): Lihat evaluasi diri sendiri saja
+        - Ustadz (guru/musyrif): Lihat evaluasi diri sendiri saja
 
     POST: Buat evaluasi baru (hanya pimpinan/superadmin)
         - dilaporkan_oleh auto-filled dari request.user
@@ -2770,7 +2736,7 @@ def penilaian_kinerja_list_create(request):
         # RBAC filter
         if user.role in ['superadmin', 'pimpinan']:
             pass  # See all
-        elif user.role in ['guru', 'musyrif', 'wali_kelas', 'bendahara']:
+        elif user.role in ['guru', 'musyrif', 'bendahara']:
             # See own evaluations only
             queryset = queryset.filter(ustadz=user)
         else:
@@ -3205,7 +3171,7 @@ def hafalan_dashboard_stats(request):
     """
     Dashboard statistics for Hafalan Manager view.
 
-    RBAC: superadmin, pimpinan, wali_kelas only.
+    RBAC: superadmin, pimpinan only.
 
     Query params:
     - kelas: Filter by specific class (optional)
@@ -3239,7 +3205,7 @@ def hafalan_dashboard_stats(request):
     user = request.user
 
     # RBAC: Only manager roles
-    allowed_roles = ['superadmin', 'pimpinan', 'wali_kelas']
+    allowed_roles = ['superadmin', 'pimpinan']
     if user.role not in allowed_roles:
         return Response(
             {'success': False, 'message': 'Akses ditolak. Hanya untuk role manager.'},
@@ -3253,12 +3219,10 @@ def hafalan_dashboard_stats(request):
         # Base queryset: Active students only
         students_qs = Student.objects.filter(status='aktif')
 
-        # Filter by kelas if wali_kelas or explicit filter
+        # Filter by kelas if explicit filter provided
         kelas_filter = request.query_params.get('kelas', None)
         if kelas_filter:
             students_qs = students_qs.filter(kelas=kelas_filter)
-        elif user.role == 'wali_kelas' and user.kelas:
-            students_qs = students_qs.filter(kelas=user.kelas)
 
         # Total active students
         total_santri_aktif = students_qs.count()

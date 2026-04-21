@@ -502,7 +502,7 @@ function onRoleChange() {
     walisantriFields.style.display = role === 'walisantri' ? 'block' : 'none';
 
     // Show/hide kelas field
-    const showKelas = ['guru', 'musyrif', 'wali_kelas', 'bk'].includes(role);
+    const showKelas = ['guru', 'musyrif', 'bk'].includes(role);
     kelasGroup.style.display = showKelas ? 'block' : 'none';
 }
 
@@ -694,7 +694,7 @@ function openAssignModal(userId) {
     }
 
     // Check if user can be assigned
-    const allowedRoles = ['guru', 'musyrif', 'wali_kelas', 'bk', 'pimpinan'];
+    const allowedRoles = ['guru', 'musyrif', 'bk', 'pimpinan'];
     if (!allowedRoles.includes(user.role)) {
         showToast('warning', `User dengan role ${formatRole(user.role)} tidak dapat diberi assignment`);
         return;
@@ -1187,7 +1187,6 @@ function formatRole(role) {
         'pimpinan': 'Pimpinan',
         'guru': 'Guru',
         'musyrif': 'Musyrif',
-        'wali_kelas': 'Wali Kelas',
         'bk': 'Guru BK',
         'bendahara': 'Bendahara',
         'walisantri': 'Walisantri',

@@ -267,8 +267,8 @@ def admin_user_assign(request, user_id):
             'message': 'User tidak ditemukan'
         }, status=status.HTTP_404_NOT_FOUND)
 
-    # Validate user role - only guru, musyrif, wali_kelas can be assigned
-    allowed_roles = ['guru', 'musyrif', 'wali_kelas', 'pimpinan']
+    # Validate user role - only guru, musyrif can be assigned
+    allowed_roles = ['guru', 'musyrif', 'pimpinan']
     if user.role not in allowed_roles:
         return Response({
             'success': False,
@@ -623,7 +623,7 @@ def admin_bulk_assign(request):
                 user = User.objects.get(id=user_id)
 
                 # Skip if not allowed role
-                if user.role not in ['guru', 'musyrif', 'wali_kelas', 'pimpinan']:
+                if user.role not in ['guru', 'musyrif', 'pimpinan']:
                     errors.append(f"User {user.username}: role tidak diizinkan")
                     continue
 

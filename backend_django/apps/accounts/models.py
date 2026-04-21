@@ -34,8 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('pimpinan', 'Pimpinan'),
         ('guru', 'Guru'),
         ('musyrif', 'Musyrif'),           # Pengawas asrama/halaqoh
-        ('wali_kelas', 'Wali Kelas'),     # RENAMED from admin_kelas - Wali kelas untuk bulk operations
-        ('bk', 'Guru BK'),                # NEW: Guru Bimbingan Konseling
+        ('bk', 'Guru BK'),                # Guru Bimbingan Konseling
         ('bendahara', 'Bendahara'),
         ('walisantri', 'Walisantri'),
         ('adituren', 'Adituren/Alumni'),  # Alumni access

@@ -18,7 +18,7 @@
     <!-- Role Validation (Hafalan Manager Dashboard) -->
     <script>
         (function() {
-            const allowedRoles = ['pimpinan', 'superadmin', 'wali_kelas'];
+            const allowedRoles = ['pimpinan', 'superadmin'];
             const verifiedRole = sessionStorage.getItem('verified_role');
             const timestamp = parseInt(sessionStorage.getItem('verified_timestamp') || '0');
             const isRecent = (Date.now() - timestamp) < 5000;

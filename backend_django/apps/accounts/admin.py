@@ -70,7 +70,6 @@ class UserAdmin(BaseUserAdmin):
             'pimpinan': '#7c3aed',      # Purple
             'guru': '#2563eb',          # Blue
             'musyrif': '#0891b2',       # Cyan
-            'wali_kelas': '#059669',    # Green
             'bk': '#d97706',            # Amber
             'bendahara': '#65a30d',     # Lime
             'walisantri': '#6366f1',    # Indigo

@@ -187,7 +187,7 @@ class IsAsatidzEvaluationAllowed(permissions.BasePermission):
 
     READ Access (GET):
         - superadmin, pimpinan: Bisa lihat semua
-        - guru, musyrif, wali_kelas: Hanya lihat evaluasi diri sendiri
+        - guru, musyrif: Hanya lihat evaluasi diri sendiri
 
     Object-level:
         - Ustadz hanya bisa lihat record di mana ustadz=request.user
@@ -198,7 +198,7 @@ class IsAsatidzEvaluationAllowed(permissions.BasePermission):
     WRITE_ROLES = ['superadmin', 'pimpinan']
 
     # Roles yang boleh READ (semua staff kecuali walisantri)
-    READ_ROLES = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'wali_kelas', 'bk']
+    READ_ROLES = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk']
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:

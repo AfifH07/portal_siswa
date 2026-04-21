@@ -21,7 +21,7 @@
     <!-- Role Validation (Ustadz Dashboard) -->
     <script>
         (function() {
-            const allowedRoles = ['guru', 'musyrif', 'wali_kelas', 'bk'];
+            const allowedRoles = ['guru', 'musyrif', 'bk'];
             const verifiedRole = sessionStorage.getItem('verified_role');
             const timestamp = parseInt(sessionStorage.getItem('verified_timestamp') || '0');
             const isRecent = (Date.now() - timestamp) < 5000;

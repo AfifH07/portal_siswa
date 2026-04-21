@@ -35,7 +35,7 @@
     // Roles with write access
     const PIMPINAN_ROLES = ['superadmin', 'pimpinan'];
     // Roles with read access (own data only)
-    const USTADZ_ROLES = ['guru', 'musyrif', 'wali_kelas', 'bk'];
+    const USTADZ_ROLES = ['guru', 'musyrif', 'bk'];
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -214,7 +214,7 @@
 
         try {
             // Fetch users with ustadz roles
-            const response = await apiRequest(`${USERS_API}/?role=guru,musyrif,wali_kelas,pimpinan`);
+            const response = await apiRequest(`${USERS_API}/?role=guru,musyrif,pimpinan`);
 
             const users = response.data || response.results || response || [];
 
@@ -1485,7 +1485,7 @@
         }
 
         try {
-            const response = await apiRequest(`${USERS_API}/?role=guru,musyrif,wali_kelas,pimpinan`);
+            const response = await apiRequest(`${USERS_API}/?role=guru,musyrif,pimpinan`);
             const users = response.data || response.results || response || [];
 
             select.innerHTML = '<option value="">-- Pilih Ustadz/Karyawan --</option>';

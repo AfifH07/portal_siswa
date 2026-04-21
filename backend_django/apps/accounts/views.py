@@ -322,7 +322,6 @@ def auth_status_view(request):
         'pimpinan': ['/', '/dashboard', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/finance', '/blp', '/ibadah', '/case-management', '/evaluasi-asatidz'],
         'guru': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/blp', '/inval', '/case-management', '/evaluasi-asatidz'],
         'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/blp', '/inval', '/case-management', '/evaluasi-asatidz'],
-        'wali_kelas': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/case-management', '/evaluasi-asatidz'],
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/case-management', '/evaluasi-asatidz'],
         'bendahara': ['/', '/dashboard', '/jurnal-piket', '/finance'],
         'walisantri': ['/', '/dashboard', '/dashboard/parent', '/attendance', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/case-management'],
