@@ -3353,3 +3353,336 @@ def hafalan_dashboard_stats(request):
             'message': str(e),
             'traceback': traceback.format_exc()
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================
+# IZIN GURU VIEWS
+# ============================================
+
+from .models import IzinGuru
+from .serializers import IzinGuruSerializer, IzinGuruCreateSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def izin_guru_list_create(request):
+    """
+    GET: List izin guru
+    - Guru/Musyrif: Return izin milik sendiri
+    - Pimpinan/Superadmin/BK: Return semua izin
+
+    POST: Create izin baru
+    - Otomatis set guru = request.user
+    - Otomatis set tahun_ajaran = TahunAjaran aktif
+    - Handle multipart/form-data untuk upload foto
+    """
+    user = request.user
+
+    # Block walisantri
+    if user.role == 'walisantri':
+        return Response({
+            'success': False,
+            'message': 'Walisantri tidak memiliki akses ke fitur ini'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'GET':
+        # Filter by role
+        admin_roles = ['superadmin', 'pimpinan', 'bk']
+        if user.role in admin_roles:
+            queryset = IzinGuru.objects.all()
+        else:
+            queryset = IzinGuru.objects.filter(guru=user)
+
+        # Query params filters
+        tanggal_mulai = request.query_params.get('tanggal_mulai')
+        tanggal_selesai = request.query_params.get('tanggal_selesai')
+        jenis = request.query_params.get('jenis')
+        guru_id = request.query_params.get('guru')
+
+        if tanggal_mulai:
+            queryset = queryset.filter(tanggal_mulai__gte=tanggal_mulai)
+        if tanggal_selesai:
+            queryset = queryset.filter(tanggal_selesai__lte=tanggal_selesai)
+        if jenis:
+            queryset = queryset.filter(jenis_izin=jenis)
+        if guru_id and user.role in admin_roles:
+            queryset = queryset.filter(guru_id=guru_id)
+
+        queryset = queryset.select_related('guru', 'tahun_ajaran')
+        serializer = IzinGuruSerializer(queryset, many=True, context={'request': request})
+
+        return Response({
+            'success': True,
+            'count': queryset.count(),
+            'data': serializer.data
+        })
+
+    elif request.method == 'POST':
+        serializer = IzinGuruCreateSerializer(data=request.data)
+
+        if serializer.is_valid():
+            # Get active tahun ajaran
+            from apps.core.models import TahunAjaran
+            tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+            if not tahun_ajaran:
+                return Response({
+                    'success': False,
+                    'message': 'Tidak ada tahun ajaran aktif'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Save with auto-filled fields
+            izin = serializer.save(
+                guru=user,
+                tahun_ajaran=tahun_ajaran
+            )
+
+            return Response({
+                'success': True,
+                'message': 'Izin berhasil diajukan',
+                'data': IzinGuruSerializer(izin, context={'request': request}).data
+            }, status=status.HTTP_201_CREATED)
+
+        return Response({
+            'success': False,
+            'message': 'Validasi gagal',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def izin_guru_detail(request, pk):
+    """
+    GET: Detail izin
+    - Guru hanya bisa lihat miliknya sendiri
+    - Pimpinan/Superadmin/BK bisa lihat semua
+    """
+    user = request.user
+
+    if user.role == 'walisantri':
+        return Response({
+            'success': False,
+            'message': 'Walisantri tidak memiliki akses ke fitur ini'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        izin = IzinGuru.objects.select_related('guru', 'tahun_ajaran').get(pk=pk)
+
+        # Check permission
+        admin_roles = ['superadmin', 'pimpinan', 'bk']
+        if user.role not in admin_roles and izin.guru != user:
+            return Response({
+                'success': False,
+                'message': 'Anda tidak memiliki akses ke data ini'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = IzinGuruSerializer(izin, context={'request': request})
+
+        return Response({
+            'success': True,
+            'data': serializer.data
+        })
+
+    except IzinGuru.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Izin tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def izin_guru_export_pdf(request):
+    """
+    Export rekap izin guru ke PDF menggunakan reportlab.
+
+    Query params:
+    - tanggal_mulai: Filter tanggal mulai (YYYY-MM-DD)
+    - tanggal_selesai: Filter tanggal selesai (YYYY-MM-DD)
+    """
+    user = request.user
+
+    # Only admin roles can export
+    admin_roles = ['superadmin', 'pimpinan', 'bk']
+    if user.role not in admin_roles:
+        return Response({
+            'success': False,
+            'message': 'Hanya pimpinan yang dapat mengekspor rekap izin'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    # Get filters
+    tanggal_mulai = request.query_params.get('tanggal_mulai')
+    tanggal_selesai = request.query_params.get('tanggal_selesai')
+
+    queryset = IzinGuru.objects.select_related('guru', 'tahun_ajaran').all()
+
+    if tanggal_mulai:
+        queryset = queryset.filter(tanggal_mulai__gte=tanggal_mulai)
+    if tanggal_selesai:
+        queryset = queryset.filter(tanggal_selesai__lte=tanggal_selesai)
+
+    queryset = queryset.order_by('tanggal_mulai')
+
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        from io import BytesIO
+        from datetime import datetime
+
+        # Create PDF buffer
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=landscape(A4),
+            rightMargin=1.5*cm,
+            leftMargin=1.5*cm,
+            topMargin=1.5*cm,
+            bottomMargin=1.5*cm
+        )
+
+        elements = []
+        styles = getSampleStyleSheet()
+
+        # Custom styles
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            alignment=TA_CENTER,
+            spaceAfter=12
+        )
+
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=TA_CENTER,
+            spaceAfter=20
+        )
+
+        # Header
+        elements.append(Paragraph("REKAP IZIN GURU", title_style))
+        elements.append(Paragraph("Pondok Pesantren Baron", subtitle_style))
+
+        # Period info
+        periode_text = "Periode: "
+        if tanggal_mulai and tanggal_selesai:
+            periode_text += f"{tanggal_mulai} s/d {tanggal_selesai}"
+        elif tanggal_mulai:
+            periode_text += f"Mulai {tanggal_mulai}"
+        elif tanggal_selesai:
+            periode_text += f"Sampai {tanggal_selesai}"
+        else:
+            periode_text += "Semua Data"
+
+        elements.append(Paragraph(periode_text, subtitle_style))
+        elements.append(Spacer(1, 0.5*cm))
+
+        # Table header
+        table_data = [
+            ['No', 'Nama Guru', 'Jenis Izin', 'Tanggal Mulai', 'Tanggal Selesai', 'Durasi', 'Keterangan']
+        ]
+
+        # Table data
+        for idx, izin in enumerate(queryset, start=1):
+            table_data.append([
+                str(idx),
+                izin.guru.name or izin.guru.username,
+                izin.get_jenis_izin_display(),
+                izin.tanggal_mulai.strftime('%d/%m/%Y'),
+                izin.tanggal_selesai.strftime('%d/%m/%Y'),
+                f"{izin.durasi_hari} hari",
+                izin.keterangan[:50] + '...' if len(izin.keterangan) > 50 else izin.keterangan
+            ])
+
+        # Create table
+        col_widths = [1*cm, 5*cm, 3*cm, 3*cm, 3*cm, 2*cm, 7*cm]
+        table = Table(table_data, colWidths=col_widths)
+
+        table.setStyle(TableStyle([
+            # Header style
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#059669')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+
+            # Data style
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # No column
+            ('ALIGN', (3, 1), (5, -1), 'CENTER'),  # Date & duration columns
+
+            # Grid
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+
+            # Alternating row colors
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')])
+        ]))
+
+        elements.append(table)
+
+        # Summary
+        elements.append(Spacer(1, 1*cm))
+
+        summary_style = ParagraphStyle(
+            'Summary',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=TA_LEFT
+        )
+
+        total_izin = queryset.count()
+        total_hari = sum(izin.durasi_hari for izin in queryset)
+
+        elements.append(Paragraph(f"<b>Total Izin:</b> {total_izin} pengajuan", summary_style))
+        elements.append(Paragraph(f"<b>Total Hari Izin:</b> {total_hari} hari", summary_style))
+        elements.append(Spacer(1, 0.5*cm))
+
+        # Footer
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            alignment=TA_LEFT,
+            textColor=colors.grey
+        )
+        elements.append(Paragraph(
+            f"Dicetak pada: {datetime.now().strftime('%d/%m/%Y %H:%M')} oleh {user.name or user.username}",
+            footer_style
+        ))
+
+        # Build PDF
+        doc.build(elements)
+
+        # Get PDF value
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        # Return response
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"rekap_izin_guru_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.write(pdf)
+
+        return response
+
+    except ImportError:
+        return Response({
+            'success': False,
+            'message': 'reportlab tidak terinstall. Jalankan: pip install reportlab'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        import traceback
+        return Response({
+            'success': False,
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

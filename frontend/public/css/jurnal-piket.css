@@ -625,6 +625,117 @@ textarea.filter-input {
 }
 
 /* =============================================
+   FILE UPLOAD (Izin Guru)
+   ============================================= */
+
+.upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.file-input {
+    display: none;
+}
+
+.btn-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.btn-upload svg {
+    width: 16px;
+    height: 16px;
+}
+
+.file-name-display {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Foto Preview */
+.foto-preview {
+    position: relative;
+    margin-top: 12px;
+    max-width: 200px;
+}
+
+.foto-preview img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border-light);
+}
+
+.btn-remove-preview {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.btn-remove-preview:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* =============================================
+   BADGE COLORS FOR JENIS IZIN
+   ============================================= */
+
+.badge-red {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+}
+
+.badge-blue {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #2563eb;
+    border: 1px solid #93c5fd;
+}
+
+.badge-purple {
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    color: #7c3aed;
+    border: 1px solid #c4b5fd;
+}
+
+.badge-gray {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+}
+
+/* Keterangan Cell */
+.keterangan-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Modal Large */
+.modal-lg .modal-content {
+    max-width: 700px;
+}
+
+/* =============================================
    RESPONSIVE
    ============================================= */
 

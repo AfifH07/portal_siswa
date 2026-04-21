@@ -11,7 +11,8 @@ from .models import (
     Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan,
     BLPEntry, EmployeeEvaluation, InvalRecord, BLP_INDICATORS,
     Incident, IncidentComment, AsatidzEvaluation,
-    IndikatorKinerja, PenilaianKinerjaAsatidz, DetailPenilaianKinerja
+    IndikatorKinerja, PenilaianKinerjaAsatidz, DetailPenilaianKinerja,
+    IzinGuru
 )
 from apps.students.models import Student
 
@@ -1002,3 +1003,73 @@ class PenilaianKinerjaSummarySerializer(serializers.Serializer):
     by_predikat = serializers.DictField()
     top_performers = serializers.ListField()
     recent_penilaian = PenilaianKinerjaAsatidzListSerializer(many=True)
+
+
+# ============================================
+# IZIN GURU SERIALIZERS
+# ============================================
+
+class IzinGuruSerializer(serializers.ModelSerializer):
+    """Serializer untuk IzinGuru (read)."""
+    guru_nama = serializers.SerializerMethodField()
+    guru_username = serializers.CharField(source='guru.username', read_only=True)
+    jenis_izin_display = serializers.CharField(source='get_jenis_izin_display', read_only=True)
+    tahun_ajaran_nama = serializers.CharField(source='tahun_ajaran.nama', read_only=True)
+    durasi_hari = serializers.IntegerField(read_only=True)
+    foto_surat_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = IzinGuru
+        fields = [
+            'id', 'guru', 'guru_nama', 'guru_username',
+            'jenis_izin', 'jenis_izin_display',
+            'tanggal_mulai', 'tanggal_selesai', 'durasi_hari',
+            'keterangan', 'foto_surat', 'foto_surat_url',
+            'tahun_ajaran', 'tahun_ajaran_nama',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_guru_nama(self, obj):
+        if obj.guru:
+            return obj.guru.name or obj.guru.username
+        return None
+
+    def get_foto_surat_url(self, obj):
+        """Return absolute URL untuk foto surat."""
+        if obj.foto_surat:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.foto_surat.url)
+            return obj.foto_surat.url
+        return None
+
+
+class IzinGuruCreateSerializer(serializers.ModelSerializer):
+    """Serializer untuk create IzinGuru."""
+
+    class Meta:
+        model = IzinGuru
+        fields = [
+            'jenis_izin', 'tanggal_mulai', 'tanggal_selesai',
+            'keterangan', 'foto_surat'
+        ]
+
+    def validate(self, data):
+        # Validasi tanggal
+        tanggal_mulai = data.get('tanggal_mulai')
+        tanggal_selesai = data.get('tanggal_selesai')
+
+        if tanggal_mulai and tanggal_selesai:
+            if tanggal_selesai < tanggal_mulai:
+                raise serializers.ValidationError({
+                    'tanggal_selesai': 'Tanggal selesai harus sama atau setelah tanggal mulai'
+                })
+
+        # Validasi foto_surat wajib
+        if not data.get('foto_surat'):
+            raise serializers.ValidationError({
+                'foto_surat': 'Foto surat izin wajib diupload'
+            })
+
+        return data

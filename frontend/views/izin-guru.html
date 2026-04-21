@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Izin Guru - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260421" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260421" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260421" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Izin Guru</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Izin Guru</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Section 1: Form Ajukan Izin (hidden for pimpinan/superadmin) -->
+        <section class="form-section" id="form-section">
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📝</span> Ajukan Izin</h3>
+                </div>
+                <form id="form-izin" enctype="multipart/form-data">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="input-jenis">Jenis Izin <span class="required">*</span></label>
+                            <select id="input-jenis" name="jenis_izin" class="filter-input" required>
+                                <option value="">-- Pilih Jenis Izin --</option>
+                                <option value="sakit">Sakit</option>
+                                <option value="dinas">Dinas Luar</option>
+                                <option value="keperluan_keluarga">Keperluan Keluarga</option>
+                                <option value="lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="input-tanggal-mulai">Tanggal Mulai <span class="required">*</span></label>
+                            <input type="date" id="input-tanggal-mulai" name="tanggal_mulai" class="filter-input" required>
+                        </div>
+                        <div class="filter-group">
+                            <label for="input-tanggal-selesai">Tanggal Selesai <span class="required">*</span></label>
+                            <input type="date" id="input-tanggal-selesai" name="tanggal_selesai" class="filter-input" required>
+                        </div>
+                    </div>
+                    <div class="filters-grid" style="margin-top: 16px;">
+                        <div class="filter-group" style="grid-column: span 2;">
+                            <label for="input-keterangan">Keterangan <span class="required">*</span></label>
+                            <textarea id="input-keterangan" name="keterangan" class="filter-input textarea-input" rows="3" placeholder="Jelaskan alasan izin..." required></textarea>
+                        </div>
+                        <div class="filter-group">
+                            <label for="input-foto">Foto Surat <span class="required">*</span></label>
+                            <div class="upload-wrapper">
+                                <input type="file" id="input-foto" name="foto_surat" accept="image/*" class="file-input" required>
+                                <label for="input-foto" class="btn btn-secondary btn-upload">
+                                    <i data-lucide="upload"></i> Pilih Foto
+                                </label>
+                                <span id="file-name" class="file-name-display">Belum ada file</span>
+                            </div>
+                            <div id="foto-preview" class="foto-preview" style="display: none;">
+                                <img id="preview-img" src="" alt="Preview">
+                                <button type="button" class="btn-remove-preview" onclick="removePreview()">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button type="submit" id="btn-submit" class="btn btn-primary">
+                            <i data-lucide="send"></i> Ajukan Izin
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Section 2: Filter & Export -->
+        <section class="filter-section">
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🔍</span> Filter &amp; Export</h3>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="filter-dari">Dari Tanggal</label>
+                        <input type="date" id="filter-dari" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-sampai">Sampai Tanggal</label>
+                        <input type="date" id="filter-sampai" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-jenis">Jenis Izin</label>
+                        <select id="filter-jenis" class="filter-input">
+                            <option value="">Semua Jenis</option>
+                            <option value="sakit">Sakit</option>
+                            <option value="dinas">Dinas Luar</option>
+                            <option value="keperluan_keluarga">Keperluan Keluarga</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="filter-group filter-actions">
+                        <button onclick="loadIzinList()" class="btn btn-secondary btn-sm">
+                            <i data-lucide="search"></i> Filter
+                        </button>
+                        <button onclick="resetFilters()" class="btn btn-secondary btn-sm">
+                            <i data-lucide="refresh-cw"></i> Reset
+                        </button>
+                        <button onclick="exportPDF()" class="btn btn-primary btn-sm" id="btn-export">
+                            <i data-lucide="file-down"></i> Export PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Daftar Izin -->
+        <section class="table-section-wrap">
+            <div class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> <span id="table-title">Riwayat Izin Saya</span></h3>
+                    <div class="card-badge" id="izin-badge">0 data</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="table-izin">
+                        <thead>
+                            <tr>
+                                <th id="th-guru" style="display: none;">Nama Guru</th>
+                                <th>Jenis Izin</th>
+                                <th>Tanggal</th>
+                                <th>Durasi</th>
+                                <th>Keterangan</th>
+                                <th>Foto Surat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-izin">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="loading-spinner" style="margin: 30px auto;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="empty-state" style="display: none;">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-title">Belum Ada Data Izin</div>
+                    <div class="empty-desc">Belum ada pengajuan izin yang tercatat.</div>
+                </div>
+            </div>
+        </section>
+
+    </div><!-- /page-body -->
+</main>
+
+<!-- Modal Lihat Foto -->
+<div class="modal" id="foto-modal">
+    <div class="modal-backdrop" onclick="closeFotoModal()"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="foto-modal-title">Foto Surat Izin</h2>
+            <button class="btn-close" onclick="closeFotoModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 20px;">
+            <img id="modal-foto-img" src="" alt="Foto Surat" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeFotoModal()">Tutup</button>
+            <a id="foto-download-link" href="" download class="btn btn-primary">
+                <i data-lucide="download"></i> Download
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260208" defer></script>
+<script src="/static/js/apiConfig.js?v=20260208" defer></script>
+<script src="/static/js/apiFetch.js?v=20260208" defer></script>
+<script src="/static/js/auth-check.js?v=20260421" defer></script>
+<script src="/static/js/auth.js?v=20260208" defer></script>
+<script src="/static/js/page-events.js?v=20260312c" defer></script>
+<script src="/static/js/izin-guru.js?v=20260421" defer></script>
+</body>
+</html>

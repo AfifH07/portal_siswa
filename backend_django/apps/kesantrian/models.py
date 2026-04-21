@@ -1784,6 +1784,103 @@ class DetailPenilaianKinerja(models.Model):
         return dict(self.NILAI_CHOICES).get(self.nilai_bintang, "-")
 
 
+# ============================================
+# IZIN GURU (PENGAJUAN IZIN USTADZ/KARYAWAN)
+# ============================================
+
+class IzinGuru(models.Model):
+    """
+    Model untuk pengajuan izin guru/ustadz/karyawan.
+
+    Workflow:
+    1. Guru/Ustadz mengajukan izin via form (dengan upload foto surat)
+    2. Data tersimpan dengan status otomatis
+    3. Pimpinan/Admin dapat melihat rekap izin
+    4. Export ke PDF untuk pelaporan
+    """
+
+    JENIS_CHOICES = [
+        ('sakit', 'Sakit'),
+        ('dinas', 'Dinas Luar'),
+        ('keperluan_keluarga', 'Keperluan Keluarga'),
+        ('lainnya', 'Lainnya'),
+    ]
+
+    id = models.BigAutoField(primary_key=True)
+
+    # Guru yang mengajukan izin
+    guru = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='izin_guru',
+        help_text="Guru/Ustadz yang mengajukan izin"
+    )
+
+    # Detail izin
+    jenis_izin = models.CharField(
+        max_length=30,
+        choices=JENIS_CHOICES,
+        help_text="Jenis izin yang diajukan"
+    )
+    tanggal_mulai = models.DateField(
+        help_text="Tanggal mulai izin"
+    )
+    tanggal_selesai = models.DateField(
+        help_text="Tanggal selesai izin"
+    )
+    keterangan = models.TextField(
+        help_text="Keterangan/alasan izin"
+    )
+
+    # Foto surat (WAJIB)
+    foto_surat = models.ImageField(
+        upload_to='izin_guru/%Y/%m/',
+        help_text="Foto surat izin/keterangan (WAJIB)"
+    )
+
+    # Periode
+    tahun_ajaran = models.ForeignKey(
+        'core.TahunAjaran',
+        on_delete=models.CASCADE,
+        related_name='izin_guru',
+        help_text="Tahun ajaran saat pengajuan"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'kesantrian_izin_guru'
+        ordering = ['-tanggal_mulai', '-created_at']
+        verbose_name = 'Izin Guru'
+        verbose_name_plural = 'Izin Guru'
+        indexes = [
+            models.Index(fields=['guru', 'tanggal_mulai'], name='idx_izin_guru_tgl'),
+            models.Index(fields=['jenis_izin'], name='idx_izin_jenis'),
+            models.Index(fields=['tahun_ajaran'], name='idx_izin_tahun_ajaran'),
+            models.Index(fields=['tanggal_mulai', 'tanggal_selesai'], name='idx_izin_periode'),
+        ]
+
+    def __str__(self):
+        return f"{self.guru.name} - {self.get_jenis_izin_display()} ({self.tanggal_mulai} s/d {self.tanggal_selesai})"
+
+    @property
+    def durasi_hari(self):
+        """Hitung durasi izin dalam hari."""
+        if self.tanggal_mulai and self.tanggal_selesai:
+            return (self.tanggal_selesai - self.tanggal_mulai).days + 1
+        return 0
+
+    def clean(self):
+        """Validasi tanggal_selesai >= tanggal_mulai."""
+        from django.core.exceptions import ValidationError
+        if self.tanggal_mulai and self.tanggal_selesai:
+            if self.tanggal_selesai < self.tanggal_mulai:
+                raise ValidationError({
+                    'tanggal_selesai': 'Tanggal selesai harus sama atau setelah tanggal mulai'
+                })
+
+
 # =============================================================
 # KELAS NORMALIZATION - Database Level Guard
 # =============================================================

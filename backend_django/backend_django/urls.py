@@ -41,6 +41,7 @@ urlpatterns = [
     path('evaluasi-asatidz/', TemplateView.as_view(template_name='evaluasi-asatidz.html')),  # Evaluasi Asatidz
     path('jurnal-piket/', TemplateView.as_view(template_name='jurnal-piket.html')),  # Jurnal Piket
     path('titipan-tugas/', TemplateView.as_view(template_name='titipan-tugas.html')),  # Titipan Tugas
+    path('izin-guru/', TemplateView.as_view(template_name='izin-guru.html')),  # Izin Guru
 
     # ==========================================
     # ADMIN

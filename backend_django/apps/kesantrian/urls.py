@@ -102,4 +102,11 @@ urlpatterns = [
     # HAFALAN DASHBOARD (Manager View)
     # ============================================
     path('hafalan/dashboard-stats/', views.hafalan_dashboard_stats, name='hafalan-dashboard-stats'),
+
+    # ============================================
+    # IZIN GURU
+    # ============================================
+    path('izin-guru/', views.izin_guru_list_create, name='izin-guru-list-create'),
+    path('izin-guru/export-pdf/', views.izin_guru_export_pdf, name='izin-guru-export-pdf'),
+    path('izin-guru/<int:pk>/', views.izin_guru_detail, name='izin-guru-detail'),
 ]
