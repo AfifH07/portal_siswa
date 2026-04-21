@@ -581,8 +581,10 @@ async function fetchTitipanTugas() {
         const result = await response.json();
         const allTitipan = result.data || result.results || result || [];
 
-        // Filter by current class
-        const titipanForClass = allTitipan.filter(t => t.kelas === kelas);
+        // Filter by current class and status='menunggu' (belum dikerjakan)
+        const titipanForClass = allTitipan.filter(t =>
+            t.kelas === kelas && t.status === 'menunggu'
+        );
 
         if (titipanForClass.length === 0) {
             container.innerHTML = '';
