@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView, RedirectView
 from django.conf import settings
+from django.conf.urls.static import static
 from apps.dashboard.views import unified_dashboard
 
 urlpatterns = [
@@ -65,3 +66,7 @@ urlpatterns = [
     path('api/kesantrian/', include('apps.kesantrian.urls')),
     path('api/admin/', include('apps.accounts.urls_admin')),
 ]
+
+# Serve media files (uploads) - works for both DEBUG and production
+# For PythonAnywhere production, also configure static files in Web tab
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
