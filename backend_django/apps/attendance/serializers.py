@@ -39,7 +39,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
     def get_guru_pengganti_nama(self, obj):
         if obj.guru_pengganti:
-            return obj.guru_pengganti.get_full_name() or obj.guru_pengganti.username
+            return obj.guru_pengganti.name or obj.guru_pengganti.username
         return None
 
     def validate(self, data):
@@ -178,7 +178,7 @@ class TitipanTugasSerializer(serializers.ModelSerializer):
 
     def get_guru_piket_nama(self, obj):
         if obj.guru_piket:
-            return obj.guru_piket.get_full_name() or obj.guru_piket.username
+            return obj.guru_piket.name or obj.guru_piket.username
         return None
 
     def get_status_display(self, obj):

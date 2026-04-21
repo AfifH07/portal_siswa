@@ -1026,13 +1026,13 @@ def jurnal_piket(request):
     for t in titipan_qs:
         titipan_list.append({
             'id': t.id,
-            'guru_nama': t.guru.get_full_name() or t.guru.username if t.guru else None,
+            'guru_nama': t.guru.name or t.guru.username if t.guru else None,
             'kelas': t.kelas,
             'mata_pelajaran': t.mata_pelajaran,
             'deskripsi_tugas': t.deskripsi_tugas,
             'status': t.status,
             'status_display': t.get_status_display(),
-            'guru_piket_nama': t.guru_piket.get_full_name() or t.guru_piket.username if t.guru_piket else None,
+            'guru_piket_nama': t.guru_piket.name or t.guru_piket.username if t.guru_piket else None,
             'catatan_piket': t.catatan_piket
         })
 

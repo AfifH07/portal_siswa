@@ -161,7 +161,7 @@ OTP: 6 digit, expire 30 menit, dikirim via SMTP Gmail.
 
 | Model | App | Identifier Utama |
 |-------|-----|-----------------|
-| `User` | accounts | `id`, `username`, `role` |
+| `User` | accounts | `id`, `username`, `role`, `name` (nama lengkap) |
 | `Student` | students | **`nisn`** (bukan id!) |
 | `Grade` | grades | `student` (FK ke nisn) + `mata_pelajaran` + `semester` |
 | `Attendance` | attendance | `student` + `tanggal` |
@@ -172,7 +172,11 @@ OTP: 6 digit, expire 30 menit, dikirim via SMTP Gmail.
 | `Incident` | kesantrian | `id`, `student`, `status` |
 | `PenilaianKinerja` | kesantrian | `ustadz` (FK ke User) |
 
-> **Catatan:** Siswa diidentifikasi dengan **NISN**, bukan auto-increment ID. Semua relasi ke siswa menggunakan `nisn`.
+> **⚠️ WAJIB DIBACA — Custom User Model:**
+> - Nama lengkap user ada di field **`user.name`** (bukan `first_name`, `last_name`, atau `full_name`)
+> - **TIDAK ADA** method `get_full_name()` — ini Custom User Model, bukan Django default User
+> - Selalu gunakan: `user.name or user.username`
+> - **JANGAN PERNAH** gunakan: `user.get_full_name()` → akan throw `AttributeError`
 
 ---
 
@@ -277,7 +281,7 @@ journalctl -u gunicorn -f
 | `401 Unauthorized` | Token expired | Cek refresh token logic di frontend |
 | `403 Forbidden` | Role tidak punya permission | Cek `permission_classes` di view |
 | `400 Bad Request` | Serializer validation gagal | Print `serializer.errors` |
-| `500 Internal Server` | Error Python | Cek traceback di server log |
+| `AttributeError: get_full_name` | Pakai Django default User method di Custom User | Ganti `user.get_full_name()` → `user.name or user.username` |
 | Static files 404 | `collectstatic` belum dijalankan | `python manage.py collectstatic` |
 | DB migration error | Conflict migration | Cek `showmigrations`, squash jika perlu |
 
