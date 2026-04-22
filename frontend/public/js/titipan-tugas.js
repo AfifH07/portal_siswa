@@ -122,6 +122,7 @@ async function handleSubmit(e) {
 
     const select = document.getElementById('input-kelas-mapel');
     const tanggalInput = document.getElementById('input-tanggal');
+    const jamKeInput = document.getElementById('input-jam-ke');
     const deskripsiInput = document.getElementById('input-deskripsi');
     const btnSimpan = document.getElementById('btn-simpan');
 
@@ -133,6 +134,7 @@ async function handleSubmit(e) {
     }
 
     const tanggal = tanggalInput.value;
+    const jamKe = jamKeInput.value ? parseInt(jamKeInput.value) : null;
     const deskripsi = deskripsiInput.value.trim();
 
     if (!tanggal) {
@@ -152,17 +154,24 @@ async function handleSubmit(e) {
     btnSimpan.innerHTML = '<i data-lucide="loader"></i> Menyimpan...';
 
     try {
+        const payload = {
+            kelas: selectedOption.kelas,
+            mata_pelajaran: selectedOption.mata_pelajaran,
+            tanggal_berlaku: tanggal,
+            deskripsi_tugas: deskripsi
+        };
+
+        // Only include jam_ke if provided
+        if (jamKe !== null) {
+            payload.jam_ke = jamKe;
+        }
+
         const response = await window.apiFetch('/attendance/titipan-tugas/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                kelas: selectedOption.kelas,
-                mata_pelajaran: selectedOption.mata_pelajaran,
-                tanggal_berlaku: tanggal,
-                deskripsi_tugas: deskripsi
-            })
+            body: JSON.stringify(payload)
         });
 
         if (!response || !response.ok) {
@@ -180,6 +189,7 @@ async function handleSubmit(e) {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             tanggalInput.value = tomorrow.toISOString().split('T')[0];
+            jamKeInput.value = '';
             deskripsiInput.value = '';
 
             // Reload riwayat
@@ -237,9 +247,12 @@ function renderRiwayat(data) {
         const statusClass = item.status === 'dikerjakan' ? 'handled' : 'pending';
         const statusText = item.status_display || (item.status === 'dikerjakan' ? 'Dikerjakan' : 'Menunggu');
 
+        const jpDisplay = item.jam_ke ? `JP ${item.jam_ke}` : '-';
+
         tr.innerHTML = `
             <td>${formatDate(item.tanggal_berlaku)}</td>
             <td>${escapeHtml(item.kelas)}</td>
+            <td>${jpDisplay}</td>
             <td>${escapeHtml(item.mata_pelajaran)}</td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
             <td>${item.guru_piket_nama ? escapeHtml(item.guru_piket_nama) : '<span class="text-muted">-</span>'}</td>

@@ -80,6 +80,10 @@
                     <label for="input-tanggal">Tanggal Berlaku</label>
                     <input type="date" id="input-tanggal" class="filter-input" required>
                 </div>
+                <div class="filter-group">
+                    <label for="input-jam-ke">Jam Pelajaran (JP) <span class="optional-badge">Opsional</span></label>
+                    <input type="number" id="input-jam-ke" class="filter-input" min="1" max="12" placeholder="Contoh: 3">
+                </div>
                 <div class="filter-group filter-group-full">
                     <label for="input-deskripsi">Deskripsi Tugas</label>
                     <textarea id="input-deskripsi" class="filter-input textarea-input" rows="3" placeholder="Jelaskan tugas yang harus dikerjakan oleh siswa..." required></textarea>
@@ -104,6 +108,7 @@
                         <tr>
                             <th>Tanggal Berlaku</th>
                             <th>Kelas</th>
+                            <th>JP</th>
                             <th>Mata Pelajaran</th>
                             <th>Status</th>
                             <th>Guru Piket</th>
@@ -111,7 +116,7 @@
                     </thead>
                     <tbody id="tbody-riwayat">
                         <tr>
-                            <td colspan="5" class="text-center">
+                            <td colspan="6" class="text-center">
                                 <div class="loading-spinner" style="margin: 30px auto;"></div>
                             </td>
                         </tr>
@@ -151,6 +156,6 @@
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/titipan-tugas.js?v=20260420D" defer></script>
+<script src="/static/js/titipan-tugas.js?v=20260422" defer></script>
 </body>
 </html>

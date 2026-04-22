@@ -182,6 +182,11 @@ class TitipanTugas(models.Model):
     )
     kelas = models.CharField(max_length=20)
     mata_pelajaran = models.CharField(max_length=100)
+    jam_ke = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Jam pelajaran ke berapa (opsional)"
+    )
     tanggal_berlaku = models.DateField(help_text="Tanggal tugas harus dikerjakan")
     deskripsi_tugas = models.TextField()
     status = models.CharField(

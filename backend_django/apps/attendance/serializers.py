@@ -163,7 +163,7 @@ class TitipanTugasSerializer(serializers.ModelSerializer):
     class Meta:
         model = TitipanTugas
         fields = [
-            'id', 'guru', 'guru_nama', 'kelas', 'mata_pelajaran',
+            'id', 'guru', 'guru_nama', 'kelas', 'mata_pelajaran', 'jam_ke',
             'tanggal_berlaku', 'deskripsi_tugas', 'status', 'status_display',
             'guru_piket', 'guru_piket_nama', 'catatan_piket',
             'tahun_ajaran', 'tahun_ajaran_nama',
@@ -188,7 +188,7 @@ class TitipanTugasSerializer(serializers.ModelSerializer):
 class TitipanTugasCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TitipanTugas
-        fields = ['kelas', 'mata_pelajaran', 'tanggal_berlaku', 'deskripsi_tugas']
+        fields = ['kelas', 'mata_pelajaran', 'jam_ke', 'tanggal_berlaku', 'deskripsi_tugas']
 
     def validate_tanggal_berlaku(self, value):
         from datetime import date

@@ -620,11 +620,13 @@ async function fetchTitipanTugas() {
  * Render single titipan tugas card
  */
 function renderTitipanCard(titipan) {
-    const jamKe = titipan.jam_ke || '-';
     const mapel = titipan.mata_pelajaran || '-';
     const guruNama = titipan.guru_nama || titipan.guru?.name || 'Guru';
     const deskripsi = titipan.deskripsi_tugas || titipan.catatan || '-';
     const status = titipan.status || 'pending';
+
+    // Only show JP if jam_ke exists
+    const jpDisplay = titipan.jam_ke ? `<span class="titipan-jam">JP ${titipan.jam_ke}</span>` : '';
 
     const statusBadge = status === 'selesai'
         ? '<span class="titipan-status-badge selesai">Selesai</span>'
@@ -638,7 +640,7 @@ function renderTitipanCard(titipan) {
                 </div>
                 <div class="titipan-card-title">
                     <span class="titipan-mapel">${escapeHtml(mapel)}</span>
-                    <span class="titipan-jam">JP ${jamKe}</span>
+                    ${jpDisplay}
                 </div>
                 ${statusBadge}
             </div>

@@ -19,7 +19,7 @@ class AttendanceDraftAdmin(admin.ModelAdmin):
 
 @admin.register(TitipanTugas)
 class TitipanTugasAdmin(admin.ModelAdmin):
-    list_display = ['guru', 'kelas', 'mata_pelajaran', 'tanggal_berlaku', 'status', 'guru_piket']
+    list_display = ['guru', 'kelas', 'mata_pelajaran', 'jam_ke', 'tanggal_berlaku', 'status', 'guru_piket']
     list_filter = ['status', 'kelas', 'tanggal_berlaku', 'tahun_ajaran']
     search_fields = ['guru__username', 'guru__first_name', 'kelas', 'mata_pelajaran', 'deskripsi_tugas']
     date_hierarchy = 'tanggal_berlaku'
