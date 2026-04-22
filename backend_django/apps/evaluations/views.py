@@ -50,7 +50,9 @@ class EvaluationViewSet(viewsets.ModelViewSet):
                 # Fallback to legacy single NISN
                 queryset = queryset.filter(nisn=user.linked_student_nisn)
         elif user.role == 'guru':
-            queryset = queryset.filter(evaluator=user.name)
+            # FIX: Match both user.name and user.username for evaluator filter
+            evaluator_name = user.name if user.name else user.username
+            queryset = queryset.filter(evaluator=evaluator_name)
 
         # Superadmin and pimpinan can see all evaluations
         # Filter by kelas (dari query parameter)
@@ -281,18 +283,30 @@ def evaluation_statistics(request):
         queryset = Evaluation.objects.all()
 
         if user.role == 'walisantri':
-            queryset = queryset.filter(nisn=user.linked_student_nisn)
+            # Support multi-child
+            linked_nisns = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
+            if linked_nisns:
+                queryset = queryset.filter(nisn__nisn__in=linked_nisns)
+            else:
+                queryset = queryset.filter(nisn=user.linked_student_nisn)
         elif user.role == 'guru':
-            queryset = queryset.filter(evaluator=user.name)
+            # FIX: Match both user.name and user.username for evaluator filter
+            evaluator_name = user.name if user.name else user.username
+            queryset = queryset.filter(evaluator=evaluator_name)
 
         total_evaluations = queryset.count()
         total_prestasi = queryset.filter(jenis='prestasi').count()
         total_pelanggaran = queryset.filter(jenis='pelanggaran').count()
 
         from django.utils import timezone
+        from django.db.models.functions import TruncMonth
+        from django.db.models import Count
+        from collections import defaultdict
+
+        now = timezone.now()
         evaluations_this_month = queryset.filter(
-            created_at__month=timezone.now().month,
-            created_at__year=timezone.now().year
+            created_at__month=now.month,
+            created_at__year=now.year
         ).count()
 
         # Category statistics
@@ -324,6 +338,51 @@ def evaluation_statistics(request):
             'sosial': queryset.filter(kategori='sosial', jenis='pelanggaran').count(),
         }
 
+        # Monthly trend (last 6 months)
+        # Calculate start date (6 months ago) using datetime
+        from datetime import timedelta
+        import calendar
+
+        def subtract_months(source_date, months):
+            """Subtract months from a date safely"""
+            month = source_date.month - 1 - months
+            year = source_date.year + month // 12
+            month = month % 12 + 1
+            day = min(source_date.day, calendar.monthrange(year, month)[1])
+            return source_date.replace(year=year, month=month, day=day)
+
+        six_months_ago = subtract_months(now, 5)
+        start_of_period = six_months_ago.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        monthly_data = queryset.filter(
+            tanggal__gte=start_of_period.date()
+        ).annotate(
+            month=TruncMonth('tanggal')
+        ).values('month', 'jenis').annotate(
+            count=Count('id')
+        ).order_by('month')
+
+        # Build monthly trend dict
+        month_names_id = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+        trend_dict = defaultdict(lambda: {'prestasi': 0, 'pelanggaran': 0})
+
+        for entry in monthly_data:
+            month_key = entry['month'].strftime('%Y-%m') if entry['month'] else None
+            if month_key:
+                trend_dict[month_key][entry['jenis']] = entry['count']
+
+        # Generate last 6 months in order
+        monthly_trend = []
+        for i in range(6):
+            target_date = subtract_months(now, 5 - i)
+            month_key = target_date.strftime('%Y-%m')
+            month_label = f"{month_names_id[target_date.month]} {target_date.year}"
+            monthly_trend.append({
+                'month': month_label,
+                'prestasi': trend_dict[month_key]['prestasi'],
+                'pelanggaran': trend_dict[month_key]['pelanggaran']
+            })
+
         return Response({
             'success': True,
             'statistics': {
@@ -333,10 +392,14 @@ def evaluation_statistics(request):
                 'evaluations_this_month': evaluations_this_month,
                 'by_category': category_stats,
                 'prestasi_by_category': category_prestasi,
-                'pelanggaran_by_category': category_pelanggaran
+                'pelanggaran_by_category': category_pelanggaran,
+                'monthly_trend': monthly_trend
             }
         })
     except Exception as e:
+        import traceback
+        print(f"[Evaluation Statistics] Error: {str(e)}")
+        print(traceback.format_exc())
         return Response({
             'success': False,
             'message': f'Terjadi kesalahan: {str(e)}'
