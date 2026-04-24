@@ -47,8 +47,8 @@ class EvaluationViewSet(viewsets.ModelViewSet):
             if linked_nisns:
                 queryset = queryset.filter(nisn__nisn__in=linked_nisns)
             else:
-                # Fallback to legacy single NISN
-                queryset = queryset.filter(nisn=user.linked_student_nisn)
+                # FIX: Compare nisn field (NISN string), not FK object
+                queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
         elif user.role == 'guru':
             # FIX: Match both user.name and user.username for evaluator filter
             evaluator_name = user.name if user.name else user.username
@@ -156,7 +156,11 @@ def get_student_evaluations(request, nisn):
 
     # Walisantri can only see their linked student's evaluations
     if user.role == 'walisantri':
-        if user.linked_student_nisn != nisn:
+        # Support multi-child
+        linked_nisns = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
+        if not linked_nisns:
+            linked_nisns = [user.linked_student_nisn] if user.linked_student_nisn else []
+        if nisn not in linked_nisns:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki akses ke data siswa ini'
@@ -166,8 +170,8 @@ def get_student_evaluations(request, nisn):
     serializer = EvaluationSerializer(evaluations, many=True)
 
     # Calculate summary stats for flashcard
-    prestasi_count = evaluations.filter(jenis='Prestasi').count()
-    pelanggaran_count = evaluations.filter(jenis='Pelanggaran').count()
+    prestasi_count = evaluations.filter(jenis='prestasi').count()
+    pelanggaran_count = evaluations.filter(jenis='pelanggaran').count()
 
     return Response({
         'success': True,
@@ -288,7 +292,8 @@ def evaluation_statistics(request):
             if linked_nisns:
                 queryset = queryset.filter(nisn__nisn__in=linked_nisns)
             else:
-                queryset = queryset.filter(nisn=user.linked_student_nisn)
+                # FIX: Compare nisn field (NISN string), not FK object
+                queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
         elif user.role == 'guru':
             # FIX: Match both user.name and user.username for evaluator filter
             evaluator_name = user.name if user.name else user.username

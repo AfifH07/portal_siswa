@@ -1,13 +1,13 @@
 # CLAUDE.md — Portal Siswa Baron
 > File ini dibaca otomatis oleh Claude Code setiap sesi. Jangan hapus.
-> Versi: 2.3.10 | Update: April 2026
+> Versi: 2.3.9 | Update: April 2026
 
 ---
 
 ## 🎯 IDENTITAS PROYEK
 
-**Nama:** Portal Siswa Baron
-**Versi:** 2.3.10 (Active Development)  
+**Nama:** Portal Siswa Baron  
+**Versi:** 2.3.9 (Active Development)  
 **Institusi:** Pondok Pesantren Baron  
 **Deployment:** PythonAnywhere — https://apiiip.pythonanywhere.com  
 **Deskripsi:** Sistem Informasi Akademik Terpadu untuk manajemen santri, akademik, evaluasi karakter, dan komunikasi walisantri.
@@ -76,34 +76,6 @@
 
 ---
 
-## 🆕 v2.3.10 Updates (2026-04-24) - Evaluasi Santri Dashboard Fix
-
-### Bug Fixes di `apps/evaluations/views.py`
-
-| Bug | Location | Fix |
-|-----|----------|-----|
-| Case sensitivity | line 169-170 | `jenis='Prestasi'` → `jenis='prestasi'` |
-| FK vs String comparison | get_queryset, evaluation_statistics | `nisn=user.linked_student_nisn` → `nisn__nisn=user.linked_student_nisn` |
-| Guru filter mismatch | line 54, 294 | Fallback: `user.name if user.name else user.username` |
-| Multi-child walisantri | get_student_evaluations | Support `get_linked_students()` array |
-| Missing monthly_trend | evaluation_statistics | Added 6-month trend data for chart |
-
-### Key Pattern (Evaluations Filter)
-```python
-# WALISANTRI - use nisn__nisn for string comparison
-linked_nisns = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
-if linked_nisns:
-    queryset = queryset.filter(nisn__nisn__in=linked_nisns)
-else:
-    queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
-
-# GURU - fallback evaluator name
-evaluator_name = user.name if user.name else user.username
-queryset = queryset.filter(evaluator=evaluator_name)
-```
-
----
-
 ## 🆕 FITUR BARU v2.3.9
 
 ### 1. Guru Pengganti (Attendance Step 3)
@@ -141,8 +113,6 @@ queryset = queryset.filter(evaluator=evaluator_name)
 | IsGuru permission | Hanya role 'guru' (wali_kelas sudah hapus) |
 | Media files | Serve via urls.py + PythonAnywhere static mapping /media/ |
 | Assignment filter | Exclude 'piket' dan 'wali_kelas', bukan hanya kbm |
-| Evaluations filter | `nisn__nisn` untuk FK string comparison, lowercase jenis |
-| Guru evaluator match | Fallback `user.name or user.username` di filter |
 
 ---
 
@@ -199,8 +169,6 @@ python manage.py migrate
 | `403 Forbidden` | Cek permission_classes di view |
 | Halaman tidak jalan | Script dependencies kurang/urutan salah |
 | Static 404 | collectstatic --noinput |
-| Chart kosong (evaluasi) | Cek case jenis (lowercase), gunakan `nisn__nisn` |
-| Data guru tidak muncul | Cek match evaluator dengan `user.name or username` |
 
 ### Cek Log PythonAnywhere
 ```bash
@@ -242,23 +210,14 @@ TahunAjaran.objects.create(nama='2025/2026', semester='Genap', is_active=True)
 
 ---
 
-## 📋 DAFTAR TUGAS
+## 📋 DAFTAR TUGAS YANG BELUM SELESAI
 
-### ✅ Selesai (v2.3.10)
-| Task | Status |
-|------|--------|
-| Fix dashboard Evaluasi Santri (chart kosong) | ✅ Fixed |
-| Case sensitivity jenis prestasi/pelanggaran | ✅ Fixed |
-| FK comparison walisantri filter | ✅ Fixed |
-| Multi-child support evaluations | ✅ Fixed |
-| Monthly trend data for chart | ✅ Added |
-
-### 🔄 Belum Selesai
 | # | Task | Priority |
 |---|------|----------|
-| 1 | Poin kinerja otomatis untuk guru pengganti | 🟡 Medium |
-| 2 | Modal detail Titipan Tugas (read-only, klik row) | 🟡 Medium |
-| 3 | Jadwal sekolah | 🟢 Low |
+| 1 | Fix dashboard Evaluasi Santri (data tidak muncul di chart) | 🔴 High |
+| 2 | Poin kinerja otomatis untuk guru pengganti | 🟡 Medium |
+| 3 | Modal detail Titipan Tugas (read-only, klik row) | 🟡 Medium |
+| 4 | Jadwal sekolah | 🟢 Low |
 
 ---
 
@@ -283,4 +242,4 @@ rtk curl http://localhost:8000/api/endpoint/
 
 ---
 
-*Portal Siswa Baron v2.3.10 — Pondok Pesantren Baron — April 2026*
+*Portal Siswa Baron v2.3.9 — Pondok Pesantren Baron — April 2026*
