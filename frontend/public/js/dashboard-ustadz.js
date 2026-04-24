@@ -198,7 +198,7 @@ function renderAssignments() {
                 <div class="assignment-details">
                     ${a.kelas ? `<span class="assignment-tag">Kelas ${a.kelas}</span>` : ''}
                     ${a.mata_pelajaran ? `<span class="assignment-tag">${a.mata_pelajaran}</span>` : ''}
-                    ${a.halaqoh_name ? `<span class="assignment-tag">${a.halaqoh_name}</span>` : ''}
+                    ${a.mentoring_name ? `<span class="assignment-tag">${a.mentoring_name}</span>` : ''}
                 </div>
             </div>
         `;
@@ -209,7 +209,7 @@ function getAssignmentIcon(type) {
     const icons = {
         'kbm': '📚',
         'diniyah': '📖',
-        'halaqoh': '🌙',
+        'mentoring': '🌙',
         'piket': '🔔',
         'wali_kelas': '👥'
     };
@@ -222,8 +222,8 @@ function getAssignmentTitle(assignment) {
             return assignment.mata_pelajaran || 'Mengajar KBM';
         case 'diniyah':
             return assignment.mata_pelajaran || 'Mengajar Diniyah';
-        case 'halaqoh':
-            return assignment.halaqoh_name || 'Pembimbing Halaqoh';
+        case 'mentoring':
+            return assignment.mentoring_name || 'Pembimbing Mentoring';
         case 'piket':
             return 'Ustadz Piket';
         case 'wali_kelas':

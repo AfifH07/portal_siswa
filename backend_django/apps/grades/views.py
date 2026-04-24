@@ -12,6 +12,9 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from io import BytesIO
 
+from apps.accounts.models import Assignment
+from apps.core.models import TahunAjaran
+
 
 class GradePagination(PageNumberPagination):
     page_size = 10
@@ -1325,6 +1328,244 @@ def import_grades_v2(request):
         })
 
     except Exception as e:
+        return Response({
+            'success': False,
+            'message': f'Terjadi kesalahan: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsGuru | IsSuperAdmin])
+def get_my_teaching_classes(request):
+    """
+    Get guru's assigned classes for grade input.
+    Returns classes from active assignments (KBM/Diniyah only).
+    """
+    try:
+        user = request.user
+
+        # Get active TahunAjaran
+        tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+        if not tahun_ajaran:
+            return Response({
+                'success': True,
+                'data': [],
+                'message': 'Tidak ada tahun ajaran aktif'
+            })
+
+        # Superadmin can see all classes
+        if user.role == 'superadmin':
+            classes = Student.objects.values_list('kelas', flat=True).distinct()
+            result = [{'kelas': k, 'mata_pelajaran': None} for k in sorted(set(c for c in classes if c))]
+            return Response({
+                'success': True,
+                'data': result,
+                'tahun_ajaran': tahun_ajaran.nama,
+                'semester': tahun_ajaran.semester
+            })
+
+        # Get guru's teaching assignments (exclude piket & wali_kelas)
+        assignments = Assignment.objects.filter(
+            user=user,
+            status='active',
+            tahun_ajaran=tahun_ajaran.nama
+        ).exclude(
+            assignment_type__in=['piket', 'wali_kelas']
+        ).values('kelas', 'mata_pelajaran').distinct()
+
+        result = []
+        seen_kelas = set()
+        for a in assignments:
+            if a['kelas'] and a['kelas'] not in seen_kelas:
+                result.append({
+                    'kelas': a['kelas'],
+                    'mata_pelajaran': a['mata_pelajaran']
+                })
+                seen_kelas.add(a['kelas'])
+
+        return Response({
+            'success': True,
+            'data': result,
+            'tahun_ajaran': tahun_ajaran.nama,
+            'semester': tahun_ajaran.semester
+        })
+
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_students_by_class(request, kelas):
+    """
+    Get list of students in a class for grade input form.
+    """
+    try:
+        students = Student.objects.filter(kelas=kelas, aktif=True).order_by('nama')
+
+        if not students.exists():
+            # Try case-insensitive
+            students = Student.objects.filter(kelas__iexact=kelas, aktif=True).order_by('nama')
+
+        data = []
+        for s in students:
+            data.append({
+                'nisn': s.nisn,
+                'nama': s.nama,
+                'kelas': s.kelas
+            })
+
+        return Response({
+            'success': True,
+            'kelas': kelas,
+            'count': len(data),
+            'students': data
+        })
+
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsGuru | IsSuperAdmin])
+def input_batch_grades(request):
+    """
+    Batch input grades for a class.
+
+    Request body:
+    {
+        "kelas": "XI A",
+        "mata_pelajaran": "Matematika",
+        "jenis": "UH",
+        "semester": "Genap",
+        "tahun_ajaran": "2024/2025",
+        "data": [
+            {"nisn": "0012345678", "nilai": 85},
+            {"nisn": "0012345679", "nilai": 90}
+        ]
+    }
+    """
+    try:
+        data = request.data
+
+        # Validate required fields
+        kelas = data.get('kelas')
+        mata_pelajaran = data.get('mata_pelajaran')
+        jenis = data.get('jenis', 'UH')
+        semester = data.get('semester', 'Ganjil')
+        tahun_ajaran = data.get('tahun_ajaran', '2024/2025')
+        grades_data = data.get('data', [])
+
+        if not kelas:
+            return Response({
+                'success': False,
+                'message': 'Kelas harus diisi'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not mata_pelajaran:
+            return Response({
+                'success': False,
+                'message': 'Mata pelajaran harus diisi'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not grades_data:
+            return Response({
+                'success': False,
+                'message': 'Data nilai kosong'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get guru name
+        guru_name = request.user.name if hasattr(request.user, 'name') and request.user.name else request.user.username
+
+        success_count = 0
+        updated_count = 0
+        error_count = 0
+        errors = []
+
+        for item in grades_data:
+            try:
+                nisn = str(item.get('nisn', '')).strip()
+                nilai_raw = item.get('nilai')
+
+                # Skip empty entries
+                if not nisn or nilai_raw is None or nilai_raw == '':
+                    continue
+
+                # Validate nilai
+                try:
+                    nilai = int(float(nilai_raw))
+                except (ValueError, TypeError):
+                    error_count += 1
+                    errors.append(f'NISN {nisn}: Nilai tidak valid')
+                    continue
+
+                if nilai < 0 or nilai > 100:
+                    error_count += 1
+                    errors.append(f'NISN {nisn}: Nilai harus 0-100')
+                    continue
+
+                # Find student
+                try:
+                    student = Student.objects.get(nisn=nisn)
+                except Student.DoesNotExist:
+                    error_count += 1
+                    errors.append(f'NISN {nisn}: Siswa tidak ditemukan')
+                    continue
+
+                # Check/update existing grade or create new
+                existing = Grade.objects.filter(
+                    nisn=student,
+                    mata_pelajaran=mata_pelajaran,
+                    jenis=jenis,
+                    semester=semester,
+                    tahun_ajaran=tahun_ajaran
+                ).first()
+
+                if existing:
+                    existing.nilai = nilai
+                    existing.guru = guru_name
+                    existing.save()
+                    updated_count += 1
+                else:
+                    Grade.objects.create(
+                        nisn=student,
+                        mata_pelajaran=mata_pelajaran,
+                        nilai=nilai,
+                        jenis=jenis,
+                        semester=semester,
+                        tahun_ajaran=tahun_ajaran,
+                        kelas=kelas,
+                        guru=guru_name
+                    )
+                    success_count += 1
+
+            except Exception as e:
+                error_count += 1
+                errors.append(f'Error: {str(e)}')
+
+        total = success_count + updated_count
+
+        return Response({
+            'success': True,
+            'message': f'Berhasil menyimpan {total} nilai',
+            'summary': {
+                'new_grades': success_count,
+                'updated_grades': updated_count,
+                'total': total,
+                'errors': error_count
+            },
+            'errors': errors[:5] if errors else None
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return Response({
             'success': False,
             'message': f'Terjadi kesalahan: {str(e)}'

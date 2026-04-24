@@ -811,7 +811,7 @@ async function loadAttendanceDonutData(nisn) {
     const placeholders = {
         kbm: { pct: 95, color: '#3b82f6' },
         diniyah: { pct: 88, color: '#c8961c' },
-        halaqoh: { pct: 92, color: '#8b5cf6' },
+        mentoring: { pct: 92, color: '#8b5cf6' },
         puasa: { pct: 75, color: '#ec4899' }
     };
 

@@ -243,7 +243,7 @@ function getAllowedPages(role) {
     const roleAccess = {
         'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
         'pimpinan': ['/', '/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
-        'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
+        'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management', '/kelas-saya'],
         'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/evaluasi-asatidz', '/case-management'],
         'bendahara': ['/', '/dashboard', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/finance'],
@@ -595,8 +595,77 @@ function createRoleBasedNav() {
         lucide.createIcons();
     }
 
+    // Check for Wali Kelas status and add menu if applicable
+    if (userRole === 'guru') {
+        checkAndAddWaliKelasMenu(nav, createNavItem, isActive);
+    }
+
     // Also update user role display
     updateUserRoleDisplay();
+}
+
+/**
+ * Check if current guru is a wali kelas and add "Kelas Saya" menu.
+ */
+async function checkAndAddWaliKelasMenu(nav, createNavItem, isActive) {
+    try {
+        const response = await window.apiFetch('auth/my-wali-kelas/');
+        if (!response || !response.ok) return;
+
+        const data = await response.json();
+        if (!data.success || !data.is_wali_kelas) return;
+
+        // Store wali kelas info in localStorage for quick access
+        localStorage.setItem('wali_kelas_info', JSON.stringify({
+            kelas: data.kelas,
+            tahun_ajaran: data.tahun_ajaran,
+            semester: data.semester
+        }));
+
+        // Find "Kesantrian" label or "Lainnya" to insert before
+        const navLabels = nav.querySelectorAll('.nav-label');
+        let insertBefore = null;
+
+        for (const label of navLabels) {
+            if (label.textContent === 'Kesantrian' || label.textContent === 'Lainnya') {
+                insertBefore = label;
+                break;
+            }
+        }
+
+        // Create "Wali Kelas" section
+        const waliLabel = document.createElement('div');
+        waliLabel.className = 'nav-label';
+        waliLabel.textContent = 'Wali Kelas';
+
+        const kelasSayaItem = createNavItem({
+            href: '/kelas-saya',
+            icon: 'school',
+            label: `Kelas ${data.kelas}`
+        });
+
+        if (insertBefore) {
+            nav.insertBefore(waliLabel, insertBefore);
+            nav.insertBefore(kelasSayaItem, insertBefore);
+        } else {
+            nav.appendChild(waliLabel);
+            nav.appendChild(kelasSayaItem);
+        }
+
+        // Re-init Lucide icons for new items
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+
+        // Update role display to include wali kelas
+        const roleEl = document.getElementById('user-role-display') || document.getElementById('user-role');
+        if (roleEl) {
+            roleEl.textContent = `Guru / Wali Kelas ${data.kelas}`;
+        }
+
+    } catch (error) {
+        console.error('[AUTH] Error checking wali kelas status:', error);
+    }
 }
 
 function updateUserRoleDisplay() {

@@ -288,6 +288,20 @@ class Assignment(models.Model):
         if self.assignment_type == 'piket' and not self.hari:
             raise ValidationError("Assignment Piket harus memiliki hari")
 
+        # Wali Kelas: Only one active wali per class
+        if self.assignment_type == 'wali_kelas' and self.kelas and self.status == 'active':
+            existing = Assignment.objects.filter(
+                assignment_type='wali_kelas',
+                kelas=self.kelas,
+                status='active',
+                tahun_ajaran=self.tahun_ajaran,
+                semester=self.semester
+            ).exclude(pk=self.pk).first()
+            if existing:
+                raise ValidationError(
+                    f"Kelas {self.kelas} sudah memiliki wali kelas aktif: {existing.user.name or existing.user.username}"
+                )
+
 
 class UserActivity(models.Model):
     """
@@ -379,6 +393,77 @@ def normalize_assignment_kelas(sender, instance, **kwargs):
     """
     Pre-save signal to normalize kelas field in Assignment model.
     """
+    if instance.kelas:
+        normalize_fn = _get_normalize_kelas_format()
+        normalized = normalize_fn(instance.kelas)
+        if normalized != instance.kelas:
+            instance.kelas = normalized
+
+
+class CatatanKelas(models.Model):
+    """
+    Model untuk catatan harian Wali Kelas.
+    Digunakan untuk mencatat perkembangan kelas secara berkala.
+    """
+    KATEGORI_CHOICES = [
+        ('harian', 'Catatan Harian'),
+        ('akademik', 'Akademik'),
+        ('kedisiplinan', 'Kedisiplinan'),
+        ('kegiatan', 'Kegiatan Kelas'),
+        ('lainnya', 'Lainnya'),
+    ]
+
+    id = models.BigAutoField(primary_key=True)
+    wali_kelas = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='catatan_kelas',
+        help_text="Wali Kelas yang membuat catatan"
+    )
+    kelas = models.CharField(
+        max_length=20,
+        help_text="Kelas yang dicatat"
+    )
+    tanggal = models.DateField(
+        help_text="Tanggal catatan"
+    )
+    kategori = models.CharField(
+        max_length=20,
+        choices=KATEGORI_CHOICES,
+        default='harian'
+    )
+    judul = models.CharField(
+        max_length=200,
+        help_text="Judul singkat catatan"
+    )
+    isi = models.TextField(
+        help_text="Isi catatan lengkap"
+    )
+    tahun_ajaran = models.CharField(
+        max_length=10,
+        help_text="Tahun ajaran, format: 2025/2026"
+    )
+    semester = models.CharField(
+        max_length=10,
+        choices=[('Ganjil', 'Ganjil'), ('Genap', 'Genap')],
+        default='Ganjil'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'catatan_kelas'
+        ordering = ['-tanggal', '-created_at']
+        verbose_name = 'Catatan Kelas'
+        verbose_name_plural = 'Catatan Kelas'
+
+    def __str__(self):
+        return f"{self.kelas} - {self.tanggal} - {self.judul}"
+
+
+@receiver(pre_save, sender=CatatanKelas)
+def normalize_catatan_kelas(sender, instance, **kwargs):
+    """Normalize kelas field in CatatanKelas."""
     if instance.kelas:
         normalize_fn = _get_normalize_kelas_format()
         normalized = normalize_fn(instance.kelas)

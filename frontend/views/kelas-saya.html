@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelas Saya - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260327" rel="stylesheet">
+    <link href="/static/css/bento-dashboard.css?v=20260327" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Kelas Saya specific styles */
+        .kelas-header {
+            background: linear-gradient(135deg, var(--emerald-600, #059669) 0%, var(--emerald-700, #047857) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .kelas-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .kelas-header .kelas-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .overview-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color, #e5e7eb);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .overview-card .icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .overview-card .icon-wrap.blue { background: #dbeafe; }
+        .overview-card .icon-wrap.green { background: #dcfce7; }
+        .overview-card .icon-wrap.yellow { background: #fef3c7; }
+        .overview-card .icon-wrap.red { background: #fee2e2; }
+        .overview-card .overview-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark, #1f2937);
+        }
+        .overview-card .overview-label {
+            font-size: 0.8rem;
+            color: var(--text-muted, #6b7280);
+        }
+        .section-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border-color, #e5e7eb);
+            margin-bottom: 1.5rem;
+        }
+        .section-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-body {
+            padding: 1.5rem;
+        }
+        .catatan-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .catatan-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .catatan-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .catatan-item {
+            padding: 1rem;
+            border: 1px solid var(--border-color, #e5e7eb);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+        .catatan-item:last-child { margin-bottom: 0; }
+        .catatan-item .catatan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .catatan-item .catatan-title {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .catatan-item .catatan-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .catatan-item .catatan-kategori {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            background: var(--emerald-100, #d1fae5);
+            color: var(--emerald-700, #047857);
+            border-radius: 4px;
+        }
+        .catatan-item .catatan-content {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        .pembinaan-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .pembinaan-item {
+            padding: 1rem;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            background: #fff5f5;
+        }
+        .pembinaan-item .student-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .pembinaan-item .student-name {
+            font-weight: 600;
+        }
+        .pembinaan-item .violation-count {
+            background: #ef4444;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .pembinaan-item .recent-violations {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .pembinaan-item .violation-tag {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .students-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .students-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: var(--emerald-50, #ecfdf5);
+            font-weight: 600;
+            font-size: 0.8rem;
+            border-bottom: 2px solid var(--emerald-200, #a7f3d0);
+        }
+        .students-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
+            font-size: 0.875rem;
+        }
+        .students-table tr:hover {
+            background: var(--emerald-50, #ecfdf5);
+        }
+        .badge-prestasi {
+            background: #dcfce7;
+            color: #166534;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        .badge-pelanggaran {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-radius: 8px 8px 0 0;
+        }
+        .tab-btn.active {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout?.()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Kelas Saya</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Wali Kelas</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Kelas Header -->
+        <div class="kelas-header" id="kelas-header">
+            <div>
+                <h2 id="kelas-title">Memuat...</h2>
+                <p id="kelas-subtitle">Wali Kelas</p>
+            </div>
+            <div class="kelas-badge" id="kelas-badge">-</div>
+        </div>
+
+        <!-- Overview Stats -->
+        <div class="overview-grid" id="overview-grid">
+            <div class="overview-card">
+                <div class="icon-wrap blue">👥</div>
+                <div>
+                    <div class="overview-value" id="stat-siswa">-</div>
+                    <div class="overview-label">Total Siswa</div>
+                </div>
+            </div>
+            <div class="overview-card">
+                <div class="icon-wrap green">📊</div>
+                <div>
+                    <div class="overview-value" id="stat-nilai">-</div>
+                    <div class="overview-label">Rata-rata Nilai</div>
+                </div>
+            </div>
+            <div class="overview-card">
+                <div class="icon-wrap yellow">📅</div>
+                <div>
+                    <div class="overview-value" id="stat-kehadiran">-</div>
+                    <div class="overview-label">% Kehadiran</div>
+                </div>
+            </div>
+            <div class="overview-card">
+                <div class="icon-wrap red">⚠️</div>
+                <div>
+                    <div class="overview-value" id="stat-perhatian">-</div>
+                    <div class="overview-label">Perlu Perhatian</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('catatan')">📝 Catatan Kelas</button>
+            <button class="tab-btn" onclick="switchTab('pembinaan')">⚠️ Pembinaan</button>
+            <button class="tab-btn" onclick="switchTab('siswa')">👥 Daftar Siswa</button>
+        </div>
+
+        <!-- Tab: Catatan Kelas -->
+        <div class="tab-content active" id="tab-catatan">
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>📝 Tambah Catatan</h3>
+                </div>
+                <div class="section-body">
+                    <form class="catatan-form" id="catatan-form" onsubmit="submitCatatan(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tanggal</label>
+                                <input type="date" id="catatan-tanggal" class="glass-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Kategori</label>
+                                <select id="catatan-kategori" class="glass-input">
+                                    <option value="harian">Catatan Harian</option>
+                                    <option value="akademik">Akademik</option>
+                                    <option value="kedisiplinan">Kedisiplinan</option>
+                                    <option value="kegiatan">Kegiatan Kelas</option>
+                                    <option value="lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Judul <span class="required">*</span></label>
+                            <input type="text" id="catatan-judul" class="glass-input" placeholder="Judul catatan" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Isi Catatan <span class="required">*</span></label>
+                            <textarea id="catatan-isi" class="glass-input" rows="4" placeholder="Tulis catatan..." required></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-emerald">
+                                <i data-lucide="save" class="btn-icon"></i>
+                                Simpan Catatan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>📋 Riwayat Catatan</h3>
+                    <span class="badge" id="catatan-count">0 catatan</span>
+                </div>
+                <div class="section-body">
+                    <div class="catatan-list" id="catatan-list">
+                        <div class="empty-state">
+                            <div class="empty-icon">📝</div>
+                            <p>Belum ada catatan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Pembinaan -->
+        <div class="tab-content" id="tab-pembinaan">
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>⚠️ Siswa Perlu Pembinaan</h3>
+                    <span class="badge badge-warning" id="pembinaan-count">0 siswa</span>
+                </div>
+                <div class="section-body">
+                    <div class="pembinaan-list" id="pembinaan-list">
+                        <div class="empty-state">
+                            <div class="empty-icon">✅</div>
+                            <p>Tidak ada siswa yang perlu pembinaan khusus</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Daftar Siswa -->
+        <div class="tab-content" id="tab-siswa">
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>👥 Daftar Siswa</h3>
+                    <span class="badge" id="siswa-count">0 siswa</span>
+                </div>
+                <div class="section-body">
+                    <div style="overflow-x: auto;">
+                        <table class="students-table" id="students-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>NISN</th>
+                                    <th>Nama</th>
+                                    <th>L/P</th>
+                                    <th>Rata-rata</th>
+                                    <th>Prestasi</th>
+                                    <th>Pelanggaran</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-body">
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        <div class="loading-spinner"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260208" defer></script>
+<script src="/static/js/apiConfig.js?v=20260208" defer></script>
+<script src="/static/js/apiFetch.js?v=20260208" defer></script>
+<script src="/static/js/auth-check.js?v=20260425" defer></script>
+<script src="/static/js/auth.js?v=20260208" defer></script>
+<script src="/static/js/page-events.js?v=20260312c" defer></script>
+
+<script>
+    // ============================================
+    // KELAS SAYA - Wali Kelas Dashboard
+    // ============================================
+
+    let kelasInfo = null;
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Set today's date for catatan form
+        document.getElementById('catatan-tanggal').valueAsDate = new Date();
+
+        // Update topbar date
+        const dateEl = document.getElementById('topbar-date');
+        if (dateEl) {
+            const now = new Date();
+            const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = '📅 ' + now.toLocaleDateString('id-ID', opts);
+        }
+
+        // Load data
+        await loadOverview();
+        await loadCatatan();
+        await loadPembinaan();
+        await loadStudents();
+    });
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-message');
+        if (toast && toastMsg) {
+            toastMsg.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    }
+
+    function switchTab(tabName) {
+        // Update buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.onclick.toString().includes(tabName));
+        });
+
+        // Update content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.toggle('active', content.id === `tab-${tabName}`);
+        });
+    }
+
+    async function loadOverview() {
+        try {
+            const resp = await window.apiFetch('auth/kelas-saya/overview/');
+            if (!resp || !resp.ok) {
+                if (resp && resp.status === 403) {
+                    showToast('Anda bukan wali kelas aktif', 'error');
+                    setTimeout(() => window.location.href = '/dashboard/', 2000);
+                }
+                return;
+            }
+
+            const data = await resp.json();
+            if (!data.success) return;
+
+            kelasInfo = data;
+
+            // Update header
+            document.getElementById('kelas-title').textContent = `Kelas ${data.kelas}`;
+            document.getElementById('kelas-subtitle').textContent = `Wali Kelas: ${data.wali_kelas}`;
+            document.getElementById('kelas-badge').textContent = `${data.semester} ${data.tahun_ajaran}`;
+            document.getElementById('page-title').textContent = `Kelas ${data.kelas}`;
+
+            // Update stats
+            const o = data.overview;
+            document.getElementById('stat-siswa').textContent = o.total_siswa;
+            document.getElementById('stat-nilai').textContent = o.rata_rata_nilai;
+            document.getElementById('stat-kehadiran').textContent = o.persentase_kehadiran + '%';
+            document.getElementById('stat-perhatian').textContent = o.siswa_perlu_perhatian;
+
+            // Update topbar academic year
+            document.querySelector('.topbar-academic-year strong').textContent =
+                `${data.semester} ${data.tahun_ajaran}`;
+
+        } catch (err) {
+            console.error('Error loading overview:', err);
+        }
+    }
+
+    async function loadCatatan() {
+        try {
+            const resp = await window.apiFetch('auth/kelas-saya/catatan/');
+            if (!resp || !resp.ok) return;
+
+            const data = await resp.json();
+            if (!data.success) return;
+
+            document.getElementById('catatan-count').textContent = `${data.count} catatan`;
+
+            const list = document.getElementById('catatan-list');
+            if (data.catatan.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <p>Belum ada catatan</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = data.catatan.map(c => `
+                <div class="catatan-item">
+                    <div class="catatan-header">
+                        <div>
+                            <span class="catatan-title">${c.judul}</span>
+                            <span class="catatan-kategori">${c.kategori}</span>
+                        </div>
+                        <span class="catatan-date">${formatDate(c.tanggal)}</span>
+                    </div>
+                    <div class="catatan-content">${c.isi}</div>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            console.error('Error loading catatan:', err);
+        }
+    }
+
+    async function loadPembinaan() {
+        try {
+            const resp = await window.apiFetch('auth/kelas-saya/pembinaan/');
+            if (!resp || !resp.ok) return;
+
+            const data = await resp.json();
+            if (!data.success) return;
+
+            document.getElementById('pembinaan-count').textContent = `${data.count} siswa`;
+
+            const list = document.getElementById('pembinaan-list');
+            if (data.pembinaan.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✅</div>
+                        <p>Tidak ada siswa yang perlu pembinaan khusus</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = data.pembinaan.map(p => `
+                <div class="pembinaan-item">
+                    <div class="student-info">
+                        <span class="student-name">${p.nama}</span>
+                        <span class="violation-count">${p.total_pelanggaran} pelanggaran</span>
+                    </div>
+                    <div class="recent-violations">
+                        ${p.recent_violations.map(v => `
+                            <span class="violation-tag">${v.kategori}: ${v.name}</span>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            console.error('Error loading pembinaan:', err);
+        }
+    }
+
+    async function loadStudents() {
+        try {
+            const resp = await window.apiFetch('auth/kelas-saya/students/');
+            if (!resp || !resp.ok) return;
+
+            const data = await resp.json();
+            if (!data.success) return;
+
+            document.getElementById('siswa-count').textContent = `${data.count} siswa`;
+
+            const tbody = document.getElementById('students-body');
+            if (data.students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada siswa</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.students.map((s, idx) => `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><code>${s.nisn}</code></td>
+                    <td>${s.nama}</td>
+                    <td>${s.jenis_kelamin === 'L' ? 'L' : 'P'}</td>
+                    <td><strong>${s.rata_rata_nilai}</strong></td>
+                    <td>${s.prestasi > 0 ? `<span class="badge-prestasi">${s.prestasi}</span>` : '-'}</td>
+                    <td>${s.pelanggaran > 0 ? `<span class="badge-pelanggaran">${s.pelanggaran}</span>` : '-'}</td>
+                </tr>
+            `).join('');
+
+        } catch (err) {
+            console.error('Error loading students:', err);
+        }
+    }
+
+    async function submitCatatan(event) {
+        event.preventDefault();
+
+        const btn = event.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner-sm"></span> Menyimpan...';
+
+        try {
+            const resp = await window.apiFetch('auth/kelas-saya/catatan/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tanggal: document.getElementById('catatan-tanggal').value,
+                    kategori: document.getElementById('catatan-kategori').value,
+                    judul: document.getElementById('catatan-judul').value,
+                    isi: document.getElementById('catatan-isi').value
+                })
+            });
+
+            const data = await resp.json();
+
+            if (data.success) {
+                showToast('Catatan berhasil disimpan', 'success');
+                document.getElementById('catatan-form').reset();
+                document.getElementById('catatan-tanggal').valueAsDate = new Date();
+                await loadCatatan();
+            } else {
+                showToast(data.message || 'Gagal menyimpan catatan', 'error');
+            }
+
+        } catch (err) {
+            console.error('Error submitting catatan:', err);
+            showToast('Terjadi kesalahan', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="save" class="btn-icon"></i> Simpan Catatan';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+</script>
+</body>
+</html>

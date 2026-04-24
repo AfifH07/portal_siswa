@@ -14,6 +14,131 @@
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Input Nilai Modal Styles */
+        .step-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .quick-fill {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .quick-fill .input-sm {
+            width: 80px;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.875rem;
+        }
+        .students-input-table-wrap {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color, #e5e7eb);
+            border-radius: 8px;
+        }
+        .students-input-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .students-input-table th {
+            position: sticky;
+            top: 0;
+            background: var(--emerald-50, #ecfdf5);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.8rem;
+            border-bottom: 2px solid var(--emerald-200, #a7f3d0);
+            z-index: 1;
+        }
+        .students-input-table td {
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
+        }
+        .students-input-table tr:hover {
+            background: var(--emerald-50, #ecfdf5);
+        }
+        .students-input-table .input-nilai {
+            width: 100%;
+            padding: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid var(--border-color, #d1d5db);
+            border-radius: 6px;
+        }
+        .students-input-table .input-nilai:focus {
+            border-color: var(--emerald-500, #10b981);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            outline: none;
+        }
+        .confirm-box {
+            text-align: center;
+            padding: 2rem;
+        }
+        .confirm-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .confirm-details {
+            background: var(--emerald-50, #ecfdf5);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        .confirm-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed var(--border-color, #d1d5db);
+        }
+        .confirm-row:last-child {
+            border-bottom: none;
+        }
+        .confirm-label {
+            color: var(--text-muted, #6b7280);
+        }
+        .confirm-value {
+            font-weight: 600;
+            color: var(--emerald-700, #047857);
+        }
+        .info-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #fef3c7;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+        }
+        .loading-spinner-sm {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .btn-sm {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
 <body data-role="">
 
@@ -71,7 +196,13 @@
 
             <!-- Page Actions -->
             <div class="page-actions">
-                <button onclick="window.openImportModal()" class="btn btn-emerald admin-only">
+                <button onclick="window.openInputNilaiModal()" class="btn btn-emerald admin-only">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                    Input Nilai
+                </button>
+                <button onclick="window.openImportModal()" class="btn btn-outline-emerald admin-only">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
                     </svg>
@@ -598,6 +729,170 @@
     </div>
 </div>
 
+<!-- ===================== MODAL: INPUT NILAI MANUAL ===================== -->
+<div id="input-nilai-modal" class="modal">
+    <div class="modal-backdrop" onclick="window.closeInputNilaiModal()"></div>
+    <div class="modal-content modal-wizard modal-large">
+        <div class="modal-header">
+            <h2>Input Nilai Manual</h2>
+            <button class="modal-close" onclick="window.closeInputNilaiModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step-wrap">
+                    <div class="step-dot active" id="input-dot-1">1</div>
+                    <div class="step-label">Kelas</div>
+                </div>
+                <div class="step-line" id="input-line-1"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="input-dot-2">2</div>
+                    <div class="step-label">Detail</div>
+                </div>
+                <div class="step-line" id="input-line-2"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="input-dot-3">3</div>
+                    <div class="step-label">Input</div>
+                </div>
+                <div class="step-line" id="input-line-3"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="input-dot-4">4</div>
+                    <div class="step-label">Simpan</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Pilih Kelas -->
+            <div class="wizard-panel active" id="input-step-1">
+                <p class="step-desc">Pilih kelas yang akan diinput nilainya.</p>
+                <div class="form-group">
+                    <label>Kelas <span class="required">*</span></label>
+                    <select id="input-kelas" class="glass-input" required>
+                        <option value="">Memuat kelas...</option>
+                    </select>
+                </div>
+                <div id="input-kelas-info" class="info-box" style="display: none;">
+                    <span class="info-icon">ℹ️</span>
+                    <span id="input-kelas-info-text"></span>
+                </div>
+            </div>
+
+            <!-- Step 2: Detail Nilai -->
+            <div class="wizard-panel" id="input-step-2" style="display: none;">
+                <p class="step-desc">Tentukan mata pelajaran dan jenis nilai.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Mata Pelajaran <span class="required">*</span></label>
+                        <input type="text" id="input-mapel" class="glass-input" placeholder="Contoh: Matematika" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Nilai <span class="required">*</span></label>
+                        <select id="input-jenis" class="glass-input" required>
+                            <option value="UH">Ulangan Harian (UH)</option>
+                            <option value="UTS">Ujian Tengah Semester (UTS)</option>
+                            <option value="UAS">Ujian Akhir Semester (UAS)</option>
+                            <option value="Tugas">Tugas</option>
+                            <option value="Proyek">Proyek</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select id="input-semester" class="glass-input">
+                            <option value="Ganjil">Ganjil</option>
+                            <option value="Genap">Genap</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tahun Ajaran</label>
+                        <input type="text" id="input-tahun" class="glass-input" value="2024/2025" placeholder="2024/2025">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Input Nilai per Siswa -->
+            <div class="wizard-panel" id="input-step-3" style="display: none;">
+                <div class="step-header-row">
+                    <p class="step-desc">Input nilai untuk setiap siswa (0-100).</p>
+                    <div class="quick-fill">
+                        <input type="number" id="quick-fill-value" class="glass-input input-sm" min="0" max="100" placeholder="Nilai">
+                        <button type="button" onclick="window.quickFillAllNilai()" class="btn btn-sm btn-outline-emerald">Isi Semua</button>
+                    </div>
+                </div>
+                <div class="students-input-table-wrap">
+                    <table class="students-input-table">
+                        <thead>
+                            <tr>
+                                <th width="50">No</th>
+                                <th width="120">NISN</th>
+                                <th>Nama Siswa</th>
+                                <th width="120">Nilai</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-input-body">
+                            <tr>
+                                <td colspan="4" class="text-center">
+                                    <div class="loading-spinner"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Step 4: Konfirmasi -->
+            <div class="wizard-panel" id="input-step-4" style="display: none;">
+                <div class="confirm-box">
+                    <div class="confirm-icon">📋</div>
+                    <h3>Konfirmasi Input Nilai</h3>
+                    <div class="confirm-details">
+                        <div class="confirm-row">
+                            <span class="confirm-label">Kelas:</span>
+                            <span class="confirm-value" id="confirm-kelas">-</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">Mata Pelajaran:</span>
+                            <span class="confirm-value" id="confirm-mapel">-</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">Jenis:</span>
+                            <span class="confirm-value" id="confirm-jenis">-</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">Semester:</span>
+                            <span class="confirm-value" id="confirm-semester">-</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">Jumlah Siswa:</span>
+                            <span class="confirm-value" id="confirm-count">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="input-result" class="import-summary" style="display: none;">
+                    <div class="summary-header">
+                        <span class="summary-icon">✅</span>
+                        <span class="summary-text">Nilai Berhasil Disimpan!</span>
+                    </div>
+                    <div class="summary-details" id="input-result-details"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" id="input-btn-back" onclick="window.goToInputStepBack()" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                Kembali
+            </button>
+            <button class="btn btn-outline-emerald" onclick="window.closeInputNilaiModal()">Batal</button>
+            <button class="btn btn-emerald" id="input-btn-next" onclick="window.goToInputStepNext()" disabled>
+                Lanjut
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <button class="btn btn-emerald" id="input-btn-save" onclick="window.saveInputNilai()" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                Simpan Nilai
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ===================== MODAL: VIEW DETAIL ===================== -->
 <div id="view-modal" class="modal">
     <div class="modal-backdrop" onclick="window.closeViewModal()"></div>
@@ -809,6 +1104,352 @@
 
         window.open(`/api/kesantrian/print-rapor-html/${nisn}/`, '_blank', 'width=900,height=700');
     }
+
+    // ============================================
+    // INPUT NILAI MANUAL - Step Wizard
+    // ============================================
+    let inputNilaiStep = 1;
+    let inputNilaiData = {
+        kelas: '',
+        mapel: '',
+        jenis: 'UH',
+        semester: 'Ganjil',
+        tahun_ajaran: '',
+        students: []
+    };
+
+    window.openInputNilaiModal = async function() {
+        inputNilaiStep = 1;
+        inputNilaiData = { kelas: '', mapel: '', jenis: 'UH', semester: 'Ganjil', tahun_ajaran: '', students: [] };
+
+        document.getElementById('input-nilai-modal').classList.add('active');
+        updateInputStepUI();
+
+        // Load classes
+        await loadMyTeachingClasses();
+    };
+
+    window.closeInputNilaiModal = function() {
+        document.getElementById('input-nilai-modal').classList.remove('active');
+        inputNilaiStep = 1;
+    };
+
+    async function loadMyTeachingClasses() {
+        const select = document.getElementById('input-kelas');
+        select.innerHTML = '<option value="">Memuat...</option>';
+
+        try {
+            const token = localStorage.getItem('access_token');
+            const resp = await fetch('/api/grades/my-classes/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await resp.json();
+
+            if (data.success && data.data.length > 0) {
+                select.innerHTML = '<option value="">Pilih Kelas</option>';
+                data.data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.kelas;
+                    opt.textContent = item.kelas;
+                    if (item.mata_pelajaran) {
+                        opt.dataset.mapel = item.mata_pelajaran;
+                    }
+                    select.appendChild(opt);
+                });
+
+                // Set tahun ajaran & semester from API
+                if (data.tahun_ajaran) {
+                    document.getElementById('input-tahun').value = data.tahun_ajaran;
+                    inputNilaiData.tahun_ajaran = data.tahun_ajaran;
+                }
+                if (data.semester) {
+                    document.getElementById('input-semester').value = data.semester;
+                    inputNilaiData.semester = data.semester;
+                }
+            } else {
+                select.innerHTML = '<option value="">Tidak ada kelas tersedia</option>';
+                document.getElementById('input-kelas-info').style.display = 'flex';
+                document.getElementById('input-kelas-info-text').textContent = 'Anda belum memiliki assignment mengajar aktif.';
+            }
+        } catch (err) {
+            console.error('Error loading classes:', err);
+            select.innerHTML = '<option value="">Error memuat kelas</option>';
+        }
+    }
+
+    async function loadStudentsByClass(kelas) {
+        const tbody = document.getElementById('students-input-body');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="loading-spinner"></div></td></tr>';
+
+        try {
+            const token = localStorage.getItem('access_token');
+            const resp = await fetch(`/api/grades/students/${encodeURIComponent(kelas)}/`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await resp.json();
+
+            if (data.success && data.students.length > 0) {
+                inputNilaiData.students = data.students;
+                renderStudentsInputTable(data.students);
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Tidak ada siswa di kelas ini</td></tr>';
+            }
+        } catch (err) {
+            console.error('Error loading students:', err);
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error memuat data siswa</td></tr>';
+        }
+    }
+
+    function renderStudentsInputTable(students) {
+        const tbody = document.getElementById('students-input-body');
+        tbody.innerHTML = students.map((s, idx) => `
+            <tr data-nisn="${s.nisn}">
+                <td class="text-center">${idx + 1}</td>
+                <td><code>${s.nisn}</code></td>
+                <td>${s.nama}</td>
+                <td>
+                    <input type="number" class="glass-input input-nilai"
+                           data-nisn="${s.nisn}"
+                           min="0" max="100"
+                           placeholder="0-100"
+                           oninput="window.validateNilaiInput(this)">
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.validateNilaiInput = function(input) {
+        let val = parseInt(input.value);
+        if (isNaN(val)) return;
+        if (val < 0) input.value = 0;
+        if (val > 100) input.value = 100;
+    };
+
+    window.quickFillAllNilai = function() {
+        const fillVal = document.getElementById('quick-fill-value').value;
+        if (!fillVal || isNaN(fillVal)) {
+            showToast('Masukkan nilai yang valid', 'error');
+            return;
+        }
+        document.querySelectorAll('#students-input-body .input-nilai').forEach(input => {
+            input.value = fillVal;
+        });
+    };
+
+    function updateInputStepUI() {
+        // Update step dots
+        for (let i = 1; i <= 4; i++) {
+            const dot = document.getElementById(`input-dot-${i}`);
+            const line = document.getElementById(`input-line-${i}`);
+            dot.classList.toggle('active', i <= inputNilaiStep);
+            dot.classList.toggle('completed', i < inputNilaiStep);
+            if (line) line.classList.toggle('active', i < inputNilaiStep);
+        }
+
+        // Show/hide panels
+        for (let i = 1; i <= 4; i++) {
+            const panel = document.getElementById(`input-step-${i}`);
+            panel.style.display = i === inputNilaiStep ? 'block' : 'none';
+        }
+
+        // Show/hide buttons
+        const btnBack = document.getElementById('input-btn-back');
+        const btnNext = document.getElementById('input-btn-next');
+        const btnSave = document.getElementById('input-btn-save');
+
+        btnBack.style.display = inputNilaiStep > 1 ? 'inline-flex' : 'none';
+        btnNext.style.display = inputNilaiStep < 4 ? 'inline-flex' : 'none';
+        btnSave.style.display = inputNilaiStep === 4 ? 'inline-flex' : 'none';
+
+        // Enable/disable next based on step validation
+        validateInputStep();
+    }
+
+    function validateInputStep() {
+        const btnNext = document.getElementById('input-btn-next');
+        let valid = false;
+
+        switch (inputNilaiStep) {
+            case 1:
+                valid = !!document.getElementById('input-kelas').value;
+                break;
+            case 2:
+                valid = !!document.getElementById('input-mapel').value.trim();
+                break;
+            case 3:
+                // At least one nilai filled
+                const nilaiInputs = document.querySelectorAll('#students-input-body .input-nilai');
+                valid = Array.from(nilaiInputs).some(input => input.value !== '');
+                break;
+            case 4:
+                valid = true;
+                break;
+        }
+
+        btnNext.disabled = !valid;
+    }
+
+    window.goToInputStepNext = async function() {
+        // Validate current step
+        if (inputNilaiStep === 1) {
+            inputNilaiData.kelas = document.getElementById('input-kelas').value;
+            if (!inputNilaiData.kelas) {
+                showToast('Pilih kelas terlebih dahulu', 'error');
+                return;
+            }
+            // Auto-fill mapel if available from assignment
+            const selectedOpt = document.getElementById('input-kelas').selectedOptions[0];
+            if (selectedOpt && selectedOpt.dataset.mapel) {
+                document.getElementById('input-mapel').value = selectedOpt.dataset.mapel;
+            }
+        }
+
+        if (inputNilaiStep === 2) {
+            inputNilaiData.mapel = document.getElementById('input-mapel').value.trim();
+            inputNilaiData.jenis = document.getElementById('input-jenis').value;
+            inputNilaiData.semester = document.getElementById('input-semester').value;
+            inputNilaiData.tahun_ajaran = document.getElementById('input-tahun').value;
+
+            if (!inputNilaiData.mapel) {
+                showToast('Mata pelajaran harus diisi', 'error');
+                return;
+            }
+
+            // Load students for step 3
+            await loadStudentsByClass(inputNilaiData.kelas);
+        }
+
+        if (inputNilaiStep === 3) {
+            // Collect nilai data
+            const nilaiInputs = document.querySelectorAll('#students-input-body .input-nilai');
+            let filledCount = 0;
+            nilaiInputs.forEach(input => {
+                if (input.value !== '') filledCount++;
+            });
+
+            if (filledCount === 0) {
+                showToast('Isi minimal satu nilai siswa', 'error');
+                return;
+            }
+
+            // Update confirmation panel
+            document.getElementById('confirm-kelas').textContent = inputNilaiData.kelas;
+            document.getElementById('confirm-mapel').textContent = inputNilaiData.mapel;
+            document.getElementById('confirm-jenis').textContent = inputNilaiData.jenis;
+            document.getElementById('confirm-semester').textContent = `${inputNilaiData.semester} ${inputNilaiData.tahun_ajaran}`;
+            document.getElementById('confirm-count').textContent = `${filledCount} siswa`;
+
+            // Hide result, show confirm
+            document.getElementById('input-result').style.display = 'none';
+            document.querySelector('#input-step-4 .confirm-box').style.display = 'block';
+        }
+
+        inputNilaiStep++;
+        updateInputStepUI();
+    };
+
+    window.goToInputStepBack = function() {
+        if (inputNilaiStep > 1) {
+            inputNilaiStep--;
+            updateInputStepUI();
+        }
+    };
+
+    window.saveInputNilai = async function() {
+        const btnSave = document.getElementById('input-btn-save');
+        btnSave.disabled = true;
+        btnSave.innerHTML = '<span class="loading-spinner-sm"></span> Menyimpan...';
+
+        // Collect all nilai
+        const gradesData = [];
+        document.querySelectorAll('#students-input-body .input-nilai').forEach(input => {
+            if (input.value !== '') {
+                gradesData.push({
+                    nisn: input.dataset.nisn,
+                    nilai: parseInt(input.value)
+                });
+            }
+        });
+
+        try {
+            const token = localStorage.getItem('access_token');
+            const resp = await fetch('/api/grades/input-batch/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    kelas: inputNilaiData.kelas,
+                    mata_pelajaran: inputNilaiData.mapel,
+                    jenis: inputNilaiData.jenis,
+                    semester: inputNilaiData.semester,
+                    tahun_ajaran: inputNilaiData.tahun_ajaran,
+                    data: gradesData
+                })
+            });
+
+            const result = await resp.json();
+
+            if (result.success) {
+                // Show success
+                document.querySelector('#input-step-4 .confirm-box').style.display = 'none';
+                const resultDiv = document.getElementById('input-result');
+                resultDiv.style.display = 'block';
+                document.getElementById('input-result-details').innerHTML = `
+                    <div class="result-row"><span>Nilai baru:</span><strong>${result.summary.new_grades}</strong></div>
+                    <div class="result-row"><span>Nilai diperbarui:</span><strong>${result.summary.updated_grades}</strong></div>
+                    <div class="result-row"><span>Total tersimpan:</span><strong>${result.summary.total}</strong></div>
+                    ${result.summary.errors > 0 ? `<div class="result-row text-warning"><span>Error:</span><strong>${result.summary.errors}</strong></div>` : ''}
+                `;
+
+                showToast(result.message, 'success');
+
+                // Hide save button, show close
+                btnSave.style.display = 'none';
+                document.getElementById('input-btn-back').style.display = 'none';
+
+                // Refresh grades table after 2 seconds
+                setTimeout(() => {
+                    if (typeof window.loadGrades === 'function') {
+                        window.loadGrades();
+                    }
+                    if (typeof window.loadStatistics === 'function') {
+                        window.loadStatistics();
+                    }
+                }, 1500);
+            } else {
+                showToast(result.message || 'Gagal menyimpan nilai', 'error');
+                btnSave.disabled = false;
+                btnSave.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Simpan Nilai';
+            }
+        } catch (err) {
+            console.error('Error saving grades:', err);
+            showToast('Terjadi kesalahan saat menyimpan', 'error');
+            btnSave.disabled = false;
+            btnSave.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Simpan Nilai';
+        }
+    };
+
+    // Event listeners for validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const kelasSelect = document.getElementById('input-kelas');
+        const mapelInput = document.getElementById('input-mapel');
+
+        if (kelasSelect) {
+            kelasSelect.addEventListener('change', validateInputStep);
+        }
+        if (mapelInput) {
+            mapelInput.addEventListener('input', validateInputStep);
+        }
+
+        // Delegate event for nilai inputs
+        document.getElementById('students-input-body')?.addEventListener('input', function(e) {
+            if (e.target.classList.contains('input-nilai')) {
+                validateInputStep();
+            }
+        });
+    });
 </script>
 </body>
 </html>

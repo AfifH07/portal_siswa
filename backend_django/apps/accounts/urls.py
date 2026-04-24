@@ -10,4 +10,11 @@ urlpatterns = [
     path('request-reset/', views.request_reset_view, name='request_reset'),
     path('reset-password/', views.reset_password_view, name='reset_password'),
     path('token/refresh/', views.TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Wali Kelas endpoints
+    path('my-wali-kelas/', views.my_wali_kelas_status, name='my_wali_kelas'),
+    path('kelas-saya/overview/', views.kelas_overview, name='kelas_overview'),
+    path('kelas-saya/students/', views.kelas_students, name='kelas_students'),
+    path('kelas-saya/pembinaan/', views.kelas_pembinaan, name='kelas_pembinaan'),
+    path('kelas-saya/catatan/', views.kelas_catatan, name='kelas_catatan'),
 ]

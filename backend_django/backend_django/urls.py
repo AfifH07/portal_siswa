@@ -45,6 +45,11 @@ urlpatterns = [
     path('izin-guru/', TemplateView.as_view(template_name='izin-guru.html')),  # Izin Guru
 
     # ==========================================
+    # WALI KELAS
+    # ==========================================
+    path('kelas-saya/', TemplateView.as_view(template_name='kelas-saya.html')),  # Wali Kelas Dashboard
+
+    # ==========================================
     # ADMIN
     # ==========================================
     path('admin/', admin.site.urls),

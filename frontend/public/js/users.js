@@ -15,7 +15,7 @@
 // ============================================
 let currentUser = null;
 let usersData = [];
-let halaqohOptions = [];
+let mentoringOptions = [];
 let currentPage = 1;
 let totalPages = 1;
 let searchTimeout = null;
@@ -208,23 +208,23 @@ async function loadUsers() {
     }
 }
 
-async function loadHalaqohOptions() {
+async function loadMentoringOptions() {
     try {
-        const data = await apiRequest('/halaqoh-options/');
+        const data = await apiRequest('/mentoring-options/');
         if (data.success) {
-            halaqohOptions = data.halaqohs || [];
+            mentoringOptions = data.mentorings || [];
 
-            // Populate halaqoh dropdown
-            const select = document.getElementById('assign-halaqoh');
+            // Populate mentoring dropdown
+            const select = document.getElementById('assign-mentoring');
             if (select) {
-                select.innerHTML = '<option value="">Pilih Halaqoh</option>';
-                halaqohOptions.forEach(h => {
+                select.innerHTML = '<option value="">Pilih Mentoring</option>';
+                mentoringOptions.forEach(h => {
                     select.innerHTML += `<option value="${h.id}">${h.nama} (${h.jenis})</option>`;
                 });
             }
         }
     } catch (error) {
-        console.error('Error loading halaqoh options:', error);
+        console.error('Error loading mentoring options:', error);
     }
 }
 
@@ -305,7 +305,7 @@ function renderAssignments(user) {
             ${assignments.slice(0, 3).map(a => `
                 <span class="assignment-badge">
                     <span class="badge-icon">${getAssignmentIcon(a.assignment_type)}</span>
-                    ${a.kelas || a.halaqoh_name || a.hari || '-'}
+                    ${a.kelas || a.mentoring_name || a.hari || '-'}
                 </span>
             `).join('')}
             ${assignments.length > 3 ? `<span class="assignment-badge">+${assignments.length - 3}</span>` : ''}
@@ -725,8 +725,8 @@ function onAssignTypeChange() {
     document.getElementById('assign-mapel-group').style.display =
         type === 'kbm' ? 'block' : 'none';
 
-    document.getElementById('assign-halaqoh-group').style.display =
-        type === 'halaqoh' ? 'block' : 'none';
+    document.getElementById('assign-mentoring-group').style.display =
+        type === 'mentoring' ? 'block' : 'none';
 
     document.getElementById('assign-hari-group').style.display =
         type === 'piket' ? 'block' : 'none';
@@ -758,10 +758,10 @@ async function saveAssignment(event) {
         formData.mata_pelajaran = document.getElementById('assign-mapel').value || null;
     }
 
-    if (type === 'halaqoh') {
-        formData.halaqoh_id = parseInt(document.getElementById('assign-halaqoh').value);
-        if (!formData.halaqoh_id) {
-            showToast('error', 'Halaqoh harus dipilih');
+    if (type === 'mentoring') {
+        formData.mentoring_id = parseInt(document.getElementById('assign-mentoring').value);
+        if (!formData.mentoring_id) {
+            showToast('error', 'Mentoring harus dipilih');
             return;
         }
     }
@@ -1200,7 +1200,7 @@ function getAssignmentIcon(type) {
     const icons = {
         'kbm': '📚',
         'diniyah': '📖',
-        'halaqoh': '🕌',
+        'mentoring': '🕌',
         'wali_kelas': '👨‍🏫',
         'piket': '📋'
     };

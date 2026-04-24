@@ -14,4 +14,8 @@ urlpatterns = [
     path('import/', views.import_excel_grades, name='import-excel-grades'),
     path('generate-template/', views.generate_template, name='generate-template'),
     path('import-v2/', views.import_grades_v2, name='import-grades-v2'),
+    # Input Nilai Manual
+    path('my-classes/', views.get_my_teaching_classes, name='my-teaching-classes'),
+    path('students/<str:kelas>/', views.get_students_by_class, name='students-by-class'),
+    path('input-batch/', views.input_batch_grades, name='input-batch-grades'),
 ]

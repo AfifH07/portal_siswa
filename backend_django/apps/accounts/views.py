@@ -8,7 +8,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import User, ResetToken
+from .models import User, ResetToken, Assignment, CatatanKelas
 from .serializers import (
     LoginSerializer, ChangePasswordSerializer,
     RequestResetSerializer, ResetPasswordSerializer,
@@ -406,3 +406,387 @@ def user_assignments_view(request, user_id):
         logger.error(f"[user_assignments_view] Error for user_id={user_id}: {str(e)}")
         print(f"[user_assignments_view] Error: {e}")
         return Response([], status=status.HTTP_200_OK)
+
+
+# =============================================================
+# WALI KELAS ENDPOINTS
+# =============================================================
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def my_wali_kelas_status(request):
+    """
+    GET /api/accounts/my-wali-kelas/
+    Check if current user is a wali kelas for any class.
+    Returns assignment info if yes, or is_wali_kelas=false if not.
+    """
+    user = request.user
+
+    # Only guru can be wali kelas
+    if user.role != 'guru':
+        return Response({
+            'success': True,
+            'is_wali_kelas': False,
+            'message': 'Hanya guru yang bisa menjadi wali kelas'
+        })
+
+    # Get active tahun ajaran
+    from apps.core.models import TahunAjaran
+    tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+    if not tahun_ajaran:
+        return Response({
+            'success': True,
+            'is_wali_kelas': False,
+            'message': 'Tidak ada tahun ajaran aktif'
+        })
+
+    # Check for wali_kelas assignment
+    assignment = Assignment.objects.filter(
+        user=user,
+        assignment_type='wali_kelas',
+        status='active',
+        tahun_ajaran=tahun_ajaran.nama,
+        semester=tahun_ajaran.semester
+    ).first()
+
+    if assignment:
+        return Response({
+            'success': True,
+            'is_wali_kelas': True,
+            'kelas': assignment.kelas,
+            'tahun_ajaran': tahun_ajaran.nama,
+            'semester': tahun_ajaran.semester,
+            'assignment_id': assignment.id
+        })
+    else:
+        return Response({
+            'success': True,
+            'is_wali_kelas': False
+        })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def kelas_overview(request):
+    """
+    GET /api/accounts/kelas-saya/overview/
+    Get overview stats for wali kelas's class.
+    """
+    user = request.user
+
+    # Check wali kelas status
+    from apps.core.models import TahunAjaran
+    tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+    if not tahun_ajaran:
+        return Response({
+            'success': False,
+            'message': 'Tidak ada tahun ajaran aktif'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    assignment = Assignment.objects.filter(
+        user=user,
+        assignment_type='wali_kelas',
+        status='active',
+        tahun_ajaran=tahun_ajaran.nama,
+        semester=tahun_ajaran.semester
+    ).first()
+
+    if not assignment:
+        return Response({
+            'success': False,
+            'message': 'Anda bukan wali kelas aktif'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    kelas = assignment.kelas
+
+    # Get class stats
+    from apps.students.models import Student
+    from apps.grades.models import Grade
+    from apps.attendance.models import Attendance
+    from apps.evaluations.models import Evaluation
+    from django.db.models import Avg, Count, Q
+    from datetime import date, timedelta
+
+    # Total students
+    students = Student.objects.filter(kelas=kelas, aktif=True)
+    total_siswa = students.count()
+
+    # Average grade (current semester)
+    avg_nilai = Grade.objects.filter(
+        kelas=kelas,
+        semester=tahun_ajaran.semester,
+        tahun_ajaran=tahun_ajaran.nama
+    ).aggregate(avg=Avg('nilai'))['avg'] or 0
+
+    # Attendance rate (last 30 days)
+    thirty_days_ago = date.today() - timedelta(days=30)
+    attendance_stats = Attendance.objects.filter(
+        student__kelas=kelas,
+        tanggal__gte=thirty_days_ago
+    ).aggregate(
+        total=Count('id'),
+        hadir=Count('id', filter=Q(status='H'))
+    )
+    attendance_rate = 0
+    if attendance_stats['total'] > 0:
+        attendance_rate = round((attendance_stats['hadir'] / attendance_stats['total']) * 100, 1)
+
+    # Evaluations count
+    evaluations = Evaluation.objects.filter(nisn__kelas=kelas)
+    prestasi_count = evaluations.filter(jenis='prestasi').count()
+    pelanggaran_count = evaluations.filter(jenis='pelanggaran').count()
+
+    # Students needing attention (with pelanggaran)
+    siswa_perlu_perhatian = evaluations.filter(
+        jenis='pelanggaran'
+    ).values('nisn').distinct().count()
+
+    return Response({
+        'success': True,
+        'kelas': kelas,
+        'wali_kelas': user.name or user.username,
+        'tahun_ajaran': tahun_ajaran.nama,
+        'semester': tahun_ajaran.semester,
+        'overview': {
+            'total_siswa': total_siswa,
+            'rata_rata_nilai': round(avg_nilai, 1),
+            'persentase_kehadiran': attendance_rate,
+            'total_prestasi': prestasi_count,
+            'total_pelanggaran': pelanggaran_count,
+            'siswa_perlu_perhatian': siswa_perlu_perhatian
+        }
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def kelas_students(request):
+    """
+    GET /api/accounts/kelas-saya/students/
+    Get all students in wali kelas's class with summary stats.
+    """
+    user = request.user
+
+    from apps.core.models import TahunAjaran
+    tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+    if not tahun_ajaran:
+        return Response({'success': False, 'message': 'Tidak ada tahun ajaran aktif'}, status=400)
+
+    assignment = Assignment.objects.filter(
+        user=user,
+        assignment_type='wali_kelas',
+        status='active',
+        tahun_ajaran=tahun_ajaran.nama,
+        semester=tahun_ajaran.semester
+    ).first()
+
+    if not assignment:
+        return Response({'success': False, 'message': 'Anda bukan wali kelas aktif'}, status=403)
+
+    kelas = assignment.kelas
+
+    from apps.students.models import Student
+    from apps.grades.models import Grade
+    from apps.evaluations.models import Evaluation
+    from django.db.models import Avg, Count
+
+    students = Student.objects.filter(kelas=kelas, aktif=True).order_by('nama')
+
+    result = []
+    for s in students:
+        # Get average grade
+        avg = Grade.objects.filter(
+            nisn=s,
+            semester=tahun_ajaran.semester,
+            tahun_ajaran=tahun_ajaran.nama
+        ).aggregate(avg=Avg('nilai'))['avg'] or 0
+
+        # Get evaluation counts
+        evals = Evaluation.objects.filter(nisn=s)
+        prestasi = evals.filter(jenis='prestasi').count()
+        pelanggaran = evals.filter(jenis='pelanggaran').count()
+
+        result.append({
+            'nisn': s.nisn,
+            'nama': s.nama,
+            'jenis_kelamin': s.jenis_kelamin,
+            'rata_rata_nilai': round(avg, 1),
+            'prestasi': prestasi,
+            'pelanggaran': pelanggaran,
+            'perlu_perhatian': pelanggaran > 0
+        })
+
+    return Response({
+        'success': True,
+        'kelas': kelas,
+        'count': len(result),
+        'students': result
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def kelas_pembinaan(request):
+    """
+    GET /api/accounts/kelas-saya/pembinaan/
+    Get students needing attention (with violations).
+    """
+    user = request.user
+
+    from apps.core.models import TahunAjaran
+    tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+    if not tahun_ajaran:
+        return Response({'success': False, 'message': 'Tidak ada tahun ajaran aktif'}, status=400)
+
+    assignment = Assignment.objects.filter(
+        user=user,
+        assignment_type='wali_kelas',
+        status='active',
+        tahun_ajaran=tahun_ajaran.nama,
+        semester=tahun_ajaran.semester
+    ).first()
+
+    if not assignment:
+        return Response({'success': False, 'message': 'Anda bukan wali kelas aktif'}, status=403)
+
+    kelas = assignment.kelas
+
+    from apps.students.models import Student
+    from apps.evaluations.models import Evaluation
+    from django.db.models import Count
+
+    # Get students with pelanggaran
+    students_with_violations = Evaluation.objects.filter(
+        nisn__kelas=kelas,
+        jenis='pelanggaran'
+    ).values(
+        'nisn__nisn', 'nisn__nama'
+    ).annotate(
+        total_pelanggaran=Count('id')
+    ).order_by('-total_pelanggaran')
+
+    result = []
+    for item in students_with_violations:
+        # Get recent violations
+        recent = Evaluation.objects.filter(
+            nisn__nisn=item['nisn__nisn'],
+            jenis='pelanggaran'
+        ).order_by('-tanggal')[:3]
+
+        result.append({
+            'nisn': item['nisn__nisn'],
+            'nama': item['nisn__nama'],
+            'total_pelanggaran': item['total_pelanggaran'],
+            'recent_violations': [
+                {
+                    'tanggal': str(v.tanggal),
+                    'kategori': v.kategori,
+                    'name': v.name,
+                    'summary': v.summary[:100] if v.summary else ''
+                }
+                for v in recent
+            ]
+        })
+
+    return Response({
+        'success': True,
+        'kelas': kelas,
+        'count': len(result),
+        'pembinaan': result
+    })
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated])
+def kelas_catatan(request):
+    """
+    GET /api/accounts/kelas-saya/catatan/
+    POST /api/accounts/kelas-saya/catatan/
+    Manage catatan kelas (wali kelas notes).
+    """
+    user = request.user
+
+    from apps.core.models import TahunAjaran
+    from .models import CatatanKelas
+
+    tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+    if not tahun_ajaran:
+        return Response({'success': False, 'message': 'Tidak ada tahun ajaran aktif'}, status=400)
+
+    assignment = Assignment.objects.filter(
+        user=user,
+        assignment_type='wali_kelas',
+        status='active',
+        tahun_ajaran=tahun_ajaran.nama,
+        semester=tahun_ajaran.semester
+    ).first()
+
+    if not assignment:
+        return Response({'success': False, 'message': 'Anda bukan wali kelas aktif'}, status=403)
+
+    kelas = assignment.kelas
+
+    if request.method == 'GET':
+        catatan_list = CatatanKelas.objects.filter(
+            kelas=kelas,
+            tahun_ajaran=tahun_ajaran.nama,
+            semester=tahun_ajaran.semester
+        ).order_by('-tanggal', '-created_at')
+
+        result = []
+        for c in catatan_list:
+            result.append({
+                'id': c.id,
+                'tanggal': str(c.tanggal),
+                'kategori': c.kategori,
+                'judul': c.judul,
+                'isi': c.isi,
+                'created_at': c.created_at.isoformat()
+            })
+
+        return Response({
+            'success': True,
+            'kelas': kelas,
+            'count': len(result),
+            'catatan': result
+        })
+
+    elif request.method == 'POST':
+        data = request.data
+
+        # Validate required fields
+        if not data.get('judul') or not data.get('isi'):
+            return Response({
+                'success': False,
+                'message': 'Judul dan isi catatan wajib diisi'
+            }, status=400)
+
+        from datetime import date
+
+        catatan = CatatanKelas.objects.create(
+            wali_kelas=user,
+            kelas=kelas,
+            tanggal=data.get('tanggal', date.today()),
+            kategori=data.get('kategori', 'harian'),
+            judul=data.get('judul'),
+            isi=data.get('isi'),
+            tahun_ajaran=tahun_ajaran.nama,
+            semester=tahun_ajaran.semester
+        )
+
+        return Response({
+            'success': True,
+            'message': 'Catatan berhasil disimpan',
+            'catatan': {
+                'id': catatan.id,
+                'tanggal': str(catatan.tanggal),
+                'kategori': catatan.kategori,
+                'judul': catatan.judul,
+                'isi': catatan.isi
+            }
+        }, status=201)
