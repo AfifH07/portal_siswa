@@ -303,6 +303,11 @@ def evaluation_statistics(request):
         total_prestasi = queryset.filter(jenis='prestasi').count()
         total_pelanggaran = queryset.filter(jenis='pelanggaran').count()
 
+        # DEBUG: Check actual kategori values in database
+        kategori_values = list(queryset.values_list('kategori', flat=True).distinct())
+        print(f"[Evaluation Statistics] DEBUG - Distinct kategori values: {kategori_values}")
+        print(f"[Evaluation Statistics] DEBUG - Total records: {total_evaluations}, Prestasi: {total_prestasi}")
+
         from django.utils import timezone
         from django.db.models.functions import TruncMonth
         from django.db.models import Count
@@ -314,33 +319,42 @@ def evaluation_statistics(request):
             created_at__year=now.year
         ).count()
 
-        # Category statistics
+        # Category statistics - use __iexact for case-insensitive matching
+        # Also count null/empty as 'lainnya'
         category_stats = {
-            'adab': queryset.filter(kategori='adab').count(),
-            'kedisiplinan': queryset.filter(kategori='kedisiplinan').count(),
-            'akademik': queryset.filter(kategori='akademik').count(),
-            'kebersihan': queryset.filter(kategori='kebersihan').count(),
-            'hafalan': queryset.filter(kategori='hafalan').count(),
-            'sosial': queryset.filter(kategori='sosial').count(),
+            'adab': queryset.filter(kategori__iexact='adab').count(),
+            'kedisiplinan': queryset.filter(kategori__iexact='kedisiplinan').count(),
+            'akademik': queryset.filter(kategori__iexact='akademik').count(),
+            'kebersihan': queryset.filter(kategori__iexact='kebersihan').count(),
+            'hafalan': queryset.filter(kategori__iexact='hafalan').count(),
+            'sosial': queryset.filter(kategori__iexact='sosial').count(),
         }
 
-        # Category breakdown by jenis
+        # Count null/empty kategori as "lainnya"
+        lainnya_count = queryset.filter(
+            Q(kategori__isnull=True) | Q(kategori='') | Q(kategori__exact=' ')
+        ).count()
+        if lainnya_count > 0:
+            category_stats['lainnya'] = lainnya_count
+            print(f"[Evaluation Statistics] DEBUG - Found {lainnya_count} records with null/empty kategori")
+
+        # Category breakdown by jenis - use __iexact for case-insensitive matching
         category_prestasi = {
-            'adab': queryset.filter(kategori='adab', jenis='prestasi').count(),
-            'kedisiplinan': queryset.filter(kategori='kedisiplinan', jenis='prestasi').count(),
-            'akademik': queryset.filter(kategori='akademik', jenis='prestasi').count(),
-            'kebersihan': queryset.filter(kategori='kebersihan', jenis='prestasi').count(),
-            'hafalan': queryset.filter(kategori='hafalan', jenis='prestasi').count(),
-            'sosial': queryset.filter(kategori='sosial', jenis='prestasi').count(),
+            'adab': queryset.filter(kategori__iexact='adab', jenis='prestasi').count(),
+            'kedisiplinan': queryset.filter(kategori__iexact='kedisiplinan', jenis='prestasi').count(),
+            'akademik': queryset.filter(kategori__iexact='akademik', jenis='prestasi').count(),
+            'kebersihan': queryset.filter(kategori__iexact='kebersihan', jenis='prestasi').count(),
+            'hafalan': queryset.filter(kategori__iexact='hafalan', jenis='prestasi').count(),
+            'sosial': queryset.filter(kategori__iexact='sosial', jenis='prestasi').count(),
         }
 
         category_pelanggaran = {
-            'adab': queryset.filter(kategori='adab', jenis='pelanggaran').count(),
-            'kedisiplinan': queryset.filter(kategori='kedisiplinan', jenis='pelanggaran').count(),
-            'akademik': queryset.filter(kategori='akademik', jenis='pelanggaran').count(),
-            'kebersihan': queryset.filter(kategori='kebersihan', jenis='pelanggaran').count(),
-            'hafalan': queryset.filter(kategori='hafalan', jenis='pelanggaran').count(),
-            'sosial': queryset.filter(kategori='sosial', jenis='pelanggaran').count(),
+            'adab': queryset.filter(kategori__iexact='adab', jenis='pelanggaran').count(),
+            'kedisiplinan': queryset.filter(kategori__iexact='kedisiplinan', jenis='pelanggaran').count(),
+            'akademik': queryset.filter(kategori__iexact='akademik', jenis='pelanggaran').count(),
+            'kebersihan': queryset.filter(kategori__iexact='kebersihan', jenis='pelanggaran').count(),
+            'hafalan': queryset.filter(kategori__iexact='hafalan', jenis='pelanggaran').count(),
+            'sosial': queryset.filter(kategori__iexact='sosial', jenis='pelanggaran').count(),
         }
 
         # Monthly trend (last 6 months)
@@ -398,7 +412,9 @@ def evaluation_statistics(request):
                 'by_category': category_stats,
                 'prestasi_by_category': category_prestasi,
                 'pelanggaran_by_category': category_pelanggaran,
-                'monthly_trend': monthly_trend
+                'monthly_trend': monthly_trend,
+                # DEBUG: Remove after testing
+                '_debug_kategori_values': kategori_values,
             }
         })
     except Exception as e:
