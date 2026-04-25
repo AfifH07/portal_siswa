@@ -707,3 +707,51 @@ def admin_activate_user(request, user_id):
         'success': True,
         'message': f'User {user.username} berhasil diaktifkan kembali'
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def admin_assignments_list(request):
+    """
+    GET /api/admin/assignments/
+
+    List semua assignments dengan filter.
+
+    Query params:
+    - user__username: Filter by user's username
+    - status: Filter by status (active, inactive, all)
+    - assignment_type: Filter by assignment type (kbm, diniyah, piket, etc)
+    - kelas: Filter by kelas
+    """
+    queryset = Assignment.objects.select_related('user').all()
+
+    # Filter by username
+    username = request.query_params.get('user__username', '')
+    if username:
+        queryset = queryset.filter(user__username=username)
+
+    # Filter by status
+    status_filter = request.query_params.get('status', 'all')
+    if status_filter != 'all':
+        queryset = queryset.filter(status=status_filter)
+
+    # Filter by assignment_type
+    assignment_type = request.query_params.get('assignment_type', '')
+    if assignment_type:
+        queryset = queryset.filter(assignment_type=assignment_type)
+
+    # Filter by kelas
+    kelas = request.query_params.get('kelas', '')
+    if kelas:
+        queryset = queryset.filter(kelas=kelas)
+
+    # Order by
+    queryset = queryset.order_by('-created_at')
+
+    serializer = AssignmentSerializer(queryset, many=True)
+
+    return Response({
+        'success': True,
+        'count': queryset.count(),
+        'results': serializer.data
+    })

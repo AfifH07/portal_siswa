@@ -13,6 +13,9 @@ urlpatterns = [
     # Dashboard stats
     path('stats/', admin_views.admin_stats, name='admin_stats'),
 
+    # Assignments list (for jadwal-mengajar dropdown)
+    path('assignments/', admin_views.admin_assignments_list, name='admin_assignments_list'),
+
     # User management
     path('users/', admin_views.admin_user_list, name='admin_user_list'),
     path('users/create/', admin_views.admin_user_create, name='admin_user_create'),

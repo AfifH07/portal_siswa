@@ -669,6 +669,9 @@ async function loadGuruDashboardData() {
         // Update shortcut badges
         updateShortcutBadges(data);
 
+        // Load jadwal mingguan (separate API call)
+        loadJadwalMingguan();
+
     } catch (error) {
         console.error('[GuruDashboard] Error loading data:', error);
         showEmptyGuruDashboard('Gagal memuat data dashboard');
@@ -682,9 +685,11 @@ function updateGuruStats(stats) {
     // Kehadiran Mengajar %
     const kehadiranEl = document.getElementById('guru-stat-kehadiran');
     if (kehadiranEl) {
-        kehadiranEl.textContent = stats.persentase_kehadiran
-            ? `${stats.persentase_kehadiran}%`
-            : '-%';
+        const pct = stats.persentase_kehadiran;
+        const display = (pct !== null && pct !== undefined && !isNaN(pct))
+            ? `${Number(pct).toFixed(1)}%`
+            : '0%';
+        kehadiranEl.textContent = display;
     }
 
     // Kelas Hari Ini
@@ -704,6 +709,93 @@ function updateGuruStats(stats) {
     if (evaluasiEl) {
         evaluasiEl.textContent = stats.evaluasi_bulan_ini || 0;
     }
+}
+
+/**
+ * Load jadwal mingguan from API
+ */
+async function loadJadwalMingguan() {
+    const container = document.getElementById('jadwal-mingguan-grid');
+    if (!container) return;
+
+    // Get current user's username
+    const username = currentUser?.username;
+    if (!username) {
+        container.innerHTML = '<div class="jadwal-empty">Username tidak ditemukan</div>';
+        return;
+    }
+
+    try {
+        debugLog('[GuruDashboard] Fetching jadwal mingguan for:', username);
+        const response = await window.apiFetch(`jadwal/guru/${username}/`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        debugLog('[GuruDashboard] Jadwal mingguan response:', data);
+
+        renderJadwalMingguan(data.jadwal_mingguan || {});
+
+    } catch (error) {
+        console.error('[GuruDashboard] Error loading jadwal mingguan:', error);
+        container.innerHTML = '<div class="jadwal-empty"><span class="jadwal-empty-icon">⚠️</span>Gagal memuat jadwal</div>';
+    }
+}
+
+/**
+ * Render jadwal mingguan grid (6 hari: Senin-Sabtu)
+ * @param {Object} jadwalMingguan - Object with keys: Senin, Selasa, ... Sabtu
+ */
+function renderJadwalMingguan(jadwalMingguan) {
+    const container = document.getElementById('jadwal-mingguan-grid');
+    if (!container) return;
+
+    // Get current day name in Indonesian
+    const hariMap = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const today = hariMap[new Date().getDay()];
+
+    const hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+    container.innerHTML = hariList.map(hari => {
+        const isToday = hari === today;
+        const jadwalHari = jadwalMingguan[hari] || [];
+
+        let bodyHtml = '';
+        if (jadwalHari.length === 0) {
+            bodyHtml = `
+                <div class="jadwal-empty">
+                    <span class="jadwal-empty-icon">-</span>
+                </div>
+            `;
+        } else {
+            bodyHtml = jadwalHari.map(item => {
+                const jamDisplay = item.jam_ke
+                    ? `Jam ${item.jam_ke}`
+                    : (item.jam_mulai && item.jam_selesai
+                        ? `${item.jam_mulai}-${item.jam_selesai}`
+                        : '-');
+
+                return `
+                    <div class="jadwal-item-mini">
+                        <div class="jadwal-item-jam">${jamDisplay}</div>
+                        <div class="jadwal-item-kelas">${escapeHtml(item.kelas)}</div>
+                        <div class="jadwal-item-mapel">${escapeHtml(item.mata_pelajaran || '-')}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        return `
+            <div class="jadwal-hari-col ${isToday ? 'hari-today' : ''}">
+                <div class="jadwal-hari-header">${hari}</div>
+                <div class="jadwal-hari-body">
+                    ${bodyHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 /**

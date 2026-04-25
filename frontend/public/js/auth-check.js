@@ -241,7 +241,7 @@ function getAllowedPages(role) {
 
     // Fallback: hardcoded defaults (kept in sync with backend)
     const roleAccess = {
-        'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
+        'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/jadwal-mengajar', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
         'pimpinan': ['/', '/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
         'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management', '/kelas-saya'],
         'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
@@ -387,7 +387,8 @@ function createRoleBasedNav() {
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
             ],
             admin: [
-                { href: '/users', icon: 'user-cog', label: 'Manajemen User' }
+                { href: '/users', icon: 'user-cog', label: 'Manajemen User' },
+                { href: '/jadwal-mengajar', icon: 'calendar-clock', label: 'Jadwal Mengajar' }
             ],
             hr: [
                 { href: '/evaluasi-asatidz', icon: 'user-check', label: 'Evaluasi Asatidz' }

@@ -50,6 +50,11 @@ urlpatterns = [
     path('kelas-saya/', TemplateView.as_view(template_name='kelas-saya.html')),  # Wali Kelas Dashboard
 
     # ==========================================
+    # JADWAL MENGAJAR (Admin)
+    # ==========================================
+    path('jadwal-mengajar/', TemplateView.as_view(template_name='jadwal-mengajar.html')),
+
+    # ==========================================
     # ADMIN
     # ==========================================
     path('admin/', admin.site.urls),
@@ -61,6 +66,8 @@ urlpatterns = [
     path('api/auth/', include('apps.accounts.urls')),
     path('api/users/', include('apps.accounts.urls_users')),
     path('api/students/', include('apps.students.urls')),
+    path('api/schedules/', include('apps.students.urls_schedules')),
+    path('api/jadwal/', include('apps.students.urls_jadwal')),
     path('api/attendance/', include('apps.attendance.urls')),
     path('api/grades/', include('apps.grades.urls')),
     path('api/evaluations/', include('apps.evaluations.urls')),

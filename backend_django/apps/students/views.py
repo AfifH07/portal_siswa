@@ -9,12 +9,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 import base64
 
-from .models import Student
+from .models import Student, Schedule
 from .serializers import (
     StudentSerializer, StudentListSerializer,
     StudentCreateSerializer, StudentUpdateSerializer,
     AlumniListSerializer, AlumniDetailSerializer,
-    SetAlumniSerializer, BulkSetAlumniSerializer, ReactivateStudentSerializer
+    SetAlumniSerializer, BulkSetAlumniSerializer, ReactivateStudentSerializer,
+    ScheduleSerializer
 )
 from apps.accounts.permissions import IsSuperAdmin, IsPimpinan, IsGuru, CanUpdateStudent
 from .excel_parser import import_students, generate_import_template
@@ -832,4 +833,185 @@ def alumni_statistics(request):
                 'belum_diterima': ijazah_belum
             }
         }
+    })
+
+
+# ============================================
+# SCHEDULE (JADWAL MENGAJAR) VIEWSET
+# ============================================
+
+class ScheduleViewSet(viewsets.ModelViewSet):
+    """
+    CRUD ViewSet for Schedule (Jadwal Mengajar).
+
+    List/Retrieve: All authenticated users
+    Create/Update/Delete: Superadmin only
+
+    Query params:
+    - username: Filter by guru username
+    - kelas: Filter by class
+    - hari: Filter by day (Senin, Selasa, etc.)
+    - mata_pelajaran: Filter by subject
+    - is_active: Filter by active status
+    - search: Search by username, kelas, mata_pelajaran
+    """
+    queryset = Schedule.objects.all()
+    serializer_class = ScheduleSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['username', 'kelas', 'hari', 'mata_pelajaran', 'is_active']
+    search_fields = ['username', 'kelas', 'mata_pelajaran']
+    ordering_fields = ['hari', 'jam_ke', 'jam_mulai', 'kelas', 'username']
+    ordering = ['hari', 'jam_ke', 'jam_mulai']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsSuperAdmin]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def get_queryset(self):
+        queryset = Schedule.objects.all()
+
+        # Additional custom filters
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(kelas__icontains=search) |
+                Q(mata_pelajaran__icontains=search)
+            )
+
+        return queryset.order_by('hari', 'jam_ke', 'jam_mulai')
+
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """
+        GET /api/schedules/statistics/
+        Returns schedule statistics
+        """
+        queryset = self.get_queryset()
+
+        total = queryset.count()
+        active = queryset.filter(is_active=True).count()
+        unique_guru = queryset.values('username').distinct().count()
+        unique_kelas = queryset.values('kelas').distinct().count()
+
+        # Count by hari
+        by_hari = queryset.values('hari').annotate(count=Count('id')).order_by('hari')
+
+        return Response({
+            'success': True,
+            'statistics': {
+                'total_jadwal': total,
+                'jadwal_aktif': active,
+                'total_guru': unique_guru,
+                'total_kelas': unique_kelas,
+                'by_hari': list(by_hari)
+            }
+        })
+
+    @action(detail=False, methods=['get'])
+    def by_guru(self, request):
+        """
+        GET /api/schedules/by-guru/?username=<username>
+        Returns schedules grouped by day for a specific guru
+        """
+        username = request.query_params.get('username')
+        if not username:
+            return Response(
+                {'success': False, 'error': 'Parameter username diperlukan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        schedules = Schedule.objects.filter(
+            username=username,
+            is_active=True
+        ).order_by('hari', 'jam_ke', 'jam_mulai')
+
+        # Group by hari
+        result = {}
+        for hari in ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']:
+            hari_schedules = schedules.filter(hari=hari)
+            result[hari] = ScheduleSerializer(hari_schedules, many=True).data
+
+        return Response({
+            'success': True,
+            'username': username,
+            'schedules': result
+        })
+
+
+# ============================================
+# JADWAL GURU MINGGUAN ENDPOINT
+# ============================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def jadwal_guru_mingguan(request, username):
+    """
+    GET /api/jadwal/guru/<username>/
+
+    Returns weekly schedule for a specific guru.
+    Filters by active tahun_ajaran.
+
+    Response:
+    {
+        "success": true,
+        "username": "ahmad.fauzi",
+        "nama_guru": "Ahmad Fauzi",
+        "jadwal_mingguan": {
+            "Senin": [{ kelas, mata_pelajaran, jam_ke, jam_mulai, jam_selesai }],
+            "Selasa": [...],
+            ...
+            "Sabtu": [...]
+        }
+    }
+    """
+    from apps.core.models import TahunAjaran
+    from apps.accounts.models import User
+
+    # Get active tahun ajaran
+    tahun_ajaran_aktif = TahunAjaran.objects.filter(is_active=True).first()
+
+    # Get guru name
+    guru = User.objects.filter(username=username).first()
+    nama_guru = guru.name if guru and guru.name else username
+
+    # Build queryset with filters
+    schedules = Schedule.objects.filter(
+        username=username,
+        is_active=True
+    )
+
+    # Filter by tahun_ajaran if available
+    if tahun_ajaran_aktif:
+        schedules = schedules.filter(
+            Q(tahun_ajaran=tahun_ajaran_aktif) | Q(tahun_ajaran__isnull=True)
+        )
+
+    schedules = schedules.order_by('jam_ke', 'jam_mulai')
+
+    # Group by hari
+    jadwal_mingguan = {}
+    for hari in ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']:
+        hari_schedules = schedules.filter(hari=hari)
+        jadwal_mingguan[hari] = [
+            {
+                'kelas': s.kelas,
+                'mata_pelajaran': s.mata_pelajaran or '-',
+                'jam_ke': s.jam_ke,
+                'jam_mulai': s.jam_mulai.strftime('%H:%M') if s.jam_mulai else None,
+                'jam_selesai': s.jam_selesai.strftime('%H:%M') if s.jam_selesai else None,
+            }
+            for s in hari_schedules
+        ]
+
+    return Response({
+        'success': True,
+        'username': username,
+        'nama_guru': nama_guru,
+        'tahun_ajaran': tahun_ajaran_aktif.nama if tahun_ajaran_aktif else None,
+        'jadwal_mingguan': jadwal_mingguan
     })

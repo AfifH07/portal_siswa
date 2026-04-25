@@ -387,6 +387,123 @@
     .admin-section.active { display: block; }
     .walisantri-section { display: none; }
     .walisantri-section.active { display: block; }
+
+    /* ===================== JADWAL MINGGU INI STYLES ===================== */
+    .guru-jadwal-mingguan-card {
+        min-height: auto;
+    }
+
+    .jadwal-mingguan-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0;
+        padding: 0;
+    }
+
+    @media (max-width: 1200px) {
+        .jadwal-mingguan-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .jadwal-mingguan-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .jadwal-mingguan-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .jadwal-hari-col {
+        border-right: 1px solid var(--border-light, #e5e7eb);
+        min-height: 120px;
+    }
+
+    .jadwal-hari-col:last-child {
+        border-right: none;
+    }
+
+    .jadwal-hari-header {
+        padding: 0.75rem 0.5rem;
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+        background: var(--emerald-50, #f0faf7);
+        border-bottom: 1px solid var(--border-light, #e5e7eb);
+        color: var(--text-sub, #4b5563);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .jadwal-hari-col.hari-today .jadwal-hari-header {
+        background: linear-gradient(135deg, var(--emerald-500, #10b981), var(--emerald-600, #059669));
+        color: white;
+    }
+
+    .jadwal-hari-col.hari-today {
+        background: var(--emerald-50, #f0faf7);
+    }
+
+    .jadwal-hari-body {
+        padding: 0.5rem;
+    }
+
+    .jadwal-item-mini {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        background: white;
+        border-radius: 6px;
+        border-left: 3px solid var(--emerald-400, #34c99a);
+        font-size: 0.75rem;
+    }
+
+    .jadwal-item-mini:last-child {
+        margin-bottom: 0;
+    }
+
+    .jadwal-hari-col.hari-today .jadwal-item-mini {
+        border-left-color: var(--emerald-600, #059669);
+        background: white;
+    }
+
+    .jadwal-item-jam {
+        font-weight: 700;
+        color: var(--emerald-600, #059669);
+        font-family: var(--font-mono, monospace);
+        font-size: 0.7rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .jadwal-item-kelas {
+        font-weight: 600;
+        color: var(--text-main, #1f2937);
+    }
+
+    .jadwal-item-mapel {
+        color: var(--text-muted, #6b7280);
+        font-size: 0.7rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .jadwal-empty {
+        text-align: center;
+        color: var(--text-muted, #9ca3af);
+        font-size: 0.75rem;
+        padding: 1.5rem 0.5rem;
+    }
+
+    .jadwal-empty-icon {
+        font-size: 1.5rem;
+        display: block;
+        margin-bottom: 0.25rem;
+        opacity: 0.5;
+    }
     </style>
 </head>
 <body data-role="">
@@ -514,6 +631,19 @@
                             <div class="card-badge" id="guru-jadwal-badge">0 sesi</div>
                         </div>
                         <div class="guru-todo-list" id="guru-jadwal-list">
+                            <div class="loading-state">
+                                <div class="loading-spinner"></div>
+                                <p>Memuat jadwal...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3B. JADWAL MINGGU INI -->
+                    <div class="glass-card guru-jadwal-mingguan-card">
+                        <div class="card-head">
+                            <h3><span class="ch-icon">📆</span> Jadwal Minggu Ini</h3>
+                        </div>
+                        <div class="jadwal-mingguan-grid" id="jadwal-mingguan-grid">
                             <div class="loading-state">
                                 <div class="loading-spinner"></div>
                                 <p>Memuat jadwal...</p>

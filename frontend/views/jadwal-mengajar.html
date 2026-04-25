@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Jadwal Mengajar - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260425" rel="stylesheet">
+    <link href="/static/css/users.css?v=20260425" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        /* Additional styles for jadwal page */
+        .time-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .time-input-group input[type="time"] {
+            flex: 1;
+        }
+        .time-separator {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .badge-hari {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-senin { background: #dcfce7; color: #166534; }
+        .badge-selasa { background: #dbeafe; color: #1e40af; }
+        .badge-rabu { background: #fef3c7; color: #92400e; }
+        .badge-kamis { background: #fce7f3; color: #9d174d; }
+        .badge-jumat { background: #e0e7ff; color: #3730a3; }
+        .badge-sabtu { background: #f3e8ff; color: #6b21a8; }
+
+        .jam-badge {
+            background: var(--emerald-50);
+            color: var(--emerald-700);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .waktu-display {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+        .guru-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .guru-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--emerald-400), var(--emerald-600));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .guru-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .guru-name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .guru-username {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Manajemen Jadwal Mengajar</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Administrasi</span> &rsaquo; <span>Jadwal Mengajar</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Access Denied View (for non-superadmin) -->
+        <section class="access-denied-view" id="access-denied-view" style="display: none;">
+            <div class="glass-card" style="padding: 60px; text-align: center;">
+                <div class="empty-icon" style="font-size: 80px;">🔒</div>
+                <h2 style="color: var(--text-main); margin: 20px 0;">Akses Ditolak</h2>
+                <p style="color: var(--text-sub);">Halaman ini hanya dapat diakses oleh Superadmin.</p>
+                <a href="/dashboard" class="btn btn-primary" style="margin-top: 20px;">Kembali ke Dashboard</a>
+            </div>
+        </section>
+
+        <!-- Admin View -->
+        <section class="admin-view" id="admin-view">
+
+            <!-- Header Actions -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <button id="btn-tambah-jadwal" onclick="openCreateModal()" class="btn btn-primary fw-bold shadow-sm d-flex align-items-center" style="border-radius: 8px; padding: 10px 20px;">
+                    <i class="fas fa-plus me-2"></i> Tambah Jadwal
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">📅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-jadwal">0</div>
+                        <div class="stat-label">Total Jadwal</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">👨‍🏫</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-guru">0</div>
+                        <div class="stat-label">Guru Terdaftar</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">🏫</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="total-kelas">0</div>
+                        <div class="stat-label">Kelas Terjadwal</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-red">
+                    <div class="stat-icon-wrap">✅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="jadwal-aktif">0</div>
+                        <div class="stat-label">Jadwal Aktif</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🔍</span> Filter &amp; Pencarian</h3>
+                </div>
+                <div class="card-body">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label>Cari</label>
+                            <input type="text" id="filter-search" placeholder="Guru, Kelas, Mapel..." onkeyup="debounceSearch()">
+                        </div>
+                        <div class="filter-group">
+                            <label>Guru</label>
+                            <select id="filter-guru" onchange="applyFilters()">
+                                <option value="">Semua Guru</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Kelas</label>
+                            <select id="filter-kelas" onchange="applyFilters()">
+                                <option value="">Semua Kelas</option>
+                                <option value="X A">X A</option>
+                                <option value="X B">X B</option>
+                                <option value="X C">X C</option>
+                                <option value="XI A">XI A</option>
+                                <option value="XI B">XI B</option>
+                                <option value="XI C">XI C</option>
+                                <option value="XII A">XII A</option>
+                                <option value="XII B">XII B</option>
+                                <option value="XII C">XII C</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Hari</label>
+                            <select id="filter-hari" onchange="applyFilters()">
+                                <option value="">Semua Hari</option>
+                                <option value="Senin">Senin</option>
+                                <option value="Selasa">Selasa</option>
+                                <option value="Rabu">Rabu</option>
+                                <option value="Kamis">Kamis</option>
+                                <option value="Jumat">Jumat</option>
+                                <option value="Sabtu">Sabtu</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jadwal Table -->
+            <div class="glass-card table-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Daftar Jadwal Mengajar</h3>
+                    <div class="card-actions">
+                        <span class="result-count" id="result-count">0 jadwal</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="jadwal-table">
+                        <thead>
+                            <tr>
+                                <th>Guru</th>
+                                <th>Kelas</th>
+                                <th>Mata Pelajaran</th>
+                                <th>Hari</th>
+                                <th>Jam Ke</th>
+                                <th>Waktu</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jadwal-table-body">
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <div class="loading-spinner"></div>
+                                    <p class="text-muted">Memuat data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-wrap" id="pagination-wrap">
+                    <button class="btn btn-sm" id="btn-prev" onclick="prevPage()" disabled>← Prev</button>
+                    <span class="page-info" id="page-info">Page 1</span>
+                    <button class="btn btn-sm" id="btn-next" onclick="nextPage()">Next →</button>
+                </div>
+            </div>
+
+        </section>
+    </div>
+</main>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Create/Edit Jadwal Modal -->
+<div class="modal-overlay" id="jadwal-modal-overlay" onclick="closeModal()">
+    <div class="modal-container modal-lg" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <i class="fas fa-calendar-plus modal-header-icon"></i>
+                <h3 id="modal-title">Tambah Jadwal Baru</h3>
+            </div>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="jadwal-form" onsubmit="saveJadwal(event)">
+                <input type="hidden" id="form-jadwal-id">
+
+                <!-- Section: Pilih Guru -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-user-tie"></i> Pilih Guru
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Guru <span class="required">*</span></label>
+                            <select id="form-guru" required onchange="onGuruChange()" class="form-select">
+                                <option value="">-- Pilih Guru --</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                            <small class="form-hint"><i class="fas fa-info-circle"></i> Pilih guru yang akan mengajar</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Kelas & Mata Pelajaran -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-school"></i> Kelas & Mata Pelajaran
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Kelas <span class="required">*</span></label>
+                            <select id="form-kelas" required onchange="onKelasChange()" class="form-select">
+                                <option value="">-- Pilih Kelas --</option>
+                                <!-- Populated based on guru's assignments -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Mata Pelajaran <span class="required">*</span></label>
+                            <select id="form-mapel" required class="form-select">
+                                <option value="">-- Pilih Mata Pelajaran --</option>
+                                <!-- Populated based on guru + kelas -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Jadwal -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-clock"></i> Waktu Mengajar
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Hari <span class="required">*</span></label>
+                            <select id="form-hari" required class="form-select">
+                                <option value="">-- Pilih Hari --</option>
+                                <option value="Senin">Senin</option>
+                                <option value="Selasa">Selasa</option>
+                                <option value="Rabu">Rabu</option>
+                                <option value="Kamis">Kamis</option>
+                                <option value="Jumat">Jumat</option>
+                                <option value="Sabtu">Sabtu</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Jam Ke</label>
+                            <input type="number" id="form-jam-ke" min="1" max="10" placeholder="1-10" class="form-input">
+                            <small class="form-hint">Jam pelajaran ke berapa (opsional)</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Jam Mulai</label>
+                            <input type="time" id="form-jam-mulai" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Jam Selesai</label>
+                            <input type="time" id="form-jam-selesai" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Status -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-toggle-on"></i> Status
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Status Jadwal</label>
+                            <select id="form-status" class="form-select">
+                                <option value="true">✅ Aktif</option>
+                                <option value="false">❌ Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        <i class="fas fa-times me-2"></i> Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btn-save">
+                        <i class="fas fa-save me-2"></i> Simpan Jadwal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="delete-modal-overlay" onclick="closeDeleteModal()">
+    <div class="modal-container modal-sm" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Hapus Jadwal</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Apakah Anda yakin ingin menghapus jadwal ini?</p>
+            <div id="delete-jadwal-info" style="background: var(--bg-base); padding: 12px; border-radius: 8px; margin: 16px 0;">
+                <!-- Filled dynamically -->
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Batal</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="fas fa-trash me-2"></i> Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260425"></script>
+<script src="/static/js/apiConfig.js?v=20260425"></script>
+<script src="/static/js/apiFetch.js?v=20260425"></script>
+<script src="/static/js/auth-check.js?v=20260425" defer></script>
+<script src="/static/js/jadwal-mengajar.js?v=20260425"></script>
+
+</body>
+</html>
