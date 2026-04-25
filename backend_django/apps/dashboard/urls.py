@@ -23,4 +23,7 @@ urlpatterns = [
 
     # Ustadz dashboard specific API
     path('ustadz/summary/', views.ustadz_dashboard_summary, name='ustadz_dashboard_summary'),
+
+    # Guru Today Dashboard API
+    path('guru-today/', views.guru_today_dashboard, name='guru_today_dashboard'),
 ]

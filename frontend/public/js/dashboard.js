@@ -103,6 +103,9 @@ const EMERALD_COLORS = {
     borderColor: 'rgba(15, 99, 71, 0.15)'
 };
 
+// Guru Dashboard Chart instance
+let guruAttendanceChart = null;
+
 document.addEventListener('DOMContentLoaded', async function() {
     // Skip walisantri-specific init on admin pages
     if (window.isAdminPage && window.isAdminPage()) {
@@ -117,8 +120,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (currentUser && currentUser.role === 'walisantri') {
         debugLog('[Dashboard] Walisantri detected, rendering profile view');
         renderWalisantriDashboard();
+    } else if (currentUser && currentUser.role === 'guru') {
+        debugLog('[Dashboard] Guru detected, rendering guru dashboard');
+        renderGuruDashboard();
     } else {
-        debugLog('[Dashboard] Admin/Guru/Pimpinan detected, rendering admin dashboard');
+        debugLog('[Dashboard] Admin/Pimpinan detected, rendering admin dashboard');
         loadDashboardData();
     }
 });
@@ -218,6 +224,18 @@ async function loadCurrentUser() {
 }
 
 async function loadDashboardData() {
+    // Show admin dashboard, hide others
+    const adminDashboard = document.getElementById('dashboard-section');
+    const walisantriDashboard = document.getElementById('walisantri-dashboard');
+    const guruDashboard = document.getElementById('guru-dashboard');
+
+    if (walisantriDashboard) walisantriDashboard.style.display = 'none';
+    if (guruDashboard) guruDashboard.style.display = 'none';
+    if (adminDashboard) {
+        adminDashboard.style.display = 'block';
+        adminDashboard.classList.add('active');
+    }
+
     try {
         const [statsRes, attendanceRes, gradesRes, progressRes, activityRes] = await Promise.all([
             window.apiFetch('dashboard/stats/'),
@@ -544,6 +562,430 @@ function renderRecentActivity(activities) {
 }
 
 // showToast and window.logout are provided globally by utils.js
+
+// ============================================================
+// GURU DASHBOARD - Todo List Oriented
+// ============================================================
+
+/**
+ * Render Guru Dashboard - Main entry point
+ * Shows/hides appropriate sections and loads data
+ */
+async function renderGuruDashboard() {
+    // Hide other dashboard sections
+    const adminDashboard = document.getElementById('dashboard-section');
+    const walisantriDashboard = document.getElementById('walisantri-dashboard');
+    const guruDashboard = document.getElementById('guru-dashboard');
+    const pageTitle = document.getElementById('page-title');
+
+    if (adminDashboard) adminDashboard.style.display = 'none';
+    if (walisantriDashboard) walisantriDashboard.style.display = 'none';
+    if (guruDashboard) {
+        guruDashboard.style.display = 'block';
+        guruDashboard.classList.add('active');
+    }
+    if (pageTitle) pageTitle.textContent = 'Dashboard Guru';
+
+    // Update greeting based on time
+    updateGuruGreeting();
+
+    // Update date display
+    updateGuruDateDisplay();
+
+    // Load dashboard data from API
+    await loadGuruDashboardData();
+}
+
+/**
+ * Update greeting based on current time
+ */
+function updateGuruGreeting() {
+    const greetingEl = document.getElementById('guru-greeting');
+    if (!greetingEl) return;
+
+    const hour = new Date().getHours();
+    let greeting = 'Selamat Pagi';
+    if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
+    else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore';
+    else if (hour >= 18) greeting = 'Selamat Malam';
+
+    const userName = currentUser?.name || currentUser?.username || 'Ustadz/ah';
+    greetingEl.textContent = `${greeting}, ${userName}! 👋`;
+}
+
+/**
+ * Update date display in header
+ */
+function updateGuruDateDisplay() {
+    const hariEl = document.getElementById('guru-hari');
+    const tanggalEl = document.getElementById('guru-tanggal');
+
+    if (!hariEl || !tanggalEl) return;
+
+    const now = new Date();
+    const hariOptions = { weekday: 'long' };
+    const tanggalOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+
+    hariEl.textContent = now.toLocaleDateString('id-ID', hariOptions);
+    tanggalEl.textContent = now.toLocaleDateString('id-ID', tanggalOptions);
+}
+
+/**
+ * Load all guru dashboard data from API
+ */
+async function loadGuruDashboardData() {
+    try {
+        debugLog('[GuruDashboard] Fetching guru-today data...');
+        const response = await window.apiFetch('dashboard/guru-today/');
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        debugLog('[GuruDashboard] API Response:', data);
+
+        // Update tahun ajaran
+        if (data.tahun_ajaran) {
+            const taEl = document.getElementById('guru-tahun-ajaran-badge');
+            if (taEl) taEl.textContent = data.tahun_ajaran;
+        }
+
+        // Update stats cards
+        updateGuruStats(data.statistik || {});
+
+        // Render jadwal todo list
+        renderGuruJadwalList(data.jadwal_hari_ini || []);
+
+        // Render materi list (from e_report)
+        renderGuruMateriList(data.e_report || []);
+
+        // Render attendance chart
+        renderGuruAttendanceChart(data.statistik?.chart_data || null);
+
+        // Handle warnings
+        handleGuruWarnings(data.warning_belum_absen || []);
+
+        // Update shortcut badges
+        updateShortcutBadges(data);
+
+    } catch (error) {
+        console.error('[GuruDashboard] Error loading data:', error);
+        showEmptyGuruDashboard('Gagal memuat data dashboard');
+    }
+}
+
+/**
+ * Update stats cards with data
+ */
+function updateGuruStats(stats) {
+    // Kehadiran Mengajar %
+    const kehadiranEl = document.getElementById('guru-stat-kehadiran');
+    if (kehadiranEl) {
+        kehadiranEl.textContent = stats.persentase_kehadiran
+            ? `${stats.persentase_kehadiran}%`
+            : '-%';
+    }
+
+    // Kelas Hari Ini
+    const kelasEl = document.getElementById('guru-stat-kelas-hari-ini');
+    if (kelasEl) {
+        kelasEl.textContent = stats.total_jadwal_hari_ini || 0;
+    }
+
+    // Nilai Pending
+    const nilaiEl = document.getElementById('guru-stat-nilai-pending');
+    if (nilaiEl) {
+        nilaiEl.textContent = stats.nilai_pending || 0;
+    }
+
+    // Evaluasi Bulan Ini
+    const evaluasiEl = document.getElementById('guru-stat-evaluasi-bulan');
+    if (evaluasiEl) {
+        evaluasiEl.textContent = stats.evaluasi_bulan_ini || 0;
+    }
+}
+
+/**
+ * Render jadwal todo list
+ * @param {Array} jadwalList - Array of schedule objects
+ */
+function renderGuruJadwalList(jadwalList) {
+    const container = document.getElementById('guru-jadwal-list');
+    const badgeEl = document.getElementById('guru-jadwal-badge');
+
+    if (!container) return;
+
+    // Update badge
+    if (badgeEl) {
+        badgeEl.textContent = `${jadwalList.length} sesi`;
+    }
+
+    // Empty state
+    if (!jadwalList || jadwalList.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">📅</span>
+                <p>Tidak ada jadwal mengajar hari ini</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Get current time for comparison
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    // Sort jadwal by jam_ke or jam_mulai
+    jadwalList.sort((a, b) => {
+        if (a.jam_ke && b.jam_ke) return a.jam_ke - b.jam_ke;
+        if (a.jam_mulai && b.jam_mulai) return a.jam_mulai.localeCompare(b.jam_mulai);
+        return 0;
+    });
+
+    // Render items
+    container.innerHTML = jadwalList.map(item => {
+        // Determine status
+        let statusClass = 'item-pending';
+        let badgeClass = 'badge-pending';
+        let statusText = 'Belum';
+        let actionBtn = '';
+
+        if (item.sudah_absen) {
+            statusClass = 'item-done';
+            badgeClass = 'badge-done';
+            statusText = 'Selesai';
+        } else {
+            // Check if time has passed (overdue)
+            if (item.jam_selesai) {
+                const [endH, endM] = item.jam_selesai.split(':').map(Number);
+                if (currentHour > endH || (currentHour === endH && currentMinute > endM)) {
+                    statusClass = 'item-overdue';
+                    badgeClass = 'badge-overdue';
+                    statusText = 'Terlewat';
+                }
+            }
+
+            // Show action button for pending items
+            actionBtn = `<a href="/attendance/?kelas=${encodeURIComponent(item.kelas)}&mapel=${encodeURIComponent(item.mata_pelajaran || '')}" class="todo-action-btn">Absen</a>`;
+        }
+
+        // Format jam display
+        const jamDisplay = item.jam_ke
+            ? `Jam ${item.jam_ke}`
+            : (item.jam_mulai || '-');
+
+        const waktuDisplay = (item.jam_mulai && item.jam_selesai)
+            ? `${item.jam_mulai} - ${item.jam_selesai}`
+            : '';
+
+        return `
+            <div class="guru-todo-item ${statusClass}">
+                <div class="todo-jam-badge ${badgeClass}">${jamDisplay}</div>
+                <div class="todo-info">
+                    <div class="todo-kelas">${escapeHtml(item.kelas)}</div>
+                    <div class="todo-mapel">${escapeHtml(item.mata_pelajaran || '-')}</div>
+                    ${waktuDisplay ? `<div class="todo-waktu">${waktuDisplay}</div>` : ''}
+                </div>
+                <div class="todo-status">
+                    <span class="status-badge status-${item.sudah_absen ? 'done' : (statusClass === 'item-overdue' ? 'overdue' : 'pending')}">${statusText}</span>
+                    ${actionBtn}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Render materi list from e_report (jurnal mengajar)
+ * @param {Array} materiList - Array of jurnal/materi objects
+ */
+function renderGuruMateriList(materiList) {
+    const container = document.getElementById('guru-materi-list');
+    if (!container) return;
+
+    // Empty state
+    if (!materiList || materiList.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">📋</span>
+                <p>Belum ada jurnal mengajar hari ini</p>
+                <a href="/attendance/" class="btn btn-primary btn-sm">Input Jurnal</a>
+            </div>
+        `;
+        return;
+    }
+
+    // Render materi items
+    container.innerHTML = materiList.map(item => `
+        <div class="materi-item">
+            <div class="materi-header">
+                <span class="materi-kelas">${escapeHtml(item.kelas)}</span>
+                <span class="materi-mapel">${escapeHtml(item.mata_pelajaran || '-')}</span>
+            </div>
+            <div class="materi-content">${escapeHtml(item.materi || 'Tidak ada materi tercatat')}</div>
+            ${item.capaian_pembelajaran ? `<div class="materi-tujuan">📌 ${escapeHtml(item.capaian_pembelajaran)}</div>` : ''}
+        </div>
+    `).join('');
+}
+
+/**
+ * Render guru attendance chart (6 months bar chart)
+ * @param {Object} chartData - { labels: [], values: [] }
+ */
+function renderGuruAttendanceChart(chartData) {
+    const canvas = document.getElementById('guru-attendance-chart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    // Destroy existing chart
+    if (guruAttendanceChart) {
+        guruAttendanceChart.destroy();
+    }
+
+    // Default data if none provided
+    if (!chartData || !chartData.labels || chartData.labels.length === 0) {
+        chartData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+            values: [0, 0, 0, 0, 0, 0]
+        };
+    }
+
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+    gradient.addColorStop(0, EMERALD_COLORS.emerald400);
+    gradient.addColorStop(1, EMERALD_COLORS.emerald600);
+
+    guruAttendanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Kehadiran Mengajar',
+                data: chartData.values,
+                backgroundColor: gradient,
+                borderColor: EMERALD_COLORS.emerald600,
+                borderWidth: 0,
+                borderRadius: 6,
+                barThickness: 24
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: EMERALD_COLORS.emerald700,
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    callbacks: {
+                        label: (ctx) => `Kehadiran: ${ctx.raw}%`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: EMERALD_COLORS.gridColor },
+                    ticks: {
+                        color: EMERALD_COLORS.textMuted,
+                        font: { size: 10 },
+                        callback: v => v + '%'
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        color: EMERALD_COLORS.textMuted,
+                        font: { size: 10 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Handle warning cards for belum absen
+ * @param {Array} warnings - Array of warning items
+ */
+function handleGuruWarnings(warnings) {
+    const card = document.getElementById('guru-warning-card');
+    const content = document.getElementById('guru-warning-content');
+
+    if (!card || !content) return;
+
+    // Hide if no warnings
+    if (!warnings || warnings.length === 0) {
+        card.style.display = 'none';
+        return;
+    }
+
+    // Show warning card
+    card.style.display = 'block';
+
+    // Render warning items
+    content.innerHTML = warnings.map(item => `
+        <div class="warning-item">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text">
+                <strong>${escapeHtml(item.kelas)}</strong> - ${escapeHtml(item.mata_pelajaran || 'Jadwal')}
+                (Jam ${item.jam_ke || item.jam || '-'})
+            </span>
+            <a href="/attendance/?kelas=${encodeURIComponent(item.kelas)}" class="warning-action">Absen Sekarang</a>
+        </div>
+    `).join('');
+}
+
+/**
+ * Update shortcut badges with counts
+ */
+function updateShortcutBadges(data) {
+    const stats = data.statistik || {};
+
+    // Jurnal badge - show jadwal count
+    const jurnalBadge = document.getElementById('shortcut-jurnal-badge');
+    if (jurnalBadge) {
+        const pending = (data.jadwal_hari_ini || []).filter(j => !j.sudah_absen).length;
+        jurnalBadge.textContent = pending > 0 ? pending : '';
+    }
+
+    // Nilai badge - show pending
+    const nilaiBadge = document.getElementById('shortcut-nilai-badge');
+    if (nilaiBadge) {
+        nilaiBadge.textContent = stats.nilai_pending > 0 ? stats.nilai_pending : '';
+    }
+
+    // Evaluasi badge - no dynamic count for now
+    const evaluasiBadge = document.getElementById('shortcut-evaluasi-badge');
+    if (evaluasiBadge) {
+        evaluasiBadge.textContent = '';
+    }
+}
+
+/**
+ * Show empty state for guru dashboard
+ */
+function showEmptyGuruDashboard(message) {
+    const container = document.getElementById('guru-jadwal-list');
+    if (container) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">⚠️</span>
+                <p>${escapeHtml(message)}</p>
+                <button onclick="loadGuruDashboardData()" class="btn btn-primary btn-sm">Coba Lagi</button>
+            </div>
+        `;
+    }
+}
+
+// Export guru dashboard functions
+window.renderGuruDashboard = renderGuruDashboard;
+window.loadGuruDashboardData = loadGuruDashboardData;
 
 // ============================================================
 // WALISANTRI DASHBOARD - Student Profile View

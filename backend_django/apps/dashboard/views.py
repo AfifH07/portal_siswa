@@ -549,3 +549,227 @@ def ustadz_dashboard_summary(request):
             'success': False,
             'message': str(e)
         }, status=500)
+
+
+# ============================================
+# GURU TODAY DASHBOARD
+# ============================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def guru_today_dashboard(request):
+    """
+    Dashboard khusus guru untuk hari ini.
+
+    Returns:
+    - jadwal_hari_ini: List jadwal mengajar hari ini dengan status absen
+    - warning_belum_absen: Jadwal yang belum dilakukan absensi
+    - statistik: Persentase kehadiran mengajar
+    - e_report: Statistik nilai dan evaluasi
+    """
+    user = request.user
+
+    # Validate role
+    allowed_roles = ['guru', 'superadmin', 'pimpinan']
+    if user.role not in allowed_roles:
+        return Response({
+            'success': False,
+            'message': 'Endpoint ini hanya untuk Guru/Ustadz'
+        }, status=403)
+
+    try:
+        from apps.students.models import Schedule
+
+        # Get hari ini dalam Bahasa Indonesia
+        hari_map = {
+            0: 'Senin',
+            1: 'Selasa',
+            2: 'Rabu',
+            3: 'Kamis',
+            4: 'Jumat',
+            5: 'Sabtu',
+            6: 'Minggu'
+        }
+        today = timezone.now().date()
+        hari_ini = hari_map.get(today.weekday(), 'Senin')
+
+        # Get jadwal hari ini untuk user
+        schedules = Schedule.objects.filter(
+            username=user.username,
+            hari=hari_ini,
+            is_active=True
+        ).order_by('jam_ke', 'jam_mulai', 'jam')
+
+        jadwal_list = []
+        warning_list = []
+        total_sudah_absen = 0
+
+        for schedule in schedules:
+            # Cek apakah sudah ada Attendance record hari ini
+            # untuk kelas + mata pelajaran ini
+            sudah_absen = Attendance.objects.filter(
+                nisn__kelas=schedule.kelas,
+                tanggal=today,
+                mata_pelajaran=schedule.mata_pelajaran
+            ).exists()
+
+            if sudah_absen:
+                total_sudah_absen += 1
+
+            jadwal_item = {
+                'id': schedule.id,
+                'kelas': schedule.kelas,
+                'mata_pelajaran': schedule.mata_pelajaran or '-',
+                'jam_ke': schedule.jam_ke,
+                'jam_mulai': schedule.jam_mulai.strftime('%H:%M') if schedule.jam_mulai else None,
+                'jam_selesai': schedule.jam_selesai.strftime('%H:%M') if schedule.jam_selesai else None,
+                'jam_legacy': schedule.jam,  # Legacy field
+                'waktu_display': schedule.waktu_display,
+                'sudah_absen': sudah_absen
+            }
+
+            jadwal_list.append(jadwal_item)
+
+            # Tambahkan ke warning jika belum absen
+            if not sudah_absen:
+                warning_list.append(jadwal_item)
+
+        # Hitung statistik
+        total_jadwal = len(jadwal_list)
+        persentase_kehadiran = 0
+        if total_jadwal > 0:
+            persentase_kehadiran = round((total_sudah_absen / total_jadwal) * 100, 1)
+
+        # E-Report: Nilai pending dan evaluasi bulan ini
+        nilai_pending = 0
+        evaluasi_bulan_ini = 0
+        bulan_ini_start = today.replace(day=1)
+
+        # Cek nilai pending dari jurnal dengan flag ada_penilaian=True
+        # tapi belum ada Grade record
+        try:
+            from apps.attendance.models import JurnalMengajar
+
+            # Jurnal dengan penilaian yang belum diinput nilai
+            jurnal_pending = JurnalMengajar.objects.filter(
+                guru=user,
+                ada_penilaian=True,
+                tanggal__gte=bulan_ini_start
+            )
+
+            for jurnal in jurnal_pending:
+                # Cek apakah sudah ada grade untuk kelas + mapel + tanggal ini
+                has_grade = Grade.objects.filter(
+                    nisn__kelas=jurnal.kelas,
+                    mata_pelajaran=jurnal.mata_pelajaran,
+                    created_at__date=jurnal.tanggal
+                ).exists()
+                if not has_grade:
+                    nilai_pending += 1
+
+        except Exception:
+            pass  # JurnalMengajar mungkin belum ada
+
+        # Evaluasi bulan ini
+        evaluator_name = user.name if user.name else user.username
+        try:
+            evaluasi_bulan_ini = Evaluation.objects.filter(
+                evaluator=evaluator_name,
+                created_at__gte=bulan_ini_start
+            ).count()
+        except Exception:
+            pass
+
+        # Get tahun ajaran aktif
+        try:
+            from apps.core.models import TahunAjaran
+            ta_aktif = TahunAjaran.objects.filter(is_active=True).first()
+            tahun_ajaran_display = f"{ta_aktif.nama} - {ta_aktif.semester}" if ta_aktif else "Tahun Ajaran Aktif"
+        except Exception:
+            tahun_ajaran_display = "Tahun Ajaran"
+
+        # Generate chart data: 6 bulan terakhir kehadiran mengajar guru ini
+        chart_labels = []
+        chart_values = []
+        try:
+            for i in range(5, -1, -1):
+                bulan = (today.replace(day=1) - timedelta(days=i*30)).replace(day=1)
+                bulan_nama = bulan.strftime('%b')
+                chart_labels.append(bulan_nama)
+
+                # Hitung persentase kehadiran mengajar di bulan ini
+                # Total jadwal di bulan ini
+                total_schedules_bulan = Schedule.objects.filter(
+                    username=user.username,
+                    is_active=True
+                ).count() * 4  # Approx 4 weeks per month
+
+                # Total attendance records di bulan ini
+                attended = Attendance.objects.filter(
+                    tanggal__year=bulan.year,
+                    tanggal__month=bulan.month
+                ).filter(
+                    nisn__kelas__in=Schedule.objects.filter(
+                        username=user.username
+                    ).values_list('kelas', flat=True)
+                ).values('tanggal', 'nisn__kelas').distinct().count()
+
+                if total_schedules_bulan > 0:
+                    pct = min(round((attended / total_schedules_bulan) * 100, 0), 100)
+                else:
+                    pct = 0
+                chart_values.append(pct)
+        except Exception:
+            # Fallback to empty data
+            chart_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun']
+            chart_values = [0, 0, 0, 0, 0, 0]
+
+        # E-report materi dari jurnal mengajar hari ini
+        e_report_materi = []
+        try:
+            from apps.attendance.models import JurnalMengajar
+            jurnals_today = JurnalMengajar.objects.filter(
+                guru=user,
+                tanggal=today
+            ).order_by('created_at')
+
+            for jurnal in jurnals_today:
+                e_report_materi.append({
+                    'kelas': jurnal.kelas,
+                    'mata_pelajaran': jurnal.mata_pelajaran,
+                    'materi': jurnal.materi,
+                    'capaian_pembelajaran': jurnal.capaian_pembelajaran
+                })
+        except Exception:
+            pass
+
+        return Response({
+            'success': True,
+            'hari': hari_ini,
+            'tanggal': today.strftime('%Y-%m-%d'),
+            'tanggal_display': today.strftime('%d %B %Y'),
+            'tahun_ajaran': tahun_ajaran_display,
+            'jadwal_hari_ini': jadwal_list,
+            'warning_belum_absen': warning_list,
+            'statistik': {
+                'persentase_kehadiran': persentase_kehadiran,
+                'total_jadwal_hari_ini': total_jadwal,
+                'sudah_absen': total_sudah_absen,
+                'belum_absen': total_jadwal - total_sudah_absen,
+                'nilai_pending': nilai_pending,
+                'evaluasi_bulan_ini': evaluasi_bulan_ini,
+                'chart_data': {
+                    'labels': chart_labels,
+                    'values': chart_values
+                }
+            },
+            'e_report': e_report_materi
+        })
+
+    except Exception as e:
+        import traceback
+        return Response({
+            'success': False,
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)

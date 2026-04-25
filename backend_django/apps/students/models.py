@@ -125,19 +125,91 @@ class Student(models.Model):
 
 
 class Schedule(models.Model):
-    username = models.CharField(max_length=50)
+    """
+    Model Jadwal Mengajar Guru.
+
+    Field `jam` (legacy) dipertahankan untuk kompatibilitas data lama.
+    Field baru (jam_mulai, jam_selesai, jam_ke, tahun_ajaran, semester)
+    ditambahkan dengan nullable=True.
+    """
+    HARI_CHOICES = [
+        ('Senin', 'Senin'),
+        ('Selasa', 'Selasa'),
+        ('Rabu', 'Rabu'),
+        ('Kamis', 'Kamis'),
+        ('Jumat', 'Jumat'),
+        ('Sabtu', 'Sabtu'),
+    ]
+
+    SEMESTER_CHOICES = [
+        ('Ganjil', 'Ganjil'),
+        ('Genap', 'Genap'),
+    ]
+
+    username = models.CharField(max_length=50, help_text="Username guru")
     kelas = models.CharField(max_length=20)
-    hari = models.CharField(max_length=20)
-    jam = models.CharField(max_length=20)
+    hari = models.CharField(max_length=20, choices=HARI_CHOICES)
+
+    # Legacy field - dipertahankan untuk kompatibilitas
+    jam = models.CharField(max_length=20, blank=True, null=True, help_text="Legacy: format bebas jam")
+
+    # New fields untuk jadwal terstruktur
+    jam_ke = models.IntegerField(
+        blank=True, null=True,
+        help_text="Jam pelajaran ke-N (1-10)"
+    )
+    jam_mulai = models.TimeField(
+        blank=True, null=True,
+        help_text="Waktu mulai pelajaran"
+    )
+    jam_selesai = models.TimeField(
+        blank=True, null=True,
+        help_text="Waktu selesai pelajaran"
+    )
+
     mata_pelajaran = models.CharField(max_length=100, blank=True, null=True)
+
+    # Periode akademik
+    tahun_ajaran = models.ForeignKey(
+        'core.TahunAjaran',
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        related_name='schedules',
+        help_text="Tahun ajaran jadwal ini berlaku"
+    )
+    semester = models.CharField(
+        max_length=10,
+        choices=SEMESTER_CHOICES,
+        blank=True, null=True
+    )
+
+    # Status aktif
+    is_active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'schedules'
+        ordering = ['hari', 'jam_ke', 'jam_mulai']
+        indexes = [
+            models.Index(fields=['username', 'hari'], name='idx_schedule_user_hari'),
+            models.Index(fields=['kelas', 'hari'], name='idx_schedule_kelas_hari'),
+            models.Index(fields=['tahun_ajaran', 'semester'], name='idx_schedule_periode'),
+        ]
 
     def __str__(self):
-        return f"{self.kelas} - {self.hari} {self.jam}"
+        jam_display = f"Jam ke-{self.jam_ke}" if self.jam_ke else self.jam or "-"
+        return f"{self.kelas} - {self.hari} {jam_display} - {self.mata_pelajaran or 'N/A'}"
+
+    @property
+    def waktu_display(self):
+        """Return formatted time range."""
+        if self.jam_mulai and self.jam_selesai:
+            return f"{self.jam_mulai.strftime('%H:%M')} - {self.jam_selesai.strftime('%H:%M')}"
+        elif self.jam:
+            return self.jam
+        return "-"
 
 
 # =============================================================

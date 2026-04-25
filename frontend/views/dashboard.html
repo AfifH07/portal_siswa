@@ -10,12 +10,384 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260327" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260327" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+    /* ===================== GURU DASHBOARD STYLES ===================== */
+
+    /* Header Card */
+    .guru-header-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, var(--emerald-600, #059669) 0%, var(--emerald-700, #047857) 100%);
+        color: white;
+        margin-bottom: 1.5rem;
+    }
+    .guru-header-card h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem 0;
+    }
+    .guru-subtitle {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    .guru-header-right {
+        text-align: right;
+    }
+    .guru-tahun-ajaran .label {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        display: block;
+    }
+    .guru-tahun-ajaran .value {
+        font-size: 1rem;
+        font-weight: 700;
+        background: rgba(255,255,255,0.2);
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        display: inline-block;
+        margin-top: 0.25rem;
+    }
+
+    /* Stats Row for Guru */
+    .guru-stats-row {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Main Grid Layout */
+    .guru-main-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 1.5rem;
+    }
+    @media (max-width: 1024px) {
+        .guru-main-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .guru-left-column,
+    .guru-right-column {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Jadwal Card */
+    .guru-jadwal-card {
+        min-height: 300px;
+    }
+
+    /* Todo List Items */
+    .guru-todo-list {
+        padding: 0;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .guru-todo-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-light, #e5e7eb);
+        transition: background 0.15s;
+    }
+    .guru-todo-item:last-child {
+        border-bottom: none;
+    }
+    .guru-todo-item:hover {
+        background: var(--emerald-50, #ecfdf5);
+    }
+    .guru-todo-item.item-done {
+        opacity: 0.7;
+    }
+    .guru-todo-item.item-warning {
+        background: #fef3c7;
+        border-left: 3px solid #f59e0b;
+    }
+    .guru-todo-item.item-overdue {
+        background: #fee2e2;
+        border-left: 3px solid #ef4444;
+    }
+
+    .todo-jam-badge {
+        min-width: 50px;
+        text-align: center;
+        padding: 0.35rem 0.5rem;
+        background: var(--emerald-100, #d1fae5);
+        color: var(--emerald-700, #047857);
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        font-family: var(--font-mono, monospace);
+    }
+    .todo-jam-badge.badge-done {
+        background: #d1fae5;
+        color: #047857;
+    }
+    .todo-jam-badge.badge-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .todo-jam-badge.badge-overdue {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .todo-info {
+        flex: 1;
+    }
+    .todo-kelas {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--text-main, #1f2937);
+    }
+    .todo-mapel {
+        font-size: 0.8rem;
+        color: var(--text-muted, #6b7280);
+    }
+    .todo-waktu {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono, monospace);
+    }
+
+    .todo-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .status-badge {
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .status-done {
+        background: #dcfce7;
+        color: #166534;
+    }
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .status-overdue {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .todo-action-btn {
+        padding: 0.4rem 0.75rem;
+        background: var(--emerald-500, #10b981);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+    .todo-action-btn:hover {
+        background: var(--emerald-600, #059669);
+        transform: translateY(-1px);
+    }
+
+    /* Materi Card */
+    .guru-materi-list {
+        padding: 1rem;
+    }
+    .materi-item {
+        padding: 0.75rem 1rem;
+        background: var(--emerald-50, #ecfdf5);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid var(--emerald-500, #10b981);
+    }
+    .materi-item:last-child {
+        margin-bottom: 0;
+    }
+    .materi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.35rem;
+    }
+    .materi-kelas {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--text-main);
+    }
+    .materi-mapel {
+        font-size: 0.75rem;
+        color: var(--emerald-600);
+        background: var(--emerald-100);
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+    }
+    .materi-content {
+        font-size: 0.8rem;
+        color: var(--text-sub, #4b5563);
+    }
+    .materi-tujuan {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+        font-style: italic;
+    }
+
+    /* Chart Card */
+    .guru-chart-card .chart-wrap {
+        padding: 1rem;
+    }
+
+    /* Shortcuts Card */
+    .guru-shortcuts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    .guru-shortcut-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem 0.75rem;
+        background: var(--emerald-50, #ecfdf5);
+        border: 1px solid var(--border-light, #e5e7eb);
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--text-main, #1f2937);
+        transition: all 0.15s;
+        position: relative;
+    }
+    .guru-shortcut-btn:hover {
+        background: var(--emerald-100);
+        border-color: var(--emerald-300);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+    .shortcut-icon {
+        font-size: 1.5rem;
+    }
+    .shortcut-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    .shortcut-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        min-width: 20px;
+        height: 20px;
+        background: var(--emerald-500);
+        color: white;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+    }
+    .shortcut-badge.badge-warning {
+        background: #f59e0b;
+    }
+    .shortcut-badge:empty {
+        display: none;
+    }
+
+    /* Warning Card */
+    .guru-warning-card {
+        border: 2px solid #fbbf24;
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    }
+    .guru-warning-card .warning-head {
+        background: #fbbf24;
+        color: #78350f;
+    }
+    .guru-warning-card .warning-head h3 {
+        color: #78350f;
+    }
+    .warning-content {
+        padding: 1rem;
+    }
+    .warning-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+    }
+    .warning-item:last-child {
+        border-bottom: none;
+    }
+    .warning-icon {
+        font-size: 1.25rem;
+    }
+    .warning-text {
+        flex: 1;
+        font-size: 0.85rem;
+        color: #78350f;
+    }
+    .warning-action {
+        padding: 0.35rem 0.75rem;
+        background: #f59e0b;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    /* Empty State */
+    .guru-todo-list .empty-state,
+    .guru-materi-list .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+    .empty-state .empty-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+    .empty-state p {
+        margin-bottom: 1rem;
+    }
+
+    /* Loading State */
+    .loading-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+    .loading-state p {
+        margin-top: 0.75rem;
+    }
+
+    /* Section visibility */
+    .guru-section { display: none; }
+    .guru-section.active { display: block; }
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+    .walisantri-section { display: none; }
+    .walisantri-section.active { display: block; }
+    </style>
 </head>
 <body data-role="">
 
@@ -78,8 +450,146 @@
             </div>
         </section>
 
-        <!-- Admin/Guru/Pimpinan Dashboard -->
-        <section id="dashboard-section" class="admin-section">
+        <!-- ===================== GURU DASHBOARD (Todo List Oriented) ===================== -->
+        <section id="guru-dashboard" class="guru-section" style="display: none;">
+
+            <!-- 1. HEADER CARD -->
+            <div class="guru-header-card glass-card">
+                <div class="guru-header-left">
+                    <h2 id="guru-greeting">Selamat Pagi, Ustadz/ah! 👋</h2>
+                    <p class="guru-subtitle">
+                        <span id="guru-hari">-</span>, <span id="guru-tanggal">-</span>
+                    </p>
+                </div>
+                <div class="guru-header-right">
+                    <div class="guru-tahun-ajaran">
+                        <span class="label">Tahun Ajaran</span>
+                        <span class="value" id="guru-tahun-ajaran-badge">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. STATS ROW (4 Cards) -->
+            <div class="stats-row guru-stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">📊</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="guru-stat-kehadiran">-%</div>
+                        <div class="stat-label">Kehadiran Mengajar</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">📚</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="guru-stat-kelas-hari-ini">0</div>
+                        <div class="stat-label">Kelas Hari Ini</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold">
+                    <div class="stat-icon-wrap">📝</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="guru-stat-nilai-pending">0</div>
+                        <div class="stat-label">Nilai Pending</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-purple">
+                    <div class="stat-icon-wrap">⭐</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="guru-stat-evaluasi-bulan">0</div>
+                        <div class="stat-label">Evaluasi Bulan Ini</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="guru-main-grid">
+
+                <!-- LEFT COLUMN -->
+                <div class="guru-left-column">
+
+                    <!-- 3. JADWAL HARI INI (Todo List) -->
+                    <div class="glass-card guru-jadwal-card">
+                        <div class="card-head">
+                            <h3><span class="ch-icon">📅</span> Jadwal Mengajar Hari Ini</h3>
+                            <div class="card-badge" id="guru-jadwal-badge">0 sesi</div>
+                        </div>
+                        <div class="guru-todo-list" id="guru-jadwal-list">
+                            <div class="loading-state">
+                                <div class="loading-spinner"></div>
+                                <p>Memuat jadwal...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. MATERI HARI INI -->
+                    <div class="glass-card guru-materi-card">
+                        <div class="card-head">
+                            <h3><span class="ch-icon">📖</span> Materi Hari Ini</h3>
+                        </div>
+                        <div class="guru-materi-list" id="guru-materi-list">
+                            <div class="empty-state">
+                                <span class="empty-icon">📋</span>
+                                <p>Belum ada jurnal mengajar hari ini</p>
+                                <a href="/attendance/" class="btn btn-primary btn-sm">Input Jurnal</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="guru-right-column">
+
+                    <!-- 5. REKAP KEHADIRAN (Chart) -->
+                    <div class="glass-card guru-chart-card">
+                        <div class="card-head">
+                            <h3><span class="ch-icon">📈</span> Rekap Kehadiran Mengajar</h3>
+                            <div class="card-badge">6 Bulan</div>
+                        </div>
+                        <div class="chart-wrap" style="height: 220px;">
+                            <canvas id="guru-attendance-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 6. E-REPORT RINGKAS (Shortcuts) -->
+                    <div class="glass-card guru-shortcuts-card">
+                        <div class="card-head">
+                            <h3><span class="ch-icon">⚡</span> Aksi Cepat</h3>
+                        </div>
+                        <div class="guru-shortcuts-grid">
+                            <a href="/attendance/" class="guru-shortcut-btn shortcut-jurnal">
+                                <span class="shortcut-icon">📝</span>
+                                <span class="shortcut-label">Input Jurnal</span>
+                                <span class="shortcut-badge" id="shortcut-jurnal-badge"></span>
+                            </a>
+                            <a href="/grades/" class="guru-shortcut-btn shortcut-nilai">
+                                <span class="shortcut-icon">📊</span>
+                                <span class="shortcut-label">Input Nilai</span>
+                                <span class="shortcut-badge badge-warning" id="shortcut-nilai-badge"></span>
+                            </a>
+                            <a href="/evaluations/" class="guru-shortcut-btn shortcut-evaluasi">
+                                <span class="shortcut-icon">⭐</span>
+                                <span class="shortcut-label">Input Evaluasi</span>
+                                <span class="shortcut-badge" id="shortcut-evaluasi-badge"></span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Warning Card (if ada jadwal belum absen) -->
+                    <div class="glass-card guru-warning-card" id="guru-warning-card" style="display: none;">
+                        <div class="card-head warning-head">
+                            <h3><span class="ch-icon">⚠️</span> Perhatian!</h3>
+                        </div>
+                        <div class="warning-content" id="guru-warning-content">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ===================== ADMIN/PIMPINAN DASHBOARD ===================== -->
+        <section id="dashboard-section" class="admin-section" style="display: none;">
 
             <!-- Welcome Banner -->
             <div class="welcome-banner">
