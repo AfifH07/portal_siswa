@@ -450,11 +450,12 @@
                                     <th>Rata-rata</th>
                                     <th>Prestasi</th>
                                     <th>Pelanggaran</th>
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="students-body">
                                 <tr>
-                                    <td colspan="7" class="text-center">
+                                    <td colspan="8" class="text-center">
                                         <div class="loading-spinner"></div>
                                     </td>
                                 </tr>
@@ -472,444 +473,75 @@
 <div id="toast" class="toast"><span id="toast-message"></span></div>
 
 <!-- ===================== MODAL: DETAIL SISWA ===================== -->
-<div id="student-detail-modal" class="modal">
-    <div class="modal-backdrop" onclick="closeStudentDetailModal()"></div>
+<div id="view-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeViewModal()"></div>
     <div class="modal-content modal-large">
         <div class="modal-header">
-            <h3 id="modal-title">Detail Siswa</h3>
-            <button class="modal-close" onclick="closeStudentDetailModal()">&times;</button>
+            <h3>Detail Siswa</h3>
+            <button class="modal-close" onclick="closeViewModal()">&times;</button>
         </div>
-        <div class="modal-body" id="student-detail-body">
-            <!-- Student Header -->
-            <div class="student-profile-header" id="student-profile-header">
-                <div class="profile-avatar" id="profile-avatar">-</div>
-                <div class="profile-info">
-                    <div class="profile-name" id="profile-name">Memuat...</div>
-                    <div class="profile-meta">
-                        <span class="profile-nisn" id="profile-nisn">-</span>
-                        <span class="profile-gender" id="profile-gender">-</span>
-                        <span class="profile-program" id="profile-program">-</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Tabs -->
-            <div class="modal-tabs">
-                <button class="modal-tab-btn active" onclick="switchModalTab('akademik')">📚 Akademik</button>
-                <button class="modal-tab-btn" onclick="switchModalTab('kehadiran')">📅 Kehadiran</button>
-                <button class="modal-tab-btn" onclick="switchModalTab('evaluasi')">⭐ Evaluasi</button>
-                <button class="modal-tab-btn" onclick="switchModalTab('hafalan')">📖 Hafalan</button>
-            </div>
-
-            <!-- Tab: Akademik -->
-            <div class="modal-tab-content active" id="modal-tab-akademik">
-                <div class="detail-section">
-                    <h4>Rata-rata Nilai per Mata Pelajaran</h4>
-                    <div class="akademik-summary" id="akademik-summary">
-                        <div class="summary-stat">
-                            <span class="stat-value" id="akademik-rata-rata">-</span>
-                            <span class="stat-label">Rata-rata Keseluruhan</span>
-                        </div>
-                    </div>
-                    <div class="akademik-list" id="akademik-list">
-                        <p class="empty-text">Memuat data...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab: Kehadiran -->
-            <div class="modal-tab-content" id="modal-tab-kehadiran">
-                <div class="detail-section">
-                    <h4>Kehadiran Bulan Ini</h4>
-                    <div class="kehadiran-grid" id="kehadiran-grid">
-                        <div class="kehadiran-stat hadir">
-                            <div class="stat-value" id="kehadiran-hadir">-</div>
-                            <div class="stat-label">Hadir</div>
-                            <div class="stat-percent" id="kehadiran-hadir-persen">0%</div>
-                        </div>
-                        <div class="kehadiran-stat sakit">
-                            <div class="stat-value" id="kehadiran-sakit">-</div>
-                            <div class="stat-label">Sakit</div>
-                            <div class="stat-percent" id="kehadiran-sakit-persen">0%</div>
-                        </div>
-                        <div class="kehadiran-stat izin">
-                            <div class="stat-value" id="kehadiran-izin">-</div>
-                            <div class="stat-label">Izin</div>
-                            <div class="stat-percent" id="kehadiran-izin-persen">0%</div>
-                        </div>
-                        <div class="kehadiran-stat alpha">
-                            <div class="stat-value" id="kehadiran-alpha">-</div>
-                            <div class="stat-label">Alpha</div>
-                            <div class="stat-percent" id="kehadiran-alpha-persen">0%</div>
-                        </div>
-                    </div>
-                    <div class="kehadiran-total" id="kehadiran-total">
-                        Total record: <strong>-</strong>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab: Evaluasi -->
-            <div class="modal-tab-content" id="modal-tab-evaluasi">
-                <div class="detail-section">
-                    <h4>Evaluasi Karakter</h4>
-                    <div class="evaluasi-summary">
-                        <div class="evaluasi-stat prestasi">
-                            <span class="stat-icon">🏆</span>
-                            <span class="stat-value" id="evaluasi-prestasi">0</span>
-                            <span class="stat-label">Prestasi</span>
-                        </div>
-                        <div class="evaluasi-stat pelanggaran">
-                            <span class="stat-icon">⚠️</span>
-                            <span class="stat-value" id="evaluasi-pelanggaran">0</span>
-                            <span class="stat-label">Pelanggaran</span>
-                        </div>
-                    </div>
-                    <h4 style="margin-top: 1.5rem;">5 Riwayat Terbaru</h4>
-                    <div class="evaluasi-list" id="evaluasi-list">
-                        <p class="empty-text">Memuat data...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab: Hafalan -->
-            <div class="modal-tab-content" id="modal-tab-hafalan">
-                <div class="detail-section">
-                    <h4>Progress Hafalan</h4>
-                    <div class="hafalan-progress">
-                        <div class="progress-circle" id="hafalan-circle">
-                            <span class="progress-value" id="hafalan-persen">0%</span>
-                        </div>
-                        <div class="progress-details">
-                            <div class="progress-row">
-                                <span>Tercapai:</span>
-                                <strong id="hafalan-tercapai">0</strong> juz
-                            </div>
-                            <div class="progress-row">
-                                <span>Target:</span>
-                                <strong id="hafalan-target">0</strong> juz
-                            </div>
-                        </div>
-                    </div>
-                    <div class="hafalan-catatan" id="hafalan-catatan" style="display: none;">
-                        <strong>Catatan:</strong>
-                        <p id="hafalan-catatan-text">-</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-outline-emerald" onclick="closeStudentDetailModal()">Tutup</button>
+        <div class="modal-body" id="view-modal-body">
+            <div class="loading-spinner" style="margin: 30px auto;"></div>
         </div>
     </div>
 </div>
 
 <style>
-/* Modal Detail Siswa Styles */
-#student-detail-modal .modal-content {
-    max-width: 700px;
-}
-.student-profile-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: linear-gradient(135deg, var(--emerald-50) 0%, white 100%);
-    border-radius: 12px;
-    margin-bottom: 1rem;
-}
-.profile-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--emerald-600);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-.profile-info {
-    flex: 1;
-}
-.profile-name {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-dark);
-}
-.profile-meta {
-    display: flex;
-    gap: 1rem;
-    margin-top: 0.25rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-.profile-meta span {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-.profile-nisn::before { content: '🆔'; }
-.profile-gender::before { content: '👤'; }
-.profile-program::before { content: '📚'; }
-
-/* Modal Tabs */
-.modal-tabs {
-    display: flex;
-    gap: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 1rem;
-}
-.modal-tab-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-}
-.modal-tab-btn:hover {
-    color: var(--emerald-600);
-}
-.modal-tab-btn.active {
-    color: var(--emerald-600);
-    border-bottom-color: var(--emerald-600);
-}
-.modal-tab-content {
-    display: none;
-}
-.modal-tab-content.active {
-    display: block;
-}
-.detail-section h4 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    color: var(--text-dark);
-}
-
-/* Akademik */
-.akademik-summary {
-    background: var(--emerald-50);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    text-align: center;
-}
-.akademik-summary .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--emerald-600);
-}
-.akademik-summary .stat-label {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-.akademik-list {
+/* Detail Modal Styles */
+.detail-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
-}
-.mapel-item {
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.mapel-item .mapel-name {
-    font-weight: 500;
-    font-size: 0.85rem;
-}
-.mapel-item .mapel-nilai {
-    font-weight: 700;
-    color: var(--emerald-600);
-}
-
-/* Kehadiran */
-.kehadiran-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-.kehadiran-stat {
-    padding: 1rem;
-    border-radius: 12px;
-    text-align: center;
-}
-.kehadiran-stat.hadir { background: #dcfce7; }
-.kehadiran-stat.sakit { background: #fef3c7; }
-.kehadiran-stat.izin { background: #dbeafe; }
-.kehadiran-stat.alpha { background: #fee2e2; }
-.kehadiran-stat .stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-}
-.kehadiran-stat.hadir .stat-value { color: #166534; }
-.kehadiran-stat.sakit .stat-value { color: #92400e; }
-.kehadiran-stat.izin .stat-value { color: #1e40af; }
-.kehadiran-stat.alpha .stat-value { color: #dc2626; }
-.kehadiran-stat .stat-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: 0.25rem;
-}
-.kehadiran-stat .stat-percent {
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-top: 0.25rem;
-}
-.kehadiran-total {
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-/* Evaluasi */
-.evaluasi-summary {
-    display: flex;
     gap: 1rem;
-    margin-bottom: 1rem;
 }
-.evaluasi-stat {
-    flex: 1;
-    padding: 1rem;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-.evaluasi-stat.prestasi { background: #dcfce7; }
-.evaluasi-stat.pelanggaran { background: #fee2e2; }
-.evaluasi-stat .stat-icon { font-size: 1.5rem; }
-.evaluasi-stat .stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-.evaluasi-stat.prestasi .stat-value { color: #166534; }
-.evaluasi-stat.pelanggaran .stat-value { color: #dc2626; }
-.evaluasi-stat .stat-label {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-.evaluasi-list {
-    max-height: 250px;
-    overflow-y: auto;
-}
-.evaluasi-item {
+.detail-item {
     padding: 0.75rem;
-    border: 1px solid var(--border-color);
+    background: var(--emerald-50, #ecfdf5);
     border-radius: 8px;
-    margin-bottom: 0.5rem;
 }
-.evaluasi-item:last-child { margin-bottom: 0; }
-.evaluasi-item .eval-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.25rem;
-}
-.evaluasi-item .eval-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-.evaluasi-item .eval-date {
+.detail-label {
     font-size: 0.75rem;
-    color: var(--text-muted);
-}
-.evaluasi-item .eval-tags {
-    display: flex;
-    gap: 0.5rem;
+    color: var(--text-muted, #6b7280);
     margin-bottom: 0.25rem;
 }
-.eval-tag {
-    font-size: 0.7rem;
-    padding: 0.15rem 0.5rem;
+.detail-value {
+    font-weight: 600;
+    color: var(--text-dark, #1f2937);
+}
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
     border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
 }
-.eval-tag.prestasi { background: #dcfce7; color: #166534; }
-.eval-tag.pelanggaran { background: #fee2e2; color: #dc2626; }
-.eval-tag.kategori { background: #f3f4f6; color: var(--text-muted); }
-.evaluasi-item .eval-summary {
-    font-size: 0.8rem;
-    color: var(--text-muted);
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
 }
-
-/* Hafalan */
-.hafalan-progress {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, var(--emerald-50) 0%, white 100%);
-    border-radius: 12px;
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
 }
-.progress-circle {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: conic-gradient(var(--emerald-500) var(--progress, 0%), #e5e7eb var(--progress, 0%));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-.progress-circle::before {
-    content: '';
-    position: absolute;
-    width: 90px;
-    height: 90px;
-    background: white;
-    border-radius: 50%;
-}
-.progress-circle .progress-value {
-    position: relative;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--emerald-600);
-}
-.progress-details {
-    flex: 1;
-}
-.progress-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    border-bottom: 1px dashed var(--border-color);
-}
-.progress-row:last-child { border-bottom: none; }
-.hafalan-catatan {
-    margin-top: 1rem;
-    padding: 0.75rem;
-    background: #f9fafb;
-    border-radius: 8px;
-    font-size: 0.85rem;
-}
-.hafalan-catatan p {
-    margin: 0.25rem 0 0;
-    color: var(--text-muted);
+.badge-danger {
+    background: #fee2e2;
+    color: #dc2626;
 }
 
-.empty-text {
-    text-align: center;
-    color: var(--text-muted);
-    padding: 1rem;
-}
-
-/* Clickable rows */
-.students-table tbody tr {
+/* Action buttons in table */
+.action-btn {
+    padding: 0.35rem 0.5rem;
+    border: none;
+    border-radius: 6px;
     cursor: pointer;
+    font-size: 0.85rem;
     transition: all 0.15s;
 }
-.students-table tbody tr:hover {
-    background: var(--emerald-100) !important;
-    transform: translateX(4px);
+.action-btn-view {
+    background: var(--emerald-100, #d1fae5);
+    color: var(--emerald-700, #047857);
+}
+.action-btn-view:hover {
+    background: var(--emerald-200, #a7f3d0);
 }
 </style>
 
@@ -1148,139 +780,114 @@
     }
 
     // ============================================
-    // MODAL DETAIL SISWA
+    // MODAL DETAIL SISWA (same as students.html)
     // ============================================
 
-    let currentStudentNisn = null;
-
-    function openStudentDetailModal(nisn) {
-        currentStudentNisn = nisn;
-        document.getElementById('student-detail-modal').classList.add('active');
-        loadStudentDetail(nisn);
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
-    function closeStudentDetailModal() {
-        document.getElementById('student-detail-modal').classList.remove('active');
-        currentStudentNisn = null;
-    }
-
-    function switchModalTab(tabName) {
-        // Update tab buttons
-        document.querySelectorAll('.modal-tab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.onclick.toString().includes(tabName));
-        });
-        // Update tab content
-        document.querySelectorAll('.modal-tab-content').forEach(content => {
-            content.classList.toggle('active', content.id === `modal-tab-${tabName}`);
-        });
-    }
-
-    async function loadStudentDetail(nisn) {
-        // Reset UI
-        document.getElementById('profile-name').textContent = 'Memuat...';
-        document.getElementById('profile-avatar').textContent = '-';
-        document.getElementById('akademik-list').innerHTML = '<p class="empty-text">Memuat data...</p>';
-        document.getElementById('evaluasi-list').innerHTML = '<p class="empty-text">Memuat data...</p>';
-
+    async function viewStudent(nisn) {
         try {
-            const resp = await window.apiFetch(`auth/kelas-saya/siswa/${nisn}/detail/`);
+            const detailBody = document.getElementById('view-modal-body');
+            detailBody.innerHTML = '<div class="loading-spinner" style="margin: 30px auto;"></div>';
+            document.getElementById('view-modal').classList.add('active');
+
+            // Use same endpoint as students.html: /api/students/{nisn}/
+            const resp = await window.apiFetch(`students/${nisn}/`);
             if (!resp || !resp.ok) {
-                const errData = await resp.json().catch(() => ({}));
-                showToast(errData.message || 'Gagal memuat detail siswa', 'error');
-                return;
+                throw new Error('Failed to load student');
             }
+            const student = await resp.json();
 
-            const data = await resp.json();
-            if (!data.success) {
-                showToast(data.message || 'Gagal memuat data', 'error');
-                return;
-            }
+            const hafalanStatus = student.hafalan_status === 'above_target'
+                ? '<span class="badge badge-success">✓ Di atas target</span>'
+                : '<span class="badge badge-warning">⚠ Di bawah target</span>';
 
-            renderStudentDetail(data);
+            const progressPercent = student.progress_hafalan_percentage || 0;
+            const statusBadge = student.aktif
+                ? '<span class="badge badge-success">Aktif</span>'
+                : '<span class="badge badge-danger">Tidak Aktif</span>';
 
-        } catch (err) {
-            console.error('Error loading student detail:', err);
-            showToast('Terjadi kesalahan', 'error');
+            detailBody.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">NISN</div>
+                        <div class="detail-value" style="font-family: var(--font-mono);">${escapeHtml(student.nisn)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Nama</div>
+                        <div class="detail-value">${escapeHtml(student.nama)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Kelas</div>
+                        <div class="detail-value">${escapeHtml(student.kelas) || '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Program</div>
+                        <div class="detail-value">${escapeHtml(student.program) || '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Email</div>
+                        <div class="detail-value">${escapeHtml(student.email) || '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">No. HP</div>
+                        <div class="detail-value">${escapeHtml(student.phone) || '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Nama Wali</div>
+                        <div class="detail-value">${escapeHtml(student.wali_nama) || '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">No. HP Wali</div>
+                        <div class="detail-value">${escapeHtml(student.wali_phone) || '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Tanggal Masuk</div>
+                        <div class="detail-value">${student.tanggal_masuk ? formatDate(student.tanggal_masuk) : '-'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">${statusBadge}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Target Hafalan</div>
+                        <div class="detail-value" style="font-family: var(--font-mono);">${student.target_hafalan} juz</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Hafalan Saat Ini</div>
+                        <div class="detail-value" style="font-family: var(--font-mono);">${student.current_hafalan} juz</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Progress Hafalan</div>
+                        <div class="detail-value" style="font-family: var(--font-mono);">${progressPercent}%</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Status Hafalan</div>
+                        <div class="detail-value">${hafalanStatus}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Target Nilai</div>
+                        <div class="detail-value" style="font-family: var(--font-mono);">${student.target_nilai}</div>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error viewing student:', error);
+            showToast('Gagal memuat data siswa', 'error');
+            document.getElementById('view-modal').classList.remove('active');
         }
     }
 
-    function renderStudentDetail(data) {
-        const { profile, akademik, kehadiran, evaluasi, hafalan } = data;
-
-        // === PROFILE ===
-        const initials = profile.nama.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        document.getElementById('profile-avatar').textContent = initials;
-        document.getElementById('profile-name').textContent = profile.nama;
-        document.getElementById('profile-nisn').textContent = profile.nisn;
-        document.getElementById('profile-gender').textContent = profile.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan';
-        document.getElementById('profile-program').textContent = profile.program || profile.kelas;
-
-        // === AKADEMIK ===
-        document.getElementById('akademik-rata-rata').textContent = akademik.rata_rata_keseluruhan || '-';
-
-        if (akademik.mata_pelajaran && akademik.mata_pelajaran.length > 0) {
-            document.getElementById('akademik-list').innerHTML = akademik.mata_pelajaran.map(m => `
-                <div class="mapel-item">
-                    <span class="mapel-name">${m.nama}</span>
-                    <span class="mapel-nilai">${m.rata_rata}</span>
-                </div>
-            `).join('');
-        } else {
-            document.getElementById('akademik-list').innerHTML = '<p class="empty-text">Belum ada nilai</p>';
-        }
-
-        // === KEHADIRAN ===
-        document.getElementById('kehadiran-hadir').textContent = kehadiran.hadir;
-        document.getElementById('kehadiran-sakit').textContent = kehadiran.sakit;
-        document.getElementById('kehadiran-izin').textContent = kehadiran.izin;
-        document.getElementById('kehadiran-alpha').textContent = kehadiran.alpha;
-        document.getElementById('kehadiran-hadir-persen').textContent = kehadiran.persentase_hadir + '%';
-        document.getElementById('kehadiran-sakit-persen').textContent = kehadiran.persentase_sakit + '%';
-        document.getElementById('kehadiran-izin-persen').textContent = kehadiran.persentase_izin + '%';
-        document.getElementById('kehadiran-alpha-persen').textContent = kehadiran.persentase_alpha + '%';
-        document.getElementById('kehadiran-total').innerHTML = `Total record: <strong>${kehadiran.total_record}</strong>`;
-
-        // === EVALUASI ===
-        document.getElementById('evaluasi-prestasi').textContent = evaluasi.total_prestasi;
-        document.getElementById('evaluasi-pelanggaran').textContent = evaluasi.total_pelanggaran;
-
-        if (evaluasi.riwayat && evaluasi.riwayat.length > 0) {
-            document.getElementById('evaluasi-list').innerHTML = evaluasi.riwayat.map(e => `
-                <div class="evaluasi-item">
-                    <div class="eval-header">
-                        <span class="eval-name">${e.name}</span>
-                        <span class="eval-date">${formatDate(e.tanggal)}</span>
-                    </div>
-                    <div class="eval-tags">
-                        <span class="eval-tag ${e.jenis}">${e.jenis === 'prestasi' ? '🏆 Prestasi' : '⚠️ Pelanggaran'}</span>
-                        <span class="eval-tag kategori">${e.kategori}</span>
-                    </div>
-                    <div class="eval-summary">${e.summary || '-'}</div>
-                </div>
-            `).join('');
-        } else {
-            document.getElementById('evaluasi-list').innerHTML = '<p class="empty-text">Belum ada riwayat evaluasi</p>';
-        }
-
-        // === HAFALAN ===
-        const persen = hafalan.persentase || 0;
-        document.getElementById('hafalan-persen').textContent = persen + '%';
-        document.getElementById('hafalan-tercapai').textContent = hafalan.tercapai_juz;
-        document.getElementById('hafalan-target').textContent = hafalan.target_juz;
-
-        // Update progress circle
-        const circle = document.getElementById('hafalan-circle');
-        circle.style.setProperty('--progress', persen + '%');
-
-        if (hafalan.catatan) {
-            document.getElementById('hafalan-catatan').style.display = 'block';
-            document.getElementById('hafalan-catatan-text').textContent = hafalan.catatan;
-        } else {
-            document.getElementById('hafalan-catatan').style.display = 'none';
-        }
+    function closeViewModal() {
+        document.getElementById('view-modal').classList.remove('active');
     }
 
-    // Update loadStudents to add click handlers
+    // Load students with Detail button
     async function loadStudents() {
         try {
             const resp = await window.apiFetch('auth/kelas-saya/students/');
@@ -1293,12 +900,12 @@
 
             const tbody = document.getElementById('students-body');
             if (data.students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada siswa</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada siswa</td></tr>';
                 return;
             }
 
             tbody.innerHTML = data.students.map((s, idx) => `
-                <tr onclick="openStudentDetailModal('${s.nisn}')" title="Klik untuk lihat detail">
+                <tr>
                     <td>${idx + 1}</td>
                     <td><code>${s.nisn}</code></td>
                     <td>${s.nama}</td>
@@ -1306,6 +913,11 @@
                     <td><strong>${s.rata_rata_nilai}</strong></td>
                     <td>${s.prestasi > 0 ? `<span class="badge-prestasi">${s.prestasi}</span>` : '-'}</td>
                     <td>${s.pelanggaran > 0 ? `<span class="badge-pelanggaran">${s.pelanggaran}</span>` : '-'}</td>
+                    <td>
+                        <button onclick="viewStudent('${s.nisn}')" class="action-btn action-btn-view" title="Lihat Detail">
+                            👁️ Detail
+                        </button>
+                    </td>
                 </tr>
             `).join('');
 
