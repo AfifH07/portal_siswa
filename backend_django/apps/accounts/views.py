@@ -523,7 +523,7 @@ def kelas_overview(request):
     # Attendance rate (last 30 days)
     thirty_days_ago = date.today() - timedelta(days=30)
     attendance_stats = Attendance.objects.filter(
-        student__kelas=kelas,
+        nisn__kelas=kelas,
         tanggal__gte=thirty_days_ago
     ).aggregate(
         total=Count('id'),
