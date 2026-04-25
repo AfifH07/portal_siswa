@@ -531,15 +531,28 @@
         try {
             const resp = await window.apiFetch('auth/kelas-saya/overview/');
             if (!resp || !resp.ok) {
+                // Show error on page
+                document.getElementById('kelas-title').textContent = 'Akses Ditolak';
+                document.getElementById('kelas-subtitle').textContent = '';
+                document.getElementById('kelas-badge').textContent = '-';
+
                 if (resp && resp.status === 403) {
-                    showToast('Anda bukan wali kelas aktif', 'error');
-                    setTimeout(() => window.location.href = '/dashboard/', 2000);
+                    const errData = await resp.json().catch(() => ({}));
+                    showToast(errData.message || 'Anda bukan wali kelas aktif', 'error');
+                    document.getElementById('kelas-subtitle').textContent = errData.message || 'Anda bukan wali kelas aktif semester ini';
+                } else {
+                    showToast('Gagal memuat data kelas', 'error');
                 }
                 return;
             }
 
             const data = await resp.json();
-            if (!data.success) return;
+            if (!data.success) {
+                showToast(data.message || 'Gagal memuat data', 'error');
+                document.getElementById('kelas-title').textContent = 'Error';
+                document.getElementById('kelas-subtitle').textContent = data.message || 'Gagal memuat data';
+                return;
+            }
 
             kelasInfo = data;
 
@@ -562,6 +575,9 @@
 
         } catch (err) {
             console.error('Error loading overview:', err);
+            showToast('Terjadi kesalahan saat memuat data', 'error');
+            document.getElementById('kelas-title').textContent = 'Error';
+            document.getElementById('kelas-subtitle').textContent = 'Terjadi kesalahan';
         }
     }
 

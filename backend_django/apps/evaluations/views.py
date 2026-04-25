@@ -304,9 +304,12 @@ def evaluation_statistics(request):
         total_pelanggaran = queryset.filter(jenis='pelanggaran').count()
 
         # DEBUG: Check actual kategori values in database
-        kategori_values = list(queryset.values_list('kategori', flat=True).distinct())
-        print(f"[Evaluation Statistics] DEBUG - Distinct kategori values: {kategori_values}")
-        print(f"[Evaluation Statistics] DEBUG - Total records: {total_evaluations}, Prestasi: {total_prestasi}")
+        kategori_values = list(queryset.values_list('kategori', flat=True))
+        kategori_unique = list(set(kategori_values))
+        print(f"[Evaluation Statistics] DEBUG - User: {user.username}, Role: {user.role}")
+        print(f"[Evaluation Statistics] DEBUG - Queryset count: {total_evaluations}")
+        print(f"[Evaluation Statistics] DEBUG - Unique kategori: {kategori_unique}")
+        print(f"[Evaluation Statistics] DEBUG - All kategori values: {kategori_values[:20]}")  # First 20
 
         from django.utils import timezone
         from django.db.models.functions import TruncMonth
@@ -414,7 +417,13 @@ def evaluation_statistics(request):
                 'pelanggaran_by_category': category_pelanggaran,
                 'monthly_trend': monthly_trend,
                 # DEBUG: Remove after testing
-                '_debug_kategori_values': kategori_values,
+                '_debug': {
+                    'user': user.username,
+                    'role': user.role,
+                    'queryset_count': total_evaluations,
+                    'unique_kategori': kategori_unique,
+                    'sample_kategori': kategori_values[:10],
+                }
             }
         })
     except Exception as e:
