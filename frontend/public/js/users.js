@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await Promise.all([
             loadStats(),
             loadUsers(),
-            loadHalaqohOptions()
+            loadMentoringOptions()
         ]);
 
         // Update topbar date
