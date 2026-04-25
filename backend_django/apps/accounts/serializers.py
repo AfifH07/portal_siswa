@@ -21,8 +21,8 @@ def validate_kelas_format(value):
     # Normalize: uppercase, remove extra spaces
     value = value.strip().upper()
 
-    # Pattern: "XII A" or "XII-A" or "XII_A"
-    match = re.match(r'^(X{1,2}I{0,1})\s*[-_]?\s*([A-D])$', value)
+    # Pattern: "X A", "XI B", "XII C" (with optional dash/underscore separator)
+    match = re.match(r'^(XII|XI|X)\s*[-_]?\s*([A-D])$', value)
 
     if match:
         grade = match.group(1)
