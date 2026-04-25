@@ -700,6 +700,183 @@ def kelas_pembinaan(request):
     })
 
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def kelas_student_detail(request, nisn):
+    """
+    GET /api/auth/kelas-saya/siswa/<nisn>/detail/
+    Get detailed info for a student in wali kelas's class.
+
+    Returns:
+    - profile: nama, nisn, jenis_kelamin, kelas
+    - akademik: nilai rata-rata per mata pelajaran
+    - kehadiran: persentase H/S/I/A bulan ini
+    - evaluasi: total prestasi & pelanggaran + 5 riwayat terbaru
+    - hafalan: progress juz (target vs tercapai)
+    """
+    user = request.user
+
+    from apps.core.models import TahunAjaran
+    from apps.students.models import Student
+    from apps.grades.models import Grade
+    from apps.attendance.models import Attendance
+    from apps.evaluations.models import Evaluation
+    from apps.kesantrian.models import TargetHafalan
+    from django.db.models import Avg, Count, Q
+    from datetime import date, timedelta
+
+    # Get active tahun ajaran
+    tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+    if not tahun_ajaran:
+        return Response({'success': False, 'message': 'Tidak ada tahun ajaran aktif'}, status=400)
+
+    # Check wali kelas assignment
+    assignment = Assignment.objects.filter(
+        user=user,
+        assignment_type='wali_kelas',
+        status='active',
+        tahun_ajaran=tahun_ajaran.nama,
+        semester=tahun_ajaran.semester
+    ).first()
+
+    if not assignment:
+        return Response({'success': False, 'message': 'Anda bukan wali kelas aktif'}, status=403)
+
+    kelas = assignment.kelas
+
+    # Get student - must be in wali kelas's class
+    try:
+        student = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Siswa tidak ditemukan'}, status=404)
+
+    if student.kelas != kelas:
+        return Response({'success': False, 'message': 'Siswa bukan dari kelas Anda'}, status=403)
+
+    # === 1. PROFILE ===
+    profile = {
+        'nisn': student.nisn,
+        'nama': student.nama,
+        'jenis_kelamin': student.jenis_kelamin,
+        'kelas': student.kelas,
+        'program': student.program,
+    }
+
+    # === 2. AKADEMIK - Rata-rata nilai per mata pelajaran ===
+    grades = Grade.objects.filter(
+        nisn=student,
+        semester=tahun_ajaran.semester,
+        tahun_ajaran=tahun_ajaran.nama
+    ).values('mata_pelajaran').annotate(
+        rata_rata=Avg('nilai'),
+        jumlah=Count('id')
+    ).order_by('mata_pelajaran')
+
+    akademik = {
+        'mata_pelajaran': [
+            {
+                'nama': g['mata_pelajaran'],
+                'rata_rata': round(g['rata_rata'], 1) if g['rata_rata'] else 0,
+                'jumlah_nilai': g['jumlah']
+            }
+            for g in grades
+        ],
+        'rata_rata_keseluruhan': round(
+            Grade.objects.filter(
+                nisn=student,
+                semester=tahun_ajaran.semester,
+                tahun_ajaran=tahun_ajaran.nama
+            ).aggregate(avg=Avg('nilai'))['avg'] or 0, 1
+        )
+    }
+
+    # === 3. KEHADIRAN - Persentase bulan ini ===
+    today = date.today()
+    first_day_of_month = today.replace(day=1)
+
+    attendance_this_month = Attendance.objects.filter(
+        nisn=student,
+        tanggal__gte=first_day_of_month,
+        tanggal__lte=today
+    )
+
+    total_attendance = attendance_this_month.count()
+    hadir_count = attendance_this_month.filter(status='H').count()
+    sakit_count = attendance_this_month.filter(status='S').count()
+    izin_count = attendance_this_month.filter(status='I').count()
+    alpha_count = attendance_this_month.filter(status='A').count()
+
+    kehadiran = {
+        'total_record': total_attendance,
+        'hadir': hadir_count,
+        'sakit': sakit_count,
+        'izin': izin_count,
+        'alpha': alpha_count,
+        'persentase_hadir': round((hadir_count / total_attendance * 100), 1) if total_attendance > 0 else 0,
+        'persentase_sakit': round((sakit_count / total_attendance * 100), 1) if total_attendance > 0 else 0,
+        'persentase_izin': round((izin_count / total_attendance * 100), 1) if total_attendance > 0 else 0,
+        'persentase_alpha': round((alpha_count / total_attendance * 100), 1) if total_attendance > 0 else 0,
+    }
+
+    # === 4. EVALUASI - Prestasi & Pelanggaran ===
+    evaluations = Evaluation.objects.filter(nisn=student)
+    prestasi_count = evaluations.filter(jenis='prestasi').count()
+    pelanggaran_count = evaluations.filter(jenis='pelanggaran').count()
+
+    # 5 riwayat terbaru
+    recent_evaluations = evaluations.order_by('-tanggal', '-created_at')[:5]
+
+    evaluasi = {
+        'total_prestasi': prestasi_count,
+        'total_pelanggaran': pelanggaran_count,
+        'riwayat': [
+            {
+                'tanggal': str(e.tanggal),
+                'jenis': e.jenis,
+                'kategori': e.kategori,
+                'name': e.name,
+                'summary': e.summary[:150] if e.summary else '',
+                'evaluator': e.evaluator
+            }
+            for e in recent_evaluations
+        ]
+    }
+
+    # === 5. HAFALAN - Progress juz ===
+    target_hafalan = TargetHafalan.objects.filter(
+        siswa=student,
+        tahun_ajaran=tahun_ajaran.nama,
+        semester=tahun_ajaran.semester
+    ).first()
+
+    if target_hafalan:
+        hafalan = {
+            'target_juz': float(target_hafalan.target_juz),
+            'tercapai_juz': float(target_hafalan.tercapai_juz),
+            'persentase': target_hafalan.persentase_tercapai,
+            'catatan': target_hafalan.catatan
+        }
+    else:
+        # Fallback to Student model fields
+        hafalan = {
+            'target_juz': float(student.target_hafalan) if student.target_hafalan else 0,
+            'tercapai_juz': float(student.current_hafalan) if student.current_hafalan else 0,
+            'persentase': round(
+                (student.current_hafalan / student.target_hafalan * 100), 1
+            ) if student.target_hafalan and student.target_hafalan > 0 else 0,
+            'catatan': None
+        }
+
+    return Response({
+        'success': True,
+        'profile': profile,
+        'akademik': akademik,
+        'kehadiran': kehadiran,
+        'evaluasi': evaluasi,
+        'hafalan': hafalan
+    })
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([permissions.IsAuthenticated])
 def kelas_catatan(request):

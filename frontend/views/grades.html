@@ -1332,7 +1332,11 @@
                 return;
             }
 
-            // Update confirmation panel
+            // Step 4: Show panel FIRST, then populate data
+            inputNilaiStep++;
+            updateInputStepUI();
+
+            // NOW populate confirmation panel (after panel is visible)
             document.getElementById('confirm-kelas').textContent = inputNilaiData.kelas;
             document.getElementById('confirm-mapel').textContent = inputNilaiData.mapel;
             document.getElementById('confirm-jenis').textContent = inputNilaiData.jenis;
@@ -1342,6 +1346,7 @@
             // Hide result, show confirm
             document.getElementById('input-result').style.display = 'none';
             document.querySelector('#input-step-4 .confirm-box').style.display = 'block';
+            return; // Exit early, step already incremented
         }
 
         inputNilaiStep++;

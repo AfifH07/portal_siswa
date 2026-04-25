@@ -17,4 +17,5 @@ urlpatterns = [
     path('kelas-saya/students/', views.kelas_students, name='kelas_students'),
     path('kelas-saya/pembinaan/', views.kelas_pembinaan, name='kelas_pembinaan'),
     path('kelas-saya/catatan/', views.kelas_catatan, name='kelas_catatan'),
+    path('kelas-saya/siswa/<str:nisn>/detail/', views.kelas_student_detail, name='kelas_student_detail'),
 ]
