@@ -458,12 +458,23 @@
                             <i data-lucide="clipboard-check" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
                             Ada Penilaian?
                         </label>
-                        <label class="toggle-checkbox">
-                            <input type="checkbox" id="input-ada-penilaian">
-                            <span class="toggle-slider"></span>
-                            <span class="toggle-label">Ya, ada penilaian pada sesi ini</span>
-                        </label>
-                        <p class="field-hint">Centang jika kamu memberikan penilaian pada sesi ini. Pengingat input nilai akan muncul di dashboard.</p>
+                        <div class="penilaian-card">
+                            <label class="penilaian-toggle" for="input-ada-penilaian">
+                                <div class="penilaian-toggle-left">
+                                    <div class="penilaian-icon">
+                                        <i data-lucide="file-check" style="width:20px;height:20px;"></i>
+                                    </div>
+                                    <div class="penilaian-text">
+                                        <span class="penilaian-title">Ya, ada penilaian</span>
+                                        <span class="penilaian-desc">Pengingat input nilai akan muncul di dashboard</span>
+                                    </div>
+                                </div>
+                                <div class="penilaian-switch">
+                                    <input type="checkbox" id="input-ada-penilaian">
+                                    <span class="penilaian-slider"></span>
+                                </div>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>

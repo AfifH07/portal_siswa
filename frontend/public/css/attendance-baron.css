@@ -1698,6 +1698,122 @@ textarea.glass-input::placeholder {
     color: var(--text-main);
 }
 
+/* =============================================
+   PENILAIAN CARD (Ada Penilaian - v2.3.11)
+   ============================================= */
+
+.penilaian-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.penilaian-card:hover {
+    border-color: var(--emerald-400);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.penilaian-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    cursor: pointer;
+    gap: 16px;
+}
+
+.penilaian-toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+}
+
+.penilaian-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #047857;
+    flex-shrink: 0;
+}
+
+.penilaian-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.penilaian-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.penilaian-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.penilaian-switch {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.penilaian-switch input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.penilaian-slider {
+    display: block;
+    width: 52px;
+    height: 28px;
+    background: #d1d5db;
+    border-radius: 14px;
+    position: relative;
+    transition: background 0.3s ease;
+}
+
+.penilaian-slider::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+.penilaian-switch input:checked + .penilaian-slider {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.penilaian-switch input:checked + .penilaian-slider::after {
+    transform: translateX(24px);
+}
+
+/* Checked state - card highlight */
+.penilaian-card:has(input:checked) {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+}
+
+.penilaian-card:has(input:checked) .penilaian-icon {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
 .field-hint {
     margin-top: 8px;
     font-size: 12px;

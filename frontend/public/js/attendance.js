@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initKetuntasanSlider() {
     const slider = document.getElementById('input-ketuntasan');
-    const valueDisplay = document.getElementById('ketuntasan-value');
+    const valueDisplay = document.getElementById('ketuntasan-display'); // FIX: correct element ID
 
     if (slider && valueDisplay) {
         slider.addEventListener('input', function() {
@@ -1099,7 +1099,22 @@ function formatDate(dateStr) {
  */
 function openAddModal() {
     resetModalStep();
-    inputData = { kelas: '', mapel: '', tanggal: '', jam_ke: [], students: [], records: {} };
+    // FIX: Reset inputData dengan SEMUA field termasuk Step 3
+    inputData = {
+        kelas: '',
+        mapel: '',
+        tanggal: '',
+        jam_ke: [],
+        students: [],
+        records: {},
+        // Step 3 fields
+        tipe_pengajar: 'guru_asli',
+        materi: '',
+        capaian_pembelajaran: '',
+        catatan: '',
+        ketuntasan_materi: 0,
+        ada_penilaian: false
+    };
 
     document.getElementById('input-kelas').value = '';
     document.getElementById('input-mapel').value = '';
@@ -1192,13 +1207,13 @@ function resetModalStep() {
     inputData.ada_penilaian = false;
 
     const ketuntasanSlider = document.getElementById('input-ketuntasan');
-    const ketuntasanValue = document.getElementById('ketuntasan-value');
+    const ketuntasanDisplay = document.getElementById('ketuntasan-display'); // FIX: correct element ID
     const adaPenilaianInput = document.getElementById('input-ada-penilaian');
 
     if (ketuntasanSlider) ketuntasanSlider.value = 0;
-    if (ketuntasanValue) {
-        ketuntasanValue.textContent = '0%';
-        ketuntasanValue.className = 'ketuntasan-value low';
+    if (ketuntasanDisplay) {
+        ketuntasanDisplay.textContent = '0%';
+        ketuntasanDisplay.className = 'ketuntasan-value low';
     }
     if (adaPenilaianInput) adaPenilaianInput.checked = false;
 }
