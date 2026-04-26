@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Mata Pelajaran - Portal Baron</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/sidebar.css">
+    <link rel="stylesheet" href="/static/css/glass-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Tab Styles */
+        .sesi-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid var(--border-light);
+        }
+        .sesi-tab {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .sesi-tab:hover {
+            background: var(--emerald-50);
+            color: var(--emerald-600);
+        }
+        .sesi-tab.active {
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+            color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+        .sesi-tab .tab-count {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+        .sesi-tab.active .tab-count {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Table */
+        .mapel-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .mapel-table th {
+            background: var(--emerald-50);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--emerald-200);
+        }
+        .mapel-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+        .mapel-table tr:hover td {
+            background: var(--emerald-50);
+        }
+        .mapel-nama {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .mapel-kode {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--glass-bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Status Toggle */
+        .status-toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+        .status-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .status-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        .status-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        .status-toggle input:checked + .status-slider {
+            background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
+        }
+        .status-toggle input:checked + .status-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Action Buttons */
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-icon.btn-edit {
+            background: var(--blue-50, #eff6ff);
+            color: var(--blue-600, #2563eb);
+        }
+        .btn-icon.btn-edit:hover {
+            background: var(--blue-100, #dbeafe);
+        }
+        .btn-icon.btn-delete {
+            background: var(--red-50, #fef2f2);
+            color: var(--red-600, #dc2626);
+        }
+        .btn-icon.btn-delete:hover {
+            background: var(--red-100, #fee2e2);
+        }
+
+        /* Header Actions */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 450px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--emerald-400);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body data-role="">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+        <div class="user-profile">
+            <div class="user-avatar">👤</div>
+            <div class="user-info">
+                <div class="user-name" id="sidebar-user-name">Loading...</div>
+                <div class="user-role" id="sidebar-user-role">-</div>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="page-title-bar">Master Mata Pelajaran</h1>
+        </div>
+        <div class="topbar-right">
+            <span class="topbar-date" id="topbar-date"></span>
+        </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content-wrapper">
+        <!-- Admin View -->
+        <div id="admin-view">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2 class="page-title">Kelola Mata Pelajaran</h2>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="fas fa-plus me-2"></i> Tambah Mapel
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="glass-card">
+                <div class="sesi-tabs">
+                    <button class="sesi-tab active" data-sesi="kbm" onclick="switchTab('kbm')">
+                        <i class="fas fa-school me-2"></i> KBM
+                        <span class="tab-count" id="count-kbm">0</span>
+                    </button>
+                    <button class="sesi-tab" data-sesi="diniyah" onclick="switchTab('diniyah')">
+                        <i class="fas fa-moon me-2"></i> Diniyah
+                        <span class="tab-count" id="count-diniyah">0</span>
+                    </button>
+                    <button class="sesi-tab" data-sesi="tahfidz" onclick="switchTab('tahfidz')">
+                        <i class="fas fa-book-quran me-2"></i> Tahfidz
+                        <span class="tab-count" id="count-tahfidz">0</span>
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="mapel-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50%">Nama Mata Pelajaran</th>
+                                <th style="width: 15%">Kode</th>
+                                <th style="width: 15%">Status</th>
+                                <th style="width: 20%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mapel-table-body">
+                            <tr>
+                                <td colspan="4" class="text-center">
+                                    <div class="loading-spinner"></div>
+                                    <p>Memuat data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Access Denied -->
+        <div id="access-denied-view" style="display: none;">
+            <div class="glass-card text-center" style="padding: 60px;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">🔒</div>
+                <h2>Akses Ditolak</h2>
+                <p class="text-muted">Halaman ini hanya dapat diakses oleh Admin.</p>
+                <a href="/dashboard" class="btn btn-primary mt-3">Kembali ke Dashboard</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="mapel-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modal-title">Tambah Mata Pelajaran</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="mapel-form" onsubmit="saveMapel(event)">
+            <input type="hidden" id="form-id">
+            <div class="form-group">
+                <label>Nama Mata Pelajaran <span class="required">*</span></label>
+                <input type="text" id="form-nama" required placeholder="Contoh: Matematika">
+            </div>
+            <div class="form-group">
+                <label>Kode (opsional)</label>
+                <input type="text" id="form-kode" placeholder="Contoh: MTK" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label>Sesi <span class="required">*</span></label>
+                <select id="form-sesi" required>
+                    <option value="">-- Pilih Sesi --</option>
+                    <option value="kbm">KBM</option>
+                    <option value="diniyah">Diniyah</option>
+                    <option value="tahfidz">Tahfidz</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Batal</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i> Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="delete-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Hapus Mata Pelajaran</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <p>Apakah Anda yakin ingin menonaktifkan mata pelajaran ini?</p>
+        <p><strong id="delete-mapel-name"></strong></p>
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Batal</button>
+            <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                <i class="fas fa-trash me-2"></i> Hapus
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js" defer></script>
+<script src="/static/js/apiConfig.js" defer></script>
+<script src="/static/js/apiFetch.js" defer></script>
+<script src="/static/js/auth-check.js" defer></script>
+<script src="/static/js/auth.js" defer></script>
+<script src="/static/js/page-events.js" defer></script>
+<script src="/static/js/master-mapel.js" defer></script>
+</body>
+</html>

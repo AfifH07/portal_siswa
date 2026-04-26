@@ -387,10 +387,13 @@
                     </select>
                 </div>
 
-                <!-- Mata Pelajaran (for KBM) -->
+                <!-- Mata Pelajaran (for KBM/Diniyah) -->
                 <div class="form-group" id="assign-mapel-group" style="display: none;">
                     <label>Mata Pelajaran</label>
-                    <input type="text" id="assign-mapel" placeholder="Contoh: Matematika">
+                    <select id="assign-mapel">
+                        <option value="">-- Pilih Mata Pelajaran --</option>
+                        <!-- Loaded dynamically from /api/core/master-mapel/ -->
+                    </select>
                 </div>
 
                 <!-- Mentoring field -->

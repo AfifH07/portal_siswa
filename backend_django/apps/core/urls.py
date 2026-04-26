@@ -9,6 +9,9 @@ from .views import (
     TahunAjaranListCreateView,
     TahunAjaranDetailView,
     MasterJamListView,
+    MasterMapelListView,
+    MasterMapelDetailView,
+    MasterMapelGroupedView,
 )
 
 app_name = 'core'
@@ -23,4 +26,9 @@ urlpatterns = [
 
     # Master Jam - GET list grouped by sesi
     path('master-jam/', MasterJamListView.as_view(), name='master-jam-list'),
+
+    # Master Mapel - CRUD
+    path('master-mapel/', MasterMapelListView.as_view(), name='master-mapel-list'),
+    path('master-mapel/grouped/', MasterMapelGroupedView.as_view(), name='master-mapel-grouped'),
+    path('master-mapel/<int:pk>/', MasterMapelDetailView.as_view(), name='master-mapel-detail'),
 ]

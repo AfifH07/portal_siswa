@@ -182,3 +182,52 @@ class MasterJam(models.Model):
     def get_by_sesi(cls, sesi):
         """Get all active MasterJam for a specific sesi"""
         return cls.objects.filter(sesi=sesi, is_active=True).order_by('jam_ke')
+
+
+class MasterMapel(models.Model):
+    """
+    Master data untuk Mata Pelajaran.
+    Digunakan sebagai referensi di jadwal mengajar dan assignment.
+    """
+
+    SESI_CHOICES = [
+        ('kbm', 'KBM'),
+        ('diniyah', 'Diniyah'),
+        ('tahfidz', 'Tahfidz'),
+    ]
+
+    nama = models.CharField(
+        max_length=100,
+        verbose_name="Nama Mata Pelajaran"
+    )
+    kode = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Kode",
+        help_text="Singkatan/kode mapel (opsional)"
+    )
+    sesi = models.CharField(
+        max_length=20,
+        choices=SESI_CHOICES,
+        verbose_name="Sesi"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Aktif"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Master Mata Pelajaran"
+        verbose_name_plural = "Master Mata Pelajaran"
+        unique_together = ['nama', 'sesi']
+        ordering = ['sesi', 'nama']
+
+    def __str__(self):
+        return f"{self.nama} ({self.get_sesi_display()})"
+
+    @classmethod
+    def get_by_sesi(cls, sesi):
+        """Get all active MasterMapel for a specific sesi"""
+        return cls.objects.filter(sesi=sesi, is_active=True).order_by('nama')

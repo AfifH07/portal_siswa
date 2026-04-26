@@ -16,6 +16,7 @@
 let currentUser = null;
 let usersData = [];
 let mentoringOptions = [];
+let masterMapelData = {}; // { kbm: [...], diniyah: [...], tahfidz: [...], umum: [...] }
 let currentPage = 1;
 let totalPages = 1;
 let searchTimeout = null;
@@ -40,7 +41,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         await Promise.all([
             loadStats(),
             loadUsers(),
-            loadMentoringOptions()
+            loadMentoringOptions(),
+            loadMasterMapel()
         ]);
 
         // Update topbar date
@@ -226,6 +228,50 @@ async function loadMentoringOptions() {
     } catch (error) {
         console.error('Error loading mentoring options:', error);
     }
+}
+
+async function loadMasterMapel() {
+    try {
+        const response = await window.apiFetch('core/master-mapel/grouped/');
+        if (response.ok) {
+            const result = await response.json();
+            masterMapelData = result.data || {};
+            console.log('[Users] Master mapel loaded:', masterMapelData);
+        }
+    } catch (error) {
+        console.error('[Users] Error loading master mapel:', error);
+        masterMapelData = { kbm: [], diniyah: [], tahfidz: [] };
+    }
+}
+
+/**
+ * Populate mapel dropdown based on assignment type (sesi)
+ */
+function populateMapelDropdown(sesi) {
+    const select = document.getElementById('assign-mapel');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+
+    // Map assignment type to sesi
+    let mappedSesi = sesi;
+    if (sesi === 'halaqoh') {
+        mappedSesi = 'tahfidz';
+    }
+
+    const mapelList = masterMapelData[mappedSesi] || [];
+
+    if (mapelList.length === 0) {
+        select.innerHTML = '<option value="">Tidak ada data mapel</option>';
+        return;
+    }
+
+    mapelList.forEach(m => {
+        const option = document.createElement('option');
+        option.value = m.nama;
+        option.textContent = m.nama;
+        select.appendChild(option);
+    });
 }
 
 // ============================================
@@ -722,8 +768,20 @@ function onAssignTypeChange() {
     document.getElementById('assign-kelas-group').style.display =
         ['kbm', 'diniyah', 'wali_kelas'].includes(type) ? 'block' : 'none';
 
+    // Show mapel dropdown for kbm, diniyah, and halaqoh (tahfidz)
+    const showMapel = ['kbm', 'diniyah', 'halaqoh'].includes(type);
     document.getElementById('assign-mapel-group').style.display =
-        type === 'kbm' ? 'block' : 'none';
+        showMapel ? 'block' : 'none';
+
+    // Populate mapel dropdown based on type
+    if (showMapel) {
+        populateMapelDropdown(type);
+    }
+
+    // Hide mapel for piket and wali_kelas
+    if (['piket', 'wali_kelas'].includes(type)) {
+        document.getElementById('assign-mapel-group').style.display = 'none';
+    }
 
     document.getElementById('assign-mentoring-group').style.display =
         type === 'mentoring' ? 'block' : 'none';
@@ -754,7 +812,7 @@ async function saveAssignment(event) {
         }
     }
 
-    if (type === 'kbm') {
+    if (['kbm', 'diniyah', 'halaqoh'].includes(type)) {
         formData.mata_pelajaran = document.getElementById('assign-mapel').value || null;
     }
 

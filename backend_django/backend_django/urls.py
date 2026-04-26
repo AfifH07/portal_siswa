@@ -53,6 +53,7 @@ urlpatterns = [
     # JADWAL MENGAJAR (Admin)
     # ==========================================
     path('jadwal-mengajar/', TemplateView.as_view(template_name='jadwal-mengajar.html')),
+    path('master-mapel/', TemplateView.as_view(template_name='master-mapel.html')),
 
     # ==========================================
     # ADMIN

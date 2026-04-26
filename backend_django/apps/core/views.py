@@ -9,7 +9,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .models import TahunAjaran, MasterJam
+from .models import TahunAjaran, MasterJam, MasterMapel
 from .serializers import TahunAjaranSerializer, ActiveTahunAjaranSerializer
 
 
@@ -197,6 +197,233 @@ class MasterJamListView(APIView):
                     'keterangan': mj.keterangan,
                 }
                 for mj in queryset
+            ]
+
+        return Response({
+            'success': True,
+            'data': result
+        })
+
+
+from apps.accounts.permissions import IsSuperAdmin
+
+
+class MasterMapelListView(APIView):
+    """
+    GET  /api/core/master-mapel/  - List all mapel (filter: ?sesi=kbm)
+    POST /api/core/master-mapel/  - Create new mapel (admin only)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        sesi_filter = request.query_params.get('sesi')
+        include_inactive = request.query_params.get('include_inactive', 'false').lower() == 'true'
+
+        # Base queryset
+        if include_inactive:
+            queryset = MasterMapel.objects.all()
+        else:
+            queryset = MasterMapel.objects.filter(is_active=True)
+
+        # Filter by sesi
+        if sesi_filter:
+            queryset = queryset.filter(sesi=sesi_filter)
+
+        queryset = queryset.order_by('sesi', 'nama')
+
+        data = [
+            {
+                'id': m.id,
+                'nama': m.nama,
+                'kode': m.kode,
+                'sesi': m.sesi,
+                'sesi_display': m.get_sesi_display(),
+                'is_active': m.is_active,
+            }
+            for m in queryset
+        ]
+
+        return Response({
+            'success': True,
+            'count': len(data),
+            'data': data
+        })
+
+    def post(self, request):
+        # Only superadmin can create
+        if request.user.role not in ['superadmin', 'admin']:
+            return Response({
+                'success': False,
+                'message': 'Tidak memiliki akses'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        nama = request.data.get('nama', '').strip()
+        kode = request.data.get('kode', '').strip()
+        sesi = request.data.get('sesi', '')
+
+        if not nama:
+            return Response({
+                'success': False,
+                'message': 'Nama mata pelajaran harus diisi'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not sesi or sesi not in ['kbm', 'diniyah', 'tahfidz']:
+            return Response({
+                'success': False,
+                'message': 'Sesi harus dipilih (kbm/diniyah/tahfidz)'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check duplicate
+        if MasterMapel.objects.filter(nama=nama, sesi=sesi).exists():
+            return Response({
+                'success': False,
+                'message': f'Mapel "{nama}" sudah ada di sesi {sesi.upper()}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        mapel = MasterMapel.objects.create(
+            nama=nama,
+            kode=kode,
+            sesi=sesi,
+            is_active=True
+        )
+
+        return Response({
+            'success': True,
+            'message': f'Mapel "{nama}" berhasil ditambahkan',
+            'data': {
+                'id': mapel.id,
+                'nama': mapel.nama,
+                'kode': mapel.kode,
+                'sesi': mapel.sesi,
+                'sesi_display': mapel.get_sesi_display(),
+                'is_active': mapel.is_active,
+            }
+        }, status=status.HTTP_201_CREATED)
+
+
+class MasterMapelDetailView(APIView):
+    """
+    GET    /api/core/master-mapel/<id>/  - Get single mapel
+    PATCH  /api/core/master-mapel/<id>/  - Update mapel
+    DELETE /api/core/master-mapel/<id>/  - Soft delete (is_active=False)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return MasterMapel.objects.get(pk=pk)
+        except MasterMapel.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        mapel = self.get_object(pk)
+        if not mapel:
+            return Response({
+                'success': False,
+                'message': 'Mapel tidak ditemukan'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            'success': True,
+            'data': {
+                'id': mapel.id,
+                'nama': mapel.nama,
+                'kode': mapel.kode,
+                'sesi': mapel.sesi,
+                'sesi_display': mapel.get_sesi_display(),
+                'is_active': mapel.is_active,
+            }
+        })
+
+    def patch(self, request, pk):
+        if request.user.role not in ['superadmin', 'admin']:
+            return Response({
+                'success': False,
+                'message': 'Tidak memiliki akses'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        mapel = self.get_object(pk)
+        if not mapel:
+            return Response({
+                'success': False,
+                'message': 'Mapel tidak ditemukan'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Update fields
+        if 'nama' in request.data:
+            mapel.nama = request.data['nama'].strip()
+        if 'kode' in request.data:
+            mapel.kode = request.data['kode'].strip()
+        if 'sesi' in request.data:
+            mapel.sesi = request.data['sesi']
+        if 'is_active' in request.data:
+            mapel.is_active = request.data['is_active']
+
+        # Check duplicate (excluding self)
+        if MasterMapel.objects.filter(nama=mapel.nama, sesi=mapel.sesi).exclude(pk=pk).exists():
+            return Response({
+                'success': False,
+                'message': f'Mapel "{mapel.nama}" sudah ada di sesi {mapel.sesi.upper()}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        mapel.save()
+
+        return Response({
+            'success': True,
+            'message': 'Mapel berhasil diupdate',
+            'data': {
+                'id': mapel.id,
+                'nama': mapel.nama,
+                'kode': mapel.kode,
+                'sesi': mapel.sesi,
+                'sesi_display': mapel.get_sesi_display(),
+                'is_active': mapel.is_active,
+            }
+        })
+
+    def delete(self, request, pk):
+        if request.user.role not in ['superadmin', 'admin']:
+            return Response({
+                'success': False,
+                'message': 'Tidak memiliki akses'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        mapel = self.get_object(pk)
+        if not mapel:
+            return Response({
+                'success': False,
+                'message': 'Mapel tidak ditemukan'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Soft delete
+        mapel.is_active = False
+        mapel.save()
+
+        return Response({
+            'success': True,
+            'message': f'Mapel "{mapel.nama}" berhasil dinonaktifkan'
+        })
+
+
+class MasterMapelGroupedView(APIView):
+    """
+    GET /api/core/master-mapel/grouped/
+
+    Returns mapel grouped by sesi (for dropdowns).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        result = {}
+        for sesi_code, sesi_label in MasterMapel.SESI_CHOICES:
+            queryset = MasterMapel.objects.filter(sesi=sesi_code, is_active=True).order_by('nama')
+            result[sesi_code] = [
+                {
+                    'id': m.id,
+                    'nama': m.nama,
+                    'kode': m.kode,
+                }
+                for m in queryset
             ]
 
         return Response({
