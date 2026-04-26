@@ -21,21 +21,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
-    // Update topbar date
-    updateTopbarDate();
-
-    // Load initial data
+    // Load initial data (sidebar/topbar handled by auth-check.js)
     await loadMapelData();
 });
-
-function updateTopbarDate() {
-    const dateEl = document.getElementById('topbar-date');
-    if (dateEl) {
-        const now = new Date();
-        const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-        dateEl.textContent = now.toLocaleDateString('id-ID', options);
-    }
-}
 
 // ============================================
 // DATA LOADING

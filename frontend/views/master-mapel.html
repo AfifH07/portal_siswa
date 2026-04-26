@@ -3,22 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Mata Pelajaran - Portal Baron</title>
-    <link rel="stylesheet" href="/static/css/main.css">
-    <link rel="stylesheet" href="/static/css/sidebar.css">
-    <link rel="stylesheet" href="/static/css/glass-ui.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Master Mata Pelajaran - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260327" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- FontAwesome for Icons (legacy) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <style>
         /* Tab Styles */
         .sesi-tabs {
             display: flex;
             gap: 0;
             margin-bottom: 1.5rem;
-            background: var(--glass-bg);
+            background: var(--glass-bg, rgba(255,255,255,0.7));
             border-radius: 12px;
             padding: 4px;
-            border: 1px solid var(--border-light);
+            border: 1px solid var(--border-light, #e5e7eb);
         }
         .sesi-tab {
             flex: 1;
@@ -28,16 +36,16 @@
             cursor: pointer;
             font-weight: 600;
             font-size: 0.9rem;
-            color: var(--text-muted);
+            color: var(--text-muted, #6b7280);
             border-radius: 8px;
             transition: all 0.2s ease;
         }
         .sesi-tab:hover {
-            background: var(--emerald-50);
-            color: var(--emerald-600);
+            background: var(--emerald-50, #ecfdf5);
+            color: var(--emerald-600, #059669);
         }
         .sesi-tab.active {
-            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+            background: linear-gradient(135deg, var(--emerald-500, #10b981), var(--emerald-600, #059669));
             color: white;
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
@@ -60,33 +68,33 @@
             border-spacing: 0;
         }
         .mapel-table th {
-            background: var(--emerald-50);
+            background: var(--emerald-50, #ecfdf5);
             padding: 12px 16px;
             text-align: left;
             font-weight: 600;
             font-size: 0.8rem;
-            color: var(--text-sub);
+            color: var(--text-sub, #4b5563);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--emerald-200);
+            border-bottom: 2px solid var(--emerald-200, #a7f3d0);
         }
         .mapel-table td {
             padding: 14px 16px;
-            border-bottom: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-light, #e5e7eb);
             vertical-align: middle;
         }
         .mapel-table tr:hover td {
-            background: var(--emerald-50);
+            background: var(--emerald-50, #ecfdf5);
         }
         .mapel-nama {
             font-weight: 600;
-            color: var(--text-main);
+            color: var(--text-main, #111827);
         }
         .mapel-kode {
-            font-family: monospace;
+            font-family: 'DM Mono', monospace;
             font-size: 0.85rem;
-            color: var(--text-muted);
-            background: var(--glass-bg);
+            color: var(--text-muted, #6b7280);
+            background: var(--glass-bg, rgba(255,255,255,0.7));
             padding: 2px 8px;
             border-radius: 4px;
         }
@@ -94,6 +102,7 @@
         /* Status Toggle */
         .status-toggle {
             position: relative;
+            display: inline-block;
             width: 44px;
             height: 24px;
         }
@@ -125,7 +134,7 @@
             border-radius: 50%;
         }
         .status-toggle input:checked + .status-slider {
-            background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
+            background: linear-gradient(135deg, var(--emerald-400, #34d399), var(--emerald-500, #10b981));
         }
         .status-toggle input:checked + .status-slider:before {
             transform: translateX(20px);
@@ -148,31 +157,31 @@
             transition: all 0.2s;
         }
         .btn-icon.btn-edit {
-            background: var(--blue-50, #eff6ff);
-            color: var(--blue-600, #2563eb);
+            background: #eff6ff;
+            color: #2563eb;
         }
         .btn-icon.btn-edit:hover {
-            background: var(--blue-100, #dbeafe);
+            background: #dbeafe;
         }
         .btn-icon.btn-delete {
-            background: var(--red-50, #fef2f2);
-            color: var(--red-600, #dc2626);
+            background: #fef2f2;
+            color: #dc2626;
         }
         .btn-icon.btn-delete:hover {
-            background: var(--red-100, #fee2e2);
+            background: #fee2e2;
         }
 
-        /* Header Actions */
-        .page-header {
+        /* Page Header */
+        .page-header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
         }
-        .page-title {
+        .page-header-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--text-main);
+            color: var(--text-main, #111827);
         }
 
         /* Modal */
@@ -214,7 +223,7 @@
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
-            color: var(--text-muted);
+            color: var(--text-muted, #6b7280);
         }
         .form-group {
             margin-bottom: 16px;
@@ -229,14 +238,15 @@
         .form-group select {
             width: 100%;
             padding: 10px 14px;
-            border: 1px solid var(--border-light);
+            border: 1px solid var(--border-light, #e5e7eb);
             border-radius: 8px;
             font-size: 0.95rem;
+            font-family: inherit;
         }
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: var(--emerald-400);
+            border-color: var(--emerald-400, #34d399);
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
         }
         .form-actions {
@@ -250,17 +260,22 @@
         .empty-state {
             text-align: center;
             padding: 40px;
-            color: var(--text-muted);
+            color: var(--text-muted, #6b7280);
         }
         .empty-icon {
             font-size: 3rem;
             margin-bottom: 12px;
         }
+
+        /* Opacity for inactive */
+        .opacity-50 {
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body data-role="">
 
-<!-- SIDEBAR -->
+<!-- ===================== SIDEBAR ===================== -->
 <aside class="sidebar">
     <div class="sidebar-brand">
         <div class="brand-logo">🕌</div>
@@ -269,50 +284,67 @@
             <div class="brand-tagline">Portal Akademik</div>
         </div>
     </div>
-    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
     <div class="sidebar-footer">
-        <div class="user-profile">
-            <div class="user-avatar">👤</div>
-            <div class="user-info">
-                <div class="user-name" id="sidebar-user-name">Loading...</div>
-                <div class="user-role" id="sidebar-user-role">-</div>
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
             </div>
         </div>
-        <button class="logout-btn" onclick="logout()">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </button>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
     </div>
 </aside>
 
-<!-- MAIN CONTENT -->
-<main class="main-content">
-    <!-- TOPBAR -->
-    <header class="topbar">
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
         <div class="topbar-left">
-            <button class="sidebar-toggle" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h1 class="page-title-bar">Master Mata Pelajaran</h1>
+            <h1 id="page-title">Master Mata Pelajaran</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Administrasi</span> &rsaquo; <span>Master Mapel</span></div>
         </div>
         <div class="topbar-right">
-            <span class="topbar-date" id="topbar-date"></span>
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
         </div>
-    </header>
+    </div>
 
-    <!-- CONTENT -->
-    <div class="content-wrapper">
+    <div class="page-body">
+
+        <!-- Access Denied View (for non-superadmin) -->
+        <section class="access-denied-view" id="access-denied-view" style="display: none;">
+            <div class="glass-card" style="padding: 60px; text-align: center;">
+                <div class="empty-icon" style="font-size: 80px;">🔒</div>
+                <h2 style="color: var(--text-main); margin: 20px 0;">Akses Ditolak</h2>
+                <p style="color: var(--text-sub);">Halaman ini hanya dapat diakses oleh Superadmin.</p>
+                <a href="/dashboard" class="btn btn-primary" style="margin-top: 20px;">Kembali ke Dashboard</a>
+            </div>
+        </section>
+
         <!-- Admin View -->
-        <div id="admin-view">
+        <section class="admin-view" id="admin-view">
+
             <!-- Page Header -->
-            <div class="page-header">
-                <h2 class="page-title">Kelola Mata Pelajaran</h2>
+            <div class="page-header-row">
+                <h2 class="page-header-title">Kelola Mata Pelajaran</h2>
                 <button class="btn btn-primary" onclick="openAddModal()">
                     <i class="fas fa-plus me-2"></i> Tambah Mapel
                 </button>
             </div>
 
-            <!-- Tabs -->
+            <!-- Tabs & Table Card -->
             <div class="glass-card">
                 <div class="sesi-tabs">
                     <button class="sesi-tab active" data-sesi="kbm" onclick="switchTab('kbm')">
@@ -351,17 +383,7 @@
                     </table>
                 </div>
             </div>
-        </div>
-
-        <!-- Access Denied -->
-        <div id="access-denied-view" style="display: none;">
-            <div class="glass-card text-center" style="padding: 60px;">
-                <div style="font-size: 4rem; margin-bottom: 20px;">🔒</div>
-                <h2>Akses Ditolak</h2>
-                <p class="text-muted">Halaman ini hanya dapat diakses oleh Admin.</p>
-                <a href="/dashboard" class="btn btn-primary mt-3">Kembali ke Dashboard</a>
-            </div>
-        </div>
+        </section>
     </div>
 </main>
 
@@ -375,7 +397,7 @@
         <form id="mapel-form" onsubmit="saveMapel(event)">
             <input type="hidden" id="form-id">
             <div class="form-group">
-                <label>Nama Mata Pelajaran <span class="required">*</span></label>
+                <label>Nama Mata Pelajaran <span style="color: #dc2626;">*</span></label>
                 <input type="text" id="form-nama" required placeholder="Contoh: Matematika">
             </div>
             <div class="form-group">
@@ -383,7 +405,7 @@
                 <input type="text" id="form-kode" placeholder="Contoh: MTK" maxlength="20">
             </div>
             <div class="form-group">
-                <label>Sesi <span class="required">*</span></label>
+                <label>Sesi <span style="color: #dc2626;">*</span></label>
                 <select id="form-sesi" required>
                     <option value="">-- Pilih Sesi --</option>
                     <option value="kbm">KBM</option>
@@ -419,13 +441,15 @@
     </div>
 </div>
 
+<!-- Toast Notification -->
+<div class="toast-container" id="toast-container"></div>
+
 <!-- Scripts -->
-<script src="/static/js/utils.js" defer></script>
-<script src="/static/js/apiConfig.js" defer></script>
-<script src="/static/js/apiFetch.js" defer></script>
-<script src="/static/js/auth-check.js" defer></script>
-<script src="/static/js/auth.js" defer></script>
-<script src="/static/js/page-events.js" defer></script>
-<script src="/static/js/master-mapel.js" defer></script>
+<script src="/static/js/utils.js?v=20260314c"></script>
+<script src="/static/js/apiConfig.js?v=20260314c"></script>
+<script src="/static/js/apiFetch.js?v=20260314c"></script>
+<script src="/static/js/auth-check.js?v=20260420" defer></script>
+<script src="/static/js/master-mapel.js?v=20260426"></script>
+
 </body>
 </html>

@@ -232,11 +232,22 @@ async function loadMentoringOptions() {
 
 async function loadMasterMapel() {
     try {
+        console.log('[Users] Loading master mapel...');
         const response = await window.apiFetch('core/master-mapel/grouped/');
+        console.log('[Users] Master mapel response status:', response.status);
+
         if (response.ok) {
             const result = await response.json();
             masterMapelData = result.data || {};
             console.log('[Users] Master mapel loaded:', masterMapelData);
+            console.log('[Users] KBM count:', (masterMapelData.kbm || []).length);
+            console.log('[Users] Diniyah count:', (masterMapelData.diniyah || []).length);
+            console.log('[Users] Tahfidz count:', (masterMapelData.tahfidz || []).length);
+        } else {
+            // Response not ok - log error
+            const errorText = await response.text();
+            console.error('[Users] Master mapel request failed:', response.status, errorText);
+            masterMapelData = { kbm: [], diniyah: [], tahfidz: [] };
         }
     } catch (error) {
         console.error('[Users] Error loading master mapel:', error);
@@ -248,8 +259,14 @@ async function loadMasterMapel() {
  * Populate mapel dropdown based on assignment type (sesi)
  */
 function populateMapelDropdown(sesi) {
+    console.log('[Users] populateMapelDropdown called with sesi:', sesi);
+    console.log('[Users] Current masterMapelData:', masterMapelData);
+
     const select = document.getElementById('assign-mapel');
-    if (!select) return;
+    if (!select) {
+        console.error('[Users] assign-mapel select not found!');
+        return;
+    }
 
     select.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
 
@@ -258,11 +275,14 @@ function populateMapelDropdown(sesi) {
     if (sesi === 'halaqoh') {
         mappedSesi = 'tahfidz';
     }
+    console.log('[Users] Mapped sesi:', mappedSesi);
 
     const mapelList = masterMapelData[mappedSesi] || [];
+    console.log('[Users] Mapel list for', mappedSesi, ':', mapelList.length, 'items');
 
     if (mapelList.length === 0) {
         select.innerHTML = '<option value="">Tidak ada data mapel</option>';
+        console.warn('[Users] No mapel data for sesi:', mappedSesi);
         return;
     }
 
@@ -272,6 +292,7 @@ function populateMapelDropdown(sesi) {
         option.textContent = m.nama;
         select.appendChild(option);
     });
+    console.log('[Users] Populated', mapelList.length, 'mapel options');
 }
 
 // ============================================
