@@ -1,15 +1,15 @@
 # CLAUDE.md — Portal Siswa Baron
 > File ini dibaca otomatis oleh Claude Code setiap sesi. Jangan hapus.
-> Versi: 2.3.10 | Update: April 2026
+> Versi: 2.3.11 | Update: 26 April 2026
 
 ---
 
 ## 🎯 IDENTITAS PROYEK
 
 **Nama:** Portal Siswa Baron
-**Versi:** 2.3.10 (Active Development)  
-**Institusi:** Pondok Pesantren Baron  
-**Deployment:** PythonAnywhere — https://apiiip.pythonanywhere.com  
+**Versi:** 2.3.11 (Active Development)
+**Institusi:** Pondok Pesantren Baron
+**Deployment:** PythonAnywhere — https://apiiip.pythonanywhere.com
 **Deskripsi:** Sistem Informasi Akademik Terpadu untuk manajemen santri, akademik, evaluasi karakter, dan komunikasi walisantri.
 
 ---
@@ -25,10 +25,10 @@
 | PDF Export | reportlab 4.2.5 + weasyprint 62.3 |
 | Image Upload | Pillow 10.4.0 |
 | Frontend | Native HTML5/CSS3/Vanilla JS ES6+ |
-| Icons | Lucide Icons |
+| Icons | Lucide Icons + FontAwesome 6.5 |
 | Charts | Chart.js 4.4 |
 | Design | Baron Emerald Theme (Glassmorphism) |
-| Font | Plus Jakarta Sans |
+| Font | Plus Jakarta Sans + DM Mono |
 | Token Optimizer | RTK (hanya di lokal, TIDAK di PythonAnywhere) |
 
 ---
@@ -41,7 +41,7 @@
 |------|-------|
 | `superadmin` | Full access |
 | `pimpinan` | Lihat semua + evaluasi asatidz |
-| `guru` | Presensi, nilai, evaluasi (termasuk eks-wali_kelas) |
+| `guru` | Presensi, nilai, evaluasi, jadwal mengajar |
 | `musyrif` | Ibadah, hafalan, pembinaan |
 | `bk` | Bimbingan konseling |
 | `bendahara` | Keuangan |
@@ -54,14 +54,18 @@
 | Model | App | Identifier |
 |-------|-----|-----------|
 | `User` | accounts | `id`, `username`, `role`, `name` |
-| `Student` | students | **`nisn`** (bukan id!) |
-| `Assignment` | accounts | user + assignment_type + kelas |
+| `Student` | students | **`nisn`** (PK, bukan auto-id!) |
+| `Assignment` | accounts | user + assignment_type + kelas + mata_pelajaran |
+| `Schedule` | students | guru + hari + sesi + master_jam |
+| `MasterJam` | core | sesi + jam_ke + jam_mulai/selesai |
+| `MasterMapel` | core | nama + sesi + kode + is_active |
+| `TahunAjaran` | core | nama + semester + is_active |
 | `Attendance` | attendance | student + tanggal + jam_ke |
-| `TitipanTugas` | attendance | id, guru, kelas, tanggal_berlaku, jam_ke |
-| `IzinGuru` | kesantrian | id, guru, jenis_izin, foto_surat |
-| `TahunAjaran` | core | id, is_active |
+| `TitipanTugas` | attendance | guru + kelas + tanggal_berlaku |
+| `IzinGuru` | kesantrian | guru + jenis_izin + foto_surat |
 | `Ibadah` | kesantrian | siswa + tanggal + jenis + waktu |
 | `TargetHafalan` | kesantrian | siswa + tahun_ajaran + semester |
+| `Evaluation` | evaluations | nisn (FK) + jenis + kategori + evaluator |
 
 > **⚠️ CRITICAL — Custom User Model:**
 > - Nama lengkap: **`user.name`** (BUKAN first_name/full_name)
@@ -70,98 +74,149 @@
 
 > **Relasi Walisantri → Anak:**
 > - `User.linked_student_nisn` → CharField (NISN anak pertama)
-> - `User.linked_student_nisns` → JSONField (array NISN: ["nisn1", "nisn2"])
+> - `User.linked_student_nisns` → JSONField (array NISN)
 
 > **Siswa diidentifikasi dengan NISN, bukan auto-increment ID**
 
 ---
 
+## 🆕 v2.3.11 Updates (2026-04-26)
+
+### 1. Master Data System
+| Model | Endpoint | Deskripsi |
+|-------|----------|-----------|
+| `MasterJam` | `GET /api/core/master-jam/` | Jam pelajaran per sesi (Tahfidz/KBM/Diniyah) |
+| `MasterMapel` | `GET/POST /api/core/master-mapel/` | Mata pelajaran per sesi |
+| `MasterMapel` | `GET /api/core/master-mapel/grouped/` | Grouped by sesi untuk dropdown |
+| `MasterMapel` | `PATCH/DELETE /api/core/master-mapel/<id>/` | Update/soft-delete mapel |
+
+**Seed Data:**
+- MasterJam: 9 records (1 Tahfidz, 6 KBM, 2 Diniyah)
+- MasterMapel: 27 records (18 KBM, 8 Diniyah, 1 Tahfidz)
+
+### 2. Jadwal Mengajar (Admin)
+- **Page:** `/jadwal-mengajar/` → `jadwal-mengajar.html`
+- **Features:** CRUD jadwal guru, filter hari/sesi, cascading dropdown (Sesi → Jam)
+- **Endpoint:** `GET/POST /api/jadwal/`, `PATCH/DELETE /api/jadwal/<id>/`
+
+### 3. Master Mapel Management (Admin)
+- **Page:** `/master-mapel/` → `master-mapel.html`
+- **Features:** Tab KBM/Diniyah/Tahfidz, toggle status aktif, CRUD mapel
+- **Access:** Superadmin only
+
+### 4. Jadwal Minggu Ini Widget (Dashboard Guru)
+- Widget di dashboard guru: grid Senin-Sabtu
+- Highlight hari ini, tampilkan jam + mapel + kelas
+- **Endpoint:** `GET /api/jadwal/guru/<username>/`
+
+### 5. Hapus Assignment (User Management)
+- Badge assignment di tabel user dengan tombol × (hover)
+- Konfirmasi sebelum hapus, max 3 badge + "+N lagi" expandable
+- **Endpoint:** `DELETE /api/admin/users/<user_id>/assignments/<assignment_id>/`
+
+### 6. Dropdown Mapel di Assign Modal
+- Dropdown dinamis berdasarkan assignment type (KBM/Diniyah/Halaqoh)
+- Data dari `/api/core/master-mapel/grouped/`
+- Mapping: `halaqoh` → `tahfidz`
+
+---
+
 ## 🆕 v2.3.10 Updates (2026-04-24) - Evaluasi Santri Dashboard Fix
 
-### Bug Fixes di `apps/evaluations/views.py`
+| Bug | Fix |
+|-----|-----|
+| Case sensitivity jenis | `jenis='Prestasi'` → `jenis='prestasi'` |
+| FK vs String comparison | `nisn__nisn=user.linked_student_nisn` |
+| Guru filter mismatch | Fallback: `user.name or user.username` |
+| Multi-child walisantri | Support `get_linked_students()` array |
+| Category query | `kategori__iexact` untuk case-insensitive |
 
-| Bug | Location | Fix |
-|-----|----------|-----|
-| Case sensitivity | line 169-170 | `jenis='Prestasi'` → `jenis='prestasi'` |
-| FK vs String comparison | get_queryset, evaluation_statistics | `nisn=user.linked_student_nisn` → `nisn__nisn=user.linked_student_nisn` |
-| Guru filter mismatch | line 54, 294 | Fallback: `user.name if user.name else user.username` |
-| Multi-child walisantri | get_student_evaluations | Support `get_linked_students()` array |
-| Missing monthly_trend | evaluation_statistics | Added 6-month trend data for chart |
+---
 
-### Key Pattern (Evaluations Filter)
-```python
-# WALISANTRI - use nisn__nisn for string comparison
-linked_nisns = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
-if linked_nisns:
-    queryset = queryset.filter(nisn__nisn__in=linked_nisns)
-else:
-    queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
+## 🆕 v2.3.9 Features
 
-# GURU - fallback evaluator name
-evaluator_name = user.name if user.name else user.username
-queryset = queryset.filter(evaluator=evaluator_name)
+| Feature | Files | Endpoints |
+|---------|-------|-----------|
+| Guru Pengganti | attendance.html | Step 3 presensi |
+| Jurnal Piket | jurnal-piket.html | `GET /api/attendance/jurnal-piket/` |
+| Titipan Tugas | titipan-tugas.html | `GET/POST /api/attendance/titipan-tugas/` |
+| Izin Guru | izin-guru.html | `GET/POST /api/kesantrian/izin-guru/` |
+
+---
+
+## 🔧 FIXES & PATTERNS
+
+### apiFetch Usage
+```javascript
+// apiFetch returns raw Response - MUST parse JSON!
+const response = await window.apiFetch('core/master-mapel/');
+const data = await response.json();
+
+// Path WITHOUT /api/ prefix (buildUrl adds it)
+window.apiFetch('kesantrian/incidents/')  // CORRECT
+window.apiFetch('/api/kesantrian/...')    // WRONG - double /api/
 ```
 
----
+### File Upload (FormData)
+```python
+# Backend: Add parser_classes
+@parser_classes([MultiPartParser, FormParser, JSONParser])
+```
+```javascript
+// Frontend: apiFetch auto-detects FormData
+const formData = new FormData();
+await window.apiFetch('izin-guru/', { method: 'POST', body: formData });
+```
 
-## 🆕 FITUR BARU v2.3.9
+### FK String Comparison
+```python
+# WRONG - comparing FK object with string
+queryset.filter(nisn=user.linked_student_nisn)
 
-### 1. Guru Pengganti (Attendance Step 3)
-- Step 3 presensi: Guru Asli / Guru Pengganti
-- Guru Pengganti = request.user otomatis
-- Field baru Attendance: tipe_pengajar, guru_pengganti, materi, capaian_pembelajaran, catatan
-- Titipan tugas relevan muncul otomatis di Step 3
-
-### 2. Jurnal Piket
-- File: frontend/views/jurnal-piket.html
-- Endpoint: GET /api/attendance/jurnal-piket/?tanggal=YYYY-MM-DD
-- Daftar sesi piket + Titipan Tugas Hari Ini
-
-### 3. Titipan Tugas
-- File: frontend/views/titipan-tugas.html
-- Endpoints: GET/POST /api/attendance/titipan-tugas/
-- GET /api/attendance/titipan-tugas/kelas-saya/
-- PATCH /api/attendance/titipan-tugas/<id>/tandai/
-- Model: guru, kelas, mata_pelajaran, jam_ke, tanggal_berlaku, deskripsi_tugas, status
-
-### 4. Izin Guru
-- File: frontend/views/izin-guru.html
-- Endpoints: GET/POST /api/kesantrian/izin-guru/
-- GET /api/kesantrian/izin-guru/export-pdf/
-- Model: guru, jenis_izin, tanggal_mulai, tanggal_selesai, keterangan, foto_surat (WAJIB)
-
----
-
-## 🔧 FIXES KRITIS
-
-| Fix | Detail |
-|-----|--------|
-| apiFetch.js FormData | Deteksi FormData, skip Content-Type header — JANGAN revert |
-| get_full_name() | Diganti user.name or user.username di semua file |
-| IsGuru permission | Hanya role 'guru' (wali_kelas sudah hapus) |
-| Media files | Serve via urls.py + PythonAnywhere static mapping /media/ |
-| Assignment filter | Exclude 'piket' dan 'wali_kelas', bukan hanya kbm |
-| Evaluations filter | `nisn__nisn` untuk FK string comparison, lowercase jenis |
-| Guru evaluator match | Fallback `user.name or user.username` di filter |
+# CORRECT - use nisn__nisn for string field
+queryset.filter(nisn__nisn=user.linked_student_nisn)
+```
 
 ---
 
 ## 🎨 KONVENSI FRONTEND
 
-### Script Dependencies (WAJIB urut di setiap halaman baru!)
+### Script Dependencies (Baron Emerald Theme)
 ```html
-<script src="/static/js/utils.js" defer></script>
-<script src="/static/js/apiConfig.js" defer></script>
-<script src="/static/js/apiFetch.js" defer></script>
-<script src="/static/js/auth-check.js" defer></script>
-<script src="/static/js/auth.js" defer></script>
-<script src="/static/js/page-events.js" defer></script>
-<script src="/static/js/nama-halaman.js" defer></script>
+<!-- CSS -->
+<link href="/static/css/baron-emerald.css?v=20260327" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Scripts (URUTAN PENTING!) -->
+<script src="/static/js/utils.js?v=20260314c"></script>
+<script src="/static/js/apiConfig.js?v=20260314c"></script>
+<script src="/static/js/apiFetch.js?v=20260314c"></script>
+<script src="/static/js/auth-check.js?v=20260420" defer></script>
+<script src="/static/js/nama-halaman.js?v=20260426"></script>
 ```
-> Jika ada script yang kurang → halaman tidak jalan. Penyebab error paling umum.
+
+### Sidebar Structure (Baron Theme)
+```html
+<aside class="sidebar">
+    <div class="sidebar-brand">...</div>
+    <a class="back-chip" href="/">...</a>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+```
 
 ### Referensi UI
-- Patokan utama: `frontend/views/students.html`
+- Patokan utama: `frontend/views/users.html`
 - Baca file tersebut dulu sebelum buat halaman baru
 
 ---
@@ -193,14 +248,14 @@ python manage.py migrate
 |-------|--------|
 | `AttributeError: get_full_name` | `user.name or user.username` |
 | `400 Bad Request` upload file | Cek apiFetch.js isFormData fix |
-| `invalid_image` | Cek file.type dan file.size di browser console |
 | `no such column` | makemigrations lalu migrate |
-| `NoneType 'nama'` | TahunAjaran aktif tidak ada → buat di shell |
-| `403 Forbidden` | Cek permission_classes di view |
+| `NoneType 'nama'` | TahunAjaran aktif tidak ada |
+| `403 Forbidden` | Cek permission_classes |
 | Halaman tidak jalan | Script dependencies kurang/urutan salah |
 | Static 404 | collectstatic --noinput |
-| Chart kosong (evaluasi) | Cek case jenis (lowercase), gunakan `nisn__nisn` |
-| Data guru tidak muncul | Cek match evaluator dengan `user.name or username` |
+| Chart kosong | Lowercase jenis, `nisn__nisn`, `kategori__iexact` |
+| Dropdown mapel kosong | Cek endpoint `/api/core/master-mapel/grouped/` |
+| CSS/sidebar rusak | Pakai `baron-emerald.css`, bukan `main.css` |
 
 ### Cek Log PythonAnywhere
 ```bash
@@ -220,12 +275,14 @@ python manage.py collectstatic --noinput
 # Reload di Web tab
 ```
 
-### Setup Fresh PythonAnywhere
+### Seed Master Data (jika fresh)
 ```python
-# Wajib buat TahunAjaran dulu!
-from apps.core.models import TahunAjaran
-TahunAjaran.objects.create(nama='2025/2026', semester='Genap', is_active=True)
-# Tambah static mapping Web tab: /media/ → backend_django/media/
+python manage.py shell
+>>> from apps.core.models import TahunAjaran, MasterJam, MasterMapel
+>>> TahunAjaran.objects.create(nama='2025/2026', semester='Genap', is_active=True)
+>>> # Run seed commands:
+>>> # python manage.py seed_master_jam
+>>> # python manage.py seed_master_mapel
 ```
 
 ---
@@ -234,31 +291,71 @@ TahunAjaran.objects.create(nama='2025/2026', semester='Genap', is_active=True)
 
 - [ ] Model + makemigrations + migrate
 - [ ] Serializer
-- [ ] View + @permission_classes + @parser_classes (jika ada upload)
+- [ ] View + @permission_classes + @parser_classes
 - [ ] URL di urls.py app + backend_django/urls.py
-- [ ] HTML dengan script dependencies lengkap (urut!)
-- [ ] Menu di auth-check.js (roleAccess + sidebar)
+- [ ] HTML dengan `baron-emerald.css` + script dependencies (urut!)
+- [ ] Menu di auth-check.js (roleAccess + sidebar items)
 - [ ] Test → push → deploy
+
+---
+
+## 📁 STRUKTUR FILE PENTING
+
+```
+portal-siswa/
+├── CLAUDE.md                    # File ini
+├── backend_django/
+│   ├── apps/
+│   │   ├── accounts/            # User, Assignment, permissions
+│   │   ├── attendance/          # Presensi, TitipanTugas
+│   │   ├── core/                # TahunAjaran, MasterJam, MasterMapel
+│   │   ├── dashboard/           # Dashboard views
+│   │   ├── evaluations/         # Evaluasi santri
+│   │   ├── finance/             # Keuangan
+│   │   ├── grades/              # Nilai
+│   │   ├── kesantrian/          # Ibadah, Hafalan, IzinGuru
+│   │   ├── registration/        # Pendaftaran
+│   │   └── students/            # Student, Schedule
+│   └── backend_django/
+│       └── urls.py              # Main URL routing
+├── frontend/
+│   ├── public/
+│   │   ├── css/
+│   │   │   ├── baron-emerald.css    # Main theme (USE THIS!)
+│   │   │   └── users.css            # User management styles
+│   │   └── js/
+│   │       ├── utils.js             # 1st - Utilities
+│   │       ├── apiConfig.js         # 2nd - API config
+│   │       ├── apiFetch.js          # 3rd - API wrapper
+│   │       ├── auth-check.js        # 4th - Auth & sidebar
+│   │       └── *.js                 # Page-specific scripts
+│   └── views/
+│       └── *.html                   # Page templates
+└── docs/                            # Documentation
+```
 
 ---
 
 ## 📋 DAFTAR TUGAS
 
-### ✅ Selesai (v2.3.10)
+### ✅ Selesai (v2.3.11)
 | Task | Status |
 |------|--------|
-| Fix dashboard Evaluasi Santri (chart kosong) | ✅ Fixed |
-| Case sensitivity jenis prestasi/pelanggaran | ✅ Fixed |
-| FK comparison walisantri filter | ✅ Fixed |
-| Multi-child support evaluations | ✅ Fixed |
-| Monthly trend data for chart | ✅ Added |
+| MasterJam model + seed data | ✅ |
+| MasterMapel CRUD + management page | ✅ |
+| Jadwal Mengajar admin page | ✅ |
+| Jadwal Minggu Ini widget (guru dashboard) | ✅ |
+| Dropdown mapel di Assign Modal | ✅ |
+| Hapus assignment dengan konfirmasi | ✅ |
+| Fix master-mapel.html UI (baron theme) | ✅ |
+| Badge assignment compact + expandable | ✅ |
 
 ### 🔄 Belum Selesai
 | # | Task | Priority |
 |---|------|----------|
 | 1 | Poin kinerja otomatis untuk guru pengganti | 🟡 Medium |
-| 2 | Modal detail Titipan Tugas (read-only, klik row) | 🟡 Medium |
-| 3 | Jadwal sekolah | 🟢 Low |
+| 2 | Modal detail Titipan Tugas (read-only) | 🟡 Medium |
+| 3 | Notifikasi real-time | 🟢 Low |
 
 ---
 
@@ -268,7 +365,6 @@ TahunAjaran.objects.create(nama='2025/2026', semester='Genap', is_active=True)
 rtk git status/log/diff/add/commit/push/pull
 rtk grep "keyword" apps/
 rtk err python manage.py runserver
-rtk curl http://localhost:8000/api/endpoint/
 ```
 
 ---
@@ -283,4 +379,4 @@ rtk curl http://localhost:8000/api/endpoint/
 
 ---
 
-*Portal Siswa Baron v2.3.10 — Pondok Pesantren Baron — April 2026*
+*Portal Siswa Baron v2.3.11 — Pondok Pesantren Baron — 26 April 2026*

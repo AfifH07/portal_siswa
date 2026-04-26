@@ -362,32 +362,74 @@ function renderAssignments(user) {
 
     if (assignments.length === 0) {
         if (user.kelas) {
-            return `<span class="assignment-badge"><span class="badge-icon">📚</span> ${escapeHtml(user.kelas)}</span>`;
+            return `<span class="assignment-badge"><span class="badge-icon">📚</span> <span class="badge-text">${escapeHtml(user.kelas)}</span></span>`;
         }
         return '<span class="text-muted">-</span>';
     }
 
-    // Show all assignments with delete button
-    return `
-        <div class="assignment-badges">
-            ${assignments.map(a => {
-                const label = a.mata_pelajaran
-                    ? `${escapeHtml(a.mata_pelajaran)} - ${escapeHtml(a.kelas || '-')}`
-                    : (a.kelas || a.mentoring_name || a.hari || a.assignment_type_display || '-');
-                const displayLabel = escapeHtml(typeof label === 'string' ? label : '-');
+    const maxVisible = 3;
+    const hasMore = assignments.length > maxVisible;
+    const visibleAssignments = hasMore ? assignments.slice(0, maxVisible) : assignments;
+    const hiddenAssignments = hasMore ? assignments.slice(maxVisible) : [];
+    const containerId = `assign-${user.id}`;
 
-                return `
-                    <span class="assignment-badge" title="${escapeHtml(a.assignment_type_display || a.assignment_type)} - ${displayLabel}">
-                        <span class="badge-icon">${getAssignmentIcon(a.assignment_type)}</span>
-                        <span class="badge-text">${displayLabel}</span>
-                        <button type="button" class="badge-delete"
-                            onclick="event.stopPropagation(); confirmDeleteAssignment(${user.id}, ${a.id}, '${escapeHtml(user.name || user.username)}', '${displayLabel.replace(/'/g, "\\'")}');"
-                            title="Hapus assignment">×</button>
-                    </span>
-                `;
-            }).join('')}
+    // Render a single badge
+    const renderBadge = (a, hidden = false) => {
+        const label = a.mata_pelajaran
+            ? `${a.mata_pelajaran} - ${a.kelas || '-'}`
+            : (a.kelas || a.mentoring_name || a.hari || a.assignment_type_display || '-');
+        const displayLabel = typeof label === 'string' ? label : '-';
+        const safeLabel = escapeHtml(displayLabel).replace(/'/g, "\\'");
+        const safeName = escapeHtml(user.name || user.username).replace(/'/g, "\\'");
+
+        return `
+            <span class="assignment-badge${hidden ? ' hidden-badge' : ''}"
+                  title="${escapeHtml(a.assignment_type_display || a.assignment_type)}: ${escapeHtml(displayLabel)}"
+                  ${hidden ? 'style="display:none;"' : ''}>
+                <span class="badge-icon">${getAssignmentIcon(a.assignment_type)}</span>
+                <span class="badge-text">${escapeHtml(displayLabel)}</span>
+                <button type="button" class="badge-delete"
+                    onclick="event.stopPropagation(); confirmDeleteAssignment(${user.id}, ${a.id}, '${safeName}', '${safeLabel}');"
+                    title="Hapus">×</button>
+            </span>
+        `;
+    };
+
+    return `
+        <div class="assignment-badges" id="${containerId}">
+            ${visibleAssignments.map(a => renderBadge(a, false)).join('')}
+            ${hiddenAssignments.map(a => renderBadge(a, true)).join('')}
+            ${hasMore ? `
+                <span class="badge-more" onclick="toggleAssignmentBadges('${containerId}', this)">
+                    +${hiddenAssignments.length} lagi
+                </span>
+            ` : ''}
         </div>
     `;
+}
+
+/**
+ * Toggle expand/collapse hidden assignment badges
+ */
+function toggleAssignmentBadges(containerId, toggleEl) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const isExpanded = container.classList.contains('expanded');
+    const hiddenBadges = container.querySelectorAll('.hidden-badge');
+
+    if (isExpanded) {
+        // Collapse
+        container.classList.remove('expanded');
+        hiddenBadges.forEach(b => b.style.display = 'none');
+        const count = hiddenBadges.length;
+        toggleEl.textContent = `+${count} lagi`;
+    } else {
+        // Expand
+        container.classList.add('expanded');
+        hiddenBadges.forEach(b => b.style.display = 'inline-flex');
+        toggleEl.textContent = 'Tutup';
+    }
 }
 
 function updatePagination(total) {
@@ -1411,6 +1453,7 @@ window.closeAssignModal = closeAssignModal;
 window.saveAssignment = saveAssignment;
 window.confirmDeleteAssignment = confirmDeleteAssignment;
 window.deleteAssignment = deleteAssignment;
+window.toggleAssignmentBadges = toggleAssignmentBadges;
 window.openResetModal = openResetModal;
 window.closeResetModal = closeResetModal;
 window.submitResetPassword = submitResetPassword;

@@ -288,31 +288,38 @@
     color: #dc2626;
 }
 
-/* Assignment badges */
+/* Assignment badges - compact style matching role badges */
 .assignment-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
+    max-width: 220px;
+}
+
+.assignment-badges.expanded {
+    max-width: none;
 }
 
 .assignment-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    background: var(--bg-base);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 11px;
-    color: var(--text-sub);
+    gap: 3px;
+    padding: 2px 6px;
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #475569;
+    white-space: nowrap;
+    max-width: 140px;
 }
 
 .assignment-badge .badge-icon {
-    font-size: 10px;
+    font-size: 9px;
+    flex-shrink: 0;
 }
 
 .assignment-badge .badge-text {
-    max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -322,19 +329,20 @@
     display: none;
     align-items: center;
     justify-content: center;
-    width: 14px;
-    height: 14px;
-    margin-left: 2px;
+    width: 12px;
+    height: 12px;
+    margin-left: 1px;
     padding: 0;
     background: transparent;
     border: none;
     border-radius: 50%;
-    color: var(--text-muted);
-    font-size: 12px;
-    font-weight: bold;
+    color: #9ca3af;
+    font-size: 10px;
+    font-weight: normal;
     cursor: pointer;
     transition: all 0.15s ease;
     line-height: 1;
+    flex-shrink: 0;
 }
 
 .assignment-badge:hover .badge-delete {
@@ -342,8 +350,28 @@
 }
 
 .assignment-badge .badge-delete:hover {
-    background: var(--red-100, #fee2e2);
-    color: var(--red-600, #dc2626);
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* Badge expand/collapse toggle */
+.badge-more {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    background: rgba(107, 114, 128, 0.1);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.badge-more:hover {
+    background: rgba(107, 114, 128, 0.2);
+    color: #374151;
 }
 
 /* Action Buttons */

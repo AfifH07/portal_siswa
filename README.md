@@ -1,8 +1,8 @@
-# Portal Siswa Baron v2.3.7
+# Portal Siswa Baron v2.3.11
 
-Sistem Informasi Sekolah untuk manajemen santri, evaluasi, dan pemantauan akademik di **Pondok Pesantren Baron**.
+Sistem Informasi Akademik Terpadu untuk manajemen santri, evaluasi, dan pemantauan akademik di **Pondok Pesantren Baron**.
 
-[![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![Django](https://img.shields.io/badge/Django-4.2-green.svg)](https://djangoproject.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -12,11 +12,12 @@ Sistem Informasi Sekolah untuk manajemen santri, evaluasi, dan pemantauan akadem
 
 Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pesantren dengan walisantri. Sistem ini menyediakan:
 
-- **Dashboard Real-time** dengan visualisasi data dan statistik
-- **Manajemen Akademik** (nilai, kehadiran, evaluasi)
+- **Dashboard Real-time** dengan visualisasi data dan statistik per role
+- **Manajemen Akademik** (nilai, kehadiran, jadwal mengajar)
 - **Modul Kesantrian** (ibadah, hafalan, halaqoh, BLP)
 - **Sistem Evaluasi Poin** untuk pembinaan santri
-- **Multi-Role Access** dengan 8 level akses berbeda
+- **Multi-Role Access** dengan 7 level akses berbeda
+- **Manajemen Guru** (assignment, jadwal, titipan tugas, izin)
 
 ---
 
@@ -25,14 +26,22 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 ### Role-Based Access Control (RBAC)
 | Role | Akses |
 |------|-------|
-| `superadmin` | Full system access - kelola user, konfigurasi sistem |
+| `superadmin` | Full system access - kelola user, konfigurasi sistem, master data |
 | `pimpinan` | Lihat semua data, evaluasi asatidz, dashboard manajemen |
-| `guru` | Input nilai & kehadiran, evaluasi santri |
+| `guru` | Input nilai & kehadiran, evaluasi santri, jadwal mengajar |
 | `musyrif` | Pemantauan ibadah, hafalan, pembinaan santri |
-| `wali_kelas` | Manajemen kelas, laporan progress santri |
 | `bk` | Bimbingan konseling, penanganan kasus |
 | `bendahara` | Modul keuangan, pembayaran |
 | `walisantri` | Lihat data anak (multi-anak supported) |
+
+> **Note:** Role `wali_kelas` sudah dimigrasi ke `guru`
+
+### Fitur v2.3.11 (Terbaru)
+- **Master Jam & Mapel** - Data master jam pelajaran dan mata pelajaran
+- **Jadwal Mengajar** - CRUD jadwal guru dengan cascading dropdown
+- **Widget Jadwal Mingguan** - Tampilan jadwal minggu ini di dashboard guru
+- **Hapus Assignment** - Tombol hapus assignment dengan konfirmasi
+- **Dropdown Mapel Dinamis** - Di modal assign tugas berdasarkan sesi
 
 ### Bulk Import
 - Import data siswa via Excel/CSV
@@ -45,6 +54,7 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 - Progress hafalan per kelas
 - Distribusi nilai akademik
 - Ringkasan evaluasi santri
+- Jadwal mingguan guru (grid Senin-Sabtu)
 
 ### Sistem Evaluasi Poin
 - **BLP (Buku Laporan Pembinaan)**: 25 indikator, 6 domain
@@ -52,11 +62,11 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 - **Evaluasi Asatidz**: Penilaian kinerja ustadz/karyawan
 - Predikat otomatis (Mumtaz, Jayyid Jiddan, Jayyid, Maqbul, Perlu Pembinaan)
 
-### Secure Password Reset
-- 3-step wizard (request → verify → reset)
-- Token 6-digit dengan expiry 30 menit
-- Email notification (opsional)
-- Rate limiting untuk keamanan
+### Manajemen HR Guru
+- **Titipan Tugas**: Guru menitipkan tugas untuk kelas
+- **Izin Guru**: Pengajuan izin dengan upload surat
+- **Jurnal Piket**: Catatan piket harian
+- **Assignment**: Penugasan guru ke kelas/mapel
 
 ---
 
@@ -68,17 +78,25 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 | Django | 4.2.x | Web framework |
 | Django REST Framework | 3.14.x | REST API |
 | SimpleJWT | 5.3.x | JWT authentication |
-| dj-database-url | 2.1.x | Database URL parsing |
-| Pillow | 10.3+ | Image processing |
+| Pillow | 10.4+ | Image processing |
 | pandas | 2.1.x | Excel/CSV processing |
+| reportlab | 4.2.5 | PDF generation |
 
 ### Frontend
 | Teknologi | Fungsi |
 |-----------|--------|
 | HTML5/CSS3 | Struktur & styling |
-| Vanilla JavaScript | Logic & API calls |
+| Vanilla JavaScript ES6+ | Logic & API calls |
 | Lucide Icons | Icon library (SVG) |
-| Chart.js | Visualisasi data |
+| FontAwesome 6.5 | Additional icons |
+| Chart.js 4.4 | Visualisasi data |
+
+### Design System
+| Komponen | Detail |
+|----------|--------|
+| Theme | Baron Emerald (Glassmorphism) |
+| Font | Plus Jakarta Sans + DM Mono |
+| CSS | baron-emerald.css |
 
 ### Database
 | Environment | Database |
@@ -93,28 +111,35 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 
 ```
 portal-siswa/
+├── CLAUDE.md                    # Dokumentasi untuk Claude Code
+├── README.md                    # File ini
 ├── backend_django/
 │   ├── apps/
-│   │   ├── accounts/       # Auth, Users, JWT, Permissions
-│   │   ├── core/           # Master Data (TahunAjaran)
-│   │   ├── students/       # CRUD Siswa, Alumni
-│   │   ├── attendance/     # Sistem Presensi
-│   │   ├── grades/         # Nilai & Analytics
-│   │   ├── evaluations/    # Evaluasi Santri + Upload
-│   │   ├── kesantrian/     # Ibadah, Hafalan, BLP, Incident
-│   │   ├── finance/        # Modul Keuangan
-│   │   ├── registration/   # Pendaftaran
-│   │   └── dashboard/      # Statistik
-│   ├── backend_django/     # Django settings
-│   ├── requirements.txt
-│   ├── .env.staging.example
-│   └── .env.production.example
+│   │   ├── accounts/            # Auth, Users, JWT, Permissions, Assignment
+│   │   ├── core/                # TahunAjaran, MasterJam, MasterMapel
+│   │   ├── students/            # CRUD Siswa, Schedule, Alumni
+│   │   ├── attendance/          # Presensi, TitipanTugas, JurnalPiket
+│   │   ├── grades/              # Nilai & Analytics
+│   │   ├── evaluations/         # Evaluasi Santri + Upload
+│   │   ├── kesantrian/          # Ibadah, Hafalan, BLP, Incident, IzinGuru
+│   │   ├── finance/             # Modul Keuangan
+│   │   ├── registration/        # Pendaftaran
+│   │   └── dashboard/           # Statistik
+│   ├── backend_django/          # Django settings
+│   └── requirements.txt
 ├── frontend/
 │   ├── public/
-│   │   ├── css/            # Stylesheets
-│   │   └── js/             # JavaScript modules
-│   └── views/              # HTML templates
-└── README.md
+│   │   ├── css/
+│   │   │   ├── baron-emerald.css    # Main theme
+│   │   │   └── users.css            # User management
+│   │   └── js/
+│   │       ├── utils.js             # Utilities
+│   │       ├── apiConfig.js         # API configuration
+│   │       ├── apiFetch.js          # API wrapper
+│   │       ├── auth-check.js        # Auth & sidebar
+│   │       └── *.js                 # Page scripts
+│   └── views/                       # HTML templates
+└── docs/                            # Additional documentation
 ```
 
 ---
@@ -122,7 +147,7 @@ portal-siswa/
 ## Panduan Instalasi Lokal
 
 ### Prasyarat
-- Python 3.13+
+- Python 3.10+
 - Git
 - (Opsional) PostgreSQL 15 untuk production mode
 
@@ -146,11 +171,12 @@ source venv/bin/activate
 cd backend_django
 pip install -r requirements.txt
 
-# 4. Setup environment (development mode)
-# Tidak perlu .env file - default SQLite & DEBUG=True
-
-# 5. Jalankan migrasi database
+# 4. Jalankan migrasi database
 python manage.py migrate
+
+# 5. Seed master data (opsional)
+python manage.py seed_master_jam
+python manage.py seed_master_mapel
 
 # 6. Buat superuser
 python manage.py createsuperuser
@@ -161,38 +187,6 @@ python manage.py runserver
 # 8. Akses aplikasi
 # Frontend: http://localhost:8000
 # Admin: http://localhost:8000/admin/
-# API Docs: http://localhost:8000/api/schema/swagger/
-```
-
----
-
-## Konfigurasi Environment
-
-### Development (Default)
-Tidak memerlukan file `.env`. Sistem otomatis menggunakan:
-- `DEBUG=True`
-- SQLite database
-- Secret key development
-
-### Staging (PythonAnywhere)
-```bash
-cp .env.staging.example .env
-# Edit sesuai username PythonAnywhere Anda
-```
-
-### Production (VPS + PostgreSQL)
-```bash
-cp .env.production.example .env
-# Edit DATABASE_URL dan SECRET_KEY
-```
-
-#### Contoh DATABASE_URL
-```
-# PostgreSQL lokal
-DATABASE_URL=postgres://user:password@localhost:5432/portal_siswa
-
-# PostgreSQL cloud (Supabase/Neon/Railway)
-DATABASE_URL=postgres://user:pass@db.provider.com:5432/dbname?sslmode=require
 ```
 
 ---
@@ -205,55 +199,55 @@ DATABASE_URL=postgres://user:pass@db.provider.com:5432/dbname?sslmode=require
 | POST | `/api/auth/login/` | Login dengan JWT |
 | POST | `/api/auth/logout/` | Logout & blacklist token |
 | POST | `/api/auth/token/refresh/` | Refresh JWT token |
-| POST | `/api/auth/change-password/` | Ganti password |
-| POST | `/api/auth/request-reset/` | Request token reset |
-| POST | `/api/auth/verify-token/` | Verifikasi token 6-digit |
-| POST | `/api/auth/reset-password/` | Reset password |
 
-### Core
+### Core (Master Data)
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
 | GET | `/api/core/tahun-ajaran/active/` | Tahun ajaran aktif |
-| GET/POST | `/api/core/tahun-ajaran/` | CRUD tahun ajaran |
+| GET | `/api/core/master-jam/` | Master jam pelajaran |
+| GET | `/api/core/master-mapel/` | Master mata pelajaran |
+| GET | `/api/core/master-mapel/grouped/` | Mapel grouped by sesi |
 
-### Students
+### Students & Schedule
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
 | GET/POST | `/api/students/` | List/Create siswa |
-| GET/PUT/DELETE | `/api/students/<nisn>/` | Detail siswa |
-| GET | `/api/students/classes/` | Daftar kelas |
-| POST | `/api/students/import/` | Bulk import Excel |
+| GET | `/api/jadwal/guru/<username>/` | Jadwal guru mingguan |
+| GET/POST | `/api/jadwal/` | CRUD jadwal |
+
+### Admin (User Management)
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET/POST | `/api/admin/users/` | List/Create users |
+| PATCH | `/api/admin/users/<id>/assign/` | Assign guru ke kelas |
+| DELETE | `/api/admin/users/<id>/assignments/<aid>/` | Hapus assignment |
 
 ### Kesantrian
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| GET | `/api/kesantrian/worship-tracker/<nisn>/` | Data ibadah harian |
-| GET | `/api/kesantrian/hafalan/<nisn>/` | Progress hafalan |
-| GET/POST | `/api/kesantrian/incidents/` | Incident management |
-| GET/POST | `/api/kesantrian/asatidz/evaluations/` | Evaluasi asatidz |
+| GET | `/api/kesantrian/worship-tracker/<nisn>/` | Data ibadah |
+| GET/POST | `/api/kesantrian/izin-guru/` | Izin guru |
+| GET/POST | `/api/attendance/titipan-tugas/` | Titipan tugas |
 
 ---
 
 ## Deployment
 
 ### PythonAnywhere (Staging)
-1. Upload project ke PythonAnywhere
-2. Setup virtualenv dan install requirements
-3. Copy `.env.staging.example` ke `.env`
-4. Konfigurasi WSGI dan static files
-5. Reload web app
+```bash
+cd ~/portal_siswa && git pull
+cd backend_django
+python manage.py migrate --noinput
+python manage.py collectstatic --noinput
+# Reload di Web tab
+```
 
 ### VPS Production
 1. Setup server dengan Nginx + Gunicorn
 2. Install PostgreSQL dan buat database
-3. Copy `.env.production.example` ke `.env`
+3. Konfigurasi environment variables
 4. Jalankan migrasi dan collectstatic
 5. Konfigurasi SSL dengan Certbot
-
-```bash
-# Contoh Gunicorn
-gunicorn backend_django.wsgi:application --bind 0.0.0.0:8000 --workers 3
-```
 
 ---
 
@@ -265,46 +259,25 @@ gunicorn backend_django.wsgi:application --bind 0.0.0.0:8000 --workers 3
 - XSS protection headers
 - SQL injection prevention (Django ORM)
 - HTTPS enforcement (production)
-- HSTS headers (production)
-
----
-
-## Pengembangan
-
-### Menambah Module Baru
-```bash
-cd backend_django
-python manage.py startapp apps/nama_module
-```
-
-### Menjalankan Tests
-```bash
-python manage.py test
-```
-
-### Generate API Documentation
-```bash
-python manage.py spectacular --file schema.yml
-```
+- Role-based permission system
 
 ---
 
 ## Troubleshooting
-
-### Database Error
-```bash
-# Reset database (development only!)
-rm db.sqlite3
-python manage.py migrate
-```
 
 ### Static Files Tidak Muncul
 ```bash
 python manage.py collectstatic --noinput
 ```
 
+### CSS/Sidebar Rusak
+Pastikan menggunakan `baron-emerald.css`, bukan file CSS lama.
+
+### Dropdown Mapel Kosong
+Cek endpoint `/api/core/master-mapel/grouped/` dan pastikan data master sudah di-seed.
+
 ### Token Expired
-- Access token: 60 menit (configurable)
+- Access token: 60 menit
 - Refresh token: 24 jam
 - Frontend otomatis refresh token
 
@@ -332,4 +305,4 @@ python manage.py collectstatic --noinput
 
 ---
 
-**Status**: Production Ready | **Versi**: 2.3.7 | **Update**: April 2026
+**Status**: Production Ready | **Versi**: 2.3.11 | **Update**: 26 April 2026
