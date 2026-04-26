@@ -311,6 +311,41 @@
     font-size: 10px;
 }
 
+.assignment-badge .badge-text {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.assignment-badge .badge-delete {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-left: 2px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+
+.assignment-badge:hover .badge-delete {
+    display: flex;
+}
+
+.assignment-badge .badge-delete:hover {
+    background: var(--red-100, #fee2e2);
+    color: var(--red-600, #dc2626);
+}
+
 /* Action Buttons */
 .action-buttons {
     display: flex;

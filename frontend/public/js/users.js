@@ -362,20 +362,30 @@ function renderAssignments(user) {
 
     if (assignments.length === 0) {
         if (user.kelas) {
-            return `<span class="assignment-badge"><span class="badge-icon">📚</span> ${user.kelas}</span>`;
+            return `<span class="assignment-badge"><span class="badge-icon">📚</span> ${escapeHtml(user.kelas)}</span>`;
         }
         return '<span class="text-muted">-</span>';
     }
 
+    // Show all assignments with delete button
     return `
         <div class="assignment-badges">
-            ${assignments.slice(0, 3).map(a => `
-                <span class="assignment-badge">
-                    <span class="badge-icon">${getAssignmentIcon(a.assignment_type)}</span>
-                    ${a.kelas || a.mentoring_name || a.hari || '-'}
-                </span>
-            `).join('')}
-            ${assignments.length > 3 ? `<span class="assignment-badge">+${assignments.length - 3}</span>` : ''}
+            ${assignments.map(a => {
+                const label = a.mata_pelajaran
+                    ? `${escapeHtml(a.mata_pelajaran)} - ${escapeHtml(a.kelas || '-')}`
+                    : (a.kelas || a.mentoring_name || a.hari || a.assignment_type_display || '-');
+                const displayLabel = escapeHtml(typeof label === 'string' ? label : '-');
+
+                return `
+                    <span class="assignment-badge" title="${escapeHtml(a.assignment_type_display || a.assignment_type)} - ${displayLabel}">
+                        <span class="badge-icon">${getAssignmentIcon(a.assignment_type)}</span>
+                        <span class="badge-text">${displayLabel}</span>
+                        <button type="button" class="badge-delete"
+                            onclick="event.stopPropagation(); confirmDeleteAssignment(${user.id}, ${a.id}, '${escapeHtml(user.name || user.username)}', '${displayLabel.replace(/'/g, "\\'")}');"
+                            title="Hapus assignment">×</button>
+                    </span>
+                `;
+            }).join('')}
         </div>
     `;
 }
@@ -872,6 +882,43 @@ async function saveAssignment(event) {
 }
 
 // ============================================
+// DELETE ASSIGNMENT
+// ============================================
+
+/**
+ * Confirm and delete an assignment
+ */
+function confirmDeleteAssignment(userId, assignmentId, userName, assignmentLabel) {
+    const confirmed = confirm(`Hapus assignment "${assignmentLabel}" dari ${userName}?`);
+    if (confirmed) {
+        deleteAssignment(userId, assignmentId);
+    }
+}
+
+/**
+ * Delete assignment via API
+ */
+async function deleteAssignment(userId, assignmentId) {
+    try {
+        const response = await window.apiFetch(`admin/users/${userId}/assignments/${assignmentId}/`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showToast('success', data.message || 'Assignment berhasil dihapus');
+            loadUsers(); // Refresh table
+        } else {
+            showToast('error', data.message || 'Gagal menghapus assignment');
+        }
+    } catch (error) {
+        console.error('[Users] Error deleting assignment:', error);
+        showToast('error', 'Gagal menghapus assignment');
+    }
+}
+
+// ============================================
 // RESET PASSWORD
 // ============================================
 function openResetModal(userId, username) {
@@ -1362,6 +1409,8 @@ window.assignFromDetail = assignFromDetail;
 window.openAssignModal = openAssignModal;
 window.closeAssignModal = closeAssignModal;
 window.saveAssignment = saveAssignment;
+window.confirmDeleteAssignment = confirmDeleteAssignment;
+window.deleteAssignment = deleteAssignment;
 window.openResetModal = openResetModal;
 window.closeResetModal = closeResetModal;
 window.submitResetPassword = submitResetPassword;
