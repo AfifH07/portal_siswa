@@ -26,4 +26,7 @@ urlpatterns = [
 
     # Guru Today Dashboard API
     path('guru-today/', views.guru_today_dashboard, name='guru_today_dashboard'),
+
+    # Guru TODO List API
+    path('guru/todo-list/', views.guru_todo_list, name='guru_todo_list'),
 ]

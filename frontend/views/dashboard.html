@@ -504,6 +504,125 @@
         margin-bottom: 0.25rem;
         opacity: 0.5;
     }
+
+    /* ===================== TODO LIST WIDGET STYLES ===================== */
+    .guru-todo-widget {
+        margin-bottom: 1.5rem;
+    }
+
+    .todo-widget-list {
+        padding: 0;
+    }
+
+    .todo-widget-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-light, #e5e7eb);
+        transition: background 0.15s;
+    }
+
+    .todo-widget-item:last-child {
+        border-bottom: none;
+    }
+
+    .todo-widget-item:hover {
+        background: var(--emerald-50, #ecfdf5);
+    }
+
+    .todo-widget-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .todo-widget-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .todo-widget-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text-main, #1f2937);
+    }
+
+    .todo-widget-detail {
+        font-size: 0.75rem;
+        color: var(--text-muted, #6b7280);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .todo-widget-action {
+        flex-shrink: 0;
+    }
+
+    .todo-widget-btn {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .todo-widget-btn.btn-presensi {
+        background: var(--emerald-100, #d1fae5);
+        color: var(--emerald-700, #047857);
+    }
+    .todo-widget-btn.btn-presensi:hover {
+        background: var(--emerald-200, #a7f3d0);
+    }
+
+    .todo-widget-btn.btn-nilai {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    .todo-widget-btn.btn-nilai:hover {
+        background: #bfdbfe;
+    }
+
+    .todo-widget-btn.btn-titipan {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .todo-widget-btn.btn-titipan:hover {
+        background: #fde68a;
+    }
+
+    /* Success state when all done */
+    .todo-widget-success {
+        text-align: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+        border-radius: 8px;
+        margin: 0.5rem;
+    }
+
+    .todo-widget-success .success-icon {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .todo-widget-success .success-text {
+        font-weight: 600;
+        color: var(--emerald-700, #047857);
+        font-size: 0.9rem;
+    }
+
+    .todo-widget-success .success-sub {
+        font-size: 0.75rem;
+        color: var(--emerald-600, #059669);
+        margin-top: 0.25rem;
+    }
     </style>
 </head>
 <body data-role="">
@@ -618,6 +737,20 @@
                 </div>
             </div>
 
+            <!-- TODO LIST WIDGET (di atas grid utama) -->
+            <div class="glass-card guru-todo-widget" id="guru-todo-widget">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Yang Perlu Dikerjakan</h3>
+                    <div class="card-badge" id="todo-widget-badge">Memuat...</div>
+                </div>
+                <div class="todo-widget-list" id="todo-widget-list">
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Memeriksa tugas...</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Main Content Grid -->
             <div class="guru-main-grid">
 
@@ -651,10 +784,10 @@
                         </div>
                     </div>
 
-                    <!-- 4. MATERI HARI INI -->
+                    <!-- 4. JURNAL HARI INI -->
                     <div class="glass-card guru-materi-card">
                         <div class="card-head">
-                            <h3><span class="ch-icon">📖</span> Materi Hari Ini</h3>
+                            <h3><span class="ch-icon">📖</span> Jurnal Hari Ini</h3>
                         </div>
                         <div class="guru-materi-list" id="guru-materi-list">
                             <div class="empty-state">
@@ -877,7 +1010,7 @@
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260327B" defer></script>
 <script src="/static/js/page-events.js?v=20260327B" defer></script>
-<script src="/static/js/dashboard.js?v=20260327B" defer></script>
+<script src="/static/js/dashboard.js?v=20260426" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init

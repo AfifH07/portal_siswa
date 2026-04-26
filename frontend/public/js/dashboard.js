@@ -672,6 +672,9 @@ async function loadGuruDashboardData() {
         // Load jadwal mingguan (separate API call)
         loadJadwalMingguan();
 
+        // Load todo list (separate API call)
+        loadGuruTodoList();
+
     } catch (error) {
         console.error('[GuruDashboard] Error loading data:', error);
         showEmptyGuruDashboard('Gagal memuat data dashboard');
@@ -890,15 +893,15 @@ function renderGuruJadwalList(jadwalList) {
 }
 
 /**
- * Render materi list from e_report (jurnal mengajar)
- * @param {Array} materiList - Array of jurnal/materi objects
+ * Render jurnal list from e_report (jurnal mengajar hari ini)
+ * @param {Array} jurnalList - Array of jurnal objects
  */
-function renderGuruMateriList(materiList) {
+function renderGuruMateriList(jurnalList) {
     const container = document.getElementById('guru-materi-list');
     if (!container) return;
 
     // Empty state
-    if (!materiList || materiList.length === 0) {
+    if (!jurnalList || jurnalList.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <span class="empty-icon">📋</span>
@@ -909,17 +912,114 @@ function renderGuruMateriList(materiList) {
         return;
     }
 
-    // Render materi items
-    container.innerHTML = materiList.map(item => `
+    // Render jurnal items with all fields
+    container.innerHTML = jurnalList.map(item => `
         <div class="materi-item">
             <div class="materi-header">
-                <span class="materi-kelas">${escapeHtml(item.kelas)}</span>
+                <span class="materi-kelas">${escapeHtml(item.jam_label || `JP ${item.jam_ke || '-'}`)} • ${escapeHtml(item.kelas)}</span>
                 <span class="materi-mapel">${escapeHtml(item.mata_pelajaran || '-')}</span>
             </div>
             <div class="materi-content">${escapeHtml(item.materi || 'Tidak ada materi tercatat')}</div>
             ${item.capaian_pembelajaran ? `<div class="materi-tujuan">📌 ${escapeHtml(item.capaian_pembelajaran)}</div>` : ''}
+            ${item.catatan ? `<div class="materi-tujuan" style="color: #6b7280;">💬 ${escapeHtml(item.catatan)}</div>` : ''}
         </div>
     `).join('');
+}
+
+/**
+ * Load and render Todo List widget
+ */
+async function loadGuruTodoList() {
+    const container = document.getElementById('todo-widget-list');
+    const badge = document.getElementById('todo-widget-badge');
+
+    if (!container) return;
+
+    try {
+        debugLog('[GuruDashboard] Fetching todo list...');
+        const response = await window.apiFetch('dashboard/guru/todo-list/');
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        debugLog('[GuruDashboard] Todo list response:', data);
+
+        const items = data.items || [];
+
+        // Update badge
+        if (badge) {
+            if (items.length === 0) {
+                badge.textContent = '✅ Selesai';
+                badge.style.background = '#dcfce7';
+                badge.style.color = '#166534';
+            } else {
+                badge.textContent = `${items.length} tugas`;
+                badge.style.background = '#fef3c7';
+                badge.style.color = '#92400e';
+            }
+        }
+
+        // Render items
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="todo-widget-success">
+                    <span class="success-icon">✅</span>
+                    <div class="success-text">Semua kewajiban sudah selesai!</div>
+                    <div class="success-sub">Tidak ada tugas tertunda hari ini</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Render todo items
+        container.innerHTML = items.map(item => {
+            // Icon based on type
+            let icon = '📋';
+            let btnClass = 'btn-presensi';
+            let btnText = 'Input';
+
+            if (item.type === 'nilai') {
+                icon = '📊';
+                btnClass = 'btn-nilai';
+                btnText = 'Input';
+            } else if (item.type === 'titipan') {
+                icon = '📦';
+                btnClass = 'btn-titipan';
+                btnText = 'Buat';
+            }
+
+            return `
+                <div class="todo-widget-item">
+                    <span class="todo-widget-icon">${icon}</span>
+                    <div class="todo-widget-info">
+                        <div class="todo-widget-label">${escapeHtml(item.label)}</div>
+                        <div class="todo-widget-detail">${escapeHtml(item.detail)}</div>
+                    </div>
+                    <div class="todo-widget-action">
+                        <a href="${escapeHtml(item.url)}" class="todo-widget-btn ${btnClass}">
+                            ${btnText} →
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('[GuruDashboard] Error loading todo list:', error);
+
+        if (badge) {
+            badge.textContent = '-';
+        }
+
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 1rem;">
+                <span class="empty-icon">⚠️</span>
+                <p style="font-size: 0.8rem;">Gagal memuat daftar tugas</p>
+            </div>
+        `;
+    }
 }
 
 /**
@@ -1078,6 +1178,7 @@ function showEmptyGuruDashboard(message) {
 // Export guru dashboard functions
 window.renderGuruDashboard = renderGuruDashboard;
 window.loadGuruDashboardData = loadGuruDashboardData;
+window.loadGuruTodoList = loadGuruTodoList;
 
 // ============================================================
 // WALISANTRI DASHBOARD - Student Profile View

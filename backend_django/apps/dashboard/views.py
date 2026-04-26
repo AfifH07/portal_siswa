@@ -724,24 +724,51 @@ def guru_today_dashboard(request):
             chart_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun']
             chart_values = [0, 0, 0, 0, 0, 0]
 
-        # E-report materi dari jurnal mengajar hari ini
+        # E-report materi dari attendance hari ini (grouped by kelas + jam_ke)
         e_report_materi = []
         try:
-            from apps.attendance.models import JurnalMengajar
-            jurnals_today = JurnalMengajar.objects.filter(
-                guru=user,
-                tanggal=today
-            ).order_by('created_at')
+            from apps.attendance.models import Attendance
+            from django.db.models import Q
 
-            for jurnal in jurnals_today:
-                e_report_materi.append({
-                    'kelas': jurnal.kelas,
-                    'mata_pelajaran': jurnal.mata_pelajaran,
-                    'materi': jurnal.materi,
-                    'capaian_pembelajaran': jurnal.capaian_pembelajaran
-                })
-        except Exception:
-            pass
+            # Ambil kelas yang diajar guru ini dari jadwal
+            guru_kelas = Schedule.objects.filter(
+                username=user.username,
+                is_active=True
+            ).values_list('kelas', flat=True).distinct()
+
+            # Query attendance records hari ini:
+            # 1. Kelas yang diajar guru ini (via Schedule), ATAU
+            # 2. Guru sebagai guru_pengganti
+            attendance_today = Attendance.objects.filter(
+                tanggal=today
+            ).filter(
+                Q(nisn__kelas__in=guru_kelas) | Q(guru_pengganti=user)
+            ).exclude(
+                materi__isnull=True, materi__exact=''
+            ).values(
+                'nisn__kelas', 'mata_pelajaran', 'jam_ke',
+                'materi', 'capaian_pembelajaran', 'catatan'
+            ).distinct().order_by('jam_ke')
+
+            # Group dan format hasilnya
+            seen = set()
+            for att in attendance_today:
+                key = (att['nisn__kelas'], att['mata_pelajaran'], att['jam_ke'])
+                if key not in seen:
+                    seen.add(key)
+                    e_report_materi.append({
+                        'jam_ke': att['jam_ke'],
+                        'jam_label': Attendance.get_jam_label(att['jam_ke']),
+                        'kelas': att['nisn__kelas'],
+                        'mata_pelajaran': att['mata_pelajaran'] or '-',
+                        'materi': att['materi'] or '',
+                        'capaian_pembelajaran': att['capaian_pembelajaran'] or '',
+                        'catatan': att['catatan'] or ''
+                    })
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"[Dashboard] Error fetching e_report: {str(e)}")
 
         return Response({
             'success': True,
@@ -773,3 +800,180 @@ def guru_today_dashboard(request):
             'message': str(e),
             'traceback': traceback.format_exc()
         }, status=500)
+
+
+# =============================================================
+# GURU TODO LIST ENDPOINT
+# =============================================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def guru_todo_list(request):
+    """
+    GET /api/dashboard/guru/todo-list/
+
+    Mengembalikan daftar task yang belum selesai untuk guru:
+    1. Presensi belum diisi (jadwal hari ini tapi belum ada Attendance)
+    2. Nilai belum diinput (Attendance dengan ada_penilaian=True tapi belum ada Grade)
+    3. Izin tanpa titipan tugas (IzinGuru aktif tapi belum ada TitipanTugas)
+    """
+    from django.db.models import Q
+    from apps.students.models import Schedule
+    from apps.attendance.models import Attendance, TitipanTugas
+    from apps.grades.models import Grade
+    from apps.kesantrian.models import IzinGuru
+
+    user = request.user
+
+    # Only for guru role
+    if user.role not in ['guru', 'superadmin', 'pimpinan']:
+        return Response({
+            'success': False,
+            'message': 'Endpoint ini hanya untuk guru'
+        }, status=403)
+
+    today = timezone.now().date()
+    hari_map = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
+    today_hari = hari_map[today.weekday()]
+
+    todo_items = []
+
+    # ===========================================
+    # 1. CEK PRESENSI BELUM DIISI
+    # ===========================================
+    try:
+        # Ambil jadwal mengajar guru hari ini
+        jadwal_hari_ini = Schedule.objects.filter(
+            username=user.username,
+            hari=today_hari,
+            is_active=True
+        ).select_related('master_jam')
+
+        for jadwal in jadwal_hari_ini:
+            # Cek apakah sudah ada attendance untuk kelas + jam_ke + tanggal ini
+            has_attendance = Attendance.objects.filter(
+                nisn__kelas=jadwal.kelas,
+                tanggal=today,
+                jam_ke=jadwal.jam_ke
+            ).exists() if jadwal.jam_ke else False
+
+            if not has_attendance:
+                # Format waktu
+                waktu = ''
+                if jadwal.jam_mulai:
+                    waktu = jadwal.jam_mulai.strftime('%H:%M')
+                elif jadwal.master_jam and jadwal.master_jam.jam_mulai:
+                    waktu = jadwal.master_jam.jam_mulai.strftime('%H:%M')
+
+                todo_items.append({
+                    'type': 'presensi',
+                    'label': 'Belum input presensi',
+                    'detail': f"{jadwal.mata_pelajaran or 'N/A'} - {jadwal.kelas}" + (f" ({waktu})" if waktu else ""),
+                    'kelas': jadwal.kelas,
+                    'jam_ke': jadwal.jam_ke,
+                    'mata_pelajaran': jadwal.mata_pelajaran,
+                    'url': '/attendance/',
+                    'priority': 'high'
+                })
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"[TODO List] Error checking presensi: {str(e)}")
+
+    # ===========================================
+    # 2. CEK NILAI BELUM DIINPUT
+    # ===========================================
+    try:
+        # Ambil kelas yang diajar guru
+        guru_kelas = Schedule.objects.filter(
+            username=user.username,
+            is_active=True
+        ).values_list('kelas', flat=True).distinct()
+
+        # Cek attendance dengan ada_penilaian=True tapi belum ada Grade
+        attendance_with_penilaian = Attendance.objects.filter(
+            tanggal=today,
+            ada_penilaian=True,
+            nisn__kelas__in=guru_kelas
+        ).values('nisn__kelas', 'mata_pelajaran', 'jam_ke').distinct()
+
+        for att in attendance_with_penilaian:
+            kelas = att['nisn__kelas']
+            mapel = att['mata_pelajaran']
+
+            # Cek apakah sudah ada grade untuk kelas + mapel + tanggal ini
+            has_grade = Grade.objects.filter(
+                nisn__kelas=kelas,
+                mata_pelajaran=mapel,
+                created_at__date=today
+            ).exists()
+
+            if not has_grade:
+                todo_items.append({
+                    'type': 'nilai',
+                    'label': 'Nilai belum diinput',
+                    'detail': f"{mapel or 'N/A'} - {kelas}",
+                    'kelas': kelas,
+                    'mata_pelajaran': mapel,
+                    'url': '/grades/',
+                    'priority': 'medium'
+                })
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"[TODO List] Error checking nilai: {str(e)}")
+
+    # ===========================================
+    # 3. CEK IZIN TANPA TITIPAN TUGAS
+    # ===========================================
+    try:
+        # Cek apakah guru punya izin yang berlaku hari ini
+        # IzinGuru tidak punya field status, semua izin dianggap aktif
+        izin_aktif = IzinGuru.objects.filter(
+            guru=user,
+            tanggal_mulai__lte=today,
+            tanggal_selesai__gte=today
+        ).first()
+
+        if izin_aktif:
+            # Cek apakah sudah ada titipan tugas untuk tanggal-tanggal izin
+            # Get all dates covered by the izin
+            from datetime import timedelta
+            current_date = izin_aktif.tanggal_mulai
+            while current_date <= izin_aktif.tanggal_selesai:
+                # Skip weekends
+                if current_date.weekday() < 6:  # 0-5 = Senin-Sabtu
+                    # Cek titipan tugas untuk tanggal ini
+                    has_titipan = TitipanTugas.objects.filter(
+                        guru=user,
+                        tanggal_berlaku=current_date
+                    ).exists()
+
+                    if not has_titipan and current_date >= today:
+                        todo_items.append({
+                            'type': 'titipan',
+                            'label': 'Belum buat titipan tugas',
+                            'detail': f"Izin {izin_aktif.jenis_izin} - {current_date.strftime('%d/%m/%Y')}",
+                            'tanggal': current_date.strftime('%Y-%m-%d'),
+                            'izin_id': izin_aktif.id,
+                            'url': '/titipan-tugas/',
+                            'priority': 'high'
+                        })
+
+                current_date += timedelta(days=1)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"[TODO List] Error checking titipan: {str(e)}")
+
+    # Sort by priority (high first)
+    priority_order = {'high': 0, 'medium': 1, 'low': 2}
+    todo_items.sort(key=lambda x: priority_order.get(x.get('priority', 'low'), 2))
+
+    return Response({
+        'success': True,
+        'tanggal': today.strftime('%Y-%m-%d'),
+        'hari': today_hari,
+        'total_items': len(todo_items),
+        'items': todo_items
+    })

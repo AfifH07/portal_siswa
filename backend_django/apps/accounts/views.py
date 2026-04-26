@@ -35,9 +35,14 @@ def login_view(request):
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.validated_data
+
+        # Update last_login timestamp
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
+
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
-        
+
         response_data = {
             'success': True,
             'access': access_token,
@@ -45,7 +50,7 @@ def login_view(request):
             'user': UserSerializer(user).data,
             'redirect': get_redirect_url(user.role)
         }
-        
+
         return Response(response_data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

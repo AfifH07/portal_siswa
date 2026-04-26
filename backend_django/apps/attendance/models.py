@@ -84,6 +84,10 @@ class Attendance(models.Model):
         null=True,
         help_text="Catatan tambahan dari guru"
     )
+    ada_penilaian = models.BooleanField(
+        default=False,
+        help_text="Tandai jika sesi ini ada penilaian yang perlu diinput"
+    )
     # === END NEW FIELDS ===
 
     created_at = models.DateTimeField(auto_now_add=True)
