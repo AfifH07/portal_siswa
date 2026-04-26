@@ -7,6 +7,7 @@
 let allJadwal = [];
 let allGuru = [];
 let guruAssignments = {}; // Cache: { guru_username: [assignments] }
+let masterJamData = {}; // Cache: { tahfidz: [...], kbm: [...], diniyah: [...] }
 let currentPage = 1;
 let pageSize = 20;
 let totalPages = 1;
@@ -32,7 +33,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Load initial data
     await Promise.all([
         loadGuruList(),
-        loadJadwalData()
+        loadJadwalData(),
+        loadMasterJam()
     ]);
 });
 
@@ -76,6 +78,22 @@ async function loadGuruList() {
     } catch (error) {
         console.error('[JadwalMengajar] Error loading guru:', error);
         showToast('Gagal memuat daftar guru', 'error');
+    }
+}
+
+async function loadMasterJam() {
+    try {
+        const response = await window.apiFetch('core/master-jam/');
+        if (!response.ok) throw new Error('Failed to load master jam');
+
+        const data = await response.json();
+        masterJamData = data.data || {};
+        console.log('[JadwalMengajar] Master jam loaded:', masterJamData);
+
+    } catch (error) {
+        console.error('[JadwalMengajar] Error loading master jam:', error);
+        // Fallback to empty - form will still work with manual input
+        masterJamData = { tahfidz: [], kbm: [], diniyah: [] };
     }
 }
 
@@ -289,6 +307,14 @@ function openCreateModal() {
     document.getElementById('form-kelas').innerHTML = '<option value="">-- Pilih Kelas --</option>';
     document.getElementById('form-mapel').innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
 
+    // Reset sesi/jam dropdowns
+    document.getElementById('form-sesi').value = '';
+    document.getElementById('form-master-jam').innerHTML = '<option value="">-- Pilih Sesi dulu --</option>';
+    document.getElementById('form-jam-ke').value = '';
+    document.getElementById('form-jam-mulai').value = '';
+    document.getElementById('form-jam-selesai').value = '';
+    document.getElementById('waktu-preview').innerHTML = '<span class="waktu-preview-text empty">Pilih jam terlebih dahulu</span>';
+
     document.getElementById('jadwal-modal-overlay').classList.add('active');
 }
 
@@ -311,11 +337,46 @@ async function editJadwal(id) {
     await onKelasChange();
     document.getElementById('form-mapel').value = jadwal.mata_pelajaran || '';
 
-    // Set other fields
+    // Set hari
     document.getElementById('form-hari').value = jadwal.hari;
-    document.getElementById('form-jam-ke').value = jadwal.jam_ke || '';
-    document.getElementById('form-jam-mulai').value = jadwal.jam_mulai || '';
-    document.getElementById('form-jam-selesai').value = jadwal.jam_selesai || '';
+
+    // Set sesi and master_jam
+    const masterJamId = jadwal.master_jam;
+    if (masterJamId) {
+        // Find sesi from master_jam_id
+        let foundSesi = null;
+        for (const [sesi, jamList] of Object.entries(masterJamData)) {
+            const found = jamList.find(j => j.id === masterJamId);
+            if (found) {
+                foundSesi = sesi;
+                break;
+            }
+        }
+
+        if (foundSesi) {
+            document.getElementById('form-sesi').value = foundSesi;
+            onSesiChange(); // Populate jam dropdown
+            document.getElementById('form-master-jam').value = masterJamId;
+            onMasterJamChange(); // Update preview
+        }
+    } else {
+        // Legacy data without master_jam - set hidden fields directly
+        document.getElementById('form-sesi').value = '';
+        document.getElementById('form-master-jam').innerHTML = '<option value="">-- Pilih Sesi dulu --</option>';
+        document.getElementById('form-jam-ke').value = jadwal.jam_ke || '';
+        document.getElementById('form-jam-mulai').value = jadwal.jam_mulai || '';
+        document.getElementById('form-jam-selesai').value = jadwal.jam_selesai || '';
+
+        // Update preview for legacy data
+        const waktuPreview = document.getElementById('waktu-preview');
+        if (jadwal.jam_mulai && jadwal.jam_selesai) {
+            waktuPreview.innerHTML = `<span class="waktu-preview-text">${jadwal.jam_mulai} - ${jadwal.jam_selesai}</span>`;
+        } else {
+            waktuPreview.innerHTML = '<span class="waktu-preview-text empty">Data lama tanpa master jam</span>';
+        }
+    }
+
+    // Set status
     document.getElementById('form-status').value = jadwal.is_active ? 'true' : 'false';
 
     document.getElementById('jadwal-modal-overlay').classList.add('active');
@@ -457,6 +518,73 @@ async function onKelasChange() {
     }
 }
 
+/**
+ * Handle sesi dropdown change - populate jam dropdown
+ */
+function onSesiChange() {
+    const sesi = document.getElementById('form-sesi').value;
+    const jamSelect = document.getElementById('form-master-jam');
+    const waktuPreview = document.getElementById('waktu-preview');
+
+    // Reset
+    jamSelect.innerHTML = '<option value="">-- Pilih Jam --</option>';
+    document.getElementById('form-jam-ke').value = '';
+    document.getElementById('form-jam-mulai').value = '';
+    document.getElementById('form-jam-selesai').value = '';
+    waktuPreview.innerHTML = '<span class="waktu-preview-text empty">Pilih jam terlebih dahulu</span>';
+
+    if (!sesi) {
+        jamSelect.innerHTML = '<option value="">-- Pilih Sesi dulu --</option>';
+        return;
+    }
+
+    const jamList = masterJamData[sesi] || [];
+
+    if (jamList.length === 0) {
+        jamSelect.innerHTML = '<option value="">Tidak ada data jam</option>';
+        return;
+    }
+
+    jamList.forEach(jam => {
+        const option = document.createElement('option');
+        option.value = jam.id;
+        option.textContent = jam.label;
+        option.dataset.jamKe = jam.jam_ke;
+        option.dataset.jamMulai = jam.jam_mulai;
+        option.dataset.jamSelesai = jam.jam_selesai;
+        jamSelect.appendChild(option);
+    });
+}
+
+/**
+ * Handle master jam dropdown change - update preview and hidden fields
+ */
+function onMasterJamChange() {
+    const jamSelect = document.getElementById('form-master-jam');
+    const selectedOption = jamSelect.options[jamSelect.selectedIndex];
+    const waktuPreview = document.getElementById('waktu-preview');
+
+    if (!jamSelect.value || !selectedOption.dataset.jamKe) {
+        document.getElementById('form-jam-ke').value = '';
+        document.getElementById('form-jam-mulai').value = '';
+        document.getElementById('form-jam-selesai').value = '';
+        waktuPreview.innerHTML = '<span class="waktu-preview-text empty">Pilih jam terlebih dahulu</span>';
+        return;
+    }
+
+    const jamKe = selectedOption.dataset.jamKe;
+    const jamMulai = selectedOption.dataset.jamMulai;
+    const jamSelesai = selectedOption.dataset.jamSelesai;
+
+    // Set hidden fields
+    document.getElementById('form-jam-ke').value = jamKe;
+    document.getElementById('form-jam-mulai').value = jamMulai;
+    document.getElementById('form-jam-selesai').value = jamSelesai;
+
+    // Update preview
+    waktuPreview.innerHTML = `<span class="waktu-preview-text">${jamMulai} - ${jamSelesai}</span>`;
+}
+
 // ============================================
 // CRUD OPERATIONS
 // ============================================
@@ -467,6 +595,8 @@ async function saveJadwal(event) {
     const id = document.getElementById('form-jadwal-id').value;
     const isEdit = !!id;
 
+    const masterJamId = document.getElementById('form-master-jam').value;
+
     const payload = {
         username: document.getElementById('form-guru').value,
         kelas: document.getElementById('form-kelas').value,
@@ -475,12 +605,17 @@ async function saveJadwal(event) {
         jam_ke: document.getElementById('form-jam-ke').value || null,
         jam_mulai: document.getElementById('form-jam-mulai').value || null,
         jam_selesai: document.getElementById('form-jam-selesai').value || null,
+        master_jam: masterJamId ? parseInt(masterJamId) : null,
         is_active: document.getElementById('form-status').value === 'true'
     };
 
     // Validate
     if (!payload.username || !payload.kelas || !payload.hari) {
-        showToast('Harap lengkapi field wajib', 'error');
+        showToast('Harap lengkapi Guru, Kelas, dan Hari', 'error');
+        return;
+    }
+    if (!payload.master_jam) {
+        showToast('Harap pilih Sesi dan Jam', 'error');
         return;
     }
 
@@ -555,6 +690,8 @@ window.confirmDelete = confirmDelete;
 window.saveJadwal = saveJadwal;
 window.onGuruChange = onGuruChange;
 window.onKelasChange = onKelasChange;
+window.onSesiChange = onSesiChange;
+window.onMasterJamChange = onMasterJamChange;
 window.debounceSearch = debounceSearch;
 window.applyFilters = applyFilters;
 window.prevPage = prevPage;

@@ -167,6 +167,15 @@ class Schedule(models.Model):
         help_text="Waktu selesai pelajaran"
     )
 
+    # FK ke MasterJam (opsional, untuk integrasi dengan master jam)
+    master_jam = models.ForeignKey(
+        'core.MasterJam',
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        related_name='schedules',
+        help_text="Referensi ke master jam (otomatis isi jam_ke, jam_mulai, jam_selesai)"
+    )
+
     mata_pelajaran = models.CharField(max_length=100, blank=True, null=True)
 
     # Periode akademik

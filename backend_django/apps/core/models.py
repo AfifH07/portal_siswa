@@ -119,3 +119,66 @@ class TahunAjaran(models.Model):
             'tanggal_selesai': None,
             'is_calculated': True,  # Flag indicating this is calculated, not from DB
         }
+
+
+class MasterJam(models.Model):
+    """
+    Master data untuk jam pelajaran per sesi.
+    Digunakan sebagai referensi waktu di jadwal mengajar.
+
+    Sesi:
+    - tahfidz: Jam tahfidz pagi
+    - kbm: Kegiatan Belajar Mengajar (formal)
+    - diniyah: Pelajaran diniyah sore
+    """
+
+    SESI_CHOICES = [
+        ('tahfidz', 'Tahfidz'),
+        ('kbm', 'KBM'),
+        ('diniyah', 'Diniyah'),
+    ]
+
+    sesi = models.CharField(
+        max_length=20,
+        choices=SESI_CHOICES,
+        verbose_name="Sesi"
+    )
+    jam_ke = models.IntegerField(
+        verbose_name="Jam Ke"
+    )
+    jam_mulai = models.TimeField(
+        verbose_name="Jam Mulai"
+    )
+    jam_selesai = models.TimeField(
+        verbose_name="Jam Selesai"
+    )
+    keterangan = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Keterangan"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Aktif"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Master Jam"
+        verbose_name_plural = "Master Jam"
+        unique_together = ['sesi', 'jam_ke']
+        ordering = ['sesi', 'jam_ke']
+
+    def __str__(self):
+        return f"{self.get_sesi_display()} - Jam {self.jam_ke} ({self.jam_mulai.strftime('%H:%M')}-{self.jam_selesai.strftime('%H:%M')})"
+
+    @property
+    def label(self):
+        """Label untuk dropdown"""
+        return f"Jam {self.jam_ke} ({self.jam_mulai.strftime('%H:%M')}-{self.jam_selesai.strftime('%H:%M')})"
+
+    @classmethod
+    def get_by_sesi(cls, sesi):
+        """Get all active MasterJam for a specific sesi"""
+        return cls.objects.filter(sesi=sesi, is_active=True).order_by('jam_ke')

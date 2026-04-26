@@ -87,6 +87,34 @@
             font-size: 0.75rem;
             color: var(--text-muted);
         }
+
+        /* Waktu Preview */
+        .waktu-preview {
+            background: var(--emerald-50, #f0faf7);
+            border: 1px solid var(--emerald-200, #a7f3d0);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+        }
+        .waktu-preview-text {
+            font-family: 'Plus Jakarta Sans', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--emerald-700, #047857);
+        }
+        .waktu-preview-text.empty {
+            color: var(--text-muted, #9ca3af);
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+        .form-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted, #9ca3af);
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body data-role="">
@@ -360,21 +388,34 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Jam Ke</label>
-                            <input type="number" id="form-jam-ke" min="1" max="10" placeholder="1-10" class="form-input">
-                            <small class="form-hint">Jam pelajaran ke berapa (opsional)</small>
+                            <label>Sesi <span class="required">*</span></label>
+                            <select id="form-sesi" required class="form-select" onchange="onSesiChange()">
+                                <option value="">-- Pilih Sesi --</option>
+                                <option value="tahfidz">Tahfidz</option>
+                                <option value="kbm">KBM</option>
+                                <option value="diniyah">Diniyah</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Jam Mulai</label>
-                            <input type="time" id="form-jam-mulai" class="form-input">
+                            <label>Jam Ke <span class="required">*</span></label>
+                            <select id="form-master-jam" required class="form-select" onchange="onMasterJamChange()">
+                                <option value="">-- Pilih Sesi dulu --</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label>Jam Selesai</label>
-                            <input type="time" id="form-jam-selesai" class="form-input">
+                            <label>Waktu</label>
+                            <div class="waktu-preview" id="waktu-preview">
+                                <span class="waktu-preview-text">-</span>
+                            </div>
+                            <small class="form-hint">Otomatis terisi dari Master Jam</small>
                         </div>
                     </div>
+                    <!-- Hidden fields for actual values -->
+                    <input type="hidden" id="form-jam-ke">
+                    <input type="hidden" id="form-jam-mulai">
+                    <input type="hidden" id="form-jam-selesai">
                 </div>
 
                 <!-- Section: Status -->

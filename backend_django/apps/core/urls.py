@@ -8,6 +8,7 @@ from .views import (
     ActiveTahunAjaranView,
     TahunAjaranListCreateView,
     TahunAjaranDetailView,
+    MasterJamListView,
 )
 
 app_name = 'core'
@@ -19,4 +20,7 @@ urlpatterns = [
     # Tahun Ajaran CRUD
     path('tahun-ajaran/', TahunAjaranListCreateView.as_view(), name='tahun-ajaran-list'),
     path('tahun-ajaran/<int:pk>/', TahunAjaranDetailView.as_view(), name='tahun-ajaran-detail'),
+
+    # Master Jam - GET list grouped by sesi
+    path('master-jam/', MasterJamListView.as_view(), name='master-jam-list'),
 ]

@@ -9,7 +9,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .models import TahunAjaran
+from .models import TahunAjaran, MasterJam
 from .serializers import TahunAjaranSerializer, ActiveTahunAjaranSerializer
 
 
@@ -137,3 +137,69 @@ class TahunAjaranDetailView(RetrieveUpdateDestroyAPIView):
             'success': True,
             'message': 'Tahun Ajaran berhasil dihapus'
         }, status=status.HTTP_200_OK)
+
+
+class MasterJamListView(APIView):
+    """
+    GET /api/core/master-jam/
+
+    Returns all MasterJam grouped by sesi.
+
+    Response:
+    {
+        "success": true,
+        "data": {
+            "tahfidz": [{ id, jam_ke, jam_mulai, jam_selesai, label }],
+            "kbm": [...],
+            "diniyah": [...]
+        }
+    }
+
+    Query params:
+        - sesi: Filter by sesi (tahfidz, kbm, diniyah)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        sesi_filter = request.query_params.get('sesi')
+
+        # If specific sesi requested
+        if sesi_filter:
+            queryset = MasterJam.objects.filter(sesi=sesi_filter, is_active=True).order_by('jam_ke')
+            data = [
+                {
+                    'id': mj.id,
+                    'jam_ke': mj.jam_ke,
+                    'jam_mulai': mj.jam_mulai.strftime('%H:%M'),
+                    'jam_selesai': mj.jam_selesai.strftime('%H:%M'),
+                    'label': mj.label,
+                    'keterangan': mj.keterangan,
+                }
+                for mj in queryset
+            ]
+            return Response({
+                'success': True,
+                'sesi': sesi_filter,
+                'data': data
+            })
+
+        # Return all grouped by sesi
+        result = {}
+        for sesi_code, sesi_label in MasterJam.SESI_CHOICES:
+            queryset = MasterJam.objects.filter(sesi=sesi_code, is_active=True).order_by('jam_ke')
+            result[sesi_code] = [
+                {
+                    'id': mj.id,
+                    'jam_ke': mj.jam_ke,
+                    'jam_mulai': mj.jam_mulai.strftime('%H:%M'),
+                    'jam_selesai': mj.jam_selesai.strftime('%H:%M'),
+                    'label': mj.label,
+                    'keterangan': mj.keterangan,
+                }
+                for mj in queryset
+            ]
+
+        return Response({
+            'success': True,
+            'data': result
+        })
