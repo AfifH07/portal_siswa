@@ -174,6 +174,21 @@ def save_batch_attendance(request):
     materi = request.data.get('materi', '')
     catatan = request.data.get('catatan', '')
 
+    # === NEW FIELDS v2.3.11 ===
+    ada_penilaian = request.data.get('ada_penilaian', False)
+    ketuntasan_materi = request.data.get('ketuntasan_materi', 0)
+
+    # Validate ada_penilaian (convert to bool)
+    if isinstance(ada_penilaian, str):
+        ada_penilaian = ada_penilaian.lower() in ('true', '1', 'yes')
+
+    # Validate ketuntasan_materi (0-100)
+    try:
+        ketuntasan_materi = int(ketuntasan_materi)
+        ketuntasan_materi = max(0, min(100, ketuntasan_materi))
+    except (ValueError, TypeError):
+        ketuntasan_materi = 0
+
     # Validate tipe_pengajar
     if tipe_pengajar not in ['guru_asli', 'guru_pengganti']:
         tipe_pengajar = 'guru_asli'
@@ -274,6 +289,9 @@ def save_batch_attendance(request):
                     existing.capaian_pembelajaran = capaian_pembelajaran or existing.capaian_pembelajaran
                     existing.materi = materi or existing.materi
                     existing.catatan = catatan or existing.catatan
+                    # Update new fields v2.3.11
+                    existing.ada_penilaian = ada_penilaian
+                    existing.ketuntasan_materi = ketuntasan_materi
                     existing.save()
                     updated_count += 1
                 else:
@@ -289,7 +307,10 @@ def save_batch_attendance(request):
                         guru_pengganti=guru_pengganti,
                         capaian_pembelajaran=capaian_pembelajaran,
                         materi=materi,
-                        catatan=catatan
+                        catatan=catatan,
+                        # New fields v2.3.11
+                        ada_penilaian=ada_penilaian,
+                        ketuntasan_materi=ketuntasan_materi
                     )
                     saved_count += 1
 
@@ -1235,4 +1256,124 @@ def titipan_tugas_riwayat(request):
         'success': True,
         'count': queryset.count(),
         'data': serializer.data
+    })
+
+
+# =============================================================
+# JURNAL HISTORY (PERSONAL) - v2.3.11
+# =============================================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def jurnal_history(request):
+    """
+    GET /api/attendance/jurnal/history/
+
+    Mengembalikan riwayat jurnal mengajar HANYA milik guru yang login.
+    Filter berdasarkan kelas yang diajar guru (dari Schedule) atau
+    attendance dengan guru_pengganti = user.
+
+    Query params:
+    - page: Page number (default 1)
+    - page_size: Items per page (default 10)
+    - start_date: Filter start date (YYYY-MM-DD)
+    - end_date: Filter end date (YYYY-MM-DD)
+    - kelas: Filter by class
+    """
+    from django.db.models import Q
+    from apps.students.models import Schedule
+    from apps.core.models import MasterJam
+
+    user = request.user
+
+    # Only for guru role
+    if user.role not in ['guru', 'superadmin', 'pimpinan']:
+        return Response({
+            'success': False,
+            'message': 'Endpoint ini hanya untuk guru'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    # Parse query params
+    page = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('page_size', 10))
+    start_date = request.query_params.get('start_date')
+    end_date = request.query_params.get('end_date')
+    kelas_filter = request.query_params.get('kelas')
+
+    # Get kelas yang diajar guru dari Schedule
+    guru_kelas = Schedule.objects.filter(
+        username=user.username,
+        is_active=True
+    ).values_list('kelas', flat=True).distinct()
+
+    # Build queryset - filter attendance by:
+    # 1. Kelas yang diajar guru, ATAU
+    # 2. guru_pengganti = user (jika menggantikan)
+    # 3. Harus ada materi yang diisi (bukan empty string)
+    queryset = Attendance.objects.filter(
+        Q(nisn__kelas__in=guru_kelas) | Q(guru_pengganti=user)
+    ).exclude(
+        Q(materi__isnull=True) | Q(materi__exact='')
+    ).select_related('nisn')
+
+    # Apply filters
+    if start_date:
+        queryset = queryset.filter(tanggal__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(tanggal__lte=end_date)
+    if kelas_filter:
+        queryset = queryset.filter(nisn__kelas=kelas_filter)
+
+    # Group by tanggal + kelas + jam_ke + mata_pelajaran (unique session)
+    # Use distinct values to avoid duplicate rows for same session
+    jurnal_sessions = queryset.values(
+        'tanggal', 'jam_ke', 'nisn__kelas', 'mata_pelajaran',
+        'materi', 'capaian_pembelajaran', 'catatan',
+        'tipe_pengajar', 'guru_pengganti__name',
+        'ada_penilaian', 'ketuntasan_materi'
+    ).distinct().order_by('-tanggal', '-jam_ke')
+
+    # Pagination
+    total = len(jurnal_sessions)
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+    paginated = list(jurnal_sessions[start_idx:end_idx])
+
+    # Format results
+    results = []
+    for item in paginated:
+        # Get jam_mulai from MasterJam if available
+        jam_mulai = None
+        try:
+            master_jam = MasterJam.objects.filter(jam_ke=item['jam_ke']).first()
+            if master_jam and master_jam.jam_mulai:
+                jam_mulai = master_jam.jam_mulai.strftime('%H:%M')
+        except Exception:
+            pass
+
+        results.append({
+            'tanggal': item['tanggal'].strftime('%Y-%m-%d') if item['tanggal'] else None,
+            'tanggal_display': item['tanggal'].strftime('%d %b %Y') if item['tanggal'] else None,
+            'jam_ke': item['jam_ke'],
+            'jam_label': Attendance.get_jam_label(item['jam_ke']),
+            'jam_mulai': jam_mulai,
+            'kelas': item['nisn__kelas'],
+            'mapel': item['mata_pelajaran'] or '-',
+            'materi': item['materi'] or '',
+            'tujuan_pembelajaran': item['capaian_pembelajaran'] or '',
+            'catatan': item['catatan'] or '',
+            'tipe_pengajar': item['tipe_pengajar'],
+            'guru_pengganti_nama': item['guru_pengganti__name'],
+            'ada_penilaian': item['ada_penilaian'],
+            'ketuntasan_materi': item['ketuntasan_materi']
+        })
+
+    return Response({
+        'success': True,
+        'count': total,
+        'page': page,
+        'page_size': page_size,
+        'next': page * page_size < total,
+        'previous': page > 1,
+        'results': results
     })

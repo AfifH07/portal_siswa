@@ -26,6 +26,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
             # New fields v2.3.9
             'tipe_pengajar', 'tipe_pengajar_display', 'guru_pengganti', 'guru_pengganti_nama',
             'capaian_pembelajaran', 'materi', 'catatan',
+            # New fields v2.3.11
+            'ada_penilaian', 'ketuntasan_materi',
             # Timestamps & relations
             'created_at', 'updated_at', 'student_name', 'student_kelas'
         ]
@@ -55,7 +57,9 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         fields = [
             'nisn', 'tanggal', 'jam_ke', 'mata_pelajaran', 'status', 'keterangan',
             # New fields v2.3.9
-            'tipe_pengajar', 'guru_pengganti', 'capaian_pembelajaran', 'materi', 'catatan'
+            'tipe_pengajar', 'guru_pengganti', 'capaian_pembelajaran', 'materi', 'catatan',
+            # New fields v2.3.11
+            'ada_penilaian', 'ketuntasan_materi'
         ]
 
     def validate(self, data):
@@ -100,7 +104,9 @@ class AttendanceUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'status', 'keterangan',
             # New fields v2.3.9
-            'tipe_pengajar', 'guru_pengganti', 'capaian_pembelajaran', 'materi', 'catatan'
+            'tipe_pengajar', 'guru_pengganti', 'capaian_pembelajaran', 'materi', 'catatan',
+            # New fields v2.3.11
+            'ada_penilaian', 'ketuntasan_materi'
         ]
 
     def validate_status(self, value):

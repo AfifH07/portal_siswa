@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.students.models import Student, normalize_kelas_format
 
 
@@ -87,6 +88,11 @@ class Attendance(models.Model):
     ada_penilaian = models.BooleanField(
         default=False,
         help_text="Tandai jika sesi ini ada penilaian yang perlu diinput"
+    )
+    ketuntasan_materi = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Persentase ketuntasan materi (0-100)"
     )
     # === END NEW FIELDS ===
 

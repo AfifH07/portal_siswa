@@ -19,7 +19,10 @@ let inputData = {
     tipe_pengajar: 'guru_asli',
     materi: '',
     capaian_pembelajaran: '',
-    catatan: ''
+    catatan: '',
+    // Step 3 data (v2.3.11) - ketuntasan & penilaian
+    ketuntasan_materi: 0,
+    ada_penilaian: false
 };
 let modalStep = 1;
 const TOTAL_STEPS = 3; // Updated for 3 steps
@@ -88,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initSessionSelector();
     initFilterListeners();
     initPengajarSelector(); // NEW: Step 3 init
+    initKetuntasanSlider(); // NEW: Step 3 slider (v2.3.11)
     adjustUIForRole();
 
     // Initialize Lucide icons
@@ -95,6 +99,32 @@ document.addEventListener('DOMContentLoaded', function() {
         lucide.createIcons();
     }
 });
+
+/**
+ * Initialize ketuntasan materi slider event listener (v2.3.11)
+ * Updates the percentage display in real-time
+ */
+function initKetuntasanSlider() {
+    const slider = document.getElementById('input-ketuntasan');
+    const valueDisplay = document.getElementById('ketuntasan-value');
+
+    if (slider && valueDisplay) {
+        slider.addEventListener('input', function() {
+            const value = parseInt(this.value, 10);
+            valueDisplay.textContent = value + '%';
+            inputData.ketuntasan_materi = value;
+
+            // Update color based on percentage
+            if (value >= 80) {
+                valueDisplay.className = 'ketuntasan-value high';
+            } else if (value >= 50) {
+                valueDisplay.className = 'ketuntasan-value medium';
+            } else {
+                valueDisplay.className = 'ketuntasan-value low';
+            }
+        });
+    }
+}
 
 /**
  * Initialize filter change listeners for reactive updates
@@ -1156,6 +1186,21 @@ function resetModalStep() {
     inputData.materi = '';
     inputData.capaian_pembelajaran = '';
     inputData.catatan = '';
+
+    // Reset new v2.3.11 fields
+    inputData.ketuntasan_materi = 0;
+    inputData.ada_penilaian = false;
+
+    const ketuntasanSlider = document.getElementById('input-ketuntasan');
+    const ketuntasanValue = document.getElementById('ketuntasan-value');
+    const adaPenilaianInput = document.getElementById('input-ada-penilaian');
+
+    if (ketuntasanSlider) ketuntasanSlider.value = 0;
+    if (ketuntasanValue) {
+        ketuntasanValue.textContent = '0%';
+        ketuntasanValue.className = 'ketuntasan-value low';
+    }
+    if (adaPenilaianInput) adaPenilaianInput.checked = false;
 }
 
 async function modalNext() {
@@ -1432,10 +1477,14 @@ async function saveAttendance() {
     const materiInput = document.getElementById('input-materi');
     const capaianInput = document.getElementById('input-capaian');
     const catatanInput = document.getElementById('input-catatan-guru');
+    const ketuntasanInput = document.getElementById('input-ketuntasan');
+    const adaPenilaianInput = document.getElementById('input-ada-penilaian');
 
     const materi = materiInput ? materiInput.value.trim() : '';
     const capaianPembelajaran = capaianInput ? capaianInput.value.trim() : '';
     const catatan = catatanInput ? catatanInput.value.trim() : '';
+    const ketuntasanMateri = ketuntasanInput ? parseInt(ketuntasanInput.value, 10) : 0;
+    const adaPenilaian = adaPenilaianInput ? adaPenilaianInput.checked : false;
 
     try {
         const attendanceList = inputData.students.map(s => ({
@@ -1454,7 +1503,10 @@ async function saveAttendance() {
             tipe_pengajar: tipePengajar,
             materi: materi,
             capaian_pembelajaran: capaianPembelajaran,
-            catatan: catatan
+            catatan: catatan,
+            // Step 3 fields (v2.3.11)
+            ketuntasan_materi: ketuntasanMateri,
+            ada_penilaian: adaPenilaian
         };
 
         const response = await window.apiFetch('/attendance/batch/', {
@@ -1469,8 +1521,8 @@ async function saveAttendance() {
         if (data.success) {
             const jpCount = inputData.jam_ke.length;
             const studentCount = inputData.students.length;
-            const pengajarInfo = tipePengajar === 'guru_pengganti' ? ' (Guru Pengganti)' : '';
-            showToast(`Absensi berhasil disimpan (${studentCount} siswa × ${jpCount} JP)${pengajarInfo}`, 'success');
+            const pengajarInfo = tipePengajar === 'guru_pengganti' ? ' (Guru Piket)' : '';
+            showToast(`Jurnal berhasil disimpan (${studentCount} siswa × ${jpCount} JP)${pengajarInfo}`, 'success');
             closeAddModal();
             loadAttendanceData();
             loadWeeklyChartData();
@@ -1570,6 +1622,95 @@ function closeDetailModal() {
 
 function printDetail() {
     window.print();
+}
+
+// ==================== JURNAL DETAIL MODAL (v2.3.11) ====================
+
+/**
+ * Open jurnal detail modal with data
+ * @param {Object} jurnalData - The jurnal record data
+ */
+function openJurnalDetailModal(jurnalData) {
+    if (!jurnalData) return;
+
+    const modal = document.getElementById('jurnal-detail-modal');
+    if (!modal) return;
+
+    // Populate fields
+    const setField = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || '-';
+    };
+
+    setField('jurnal-detail-tanggal', formatDate(jurnalData.tanggal));
+
+    // Format jam_ke
+    const jamKe = Array.isArray(jurnalData.jam_ke)
+        ? jurnalData.jam_ke.map(j => `JP ${j}`).join(', ')
+        : `JP ${jurnalData.jam_ke || '-'}`;
+    setField('jurnal-detail-jam', jamKe);
+
+    setField('jurnal-detail-kelas', jurnalData.kelas);
+    setField('jurnal-detail-mapel', jurnalData.mata_pelajaran);
+
+    // Tipe pengajar
+    const tipePengajarDisplay = jurnalData.tipe_pengajar === 'guru_pengganti'
+        ? 'Guru Piket'
+        : 'Guru Pengampu';
+    setField('jurnal-detail-tipe', tipePengajarDisplay);
+
+    // Guru piket (only show if guru_pengganti)
+    const piketEl = document.getElementById('jurnal-detail-piket');
+    if (piketEl) {
+        if (jurnalData.tipe_pengajar === 'guru_pengganti' && jurnalData.guru_pengganti_nama) {
+            piketEl.textContent = jurnalData.guru_pengganti_nama;
+            piketEl.closest('.jurnal-detail-item').style.display = '';
+        } else {
+            piketEl.closest('.jurnal-detail-item').style.display = 'none';
+        }
+    }
+
+    setField('jurnal-detail-materi', jurnalData.materi);
+    setField('jurnal-detail-tujuan', jurnalData.capaian_pembelajaran);
+    setField('jurnal-detail-catatan', jurnalData.catatan);
+
+    // Ketuntasan materi with progress bar
+    const ketuntasan = jurnalData.ketuntasan_materi || 0;
+    const ketuntasanPct = document.getElementById('jurnal-detail-ketuntasan');
+    const ketuntasanFill = document.getElementById('jurnal-detail-ketuntasan-fill');
+    if (ketuntasanPct) ketuntasanPct.textContent = ketuntasan + '%';
+    if (ketuntasanFill) {
+        ketuntasanFill.style.width = ketuntasan + '%';
+        // Color based on percentage
+        if (ketuntasan >= 80) {
+            ketuntasanFill.className = 'jurnal-ketuntasan-fill high';
+        } else if (ketuntasan >= 50) {
+            ketuntasanFill.className = 'jurnal-ketuntasan-fill medium';
+        } else {
+            ketuntasanFill.className = 'jurnal-ketuntasan-fill low';
+        }
+    }
+
+    // Ada penilaian
+    const adaPenilaian = jurnalData.ada_penilaian;
+    const penilaianEl = document.getElementById('jurnal-detail-penilaian');
+    if (penilaianEl) {
+        if (adaPenilaian) {
+            penilaianEl.innerHTML = '<span class="badge badge-success">✓ Ya</span>';
+        } else {
+            penilaianEl.innerHTML = '<span class="badge badge-secondary">✗ Tidak</span>';
+        }
+    }
+
+    modal.classList.add('open');
+}
+
+/**
+ * Close jurnal detail modal
+ */
+function closeJurnalDetailModal() {
+    const modal = document.getElementById('jurnal-detail-modal');
+    if (modal) modal.classList.remove('open');
 }
 
 // ==================== EXPORT ====================
@@ -1702,6 +1843,8 @@ window.saveAttendance = saveAttendance;
 window.viewDetail = viewDetail;
 window.closeDetailModal = closeDetailModal;
 window.printDetail = printDetail;
+window.openJurnalDetailModal = openJurnalDetailModal;
+window.closeJurnalDetailModal = closeJurnalDetailModal;
 window.openExportModal = openExportModal;
 window.closeExportModal = closeExportModal;
 window.executeExport = executeExport;

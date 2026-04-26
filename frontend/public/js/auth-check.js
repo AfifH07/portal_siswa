@@ -379,7 +379,7 @@ function createRoleBasedNav() {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
                 { href: '/students', icon: 'users', label: 'Siswa' },
-                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Jurnal Guru' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
                 { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
@@ -403,7 +403,7 @@ function createRoleBasedNav() {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
                 { href: '/students', icon: 'users', label: 'Data Siswa' },
-                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Jurnal Guru' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
                 { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
@@ -422,7 +422,7 @@ function createRoleBasedNav() {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
                 { href: '/students', icon: 'users', label: 'Data Santri' },
-                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Jurnal Guru' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
                 { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
@@ -440,7 +440,7 @@ function createRoleBasedNav() {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
                 { href: '/students', icon: 'users', label: 'Data Santri' },
-                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Jurnal Guru' },
                 { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
                 { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
                 { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
@@ -482,7 +482,7 @@ function createRoleBasedNav() {
         'walisantri': {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
-                { href: '/attendance', icon: 'calendar-check', label: 'Presensi' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Kehadiran' },
                 { href: '/ibadah', icon: 'moon', label: 'Ibadah' },
                 { href: '/grades', icon: 'file-text', label: 'Akademik' },
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' },

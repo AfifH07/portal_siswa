@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Presensi - Portal Ponpes Baron</title>
+    <title>Jurnal Guru - Portal Ponpes Baron</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -54,8 +54,8 @@
     <!-- Topbar -->
     <div class="topbar">
         <div class="topbar-left">
-            <h1 id="page-title">Kelola Presensi</h1>
-            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Presensi</span></div>
+            <h1 id="page-title">Kelola Jurnal Guru</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Jurnal Guru</span></div>
         </div>
         <div class="topbar-right">
             <div class="topbar-date" id="topbar-date">📅 Loading...</div>
@@ -349,7 +349,7 @@
                             <input type="radio" name="tipe_pengajar" value="guru_asli" checked>
                             <span class="pengajar-card">
                                 <i data-lucide="user-check" class="pengajar-icon"></i>
-                                <span class="pengajar-label">Guru Asli</span>
+                                <span class="pengajar-label">Guru Pengampu</span>
                                 <span class="pengajar-desc">Mengajar sesuai jadwal</span>
                             </span>
                         </label>
@@ -357,21 +357,21 @@
                             <input type="radio" name="tipe_pengajar" value="guru_pengganti">
                             <span class="pengajar-card">
                                 <i data-lucide="user-plus" class="pengajar-icon"></i>
-                                <span class="pengajar-label">Guru Pengganti</span>
+                                <span class="pengajar-label">Guru Piket</span>
                                 <span class="pengajar-desc">Menggantikan guru lain</span>
                             </span>
                         </label>
                     </div>
                 </div>
 
-                <!-- Info Card Guru Pengganti (hidden by default) -->
+                <!-- Info Card Guru Piket (hidden by default) -->
                 <div id="guru-pengganti-fields" class="pengganti-fields" style="display: none;">
                     <div class="pengganti-info-card">
                         <div class="pengganti-info-icon">
                             <i data-lucide="user-check"></i>
                         </div>
                         <div class="pengganti-info-content">
-                            <div class="pengganti-info-label">Anda akan tercatat sebagai guru pengganti sesi ini</div>
+                            <div class="pengganti-info-label">Anda akan tercatat sebagai guru piket sesi ini</div>
                             <div class="pengganti-info-user">
                                 <span id="pengganti-user-name">-</span>
                                 <span class="pengganti-role-badge" id="pengganti-user-role">-</span>
@@ -422,9 +422,9 @@
                     <div class="form-group">
                         <label for="input-capaian">
                             <i data-lucide="target" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
-                            Capaian Pembelajaran
+                            Tujuan Pembelajaran
                         </label>
-                        <textarea id="input-capaian" class="glass-input" rows="3" placeholder="Deskripsikan capaian pembelajaran yang dicapai siswa pada sesi ini..."></textarea>
+                        <textarea id="input-capaian" class="glass-input" rows="3" placeholder="Deskripsikan tujuan pembelajaran yang ingin dicapai pada sesi ini..."></textarea>
                     </div>
 
                     <div class="form-group">
@@ -433,6 +433,37 @@
                             Catatan Guru <span class="optional-badge">Opsional</span>
                         </label>
                         <textarea id="input-catatan-guru" class="glass-input" rows="2" placeholder="Catatan tambahan (misal: siswa yang perlu remedial, kondisi kelas, dll)"></textarea>
+                    </div>
+
+                    <!-- Ketuntasan Materi (WAJIB) -->
+                    <div class="form-group">
+                        <label for="input-ketuntasan">
+                            <i data-lucide="percent" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+                            Ketuntasan Materi <span class="required">*</span>
+                        </label>
+                        <div class="ketuntasan-slider-wrapper">
+                            <input type="range" id="input-ketuntasan" class="ketuntasan-slider" min="0" max="100" value="0" step="5">
+                            <span class="ketuntasan-value" id="ketuntasan-display">0%</span>
+                        </div>
+                        <div class="ketuntasan-labels">
+                            <span>0%</span>
+                            <span>50%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    <!-- Ada Penilaian (OPSIONAL) -->
+                    <div class="form-group">
+                        <label>
+                            <i data-lucide="clipboard-check" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+                            Ada Penilaian?
+                        </label>
+                        <label class="toggle-checkbox">
+                            <input type="checkbox" id="input-ada-penilaian">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Ya, ada penilaian pada sesi ini</span>
+                        </label>
+                        <p class="field-hint">Centang jika kamu memberikan penilaian pada sesi ini. Pengingat input nilai akan muncul di dashboard.</p>
                     </div>
                 </div>
             </div>
@@ -509,6 +540,73 @@
                 Print
             </button>
             <button class="btn btn-outline-emerald" onclick="closeDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL: DETAIL JURNAL ===================== -->
+<div id="jurnal-detail-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeJurnalDetailModal()"></div>
+    <div class="modal-content modal-medium">
+        <div class="modal-header">
+            <h2 id="jurnal-detail-title">Detail Jurnal</h2>
+            <button class="modal-close" onclick="closeJurnalDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="jurnal-detail-grid">
+                <div class="jurnal-detail-item">
+                    <div class="jurnal-detail-label">Tanggal</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-tanggal">-</div>
+                </div>
+                <div class="jurnal-detail-item">
+                    <div class="jurnal-detail-label">Jam Mengajar</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-jam">-</div>
+                </div>
+                <div class="jurnal-detail-item">
+                    <div class="jurnal-detail-label">Kelas</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-kelas">-</div>
+                </div>
+                <div class="jurnal-detail-item">
+                    <div class="jurnal-detail-label">Mata Pelajaran</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-mapel">-</div>
+                </div>
+                <div class="jurnal-detail-item">
+                    <div class="jurnal-detail-label">Tipe Pengajar</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-tipe">-</div>
+                </div>
+                <div class="jurnal-detail-item">
+                    <div class="jurnal-detail-label">Guru Piket</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-piket">-</div>
+                </div>
+                <div class="jurnal-detail-item full-width">
+                    <div class="jurnal-detail-label">Materi yang Diajarkan</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-materi">-</div>
+                </div>
+                <div class="jurnal-detail-item full-width">
+                    <div class="jurnal-detail-label">Tujuan Pembelajaran</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-tujuan">-</div>
+                </div>
+                <div class="jurnal-detail-item full-width">
+                    <div class="jurnal-detail-label">Catatan Guru</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-catatan">-</div>
+                </div>
+                <div class="jurnal-detail-item">
+                    <div class="jurnal-detail-label">Ketuntasan Materi</div>
+                    <div class="jurnal-ketuntasan-bar">
+                        <div class="jurnal-ketuntasan-track">
+                            <div class="jurnal-ketuntasan-fill" id="jurnal-detail-ketuntasan-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="jurnal-ketuntasan-pct" id="jurnal-detail-ketuntasan">0%</span>
+                    </div>
+                </div>
+                <div class="jurnal-detail-item">
+                    <div class="jurnal-detail-label">Ada Penilaian?</div>
+                    <div class="jurnal-detail-value" id="jurnal-detail-penilaian">-</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-emerald" onclick="closeJurnalDetailModal()">Tutup</button>
         </div>
     </div>
 </div>
