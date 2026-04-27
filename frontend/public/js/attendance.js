@@ -136,11 +136,13 @@ function initFilterListeners() {
     const filterKelas = document.getElementById('filter-kelas');
     const filterStart = document.getElementById('filter-start');
     const filterEnd = document.getElementById('filter-end');
+    // Note: filter-guru listener is added in loadGuruListForFilter()
 
     // When filters change, update both table and flashcards
     [filterKelas, filterStart, filterEnd].forEach(el => {
         if (el) {
             el.addEventListener('change', function() {
+                currentPage = 1; // Reset to first page on filter change
                 loadAttendanceData();
                 updateAttendanceCards();
             });
@@ -155,6 +157,7 @@ function initFilterListeners() {
 async function updateAttendanceCards() {
     try {
         const filterKelas = document.getElementById('filter-kelas');
+        const filterGuru = document.getElementById('filter-guru');
         const filterStart = document.getElementById('filter-start');
         const filterEnd = document.getElementById('filter-end');
 
@@ -173,6 +176,10 @@ async function updateAttendanceCards() {
 
         if (filterKelas?.value) {
             params.append('kelas', filterKelas.value);
+        }
+
+        if (filterGuru?.value) {
+            params.append('guru', filterGuru.value);
         }
 
         const response = await window.apiFetch(`/attendance/history/?${params.toString()}`);
@@ -446,7 +453,16 @@ function adjustUIForRole() {
         const user = JSON.parse(userStr);
         const role = user.role || '';
 
+        // Admin roles that can see all guru's jurnal
+        const adminRoles = ['superadmin', 'pimpinan', 'admin'];
+        const isAdmin = adminRoles.includes(role);
+
+        // Guru/musyrif roles that see personal jurnal only
+        const personalRoles = ['guru', 'musyrif'];
+        const isPersonalView = personalRoles.includes(role);
+
         if (role === 'walisantri') {
+            // Walisantri: show parent view
             const pageActions = document.querySelector('.page-actions');
             if (pageActions) pageActions.style.display = 'none';
 
@@ -457,9 +473,60 @@ function adjustUIForRole() {
             const parentSection = document.getElementById('parent-section');
             if (adminSection) adminSection.style.display = 'none';
             if (parentSection) parentSection.style.display = 'block';
+        } else if (isPersonalView) {
+            // Guru/Musyrif: show personal view label
+            const personalLabel = document.getElementById('personal-view-label');
+            if (personalLabel) {
+                personalLabel.style.display = 'inline-flex';
+                // Re-init Lucide icons
+                if (typeof lucide !== 'undefined') {
+                    setTimeout(() => lucide.createIcons(), 50);
+                }
+            }
+        } else if (isAdmin) {
+            // Admin: show guru filter dropdown
+            const guruFilterGroup = document.getElementById('filter-guru-group');
+            if (guruFilterGroup) {
+                guruFilterGroup.style.display = 'block';
+                loadGuruListForFilter();
+            }
         }
     } catch (e) {
         console.error('Error parsing user info:', e);
+    }
+}
+
+/**
+ * Load list of guru for filter dropdown (admin only)
+ */
+async function loadGuruListForFilter() {
+    const filterGuru = document.getElementById('filter-guru');
+    if (!filterGuru) return;
+
+    try {
+        // Fetch users with role guru
+        const response = await window.apiFetch('/admin/users/?role=guru&page_size=200');
+        if (!response.ok) throw new Error('Failed to load guru list');
+
+        const data = await response.json();
+        const users = data.results || data.users || data.data || [];
+
+        filterGuru.innerHTML = '<option value="">Semua Guru</option>';
+        users.forEach(user => {
+            const displayName = user.name || user.username;
+            filterGuru.innerHTML += `<option value="${user.username}">${displayName}</option>`;
+        });
+
+        // Add change listener
+        filterGuru.addEventListener('change', function() {
+            loadAttendanceData();
+            updateAttendanceCards();
+        });
+    } catch (error) {
+        console.error('Error loading guru list:', error);
+        // Fallback - hide the filter if we can't load data
+        const guruFilterGroup = document.getElementById('filter-guru-group');
+        if (guruFilterGroup) guruFilterGroup.style.display = 'none';
     }
 }
 
@@ -989,10 +1056,12 @@ async function loadAttendanceData() {
         });
 
         const filterKelas = document.getElementById('filter-kelas');
+        const filterGuru = document.getElementById('filter-guru');
         const startDate = document.getElementById('filter-start')?.value;
         const endDate = document.getElementById('filter-end')?.value;
 
         if (filterKelas && filterKelas.value) params.append('kelas', filterKelas.value);
+        if (filterGuru && filterGuru.value) params.append('guru', filterGuru.value);
         if (startDate) params.append('start_date', startDate);
         if (endDate) params.append('end_date', endDate);
 
@@ -1270,7 +1339,9 @@ function goToPage(direction) {
 
 function resetFilters() {
     const filterKelas = document.getElementById('filter-kelas');
+    const filterGuru = document.getElementById('filter-guru');
     if (filterKelas) filterKelas.value = '';
+    if (filterGuru) filterGuru.value = '';
     setDefaultDate();
     currentPage = 1;
     loadAttendanceData();

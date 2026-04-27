@@ -56,6 +56,11 @@
         <div class="topbar-left">
             <h1 id="page-title">Kelola Jurnal Guru</h1>
             <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Jurnal Guru</span></div>
+            <!-- Personal view label for guru/musyrif -->
+            <div id="personal-view-label" class="personal-view-label" style="display: none;">
+                <i data-lucide="user" style="width: 14px; height: 14px;"></i>
+                <span>Menampilkan jurnal mengajar kamu saja</span>
+            </div>
         </div>
         <div class="topbar-right">
             <div class="topbar-date" id="topbar-date">📅 Loading...</div>
@@ -132,6 +137,13 @@
             <!-- Filters -->
             <div class="glass-card filters-card">
                 <div class="filters-grid">
+                    <!-- Guru Filter (only for admin roles) -->
+                    <div class="filter-group" id="filter-guru-group" style="display: none;">
+                        <label for="filter-guru">Guru</label>
+                        <select id="filter-guru" class="filter-input">
+                            <option value="">Semua Guru</option>
+                        </select>
+                    </div>
                     <div class="filter-group">
                         <label for="filter-kelas">Kelas</label>
                         <select id="filter-kelas" class="filter-input">

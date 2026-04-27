@@ -2034,3 +2034,40 @@ textarea.glass-input::placeholder {
 .mapel-hint svg {
     flex-shrink: 0;
 }
+
+/* =============================================
+   PERSONAL VIEW LABEL (Jurnal Guru)
+   ============================================= */
+
+.personal-view-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #047857;
+}
+
+.personal-view-label svg {
+    flex-shrink: 0;
+    color: #10b981;
+}
+
+/* Responsive filter grid with guru filter */
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+@media (min-width: 1200px) {
+    .filters-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}

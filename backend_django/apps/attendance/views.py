@@ -715,6 +715,7 @@ def get_attendance_history(request):
     - Walisantri: Returns individual attendance records for their child (simple list)
     - Guru: Returns grouped class statistics FILTERED by guru's schedule
     - Pimpinan/SuperAdmin: Returns ALL grouped class statistics (no filter)
+      - Can filter by specific guru using `guru` parameter
 
     Query params:
     - page: Page number (default 1)
@@ -723,8 +724,10 @@ def get_attendance_history(request):
     - start_date: Filter start date
     - end_date: Filter end date
     - jam_ke: Filter by specific jam pelajaran
+    - guru: Filter by specific guru username (admin only)
     """
     from apps.students.models import Schedule
+    from apps.accounts.models import User
 
     page = int(request.query_params.get('page', 1))
     page_size = int(request.query_params.get('page_size', 10))
@@ -733,6 +736,7 @@ def get_attendance_history(request):
     start_date = request.query_params.get('start_date')
     end_date = request.query_params.get('end_date')
     jam_ke_filter = request.query_params.get('jam_ke')
+    guru_filter = request.query_params.get('guru')  # Admin only
 
     user = request.user
     queryset = Attendance.objects.select_related('nisn')
@@ -802,7 +806,7 @@ def get_attendance_history(request):
 
     # ========== GURU VIEW: Filter by guru's schedule ==========
     # Role superadmin/pimpinan/admin → tampilkan semua (tidak difilter)
-    if user.role == 'guru':
+    if user.role == 'guru' or user.role == 'musyrif':
         # Get jadwal guru yang login dari Schedule
         jadwal_guru = Schedule.objects.filter(
             username=user.username,
@@ -822,6 +826,32 @@ def get_attendance_history(request):
         else:
             # Guru tidak punya jadwal, hanya tampilkan di mana dia guru_pengganti
             queryset = queryset.filter(guru_pengganti=user)
+
+    # ========== ADMIN VIEW: Filter by specific guru (optional) ==========
+    elif user.role in ['superadmin', 'pimpinan', 'admin'] and guru_filter:
+        # Admin wants to filter by specific guru
+        try:
+            target_guru = User.objects.get(username=guru_filter)
+            # Get jadwal for target guru
+            jadwal_target = Schedule.objects.filter(
+                username=guru_filter,
+                is_active=True
+            ).values_list('jam_ke', 'mata_pelajaran', 'kelas')
+
+            if jadwal_target.exists():
+                query = Q()
+                for jam_ke, mapel, kelas_jadwal in jadwal_target:
+                    query |= Q(jam_ke=jam_ke, mata_pelajaran=mapel)
+
+                # Also include where target is guru_pengganti
+                query |= Q(guru_pengganti=target_guru)
+
+                queryset = queryset.filter(query)
+            else:
+                # Target guru tidak punya jadwal, hanya tampilkan di mana dia guru_pengganti
+                queryset = queryset.filter(guru_pengganti=target_guru)
+        except User.DoesNotExist:
+            pass  # Invalid guru username, ignore filter
 
     # ========== GURU/ADMIN VIEW: Grouped class statistics ==========
     if kelas:
