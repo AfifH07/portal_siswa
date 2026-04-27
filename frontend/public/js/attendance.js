@@ -15,22 +15,25 @@ let inputData = {
     jam_ke: [],
     students: [],
     records: {},
-    // Step 3 data (v2.3.9) - guru_pengganti auto dari request.user
+    // Step 1 data - Tipe Pengajar (MOVED FROM STEP 3)
     tipe_pengajar: 'guru_asli',
+    // Step 3 data - Dokumentasi
     materi: '',
     capaian_pembelajaran: '',
     catatan: '',
-    // Step 3 data (v2.3.11) - ketuntasan & penilaian
     ketuntasan_materi: 0,
     ada_penilaian: false
 };
 let modalStep = 1;
-const TOTAL_STEPS = 3; // Updated for 3 steps
+const TOTAL_STEPS = 3;
 let weeklyChart = null;
 
 // Session & JP Selection State
 let selectedSession = null;
 let selectedJP = [];
+
+// Assignment data cache (for GURU PENGAMPU mode)
+let guruAssignmentData = null;
 
 // JP mapping by session (9 JP per hari)
 // Pagi: JP 1 (Tahfidz)
@@ -466,11 +469,16 @@ function adjustUIForRole() {
 function initSessionSelector() {
     const sessionRadios = document.querySelectorAll('input[name="sesi"]');
     sessionRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', async function() {
             selectedSession = this.value;
             selectedJP = [];
             renderJPChips(selectedSession);
             updateJPHint();
+
+            // If GURU PIKET mode, load mapel based on sesi
+            if (inputData.tipe_pengajar === 'guru_pengganti') {
+                await loadMapelBySesi(this.value);
+            }
         });
     });
 }
@@ -531,39 +539,248 @@ function updateJPHint() {
 }
 
 /**
- * Initialize pengajar selector (Step 3) - v2.3.9
- * Updated: Auto-use logged-in user as guru pengganti (no dropdown)
+ * Initialize pengajar selector (Step 1) - v2.3.12
+ * Now in Step 1 - controls which kelas/mapel options are shown
  */
 function initPengajarSelector() {
     const pengajarRadios = document.querySelectorAll('input[name="tipe_pengajar"]');
-    const penggantiFields = document.getElementById('guru-pengganti-fields');
 
     pengajarRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', async function() {
             inputData.tipe_pengajar = this.value;
 
-            const titipanSection = document.getElementById('titipan-tugas-section');
+            // Reset dropdowns when tipe changes
+            resetKelasMapelDropdowns();
 
-            if (this.value === 'guru_pengganti') {
-                penggantiFields.style.display = 'block';
-                // Display current user info
-                displayCurrentUserAsGuruPengganti();
-                // Fetch and display titipan tugas for current class
-                if (titipanSection) {
-                    titipanSection.style.display = 'block';
-                    fetchTitipanTugas();
-                }
+            // Reset sesi and JP selection
+            selectedSession = null;
+            selectedJP = [];
+            document.querySelectorAll('input[name="sesi"]').forEach(r => r.checked = false);
+            renderJPChips(null);
+
+            const noAssignmentAlert = document.getElementById('no-assignment-alert');
+            const mapelHint = document.getElementById('mapel-hint');
+
+            if (this.value === 'guru_asli') {
+                // GURU PENGAMPU: Load from assignment
+                if (mapelHint) mapelHint.style.display = 'none';
+                await loadAssignmentBasedOptions();
             } else {
-                penggantiFields.style.display = 'none';
-                if (titipanSection) titipanSection.style.display = 'none';
+                // GURU PIKET: Load all classes, mapel based on sesi
+                if (noAssignmentAlert) noAssignmentAlert.style.display = 'none';
+                if (mapelHint) mapelHint.style.display = 'block';
+                await loadAllClassesForPiket();
+                // Clear mapel - will be loaded when sesi is selected
+                const mapelSelect = document.getElementById('input-mapel');
+                if (mapelSelect) {
+                    mapelSelect.innerHTML = '<option value="">-- Pilih sesi dulu --</option>';
+                    mapelSelect.disabled = true;
+                }
             }
 
-            // Re-init Lucide icons for newly visible elements
+            // Re-init Lucide icons
             if (typeof lucide !== 'undefined') {
                 setTimeout(() => lucide.createIcons(), 50);
             }
         });
     });
+
+    // Add listener to kelas dropdown for GURU PENGAMPU mode
+    const kelasSelect = document.getElementById('input-kelas');
+    if (kelasSelect) {
+        kelasSelect.addEventListener('change', function() {
+            if (inputData.tipe_pengajar === 'guru_asli' && guruAssignmentData) {
+                // Filter mapel based on selected kelas from assignment
+                updateMapelFromAssignment(this.value);
+            }
+        });
+    }
+}
+
+/**
+ * Reset kelas and mapel dropdowns
+ */
+function resetKelasMapelDropdowns() {
+    const kelasSelect = document.getElementById('input-kelas');
+    const mapelSelect = document.getElementById('input-mapel');
+
+    if (kelasSelect) {
+        kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+        kelasSelect.value = '';
+        kelasSelect.disabled = false;
+    }
+    if (mapelSelect) {
+        mapelSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+        mapelSelect.value = '';
+        mapelSelect.disabled = false;
+    }
+}
+
+/**
+ * Load kelas and mapel options based on guru's assignment (GURU PENGAMPU mode)
+ */
+async function loadAssignmentBasedOptions() {
+    const kelasSelect = document.getElementById('input-kelas');
+    const mapelSelect = document.getElementById('input-mapel');
+    const noAssignmentAlert = document.getElementById('no-assignment-alert');
+
+    try {
+        const response = await window.apiFetch('/attendance/guru/assignment-info/');
+        if (!response.ok) throw new Error('Failed to load assignment info');
+
+        const data = await response.json();
+
+        if (data.success) {
+            guruAssignmentData = data;
+
+            // Check if guru has assignments
+            if (!data.kelas_list || data.kelas_list.length === 0) {
+                // No assignments
+                if (noAssignmentAlert) noAssignmentAlert.style.display = 'flex';
+                if (kelasSelect) kelasSelect.disabled = true;
+                if (mapelSelect) mapelSelect.disabled = true;
+                return;
+            }
+
+            // Hide alert
+            if (noAssignmentAlert) noAssignmentAlert.style.display = 'none';
+
+            // Populate kelas dropdown
+            if (kelasSelect) {
+                kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+                data.kelas_list.forEach(kelas => {
+                    kelasSelect.innerHTML += `<option value="${kelas}">${kelas}</option>`;
+                });
+                kelasSelect.disabled = false;
+            }
+
+            // Mapel will be populated when kelas is selected
+            if (mapelSelect) {
+                mapelSelect.innerHTML = '<option value="">-- Pilih kelas dulu --</option>';
+                mapelSelect.disabled = true;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading assignment info:', error);
+        // Fallback to loading all classes
+        await loadAllClassesForPiket();
+    }
+}
+
+/**
+ * Update mapel dropdown based on selected kelas from assignment data
+ */
+function updateMapelFromAssignment(selectedKelas) {
+    const mapelSelect = document.getElementById('input-mapel');
+    if (!mapelSelect || !guruAssignmentData) return;
+
+    if (!selectedKelas) {
+        mapelSelect.innerHTML = '<option value="">-- Pilih kelas dulu --</option>';
+        mapelSelect.disabled = true;
+        return;
+    }
+
+    // Find mapel for selected kelas from assignment_detail
+    const mapelForKelas = guruAssignmentData.assignment_detail
+        .filter(a => a.kelas === selectedKelas && a.mapel)
+        .map(a => a.mapel);
+
+    // Remove duplicates
+    const uniqueMapel = [...new Set(mapelForKelas)];
+
+    if (uniqueMapel.length === 0) {
+        // No specific mapel for this kelas, show all mapel from assignment
+        mapelSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+        guruAssignmentData.mapel_list.forEach(mapel => {
+            mapelSelect.innerHTML += `<option value="${mapel}">${mapel}</option>`;
+        });
+    } else {
+        mapelSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+        uniqueMapel.forEach(mapel => {
+            mapelSelect.innerHTML += `<option value="${mapel}">${mapel}</option>`;
+        });
+    }
+    mapelSelect.disabled = false;
+}
+
+/**
+ * Load all classes for GURU PIKET mode
+ */
+async function loadAllClassesForPiket() {
+    try {
+        const response = await window.apiFetch('/students/classes/');
+        if (!response.ok) throw new Error('Failed to load classes');
+
+        const data = await response.json();
+        if (data.success && data.classes) {
+            const kelasSelect = document.getElementById('input-kelas');
+            if (kelasSelect) {
+                kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+                data.classes.forEach(cls => {
+                    kelasSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+                });
+                kelasSelect.disabled = false;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading classes for piket:', error);
+    }
+}
+
+/**
+ * Load mapel based on sesi for GURU PIKET mode
+ * Called when sesi radio is changed
+ */
+async function loadMapelBySesi(sesi) {
+    if (inputData.tipe_pengajar !== 'guru_pengganti') return;
+
+    const mapelSelect = document.getElementById('input-mapel');
+    const mapelHint = document.getElementById('mapel-hint');
+
+    if (!mapelSelect) return;
+
+    // Mapping sesi to API param
+    const sesiMap = {
+        'pagi': 'pagi',     // → tahfidz
+        'siang': 'siang',   // → kbm
+        'sore': 'sore'      // → diniyah
+    };
+
+    const sesiParam = sesiMap[sesi];
+    if (!sesiParam) return;
+
+    try {
+        mapelSelect.innerHTML = '<option value="">Memuat mapel...</option>';
+        mapelSelect.disabled = true;
+
+        const response = await window.apiFetch(`/core/master-mapel/by-sesi/?sesi=${sesiParam}`);
+        if (!response.ok) throw new Error('Failed to load mapel by sesi');
+
+        const data = await response.json();
+
+        if (data.success && data.mapel_list) {
+            mapelSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+            data.mapel_list.forEach(mapel => {
+                mapelSelect.innerHTML += `<option value="${mapel}">${mapel}</option>`;
+            });
+            mapelSelect.disabled = false;
+
+            // Hide hint
+            if (mapelHint) mapelHint.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error loading mapel by sesi:', error);
+        mapelSelect.innerHTML = '<option value="">Gagal memuat mapel</option>';
+    }
+}
+
+/**
+ * Display current logged-in user as guru pengganti (DEPRECATED - now shown in Step 3 badge)
+ * Kept for backward compatibility
+ */
+function displayCurrentUserAsGuruPengganti() {
+    // This function is no longer needed - info is shown in step3-pengajar-info badge
+    console.log('[attendance.js] displayCurrentUserAsGuruPengganti called - deprecated');
 }
 
 /**
@@ -688,26 +905,6 @@ function renderTitipanCard(titipan) {
 }
 
 /**
- * Display current logged-in user as guru pengganti
- * Backend will automatically use request.user
- */
-function displayCurrentUserAsGuruPengganti() {
-    const nameEl = document.getElementById('pengganti-user-name');
-    const roleEl = document.getElementById('pengganti-user-role');
-
-    if (!nameEl || !roleEl) return;
-
-    // Get user data from localStorage (set by auth-check.js)
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-
-    const displayName = userData.name || userData.full_name || userData.username || 'User';
-    const roleDisplay = getRoleDisplayName(userData.role || 'guru');
-
-    nameEl.textContent = displayName;
-    roleEl.textContent = roleDisplay;
-}
-
-/**
  * Get display name for role
  */
 function getRoleDisplayName(role) {
@@ -740,7 +937,8 @@ function setDefaultDate() {
 }
 
 /**
- * Load class options
+ * Load class options for FILTERS and EXPORT only
+ * Input modal has its own logic based on tipe_pengajar
  */
 async function loadClassOptions() {
     try {
@@ -749,13 +947,13 @@ async function loadClassOptions() {
 
         const data = await response.json();
         if (data.success && data.classes) {
-            const selects = ['filter-kelas', 'input-kelas', 'export-kelas'];
+            // Only for filter and export, NOT input-kelas (handled by pengajar selector)
+            const selects = ['filter-kelas', 'export-kelas'];
             selects.forEach(id => {
                 const select = document.getElementById(id);
                 if (select) {
                     const currentValue = select.value;
-                    const placeholder = id === 'input-kelas' ? '-- Pilih Kelas --' : 'Semua Kelas';
-                    select.innerHTML = `<option value="">${placeholder}</option>`;
+                    select.innerHTML = '<option value="">Semua Kelas</option>';
                     data.classes.forEach(cls => {
                         select.innerHTML += `<option value="${cls}">${cls}</option>`;
                     });
@@ -769,22 +967,15 @@ async function loadClassOptions() {
 }
 
 /**
- * Load subject options
+ * Load subject options - NO LONGER USED for input modal
+ * Input modal mapel is now controlled by pengajar type:
+ * - GURU PENGAMPU: from assignment_detail
+ * - GURU PIKET: from master-mapel by sesi
  */
 async function loadSubjectOptions() {
-    const subjects = [
-        'Al-Quran', 'Hadits', 'Fiqih', 'Aqidah', 'Akhlak',
-        'Bahasa Arab', 'Bahasa Indonesia', 'Bahasa Inggris',
-        'Matematika', 'IPA', 'IPS', 'PKn', 'Penjaskes'
-    ];
-
-    const select = document.getElementById('input-mapel');
-    if (select) {
-        select.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-        subjects.forEach(s => {
-            select.innerHTML += `<option value="${s}">${s}</option>`;
-        });
-    }
+    // This function is now deprecated for input modal
+    // Kept for backward compatibility but does nothing
+    console.log('[attendance.js] loadSubjectOptions called - now handled by pengajar selector');
 }
 
 /**
@@ -1097,9 +1288,10 @@ function formatDate(dateStr) {
 /**
  * Open add modal (using .open class)
  */
-function openAddModal() {
+async function openAddModal() {
     resetModalStep();
-    // FIX: Reset inputData dengan SEMUA field termasuk Step 3
+
+    // Reset inputData
     inputData = {
         kelas: '',
         mapel: '',
@@ -1107,8 +1299,9 @@ function openAddModal() {
         jam_ke: [],
         students: [],
         records: {},
-        // Step 3 fields
+        // Step 1 - Tipe Pengajar
         tipe_pengajar: 'guru_asli',
+        // Step 3 - Dokumentasi
         materi: '',
         capaian_pembelajaran: '',
         catatan: '',
@@ -1116,10 +1309,19 @@ function openAddModal() {
         ada_penilaian: false
     };
 
-    document.getElementById('input-kelas').value = '';
-    document.getElementById('input-mapel').value = '';
+    // Reset pengajar selection to GURU PENGAMPU
+    const pengajarRadios = document.querySelectorAll('input[name="tipe_pengajar"]');
+    pengajarRadios.forEach(radio => {
+        radio.checked = radio.value === 'guru_asli';
+    });
+
+    // Reset dropdowns
+    resetKelasMapelDropdowns();
+
+    // Set tanggal to today
     document.getElementById('input-tanggal').value = new Date().toISOString().split('T')[0];
 
+    // Reset sesi and JP
     selectedSession = null;
     selectedJP = [];
     document.querySelectorAll('input[name="sesi"]').forEach(radio => radio.checked = false);
@@ -1135,7 +1337,22 @@ function openAddModal() {
         hintEl.style.color = EMERALD_COLORS.textMuted;
     }
 
+    // Hide hints and alerts
+    const mapelHint = document.getElementById('mapel-hint');
+    const noAssignmentAlert = document.getElementById('no-assignment-alert');
+    if (mapelHint) mapelHint.style.display = 'none';
+    if (noAssignmentAlert) noAssignmentAlert.style.display = 'none';
+
+    // Show modal
     document.getElementById('add-modal').classList.add('open');
+
+    // Re-init Lucide icons
+    if (typeof lucide !== 'undefined') {
+        setTimeout(() => lucide.createIcons(), 50);
+    }
+
+    // Load assignment-based options (default is GURU PENGAMPU)
+    await loadAssignmentBasedOptions();
 }
 
 function closeAddModal() {
@@ -1174,21 +1391,27 @@ function resetModalStep() {
     if (btnNext) btnNext.style.display = '';
     if (btnSave) btnSave.style.display = 'none';
 
-    // Reset step 3 fields
+    // Reset Step 1 - Tipe Pengajar
     const pengajarRadios = document.querySelectorAll('input[name="tipe_pengajar"]');
     pengajarRadios.forEach(radio => {
         radio.checked = radio.value === 'guru_asli';
     });
-    const penggantiFields = document.getElementById('guru-pengganti-fields');
-    if (penggantiFields) penggantiFields.style.display = 'none';
 
-    // Reset titipan tugas section
+    // Hide alerts and hints in Step 1
+    const noAssignmentAlert = document.getElementById('no-assignment-alert');
+    const mapelHint = document.getElementById('mapel-hint');
+    if (noAssignmentAlert) noAssignmentAlert.style.display = 'none';
+    if (mapelHint) mapelHint.style.display = 'none';
+
+    // Reset titipan tugas section (Step 3)
     const titipanSection = document.getElementById('titipan-tugas-section');
     if (titipanSection) titipanSection.style.display = 'none';
 
-    const guruSelect = document.getElementById('input-guru-pengganti');
-    if (guruSelect) guruSelect.value = '';
+    // Reset Step 3 pengajar info display
+    const step3PengajarInfo = document.getElementById('step3-pengajar-info');
+    if (step3PengajarInfo) step3PengajarInfo.style.display = 'none';
 
+    // Reset Step 3 dokumentasi fields
     const materiInput = document.getElementById('input-materi');
     const capaianInput = document.getElementById('input-capaian');
     const catatanInput = document.getElementById('input-catatan-guru');
@@ -1196,18 +1419,17 @@ function resetModalStep() {
     if (capaianInput) capaianInput.value = '';
     if (catatanInput) catatanInput.value = '';
 
-    // Reset inputData step 3 values
+    // Reset inputData values
     inputData.tipe_pengajar = 'guru_asli';
     inputData.materi = '';
     inputData.capaian_pembelajaran = '';
     inputData.catatan = '';
-
-    // Reset new v2.3.11 fields
     inputData.ketuntasan_materi = 0;
     inputData.ada_penilaian = false;
 
+    // Reset ketuntasan slider
     const ketuntasanSlider = document.getElementById('input-ketuntasan');
-    const ketuntasanDisplay = document.getElementById('ketuntasan-display'); // FIX: correct element ID
+    const ketuntasanDisplay = document.getElementById('ketuntasan-display');
     const adaPenilaianInput = document.getElementById('input-ada-penilaian');
 
     if (ketuntasanSlider) ketuntasanSlider.value = 0;
@@ -1216,6 +1438,9 @@ function resetModalStep() {
         ketuntasanDisplay.className = 'ketuntasan-value low';
     }
     if (adaPenilaianInput) adaPenilaianInput.checked = false;
+
+    // Clear assignment data cache
+    guruAssignmentData = null;
 }
 
 async function modalNext() {
@@ -1285,6 +1510,29 @@ async function modalNext() {
         document.getElementById('step3-kelas-info').textContent = inputData.kelas;
         document.getElementById('step3-mapel-info').textContent = inputData.mapel;
         document.getElementById('step3-tanggal-info').textContent = formatDate(inputData.tanggal);
+
+        // Show pengajar info badge if guru piket
+        const step3PengajarInfo = document.getElementById('step3-pengajar-info');
+        const step3PiketName = document.getElementById('step3-piket-name');
+        const titipanSection = document.getElementById('titipan-tugas-section');
+
+        if (inputData.tipe_pengajar === 'guru_pengganti') {
+            // Show guru piket badge with user name
+            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            const displayName = userData.name || userData.username || 'User';
+
+            if (step3PengajarInfo) step3PengajarInfo.style.display = 'block';
+            if (step3PiketName) step3PiketName.textContent = displayName;
+
+            // Show titipan tugas section and fetch data
+            if (titipanSection) {
+                titipanSection.style.display = 'block';
+                fetchTitipanTugas();
+            }
+        } else {
+            if (step3PengajarInfo) step3PengajarInfo.style.display = 'none';
+            if (titipanSection) titipanSection.style.display = 'none';
+        }
 
         // Update step indicator
         modalStep = 3;

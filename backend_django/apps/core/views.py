@@ -430,3 +430,70 @@ class MasterMapelGroupedView(APIView):
             'success': True,
             'data': result
         })
+
+
+class MasterMapelBySesiView(APIView):
+    """
+    GET /api/core/master-mapel/by-sesi/?sesi=kbm
+
+    Returns mapel list filtered by sesi.
+
+    Query params:
+    - sesi: Filter by sesi (pagi/siang/sore OR tahfidz/kbm/diniyah)
+
+    Frontend mapping (for guru piket):
+    - PAGI  → tahfidz
+    - SIANG → kbm
+    - SORE  → diniyah
+
+    Response:
+    {
+        "success": true,
+        "sesi": "kbm",
+        "mapel_list": ["Matematika", "Bahasa Indonesia", ...]
+    }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        sesi_param = request.query_params.get('sesi', '').lower()
+
+        # Mapping from waktu kategori to DB sesi
+        WAKTU_TO_SESI = {
+            'pagi': 'tahfidz',
+            'siang': 'kbm',
+            'sore': 'diniyah',
+            # Also accept direct sesi values
+            'tahfidz': 'tahfidz',
+            'kbm': 'kbm',
+            'diniyah': 'diniyah',
+        }
+
+        if not sesi_param:
+            return Response({
+                'success': False,
+                'message': 'Parameter sesi harus diisi (pagi/siang/sore atau tahfidz/kbm/diniyah)'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Resolve sesi
+        sesi = WAKTU_TO_SESI.get(sesi_param)
+        if not sesi:
+            return Response({
+                'success': False,
+                'message': f'Sesi "{sesi_param}" tidak valid. Gunakan: pagi/siang/sore atau tahfidz/kbm/diniyah'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get active mapel for this sesi
+        queryset = MasterMapel.objects.filter(
+            sesi=sesi,
+            is_active=True
+        ).order_by('nama')
+
+        mapel_list = [m.nama for m in queryset]
+
+        return Response({
+            'success': True,
+            'sesi': sesi,
+            'sesi_display': dict(MasterMapel.SESI_CHOICES).get(sesi, sesi),
+            'mapel_list': mapel_list
+        })

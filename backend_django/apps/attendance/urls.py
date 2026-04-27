@@ -11,6 +11,8 @@ urlpatterns = [
     path('class/<str:kelas>/<str:tanggal>/', views.get_class_attendance, name='class_attendance'),
     path('all/', views.get_all_attendance, name='all_attendance'),
     path('history/', views.get_attendance_history, name='attendance_history'),
+    # Guru Assignment Info
+    path('guru/assignment-info/', views.guru_assignment_info, name='guru_assignment_info'),
     # Jurnal History (personal)
     path('jurnal/history/', views.jurnal_history, name='jurnal_history'),
     # Titipan Tugas

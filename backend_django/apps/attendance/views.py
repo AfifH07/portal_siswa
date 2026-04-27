@@ -713,7 +713,8 @@ def get_attendance_history(request):
     Get attendance history.
 
     - Walisantri: Returns individual attendance records for their child (simple list)
-    - Guru/Pimpinan/SuperAdmin: Returns grouped class statistics
+    - Guru: Returns grouped class statistics FILTERED by guru's schedule
+    - Pimpinan/SuperAdmin: Returns ALL grouped class statistics (no filter)
 
     Query params:
     - page: Page number (default 1)
@@ -723,6 +724,8 @@ def get_attendance_history(request):
     - end_date: Filter end date
     - jam_ke: Filter by specific jam pelajaran
     """
+    from apps.students.models import Schedule
+
     page = int(request.query_params.get('page', 1))
     page_size = int(request.query_params.get('page_size', 10))
 
@@ -796,6 +799,29 @@ def get_attendance_history(request):
             'previous': page > 1,
             'results': results
         })
+
+    # ========== GURU VIEW: Filter by guru's schedule ==========
+    # Role superadmin/pimpinan/admin → tampilkan semua (tidak difilter)
+    if user.role == 'guru':
+        # Get jadwal guru yang login dari Schedule
+        jadwal_guru = Schedule.objects.filter(
+            username=user.username,
+            is_active=True
+        ).values_list('jam_ke', 'mata_pelajaran', 'kelas')
+
+        # Build query filter: (jam_ke, mata_pelajaran) combinations
+        if jadwal_guru.exists():
+            query = Q()
+            for jam_ke, mapel, kelas_jadwal in jadwal_guru:
+                query |= Q(jam_ke=jam_ke, mata_pelajaran=mapel)
+
+            # Also include where user is guru_pengganti
+            query |= Q(guru_pengganti=user)
+
+            queryset = queryset.filter(query)
+        else:
+            # Guru tidak punya jadwal, hanya tampilkan di mana dia guru_pengganti
+            queryset = queryset.filter(guru_pengganti=user)
 
     # ========== GURU/ADMIN VIEW: Grouped class statistics ==========
     if kelas:
@@ -1198,6 +1224,82 @@ def titipan_tugas_detail(request, pk):
     return Response({
         'success': True,
         'data': serializer.data
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def guru_assignment_info(request):
+    """
+    GET /api/attendance/guru/assignment-info/
+
+    Returns kelas and mapel lists based on guru's active assignments.
+
+    Response:
+    {
+        "success": true,
+        "kelas_list": ["XII A", "XII B", ...],
+        "mapel_list": ["Matematika", "Al-Quran", ...],
+        "assignment_detail": [
+            {
+                "kelas": "XII A",
+                "mapel": "Matematika",
+                "tipe": "kbm"
+            },
+            ...
+        ]
+    }
+    """
+    from apps.accounts.models import Assignment
+    from apps.core.models import TahunAjaran
+
+    user = request.user
+
+    # Get active tahun ajaran
+    tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+    if not tahun_ajaran:
+        return Response({
+            'success': True,
+            'kelas_list': [],
+            'mapel_list': [],
+            'assignment_detail': []
+        })
+
+    # Get user's active assignments (exclude piket)
+    assignments = Assignment.objects.filter(
+        user=user,
+        status='active',
+        tahun_ajaran=tahun_ajaran.nama
+    ).exclude(
+        assignment_type='piket'
+    )
+
+    kelas_set = set()
+    mapel_set = set()
+    assignment_detail = []
+
+    for a in assignments:
+        # For kbm, diniyah, wali_kelas - kelas is available
+        if a.kelas:
+            kelas_set.add(a.kelas)
+
+        # For kbm - mata_pelajaran is available
+        if a.mata_pelajaran:
+            mapel_set.add(a.mata_pelajaran)
+
+        # Build detail record
+        if a.kelas or a.mata_pelajaran:
+            assignment_detail.append({
+                'kelas': a.kelas or '',
+                'mapel': a.mata_pelajaran or '',
+                'tipe': a.assignment_type
+            })
+
+    return Response({
+        'success': True,
+        'kelas_list': sorted(list(kelas_set)),
+        'mapel_list': sorted(list(mapel_set)),
+        'assignment_detail': assignment_detail
     })
 
 
