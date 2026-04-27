@@ -15,9 +15,9 @@ let inputData = {
     jam_ke: [],
     students: [],
     records: {},
-    // Step 1 data - Tipe Pengajar (MOVED FROM STEP 3)
-    tipe_pengajar: 'guru_asli',
-    // Step 3 data - Dokumentasi
+    // Step 1 data - Tipe Pengajar
+    tipe_pengajar: '', // No default - user must select
+    // Step 4 data - Dokumentasi
     materi: '',
     capaian_pembelajaran: '',
     catatan: '',
@@ -25,7 +25,7 @@ let inputData = {
     ada_penilaian: false
 };
 let modalStep = 1;
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 let weeklyChart = null;
 
 // Session & JP Selection State
@@ -632,7 +632,7 @@ function initPengajarSelector() {
                 // GURU PENGAMPU: Load from assignment
                 if (mapelHint) mapelHint.style.display = 'none';
                 await loadAssignmentBasedOptions();
-            } else {
+            } else if (this.value === 'guru_pengganti') {
                 // GURU PIKET: Load all classes, mapel based on sesi
                 if (noAssignmentAlert) noAssignmentAlert.style.display = 'none';
                 if (mapelHint) mapelHint.style.display = 'block';
@@ -1370,9 +1370,9 @@ async function openAddModal() {
         jam_ke: [],
         students: [],
         records: {},
-        // Step 1 - Tipe Pengajar
-        tipe_pengajar: 'guru_asli',
-        // Step 3 - Dokumentasi
+        // Step 1 - Tipe Pengajar (no default)
+        tipe_pengajar: '',
+        // Step 4 - Dokumentasi
         materi: '',
         capaian_pembelajaran: '',
         catatan: '',
@@ -1380,10 +1380,10 @@ async function openAddModal() {
         ada_penilaian: false
     };
 
-    // Reset pengajar selection to GURU PENGAMPU
+    // Reset pengajar selection - NO DEFAULT (user must select)
     const pengajarRadios = document.querySelectorAll('input[name="tipe_pengajar"]');
     pengajarRadios.forEach(radio => {
-        radio.checked = radio.value === 'guru_asli';
+        radio.checked = false;
     });
 
     // Reset dropdowns
@@ -1422,8 +1422,7 @@ async function openAddModal() {
         setTimeout(() => lucide.createIcons(), 50);
     }
 
-    // Load assignment-based options (default is GURU PENGAMPU)
-    await loadAssignmentBasedOptions();
+    // Don't load options yet - wait for user to select tipe_pengajar in Step 1
 }
 
 function closeAddModal() {
@@ -1434,25 +1433,31 @@ function closeAddModal() {
 function resetModalStep() {
     modalStep = 1;
 
-    // Reset all step contents
+    // Reset all step contents (4 steps)
     const step1 = document.getElementById('modal-step-1');
     const step2 = document.getElementById('modal-step-2');
     const step3 = document.getElementById('modal-step-3');
+    const step4 = document.getElementById('modal-step-4');
     if (step1) step1.classList.add('active');
     if (step2) step2.classList.remove('active');
     if (step3) step3.classList.remove('active');
+    if (step4) step4.classList.remove('active');
 
-    // Reset step indicator dots
+    // Reset step indicator dots (4 dots, 3 lines)
     const dot1 = document.getElementById('dot-1');
     const dot2 = document.getElementById('dot-2');
     const dot3 = document.getElementById('dot-3');
+    const dot4 = document.getElementById('dot-4');
     const line1 = document.getElementById('line-1');
     const line2 = document.getElementById('line-2');
+    const line3 = document.getElementById('line-3');
     if (dot1) { dot1.className = 'step-dot active'; }
     if (dot2) { dot2.className = 'step-dot'; }
     if (dot3) { dot3.className = 'step-dot'; }
+    if (dot4) { dot4.className = 'step-dot'; }
     if (line1) { line1.classList.remove('done'); }
     if (line2) { line2.classList.remove('done'); }
+    if (line3) { line3.classList.remove('done'); }
 
     // Reset buttons
     const btnBack = document.getElementById('btn-modal-back');
@@ -1462,27 +1467,27 @@ function resetModalStep() {
     if (btnNext) btnNext.style.display = '';
     if (btnSave) btnSave.style.display = 'none';
 
-    // Reset Step 1 - Tipe Pengajar
+    // Reset Step 1 - Tipe Pengajar (NO DEFAULT)
     const pengajarRadios = document.querySelectorAll('input[name="tipe_pengajar"]');
     pengajarRadios.forEach(radio => {
-        radio.checked = radio.value === 'guru_asli';
+        radio.checked = false;
     });
 
-    // Hide alerts and hints in Step 1
+    // Hide alerts and hints in Step 2
     const noAssignmentAlert = document.getElementById('no-assignment-alert');
     const mapelHint = document.getElementById('mapel-hint');
     if (noAssignmentAlert) noAssignmentAlert.style.display = 'none';
     if (mapelHint) mapelHint.style.display = 'none';
 
-    // Reset titipan tugas section (Step 3)
+    // Reset titipan tugas section (Step 4)
     const titipanSection = document.getElementById('titipan-tugas-section');
     if (titipanSection) titipanSection.style.display = 'none';
 
-    // Reset Step 3 pengajar info display
-    const step3PengajarInfo = document.getElementById('step3-pengajar-info');
-    if (step3PengajarInfo) step3PengajarInfo.style.display = 'none';
+    // Reset Step 4 pengajar info display
+    const step4PengajarInfo = document.getElementById('step4-pengajar-info');
+    if (step4PengajarInfo) step4PengajarInfo.style.display = 'none';
 
-    // Reset Step 3 dokumentasi fields
+    // Reset Step 4 dokumentasi fields
     const materiInput = document.getElementById('input-materi');
     const capaianInput = document.getElementById('input-capaian');
     const catatanInput = document.getElementById('input-catatan-guru');
@@ -1491,7 +1496,7 @@ function resetModalStep() {
     if (catatanInput) catatanInput.value = '';
 
     // Reset inputData values
-    inputData.tipe_pengajar = 'guru_asli';
+    inputData.tipe_pengajar = ''; // No default
     inputData.materi = '';
     inputData.capaian_pembelajaran = '';
     inputData.catatan = '';
@@ -1516,7 +1521,54 @@ function resetModalStep() {
 
 async function modalNext() {
     if (modalStep === 1) {
-        // === STEP 1 → STEP 2 ===
+        // === STEP 1 → STEP 2: Validate Tipe Pengajar ===
+        const tipePengajarRadio = document.querySelector('input[name="tipe_pengajar"]:checked');
+        if (!tipePengajarRadio) {
+            showToast('Pilih tipe pengajar terlebih dahulu', 'warning');
+            return;
+        }
+
+        inputData.tipe_pengajar = tipePengajarRadio.value;
+
+        // Load dropdown options based on selected tipe
+        if (inputData.tipe_pengajar === 'guru_asli') {
+            await loadAssignmentBasedOptions();
+        } else {
+            await loadAllClassesForPiket();
+            // Reset mapel - will be loaded when sesi is selected
+            const mapelSelect = document.getElementById('input-mapel');
+            const mapelHint = document.getElementById('mapel-hint');
+            if (mapelSelect) {
+                mapelSelect.innerHTML = '<option value="">-- Pilih sesi dulu --</option>';
+                mapelSelect.disabled = true;
+            }
+            if (mapelHint) mapelHint.style.display = 'block';
+        }
+
+        // Update step indicator
+        modalStep = 2;
+        document.getElementById('modal-step-1').classList.remove('active');
+        document.getElementById('modal-step-2').classList.add('active');
+
+        const dot1 = document.getElementById('dot-1');
+        const dot2 = document.getElementById('dot-2');
+        const line1 = document.getElementById('line-1');
+        if (dot1) { dot1.classList.remove('active'); dot1.classList.add('done'); }
+        if (dot2) { dot2.classList.add('active'); }
+        if (line1) { line1.classList.add('done'); }
+
+        // Show back button
+        document.getElementById('btn-modal-back').style.display = '';
+        document.getElementById('btn-modal-next').style.display = '';
+        document.getElementById('btn-modal-save').style.display = 'none';
+
+        // Re-init Lucide icons
+        if (typeof lucide !== 'undefined') {
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+    } else if (modalStep === 2) {
+        // === STEP 2 → STEP 3: Validate Info Kelas ===
         const kelas = document.getElementById('input-kelas').value;
         const mapel = document.getElementById('input-mapel').value;
         const tanggal = document.getElementById('input-tanggal').value;
@@ -1543,6 +1595,7 @@ async function modalNext() {
 
         await loadStudentsForInput(kelas, tanggal, selectedJP);
 
+        // Update step 3 info display
         document.getElementById('step-kelas-info').textContent = kelas;
         document.getElementById('step-mapel-info').textContent = mapel;
         document.getElementById('step-tanggal-info').textContent = formatDate(tanggal);
@@ -1550,60 +1603,6 @@ async function modalNext() {
         const sessionLabel = selectedSession.charAt(0).toUpperCase() + selectedSession.slice(1);
         const jpLabels = selectedJP.map(j => `JP ${j}`).join(', ');
         document.getElementById('step-jp-info').textContent = `${sessionLabel} - ${jpLabels}`;
-
-        // Update step indicator
-        modalStep = 2;
-        document.getElementById('modal-step-1').classList.remove('active');
-        document.getElementById('modal-step-2').classList.add('active');
-
-        const dot1 = document.getElementById('dot-1');
-        const dot2 = document.getElementById('dot-2');
-        const line1 = document.getElementById('line-1');
-        if (dot1) { dot1.classList.remove('active'); dot1.classList.add('done'); }
-        if (dot2) { dot2.classList.add('active'); }
-        if (line1) { line1.classList.add('done'); }
-
-        // Show back & next, hide save
-        document.getElementById('btn-modal-back').style.display = '';
-        document.getElementById('btn-modal-next').style.display = '';
-        document.getElementById('btn-modal-save').style.display = 'none';
-
-    } else if (modalStep === 2) {
-        // === STEP 2 → STEP 3 ===
-        // Validate all students have status
-        const unfilled = inputData.students.filter(s => !inputData.records[s.nisn]?.status);
-        if (unfilled.length > 0) {
-            showToast(`${unfilled.length} siswa belum diisi statusnya`, 'warning');
-            return;
-        }
-
-        // Update step 3 info display
-        document.getElementById('step3-kelas-info').textContent = inputData.kelas;
-        document.getElementById('step3-mapel-info').textContent = inputData.mapel;
-        document.getElementById('step3-tanggal-info').textContent = formatDate(inputData.tanggal);
-
-        // Show pengajar info badge if guru piket
-        const step3PengajarInfo = document.getElementById('step3-pengajar-info');
-        const step3PiketName = document.getElementById('step3-piket-name');
-        const titipanSection = document.getElementById('titipan-tugas-section');
-
-        if (inputData.tipe_pengajar === 'guru_pengganti') {
-            // Show guru piket badge with user name
-            const userData = JSON.parse(localStorage.getItem('user') || '{}');
-            const displayName = userData.name || userData.username || 'User';
-
-            if (step3PengajarInfo) step3PengajarInfo.style.display = 'block';
-            if (step3PiketName) step3PiketName.textContent = displayName;
-
-            // Show titipan tugas section and fetch data
-            if (titipanSection) {
-                titipanSection.style.display = 'block';
-                fetchTitipanTugas();
-            }
-        } else {
-            if (step3PengajarInfo) step3PengajarInfo.style.display = 'none';
-            if (titipanSection) titipanSection.style.display = 'none';
-        }
 
         // Update step indicator
         modalStep = 3;
@@ -1617,12 +1616,65 @@ async function modalNext() {
         if (dot3) { dot3.classList.add('active'); }
         if (line2) { line2.classList.add('done'); }
 
+        // Show back & next, hide save
+        document.getElementById('btn-modal-back').style.display = '';
+        document.getElementById('btn-modal-next').style.display = '';
+        document.getElementById('btn-modal-save').style.display = 'none';
+
+    } else if (modalStep === 3) {
+        // === STEP 3 → STEP 4: Validate Kehadiran ===
+        const unfilled = inputData.students.filter(s => !inputData.records[s.nisn]?.status);
+        if (unfilled.length > 0) {
+            showToast(`${unfilled.length} siswa belum diisi statusnya`, 'warning');
+            return;
+        }
+
+        // Update step 4 info display
+        document.getElementById('step4-kelas-info').textContent = inputData.kelas;
+        document.getElementById('step4-mapel-info').textContent = inputData.mapel;
+        document.getElementById('step4-tanggal-info').textContent = formatDate(inputData.tanggal);
+
+        // Show pengajar info badge if guru piket
+        const step4PengajarInfo = document.getElementById('step4-pengajar-info');
+        const step4PiketName = document.getElementById('step4-piket-name');
+        const titipanSection = document.getElementById('titipan-tugas-section');
+
+        if (inputData.tipe_pengajar === 'guru_pengganti') {
+            // Show guru piket badge with user name
+            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            const displayName = userData.name || userData.username || 'User';
+
+            if (step4PengajarInfo) step4PengajarInfo.style.display = 'block';
+            if (step4PiketName) step4PiketName.textContent = displayName;
+
+            // Show titipan tugas section and fetch data
+            if (titipanSection) {
+                titipanSection.style.display = 'block';
+                fetchTitipanTugas();
+            }
+        } else {
+            if (step4PengajarInfo) step4PengajarInfo.style.display = 'none';
+            if (titipanSection) titipanSection.style.display = 'none';
+        }
+
+        // Update step indicator
+        modalStep = 4;
+        document.getElementById('modal-step-3').classList.remove('active');
+        document.getElementById('modal-step-4').classList.add('active');
+
+        const dot3 = document.getElementById('dot-3');
+        const dot4 = document.getElementById('dot-4');
+        const line3 = document.getElementById('line-3');
+        if (dot3) { dot3.classList.remove('active'); dot3.classList.add('done'); }
+        if (dot4) { dot4.classList.add('active'); }
+        if (line3) { line3.classList.add('done'); }
+
         // Show back & save, hide next
         document.getElementById('btn-modal-back').style.display = '';
         document.getElementById('btn-modal-next').style.display = 'none';
         document.getElementById('btn-modal-save').style.display = '';
 
-        // Re-init Lucide icons for step 3
+        // Re-init Lucide icons for step 4
         if (typeof lucide !== 'undefined') {
             setTimeout(() => lucide.createIcons(), 50);
         }
@@ -1643,6 +1695,7 @@ function modalBack() {
         if (dot2) { dot2.classList.remove('active'); }
         if (line1) { line1.classList.remove('done'); }
 
+        // Hide back button on step 1
         document.getElementById('btn-modal-back').style.display = 'none';
         document.getElementById('btn-modal-next').style.display = '';
         document.getElementById('btn-modal-save').style.display = 'none';
@@ -1659,6 +1712,24 @@ function modalBack() {
         if (dot2) { dot2.classList.add('active'); dot2.classList.remove('done'); }
         if (dot3) { dot3.classList.remove('active'); }
         if (line2) { line2.classList.remove('done'); }
+
+        // Show back & next, hide save
+        document.getElementById('btn-modal-back').style.display = '';
+        document.getElementById('btn-modal-next').style.display = '';
+        document.getElementById('btn-modal-save').style.display = 'none';
+
+    } else if (modalStep === 4) {
+        // === STEP 4 → STEP 3 ===
+        modalStep = 3;
+        document.getElementById('modal-step-4').classList.remove('active');
+        document.getElementById('modal-step-3').classList.add('active');
+
+        const dot3 = document.getElementById('dot-3');
+        const dot4 = document.getElementById('dot-4');
+        const line3 = document.getElementById('line-3');
+        if (dot3) { dot3.classList.add('active'); dot3.classList.remove('done'); }
+        if (dot4) { dot4.classList.remove('active'); }
+        if (line3) { line3.classList.remove('done'); }
 
         // Show back & next, hide save
         document.getElementById('btn-modal-back').style.display = '';
@@ -1803,9 +1874,8 @@ async function saveAttendance() {
         return;
     }
 
-    // === Collect Step 3 values ===
-    const tipePengajarRadio = document.querySelector('input[name="tipe_pengajar"]:checked');
-    const tipePengajar = tipePengajarRadio ? tipePengajarRadio.value : 'guru_asli';
+    // === Collect Step 4 values ===
+    const tipePengajar = inputData.tipe_pengajar || 'guru_asli';
     // NOTE: guru_pengganti tidak dikirim - backend otomatis pakai request.user
 
     const materiInput = document.getElementById('input-materi');

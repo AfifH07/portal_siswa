@@ -9,7 +9,7 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260419" rel="stylesheet">
-    <link href="/static/css/attendance-baron.css?v=20260421" rel="stylesheet">
+    <link href="/static/css/attendance-baron.css?v=20260427" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -261,49 +261,63 @@
             <button class="modal-close" onclick="closeAddModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <!-- Step indicator (3 steps) -->
-            <div class="step-indicator">
+            <!-- Step indicator (4 steps) -->
+            <div class="step-indicator step-indicator-4">
                 <div class="step-wrap">
                     <div class="step-dot active" id="dot-1">1</div>
-                    <div class="step-label">Info Kelas</div>
+                    <div class="step-label">Tipe Pengajar</div>
                 </div>
                 <div class="step-line" id="line-1"></div>
                 <div class="step-wrap">
                     <div class="step-dot" id="dot-2">2</div>
-                    <div class="step-label">Kehadiran</div>
+                    <div class="step-label">Info Kelas</div>
                 </div>
                 <div class="step-line" id="line-2"></div>
                 <div class="step-wrap">
                     <div class="step-dot" id="dot-3">3</div>
+                    <div class="step-label">Kehadiran</div>
+                </div>
+                <div class="step-line" id="line-3"></div>
+                <div class="step-wrap">
+                    <div class="step-dot" id="dot-4">4</div>
                     <div class="step-label">Dokumentasi</div>
                 </div>
             </div>
 
-            <!-- Step 1: Info Kelas -->
+            <!-- Step 1: Tipe Pengajar -->
             <div id="modal-step-1" class="modal-step active">
-                <!-- Tipe Pengajar (MOVED FROM STEP 3) -->
-                <div class="form-group">
-                    <label>Tipe Pengajar <span class="required">*</span></label>
-                    <div class="pengajar-selector">
-                        <label class="pengajar-radio">
-                            <input type="radio" name="tipe_pengajar" value="guru_asli" checked>
-                            <span class="pengajar-card">
-                                <i data-lucide="user-check" class="pengajar-icon"></i>
-                                <span class="pengajar-label">Guru Pengampu</span>
-                                <span class="pengajar-desc">Mengajar sesuai jadwal</span>
-                            </span>
-                        </label>
-                        <label class="pengajar-radio">
-                            <input type="radio" name="tipe_pengajar" value="guru_pengganti">
-                            <span class="pengajar-card">
-                                <i data-lucide="user-plus" class="pengajar-icon"></i>
-                                <span class="pengajar-label">Guru Piket</span>
-                                <span class="pengajar-desc">Menggantikan guru lain</span>
-                            </span>
-                        </label>
-                    </div>
+                <div class="step-intro">
+                    <h3 class="step-title">Pilih Tipe Pengajar</h3>
+                    <p class="step-desc">Tentukan apakah Anda mengajar sesuai jadwal atau menggantikan guru lain</p>
                 </div>
 
+                <div class="pengajar-selector pengajar-selector-large">
+                    <label class="pengajar-radio">
+                        <input type="radio" name="tipe_pengajar" value="guru_asli">
+                        <span class="pengajar-card">
+                            <i data-lucide="user-check" class="pengajar-icon"></i>
+                            <span class="pengajar-label">Guru Pengampu</span>
+                            <span class="pengajar-desc">Mengajar sesuai jadwal</span>
+                        </span>
+                    </label>
+                    <label class="pengajar-radio">
+                        <input type="radio" name="tipe_pengajar" value="guru_pengganti">
+                        <span class="pengajar-card">
+                            <i data-lucide="user-plus" class="pengajar-icon"></i>
+                            <span class="pengajar-label">Guru Piket</span>
+                            <span class="pengajar-desc">Menggantikan guru lain</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div id="tipe-pengajar-hint" class="tipe-hint">
+                    <i data-lucide="info" style="width: 14px; height: 14px;"></i>
+                    <span>Pilih salah satu untuk melanjutkan</span>
+                </div>
+            </div>
+
+            <!-- Step 2: Info Kelas -->
+            <div id="modal-step-2" class="modal-step">
                 <!-- Alert: No Assignment (hidden by default) -->
                 <div id="no-assignment-alert" class="alert-card alert-warning" style="display: none;">
                     <div class="alert-icon"><i data-lucide="alert-triangle"></i></div>
@@ -356,8 +370,8 @@
                 </div>
             </div>
 
-            <!-- Step 2: Input Kehadiran -->
-            <div id="modal-step-2" class="modal-step">
+            <!-- Step 3: Input Kehadiran -->
+            <div id="modal-step-3" class="modal-step">
                 <div class="step-info">
                     <span id="step-kelas-info">-</span> &nbsp;|&nbsp; <span id="step-mapel-info">-</span> &nbsp;|&nbsp; <span id="step-tanggal-info">-</span>
                     <div class="step-jp-info">
@@ -384,14 +398,14 @@
                 </div>
             </div>
 
-            <!-- Step 3: Dokumentasi Pembelajaran -->
-            <div id="modal-step-3" class="modal-step">
+            <!-- Step 4: Dokumentasi Pembelajaran -->
+            <div id="modal-step-4" class="modal-step">
                 <div class="step-info">
-                    <span id="step3-kelas-info">-</span> &nbsp;|&nbsp; <span id="step3-mapel-info">-</span> &nbsp;|&nbsp; <span id="step3-tanggal-info">-</span>
-                    <div class="step-pengajar-info" id="step3-pengajar-info" style="margin-top: 8px; display: none;">
+                    <span id="step4-kelas-info">-</span> &nbsp;|&nbsp; <span id="step4-mapel-info">-</span> &nbsp;|&nbsp; <span id="step4-tanggal-info">-</span>
+                    <div class="step-pengajar-info" id="step4-pengajar-info" style="margin-top: 8px; display: none;">
                         <span class="pengajar-badge guru-piket">
                             <i data-lucide="user-plus" style="width: 14px; height: 14px; display: inline; vertical-align: middle;"></i>
-                            Guru Piket — <span id="step3-piket-name">-</span>
+                            Guru Piket — <span id="step4-piket-name">-</span>
                             <span class="poin-badge">+5 Poin</span>
                         </span>
                     </div>
@@ -694,7 +708,7 @@
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/attendance.js?v=20260421" defer></script>
+<script src="/static/js/attendance.js?v=20260427" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init

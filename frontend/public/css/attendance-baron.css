@@ -505,6 +505,15 @@ select.filter-input {
     margin-bottom: 22px;
 }
 
+/* 4-step indicator adjustment */
+.step-indicator-4 .step-wrap {
+    min-width: 70px;
+}
+
+.step-indicator-4 .step-label {
+    font-size: 10px;
+}
+
 .step-wrap {
     display: flex;
     flex-direction: column;
@@ -2070,4 +2079,73 @@ textarea.glass-input::placeholder {
     .filters-grid {
         grid-template-columns: repeat(5, 1fr);
     }
+}
+
+/* =============================================
+   STEP 1: TIPE PENGAJAR (4-Step Wizard)
+   ============================================= */
+
+.step-intro {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.step-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+.step-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 360px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* Large pengajar selector for Step 1 */
+.pengajar-selector-large {
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.pengajar-selector-large .pengajar-card {
+    padding: 28px 20px;
+}
+
+.pengajar-selector-large .pengajar-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 14px;
+}
+
+.pengajar-selector-large .pengajar-label {
+    font-size: 16px;
+    margin-bottom: 6px;
+}
+
+.pengajar-selector-large .pengajar-desc {
+    font-size: 13px;
+}
+
+/* Tipe hint for Step 1 */
+.tipe-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #7dd3fc;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0369a1;
+}
+
+.tipe-hint svg {
+    flex-shrink: 0;
+    color: #38bdf8;
 }
