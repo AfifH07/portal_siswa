@@ -645,30 +645,39 @@ def guru_today_dashboard(request):
         evaluasi_bulan_ini = 0
         bulan_ini_start = today.replace(day=1)
 
-        # Cek nilai pending dari jurnal dengan flag ada_penilaian=True
+        # Cek nilai pending dari Attendance dengan flag ada_penilaian=True
         # tapi belum ada Grade record
         try:
-            from apps.attendance.models import JurnalMengajar
+            # Ambil kelas yang diajar guru dari jadwal
+            guru_kelas_list = Schedule.objects.filter(
+                username=user.username,
+                is_active=True
+            ).values_list('kelas', flat=True).distinct()
 
-            # Jurnal dengan penilaian yang belum diinput nilai
-            jurnal_pending = JurnalMengajar.objects.filter(
-                guru=user,
+            # Attendance dengan penilaian yang belum diinput nilai
+            # 1. Kelas yang diajar guru, ATAU
+            # 2. Guru sebagai guru_pengganti
+            attendance_pending = Attendance.objects.filter(
                 ada_penilaian=True,
                 tanggal__gte=bulan_ini_start
-            )
+            ).filter(
+                Q(nisn__kelas__in=guru_kelas_list) | Q(guru_pengganti=user)
+            ).values('nisn__kelas', 'mata_pelajaran', 'tanggal').distinct()
 
-            for jurnal in jurnal_pending:
+            for att in attendance_pending:
                 # Cek apakah sudah ada grade untuk kelas + mapel + tanggal ini
                 has_grade = Grade.objects.filter(
-                    nisn__kelas=jurnal.kelas,
-                    mata_pelajaran=jurnal.mata_pelajaran,
-                    created_at__date=jurnal.tanggal
+                    kelas=att['nisn__kelas'],
+                    mata_pelajaran=att['mata_pelajaran'],
+                    created_at__date=att['tanggal']
                 ).exists()
                 if not has_grade:
                     nilai_pending += 1
 
-        except Exception:
-            pass  # JurnalMengajar mungkin belum ada
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"[Dashboard] Error checking nilai_pending: {str(e)}")
 
         # Evaluasi bulan ini
         evaluator_name = user.name if user.name else user.username
@@ -884,40 +893,104 @@ def guru_todo_list(request):
     # 2. CEK NILAI BELUM DIINPUT
     # ===========================================
     try:
-        # Ambil kelas yang diajar guru
-        guru_kelas = Schedule.objects.filter(
-            username=user.username,
-            is_active=True
-        ).values_list('kelas', flat=True).distinct()
+        # Mapping hari (English weekday → Indonesian)
+        HARI_MAP = {
+            'Monday': 'Senin', 'Tuesday': 'Selasa', 'Wednesday': 'Rabu',
+            'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu'
+        }
+        hari_indo = HARI_MAP.get(today.strftime('%A'), 'Senin')
 
-        # Cek attendance dengan ada_penilaian=True tapi belum ada Grade
-        attendance_with_penilaian = Attendance.objects.filter(
+        # 1. Ambil jadwal guru hari ini
+        jadwal_hari_ini = Schedule.objects.filter(
+            username=user.username,
+            hari=hari_indo,
+            is_active=True
+        ).select_related('master_jam')
+
+        # Set untuk track kelas+mapel+jam yang sudah dicek (avoid duplicates)
+        checked_items = set()
+
+        # 2. Cek attendance dari jadwal guru sendiri
+        for jadwal in jadwal_hari_ini:
+            if not jadwal.jam_ke or not jadwal.mata_pelajaran:
+                continue
+
+            # Cek apakah ada attendance dengan ada_penilaian=True
+            attendance_penilaian = Attendance.objects.filter(
+                tanggal=today,
+                jam_ke=jadwal.jam_ke,
+                mata_pelajaran=jadwal.mata_pelajaran,
+                nisn__kelas=jadwal.kelas,
+                ada_penilaian=True
+            ).first()
+
+            if attendance_penilaian:
+                # Cek apakah sudah ada Grade untuk kelas + mapel hari ini
+                has_grade = Grade.objects.filter(
+                    kelas=jadwal.kelas,
+                    mata_pelajaran=jadwal.mata_pelajaran,
+                    created_at__date=today
+                ).exists()
+
+                if not has_grade:
+                    item_key = (jadwal.kelas, jadwal.mata_pelajaran, jadwal.jam_ke)
+                    if item_key not in checked_items:
+                        checked_items.add(item_key)
+
+                        # Format waktu
+                        waktu = ''
+                        if jadwal.jam_mulai:
+                            waktu = jadwal.jam_mulai.strftime('%H:%M')
+                        elif jadwal.master_jam and jadwal.master_jam.jam_mulai:
+                            waktu = jadwal.master_jam.jam_mulai.strftime('%H:%M')
+
+                        todo_items.append({
+                            'type': 'nilai',
+                            'label': 'Nilai belum diinput',
+                            'detail': f"{jadwal.mata_pelajaran} - {jadwal.kelas}" + (f" ({waktu})" if waktu else ""),
+                            'kelas': jadwal.kelas,
+                            'jam_ke': jadwal.jam_ke,
+                            'mata_pelajaran': jadwal.mata_pelajaran,
+                            'url': '/grades/',
+                            'priority': 'medium'
+                        })
+
+        # 3. Cek attendance dimana user adalah guru_pengganti (guru piket)
+        attendance_as_pengganti = Attendance.objects.filter(
             tanggal=today,
             ada_penilaian=True,
-            nisn__kelas__in=guru_kelas
+            guru_pengganti=user
         ).values('nisn__kelas', 'mata_pelajaran', 'jam_ke').distinct()
 
-        for att in attendance_with_penilaian:
+        for att in attendance_as_pengganti:
             kelas = att['nisn__kelas']
             mapel = att['mata_pelajaran']
+            jam_ke = att['jam_ke']
 
-            # Cek apakah sudah ada grade untuk kelas + mapel + tanggal ini
+            item_key = (kelas, mapel, jam_ke)
+            if item_key in checked_items:
+                continue
+
+            # Cek apakah sudah ada Grade
             has_grade = Grade.objects.filter(
-                nisn__kelas=kelas,
+                kelas=kelas,
                 mata_pelajaran=mapel,
                 created_at__date=today
             ).exists()
 
             if not has_grade:
+                checked_items.add(item_key)
                 todo_items.append({
                     'type': 'nilai',
                     'label': 'Nilai belum diinput',
-                    'detail': f"{mapel or 'N/A'} - {kelas}",
+                    'detail': f"{mapel or 'N/A'} - {kelas} (Piket)",
                     'kelas': kelas,
+                    'jam_ke': jam_ke,
                     'mata_pelajaran': mapel,
                     'url': '/grades/',
                     'priority': 'medium'
                 })
+
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
