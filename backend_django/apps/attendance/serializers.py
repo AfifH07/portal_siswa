@@ -25,7 +25,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
             'mata_pelajaran', 'status', 'keterangan',
             # New fields v2.3.9
             'tipe_pengajar', 'tipe_pengajar_display', 'guru_pengganti', 'guru_pengganti_nama',
-            'capaian_pembelajaran', 'materi', 'catatan',
+            'tujuan_pembelajaran', 'capaian_pembelajaran', 'materi', 'catatan',
             # New fields v2.3.11
             'ada_penilaian', 'ketuntasan_materi',
             # Timestamps & relations
@@ -37,7 +37,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
         return Attendance.get_jam_label(obj.jam_ke)
 
     def get_tipe_pengajar_display(self, obj):
-        return obj.get_tipe_pengajar_display() if obj.tipe_pengajar else 'Guru Asli'
+        return obj.get_tipe_pengajar_display() if obj.tipe_pengajar else 'Guru Pengampu'
 
     def get_guru_pengganti_nama(self, obj):
         if obj.guru_pengganti:
@@ -57,7 +57,7 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         fields = [
             'nisn', 'tanggal', 'jam_ke', 'mata_pelajaran', 'status', 'keterangan',
             # New fields v2.3.9
-            'tipe_pengajar', 'guru_pengganti', 'capaian_pembelajaran', 'materi', 'catatan',
+            'tipe_pengajar', 'guru_pengganti', 'tujuan_pembelajaran', 'capaian_pembelajaran', 'materi', 'catatan',
             # New fields v2.3.11
             'ada_penilaian', 'ketuntasan_materi'
         ]
@@ -67,7 +67,7 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         tanggal = data.get('tanggal')
         jam_ke = data.get('jam_ke', 1)
         status = data.get('status')
-        tipe_pengajar = data.get('tipe_pengajar', 'guru_asli')
+        tipe_pengajar = data.get('tipe_pengajar', 'guru_pengampu')
         guru_pengganti = data.get('guru_pengganti')
 
         if status not in ['Hadir', 'Sakit', 'Izin', 'Alpha']:
@@ -76,14 +76,14 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         if jam_ke < 1 or jam_ke > 9:
             raise serializers.ValidationError({'jam_ke': 'Jam pelajaran harus antara 1-9'})
 
-        # Validate guru_pengganti logic
-        if tipe_pengajar == 'guru_pengganti' and not guru_pengganti:
+        # Validate guru_pengganti logic (guru_piket)
+        if tipe_pengajar == 'guru_piket' and not guru_pengganti:
             raise serializers.ValidationError({
-                'guru_pengganti': 'Guru pengganti harus diisi jika tipe_pengajar adalah guru_pengganti'
+                'guru_pengganti': 'Guru pengganti harus diisi jika tipe_pengajar adalah guru_piket'
             })
 
-        if tipe_pengajar == 'guru_asli' and guru_pengganti:
-            # Clear guru_pengganti if tipe is guru_asli
+        if tipe_pengajar == 'guru_pengampu' and guru_pengganti:
+            # Clear guru_pengganti if tipe is guru_pengampu
             data['guru_pengganti'] = None
 
         existing = Attendance.objects.filter(
@@ -104,7 +104,7 @@ class AttendanceUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'status', 'keterangan',
             # New fields v2.3.9
-            'tipe_pengajar', 'guru_pengganti', 'capaian_pembelajaran', 'materi', 'catatan',
+            'tipe_pengajar', 'guru_pengganti', 'tujuan_pembelajaran', 'capaian_pembelajaran', 'materi', 'catatan',
             # New fields v2.3.11
             'ada_penilaian', 'ketuntasan_materi'
         ]
@@ -119,14 +119,14 @@ class AttendanceUpdateSerializer(serializers.ModelSerializer):
         guru_pengganti = data.get('guru_pengganti')
 
         # Only validate if both fields are being updated
-        if tipe_pengajar == 'guru_pengganti' and guru_pengganti is None:
+        if tipe_pengajar == 'guru_piket' and guru_pengganti is None:
             # Check if existing record has guru_pengganti
             if self.instance and not self.instance.guru_pengganti:
                 raise serializers.ValidationError({
-                    'guru_pengganti': 'Guru pengganti harus diisi jika tipe_pengajar adalah guru_pengganti'
+                    'guru_pengganti': 'Guru pengganti harus diisi jika tipe_pengajar adalah guru_piket'
                 })
 
-        if tipe_pengajar == 'guru_asli' and guru_pengganti:
+        if tipe_pengajar == 'guru_pengampu' and guru_pengganti:
             data['guru_pengganti'] = None
 
         return data

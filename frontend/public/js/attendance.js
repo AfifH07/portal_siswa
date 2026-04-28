@@ -19,7 +19,7 @@ let inputData = {
     tipe_pengajar: '', // No default - user must select
     // Step 4 data - Dokumentasi
     materi: '',
-    capaian_pembelajaran: '',
+    tujuan_pembelajaran: '',
     catatan: '',
     ketuntasan_materi: 0,
     ada_penilaian: false
@@ -543,7 +543,7 @@ function initSessionSelector() {
             updateJPHint();
 
             // If GURU PIKET mode, load mapel based on sesi
-            if (inputData.tipe_pengajar === 'guru_pengganti') {
+            if (inputData.tipe_pengajar === 'guru_piket') {
                 await loadMapelBySesi(this.value);
             }
         });
@@ -628,11 +628,11 @@ function initPengajarSelector() {
             const noAssignmentAlert = document.getElementById('no-assignment-alert');
             const mapelHint = document.getElementById('mapel-hint');
 
-            if (this.value === 'guru_asli') {
+            if (this.value === 'guru_pengampu') {
                 // GURU PENGAMPU: Load from assignment
                 if (mapelHint) mapelHint.style.display = 'none';
                 await loadAssignmentBasedOptions();
-            } else if (this.value === 'guru_pengganti') {
+            } else if (this.value === 'guru_piket') {
                 // GURU PIKET: Load all classes, mapel based on sesi
                 if (noAssignmentAlert) noAssignmentAlert.style.display = 'none';
                 if (mapelHint) mapelHint.style.display = 'block';
@@ -656,7 +656,7 @@ function initPengajarSelector() {
     const kelasSelect = document.getElementById('input-kelas');
     if (kelasSelect) {
         kelasSelect.addEventListener('change', function() {
-            if (inputData.tipe_pengajar === 'guru_asli' && guruAssignmentData) {
+            if (inputData.tipe_pengajar === 'guru_pengampu' && guruAssignmentData) {
                 // Filter mapel based on selected kelas from assignment
                 updateMapelFromAssignment(this.value);
             }
@@ -799,7 +799,7 @@ async function loadAllClassesForPiket() {
  * Called when sesi radio is changed
  */
 async function loadMapelBySesi(sesi) {
-    if (inputData.tipe_pengajar !== 'guru_pengganti') return;
+    if (inputData.tipe_pengajar !== 'guru_piket') return;
 
     const mapelSelect = document.getElementById('input-mapel');
     const mapelHint = document.getElementById('mapel-hint');
@@ -1374,7 +1374,7 @@ async function openAddModal() {
         tipe_pengajar: '',
         // Step 4 - Dokumentasi
         materi: '',
-        capaian_pembelajaran: '',
+        tujuan_pembelajaran: '',
         catatan: '',
         ketuntasan_materi: 0,
         ada_penilaian: false
@@ -1489,10 +1489,10 @@ function resetModalStep() {
 
     // Reset Step 4 dokumentasi fields
     const materiInput = document.getElementById('input-materi');
-    const capaianInput = document.getElementById('input-capaian');
+    const tujuanInput = document.getElementById('input-tujuan');
     const catatanInput = document.getElementById('input-catatan-guru');
     if (materiInput) materiInput.value = '';
-    if (capaianInput) capaianInput.value = '';
+    if (tujuanInput) tujuanInput.value = '';
     if (catatanInput) catatanInput.value = '';
 
     // Reset inputData values
@@ -1531,7 +1531,7 @@ async function modalNext() {
         inputData.tipe_pengajar = tipePengajarRadio.value;
 
         // Load dropdown options based on selected tipe
-        if (inputData.tipe_pengajar === 'guru_asli') {
+        if (inputData.tipe_pengajar === 'guru_pengampu') {
             await loadAssignmentBasedOptions();
         } else {
             await loadAllClassesForPiket();
@@ -1639,7 +1639,7 @@ async function modalNext() {
         const step4PiketName = document.getElementById('step4-piket-name');
         const titipanSection = document.getElementById('titipan-tugas-section');
 
-        if (inputData.tipe_pengajar === 'guru_pengganti') {
+        if (inputData.tipe_pengajar === 'guru_piket') {
             // Show guru piket badge with user name
             const userData = JSON.parse(localStorage.getItem('user') || '{}');
             const displayName = userData.name || userData.username || 'User';
@@ -1875,17 +1875,17 @@ async function saveAttendance() {
     }
 
     // === Collect Step 4 values ===
-    const tipePengajar = inputData.tipe_pengajar || 'guru_asli';
-    // NOTE: guru_pengganti tidak dikirim - backend otomatis pakai request.user
+    const tipePengajar = inputData.tipe_pengajar || 'guru_pengampu';
+    // NOTE: guru_piket tidak dikirim - backend otomatis pakai request.user
 
     const materiInput = document.getElementById('input-materi');
-    const capaianInput = document.getElementById('input-capaian');
+    const tujuanInput = document.getElementById('input-tujuan');
     const catatanInput = document.getElementById('input-catatan-guru');
     const ketuntasanInput = document.getElementById('input-ketuntasan');
     const adaPenilaianInput = document.getElementById('input-ada-penilaian');
 
     const materi = materiInput ? materiInput.value.trim() : '';
-    const capaianPembelajaran = capaianInput ? capaianInput.value.trim() : '';
+    const tujuanPembelajaran = tujuanInput ? tujuanInput.value.trim() : '';
     const catatan = catatanInput ? catatanInput.value.trim() : '';
     const ketuntasanMateri = ketuntasanInput ? parseInt(ketuntasanInput.value, 10) : 0;
     const adaPenilaian = adaPenilaianInput ? adaPenilaianInput.checked : false;
@@ -1903,10 +1903,10 @@ async function saveAttendance() {
             mata_pelajaran: inputData.mapel,
             jam_ke: inputData.jam_ke,
             attendance_data: attendanceList,
-            // Step 3 fields (v2.3.9) - guru_pengganti otomatis dari request.user
+            // Step 3 fields (v2.3.9) - guru_piket otomatis dari request.user
             tipe_pengajar: tipePengajar,
             materi: materi,
-            capaian_pembelajaran: capaianPembelajaran,
+            tujuan_pembelajaran: tujuanPembelajaran,
             catatan: catatan,
             // Step 3 fields (v2.3.11)
             ketuntasan_materi: ketuntasanMateri,
@@ -1925,12 +1925,15 @@ async function saveAttendance() {
         if (data.success) {
             const jpCount = inputData.jam_ke.length;
             const studentCount = inputData.students.length;
-            const pengajarInfo = tipePengajar === 'guru_pengganti' ? ' (Guru Piket)' : '';
+            const pengajarInfo = tipePengajar === 'guru_piket' ? ' (Guru Piket)' : '';
             showToast(`Jurnal berhasil disimpan (${studentCount} siswa × ${jpCount} JP)${pengajarInfo}`, 'success');
             closeAddModal();
-            loadAttendanceData();
-            loadWeeklyChartData();
-            updateAttendanceCards();
+            // Await all refresh functions to ensure data is updated
+            await Promise.all([
+                loadAttendanceData(),
+                loadWeeklyChartData(),
+                updateAttendanceCards()
+            ]);
         } else {
             throw new Error(data.message || 'Failed to save');
         }
@@ -2058,16 +2061,16 @@ function openJurnalDetailModal(jurnalData) {
     setField('jurnal-detail-mapel', jurnalData.mata_pelajaran);
 
     // Tipe pengajar
-    const tipePengajarDisplay = jurnalData.tipe_pengajar === 'guru_pengganti'
+    const tipePengajarDisplay = jurnalData.tipe_pengajar === 'guru_piket'
         ? 'Guru Piket'
         : 'Guru Pengampu';
     setField('jurnal-detail-tipe', tipePengajarDisplay);
 
-    // Guru piket (only show if guru_pengganti)
+    // Guru piket (only show if guru_piket)
     const piketEl = document.getElementById('jurnal-detail-piket');
     if (piketEl) {
-        if (jurnalData.tipe_pengajar === 'guru_pengganti' && jurnalData.guru_pengganti_nama) {
-            piketEl.textContent = jurnalData.guru_pengganti_nama;
+        if (jurnalData.tipe_pengajar === 'guru_piket' && jurnalData.guru_piket_nama) {
+            piketEl.textContent = jurnalData.guru_piket_nama;
             piketEl.closest('.jurnal-detail-item').style.display = '';
         } else {
             piketEl.closest('.jurnal-detail-item').style.display = 'none';
@@ -2075,7 +2078,7 @@ function openJurnalDetailModal(jurnalData) {
     }
 
     setField('jurnal-detail-materi', jurnalData.materi);
-    setField('jurnal-detail-tujuan', jurnalData.capaian_pembelajaran);
+    setField('jurnal-detail-tujuan', jurnalData.tujuan_pembelajaran);
     setField('jurnal-detail-catatan', jurnalData.catatan);
 
     // Ketuntasan materi with progress bar

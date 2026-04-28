@@ -158,8 +158,9 @@ def save_batch_attendance(request):
             {"nisn": "xxx", "status": "Hadir", "keterangan": ""}
         ],
         // Optional new fields v2.3.9:
-        "tipe_pengajar": "guru_asli" | "guru_pengganti",
+        "tipe_pengajar": "guru_pengampu" | "guru_piket",
         "guru_pengganti": <user_id>,
+        "tujuan_pembelajaran": "...",
         "capaian_pembelajaran": "...",
         "materi": "...",
         "catatan": "..."
@@ -169,7 +170,8 @@ def save_batch_attendance(request):
     attendance_data = request.data.get('attendance_data', [])
 
     # === NEW FIELDS v2.3.9 (session-level) ===
-    tipe_pengajar = request.data.get('tipe_pengajar', 'guru_asli')
+    tipe_pengajar = request.data.get('tipe_pengajar', 'guru_pengampu')
+    tujuan_pembelajaran = request.data.get('tujuan_pembelajaran', '')
     capaian_pembelajaran = request.data.get('capaian_pembelajaran', '')
     materi = request.data.get('materi', '')
     catatan = request.data.get('catatan', '')
@@ -190,12 +192,12 @@ def save_batch_attendance(request):
         ketuntasan_materi = 0
 
     # Validate tipe_pengajar
-    if tipe_pengajar not in ['guru_asli', 'guru_pengganti']:
-        tipe_pengajar = 'guru_asli'
+    if tipe_pengajar not in ['guru_pengampu', 'guru_piket']:
+        tipe_pengajar = 'guru_pengampu'
 
     # Auto-use request.user as guru_pengganti (no manual selection needed)
     guru_pengganti = None
-    if tipe_pengajar == 'guru_pengganti':
+    if tipe_pengajar == 'guru_piket':
         guru_pengganti = request.user
     # === END NEW FIELDS ===
 
@@ -286,6 +288,7 @@ def save_batch_attendance(request):
                     # Update new fields v2.3.9
                     existing.tipe_pengajar = tipe_pengajar
                     existing.guru_pengganti = guru_pengganti
+                    existing.tujuan_pembelajaran = tujuan_pembelajaran or existing.tujuan_pembelajaran
                     existing.capaian_pembelajaran = capaian_pembelajaran or existing.capaian_pembelajaran
                     existing.materi = materi or existing.materi
                     existing.catatan = catatan or existing.catatan
@@ -305,6 +308,7 @@ def save_batch_attendance(request):
                         # New fields v2.3.9
                         tipe_pengajar=tipe_pengajar,
                         guru_pengganti=guru_pengganti,
+                        tujuan_pembelajaran=tujuan_pembelajaran,
                         capaian_pembelajaran=capaian_pembelajaran,
                         materi=materi,
                         catatan=catatan,
@@ -322,8 +326,8 @@ def save_batch_attendance(request):
             errors.append(f'Error: {str(e)}')
 
     # === AUTO POIN GURU PIKET v2.3.9 ===
-    # Create EmployeeEvaluation record for guru_pengganti (+5 poin)
-    if tipe_pengajar == 'guru_pengganti' and guru_pengganti and (saved_count > 0 or updated_count > 0):
+    # Create EmployeeEvaluation record for guru_piket (+5 poin)
+    if tipe_pengajar == 'guru_piket' and guru_pengganti and (saved_count > 0 or updated_count > 0):
         try:
             from apps.kesantrian.models import EmployeeEvaluation
             from apps.kesantrian.signals import get_current_tahun_ajaran, get_current_semester

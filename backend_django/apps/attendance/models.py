@@ -17,8 +17,9 @@ class Attendance(models.Model):
     Unique constraint: (nisn, tanggal, jam_ke) - satu record per siswa per jam
 
     Fields tambahan v2.3.9:
-    - tipe_pengajar: guru_asli atau guru_pengganti
-    - guru_pengganti: FK ke User (jika tipe_pengajar='guru_pengganti')
+    - tipe_pengajar: guru_pengampu atau guru_piket
+    - guru_pengganti: FK ke User (jika tipe_pengajar='guru_piket')
+    - tujuan_pembelajaran: Tujuan pembelajaran yang ingin dicapai
     - capaian_pembelajaran: Capaian pembelajaran yang dicapai
     - materi: Materi yang diajarkan
     - catatan: Catatan tambahan dari guru
@@ -39,8 +40,8 @@ class Attendance(models.Model):
 
     # Choices untuk tipe_pengajar
     TIPE_PENGAJAR_CHOICES = [
-        ('guru_asli', 'Guru Asli'),
-        ('guru_pengganti', 'Guru Pengganti'),
+        ('guru_pengampu', 'Guru Pengampu'),
+        ('guru_piket', 'Guru Piket'),
     ]
 
     nisn = models.ForeignKey(Student, on_delete=models.CASCADE, db_column='nisn')
@@ -58,8 +59,8 @@ class Attendance(models.Model):
     tipe_pengajar = models.CharField(
         max_length=20,
         choices=TIPE_PENGAJAR_CHOICES,
-        default='guru_asli',
-        help_text="Apakah yang mengajar guru asli atau pengganti"
+        default='guru_pengampu',
+        help_text="Apakah yang mengajar guru pengampu atau guru piket"
     )
     guru_pengganti = models.ForeignKey(
         'accounts.User',
@@ -68,6 +69,11 @@ class Attendance(models.Model):
         blank=True,
         related_name='attendance_as_pengganti',
         help_text="Diisi jika tipe_pengajar='guru_pengganti'"
+    )
+    tujuan_pembelajaran = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Tujuan pembelajaran yang ingin dicapai pada sesi ini"
     )
     capaian_pembelajaran = models.TextField(
         blank=True,
