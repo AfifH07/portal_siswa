@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.conf import settings
 from apps.students.models import Student, normalize_kelas_format
 
 
@@ -100,6 +101,14 @@ class Attendance(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Persentase ketuntasan materi (0-100)"
     )
+    input_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='attendance_inputs',
+        help_text="User yang menginput data attendance ini"
+    )
     # === END NEW FIELDS ===
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -111,6 +120,7 @@ class Attendance(models.Model):
             models.Index(fields=['nisn']),
             models.Index(fields=['tanggal']),
             models.Index(fields=['jam_ke']),
+            models.Index(fields=['input_by']),
         ]
         # Unique constraint: satu record per siswa per tanggal per jam pelajaran
         unique_together = ['nisn', 'tanggal', 'jam_ke']

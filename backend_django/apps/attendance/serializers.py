@@ -17,6 +17,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
     # New fields v2.3.9
     tipe_pengajar_display = serializers.SerializerMethodField()
     guru_pengganti_nama = serializers.SerializerMethodField()
+    input_by_nama = serializers.SerializerMethodField()
 
     class Meta:
         model = Attendance
@@ -28,6 +29,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
             'tujuan_pembelajaran', 'capaian_pembelajaran', 'materi', 'catatan',
             # New fields v2.3.11
             'ada_penilaian', 'ketuntasan_materi',
+            # Input tracking
+            'input_by', 'input_by_nama',
             # Timestamps & relations
             'created_at', 'updated_at', 'student_name', 'student_kelas'
         ]
@@ -42,6 +45,11 @@ class AttendanceSerializer(serializers.ModelSerializer):
     def get_guru_pengganti_nama(self, obj):
         if obj.guru_pengganti:
             return obj.guru_pengganti.name or obj.guru_pengganti.username
+        return None
+
+    def get_input_by_nama(self, obj):
+        if obj.input_by:
+            return obj.input_by.name or obj.input_by.username
         return None
 
     def validate(self, data):

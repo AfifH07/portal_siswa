@@ -295,6 +295,8 @@ def save_batch_attendance(request):
                     # Update new fields v2.3.11
                     existing.ada_penilaian = ada_penilaian
                     existing.ketuntasan_materi = ketuntasan_materi
+                    # Track who updated this record
+                    existing.input_by = request.user
                     existing.save()
                     updated_count += 1
                 else:
@@ -314,7 +316,9 @@ def save_batch_attendance(request):
                         catatan=catatan,
                         # New fields v2.3.11
                         ada_penilaian=ada_penilaian,
-                        ketuntasan_materi=ketuntasan_materi
+                        ketuntasan_materi=ketuntasan_materi,
+                        # Track who input this record
+                        input_by=request.user
                     )
                     saved_count += 1
 
@@ -717,9 +721,9 @@ def get_attendance_history(request):
     Get attendance history.
 
     - Walisantri: Returns individual attendance records for their child (simple list)
-    - Guru: Returns grouped class statistics FILTERED by guru's schedule
+    - Guru: Returns grouped class statistics FILTERED by input_by (who input the data)
     - Pimpinan/SuperAdmin: Returns ALL grouped class statistics (no filter)
-      - Can filter by specific guru using `guru` parameter
+      - Can filter by specific guru using `guru` parameter (filters by input_by)
 
     Query params:
     - page: Page number (default 1)
@@ -728,9 +732,8 @@ def get_attendance_history(request):
     - start_date: Filter start date
     - end_date: Filter end date
     - jam_ke: Filter by specific jam pelajaran
-    - guru: Filter by specific guru username (admin only)
+    - guru: Filter by specific guru username (admin only, filters by input_by)
     """
-    from apps.students.models import Schedule
     from apps.accounts.models import User
 
     page = int(request.query_params.get('page', 1))
@@ -808,52 +811,19 @@ def get_attendance_history(request):
             'results': results
         })
 
-    # ========== GURU VIEW: Filter by guru's schedule ==========
+    # ========== GURU VIEW: Filter by input_by (who input the attendance) ==========
     # Role superadmin/pimpinan/admin → tampilkan semua (tidak difilter)
     if user.role == 'guru' or user.role == 'musyrif':
-        # Get jadwal guru yang login dari Schedule
-        jadwal_guru = Schedule.objects.filter(
-            username=user.username,
-            is_active=True
-        ).values_list('jam_ke', 'mata_pelajaran', 'kelas')
-
-        # Build query filter: (jam_ke, mata_pelajaran) combinations
-        if jadwal_guru.exists():
-            query = Q()
-            for jam_ke, mapel, kelas_jadwal in jadwal_guru:
-                query |= Q(jam_ke=jam_ke, mata_pelajaran=mapel)
-
-            # Also include where user is guru_pengganti
-            query |= Q(guru_pengganti=user)
-
-            queryset = queryset.filter(query)
-        else:
-            # Guru tidak punya jadwal, hanya tampilkan di mana dia guru_pengganti
-            queryset = queryset.filter(guru_pengganti=user)
+        # Filter berdasarkan siapa yang input attendance
+        queryset = queryset.filter(input_by=user)
 
     # ========== ADMIN VIEW: Filter by specific guru (optional) ==========
     elif user.role in ['superadmin', 'pimpinan', 'admin'] and guru_filter:
         # Admin wants to filter by specific guru
         try:
             target_guru = User.objects.get(username=guru_filter)
-            # Get jadwal for target guru
-            jadwal_target = Schedule.objects.filter(
-                username=guru_filter,
-                is_active=True
-            ).values_list('jam_ke', 'mata_pelajaran', 'kelas')
-
-            if jadwal_target.exists():
-                query = Q()
-                for jam_ke, mapel, kelas_jadwal in jadwal_target:
-                    query |= Q(jam_ke=jam_ke, mata_pelajaran=mapel)
-
-                # Also include where target is guru_pengganti
-                query |= Q(guru_pengganti=target_guru)
-
-                queryset = queryset.filter(query)
-            else:
-                # Target guru tidak punya jadwal, hanya tampilkan di mana dia guru_pengganti
-                queryset = queryset.filter(guru_pengganti=target_guru)
+            # Filter berdasarkan siapa yang input attendance
+            queryset = queryset.filter(input_by=target_guru)
         except User.DoesNotExist:
             pass  # Invalid guru username, ignore filter
 
@@ -1405,9 +1375,9 @@ def jurnal_history(request):
     """
     GET /api/attendance/jurnal/history/
 
-    Mengembalikan riwayat jurnal mengajar HANYA milik guru yang login.
-    Filter berdasarkan kelas yang diajar guru (dari Schedule) atau
-    attendance dengan guru_pengganti = user.
+    Mengembalikan riwayat jurnal mengajar berdasarkan siapa yang input (input_by).
+    - Guru: Hanya melihat jurnal yang dia input sendiri
+    - Superadmin/Pimpinan: Melihat semua jurnal
 
     Query params:
     - page: Page number (default 1)
@@ -1417,7 +1387,6 @@ def jurnal_history(request):
     - kelas: Filter by class
     """
     from django.db.models import Q
-    from apps.students.models import Schedule
     from apps.core.models import MasterJam
 
     user = request.user
@@ -1436,21 +1405,20 @@ def jurnal_history(request):
     end_date = request.query_params.get('end_date')
     kelas_filter = request.query_params.get('kelas')
 
-    # Get kelas yang diajar guru dari Schedule
-    guru_kelas = Schedule.objects.filter(
-        username=user.username,
-        is_active=True
-    ).values_list('kelas', flat=True).distinct()
-
     # Build queryset - filter attendance by:
-    # 1. Kelas yang diajar guru, ATAU
-    # 2. guru_pengganti = user (jika menggantikan)
-    # 3. Harus ada materi yang diisi (bukan empty string)
-    queryset = Attendance.objects.filter(
-        Q(nisn__kelas__in=guru_kelas) | Q(guru_pengganti=user)
-    ).exclude(
-        Q(materi__isnull=True) | Q(materi__exact='')
-    ).select_related('nisn')
+    # 1. input_by = user (jurnal milik guru yang login)
+    # 2. Harus ada materi yang diisi (bukan empty string)
+    # Role superadmin/pimpinan dapat melihat semua
+    if user.role in ['superadmin', 'pimpinan']:
+        queryset = Attendance.objects.exclude(
+            Q(materi__isnull=True) | Q(materi__exact='')
+        ).select_related('nisn')
+    else:
+        queryset = Attendance.objects.filter(
+            input_by=user
+        ).exclude(
+            Q(materi__isnull=True) | Q(materi__exact='')
+        ).select_related('nisn')
 
     # Apply filters
     if start_date:
@@ -1464,9 +1432,10 @@ def jurnal_history(request):
     # Use distinct values to avoid duplicate rows for same session
     jurnal_sessions = queryset.values(
         'tanggal', 'jam_ke', 'nisn__kelas', 'mata_pelajaran',
-        'materi', 'capaian_pembelajaran', 'catatan',
+        'materi', 'tujuan_pembelajaran', 'capaian_pembelajaran', 'catatan',
         'tipe_pengajar', 'guru_pengganti__name',
-        'ada_penilaian', 'ketuntasan_materi'
+        'ada_penilaian', 'ketuntasan_materi',
+        'input_by__name', 'input_by__username'
     ).distinct().order_by('-tanggal', '-jam_ke')
 
     # Pagination
@@ -1496,12 +1465,14 @@ def jurnal_history(request):
             'kelas': item['nisn__kelas'],
             'mapel': item['mata_pelajaran'] or '-',
             'materi': item['materi'] or '',
-            'tujuan_pembelajaran': item['capaian_pembelajaran'] or '',
+            'tujuan_pembelajaran': item['tujuan_pembelajaran'] or '',
+            'capaian_pembelajaran': item['capaian_pembelajaran'] or '',
             'catatan': item['catatan'] or '',
             'tipe_pengajar': item['tipe_pengajar'],
             'guru_pengganti_nama': item['guru_pengganti__name'],
             'ada_penilaian': item['ada_penilaian'],
-            'ketuntasan_materi': item['ketuntasan_materi']
+            'ketuntasan_materi': item['ketuntasan_materi'],
+            'input_by_nama': item['input_by__name'] or item['input_by__username']
         })
 
     return Response({
