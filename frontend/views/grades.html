@@ -138,6 +138,98 @@
             padding: 0.4rem 0.75rem;
             font-size: 0.8rem;
         }
+
+        /* Jenis Penilaian Card Grid */
+        .jenis-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .jenis-radio {
+            cursor: pointer;
+        }
+        .jenis-radio input[type="radio"] {
+            display: none;
+        }
+        .jenis-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 8px;
+            border-radius: 10px;
+            border: 2px solid var(--border-color, #e5e7eb);
+            background: var(--bg-surface, #fff);
+            transition: all 0.2s ease;
+            text-align: center;
+            min-height: 70px;
+        }
+        .jenis-card:hover {
+            border-color: var(--emerald-300, #6ee7b7);
+            background: var(--emerald-50, #ecfdf5);
+            transform: translateY(-2px);
+        }
+        .jenis-radio input:checked + .jenis-card {
+            border-color: var(--emerald-500, #10b981);
+            background: linear-gradient(135deg, var(--emerald-50, #ecfdf5) 0%, rgba(52, 201, 154, 0.1) 100%);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(16, 185, 129, 0.12);
+        }
+        .jenis-icon {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+        .jenis-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-main, #1f2937);
+        }
+        .jenis-radio input:checked + .jenis-card .jenis-label {
+            color: var(--emerald-700, #047857);
+        }
+        @media (max-width: 600px) {
+            .jenis-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Mapel error message */
+        .mapel-error-msg {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #dc2626;
+        }
+        .mapel-error-msg .error-icon {
+            flex-shrink: 0;
+        }
+
+        /* Optional label styling */
+        .optional-label {
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: var(--text-muted, #6b7280);
+        }
+
+        /* Materi cell styling */
+        .materi-cell {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            color: var(--text-muted, #6b7280);
+        }
+        .materi-cell:hover {
+            white-space: normal;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body data-role="">
@@ -385,6 +477,7 @@
                                 <th>Mapel</th>
                                 <th class="text-center">Nilai</th>
                                 <th>Jenis</th>
+                                <th>Materi</th>
                                 <th>Kelas</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
@@ -392,7 +485,7 @@
                         </thead>
                         <tbody id="grades-table-body">
                             <tr>
-                                <td colspan="9" class="text-center">
+                                <td colspan="10" class="text-center">
                                     <div class="loading-spinner" style="margin: 20px auto;"></div>
                                 </td>
                             </tr>
@@ -779,21 +872,91 @@
             <!-- Step 2: Detail Nilai -->
             <div class="wizard-panel" id="input-step-2" style="display: none;">
                 <p class="step-desc">Tentukan mata pelajaran dan jenis nilai.</p>
+
+                <!-- Mata Pelajaran Dropdown -->
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label>Mata Pelajaran <span class="required">*</span></label>
+                    <select id="input-mapel" class="glass-input" required>
+                        <option value="">Memuat mata pelajaran...</option>
+                    </select>
+                    <div id="mapel-error-msg" class="mapel-error-msg" style="display: none;">
+                        <span class="error-icon">⚠️</span>
+                        <span>Kamu belum memiliki assignment mapel. Hubungi admin.</span>
+                    </div>
+                </div>
+
+                <!-- Jenis Penilaian Card Grid -->
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label>Jenis Penilaian <span class="required">*</span></label>
+                    <div class="jenis-selector" id="jenis-selector">
+                        <label class="jenis-radio">
+                            <input type="radio" name="input_jenis" value="penugasan">
+                            <span class="jenis-card">
+                                <span class="jenis-icon">📝</span>
+                                <span class="jenis-label">Penugasan</span>
+                            </span>
+                        </label>
+                        <label class="jenis-radio">
+                            <input type="radio" name="input_jenis" value="tes_tulis">
+                            <span class="jenis-card">
+                                <span class="jenis-icon">✍️</span>
+                                <span class="jenis-label">Tes Tulis</span>
+                            </span>
+                        </label>
+                        <label class="jenis-radio">
+                            <input type="radio" name="input_jenis" value="tes_lisan">
+                            <span class="jenis-card">
+                                <span class="jenis-icon">🗣️</span>
+                                <span class="jenis-label">Tes Lisan</span>
+                            </span>
+                        </label>
+                        <label class="jenis-radio">
+                            <input type="radio" name="input_jenis" value="portofolio">
+                            <span class="jenis-card">
+                                <span class="jenis-icon">📁</span>
+                                <span class="jenis-label">Portofolio</span>
+                            </span>
+                        </label>
+                        <label class="jenis-radio">
+                            <input type="radio" name="input_jenis" value="praktek">
+                            <span class="jenis-card">
+                                <span class="jenis-icon">🔧</span>
+                                <span class="jenis-label">Praktek</span>
+                            </span>
+                        </label>
+                        <label class="jenis-radio">
+                            <input type="radio" name="input_jenis" value="proyek">
+                            <span class="jenis-card">
+                                <span class="jenis-icon">🚀</span>
+                                <span class="jenis-label">Proyek</span>
+                            </span>
+                        </label>
+                        <label class="jenis-radio">
+                            <input type="radio" name="input_jenis" value="uts">
+                            <span class="jenis-card">
+                                <span class="jenis-icon">📋</span>
+                                <span class="jenis-label">UTS</span>
+                            </span>
+                        </label>
+                        <label class="jenis-radio">
+                            <input type="radio" name="input_jenis" value="uas">
+                            <span class="jenis-card">
+                                <span class="jenis-icon">🎯</span>
+                                <span class="jenis-label">UAS</span>
+                            </span>
+                        </label>
+                    </div>
+                    <input type="hidden" id="input-jenis" value="">
+                </div>
+
+                <!-- Materi Field -->
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label>Materi <span class="optional-label">(Opsional)</span></label>
+                    <input type="text" id="input-materi" class="glass-input" placeholder="Contoh: Bab 5 - Integral">
+                </div>
+
+                <!-- Semester & Tahun Ajaran -->
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label>Mata Pelajaran <span class="required">*</span></label>
-                        <input type="text" id="input-mapel" class="glass-input" placeholder="Contoh: Matematika" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Jenis Nilai <span class="required">*</span></label>
-                        <select id="input-jenis" class="glass-input" required>
-                            <option value="UH">Ulangan Harian (UH)</option>
-                            <option value="UTS">Ujian Tengah Semester (UTS)</option>
-                            <option value="UAS">Ujian Akhir Semester (UAS)</option>
-                            <option value="Tugas">Tugas</option>
-                            <option value="Proyek">Proyek</option>
-                        </select>
-                    </div>
                     <div class="form-group">
                         <label>Semester</label>
                         <select id="input-semester" class="glass-input">
@@ -853,8 +1016,12 @@
                             <span class="confirm-value" id="confirm-mapel">-</span>
                         </div>
                         <div class="confirm-row">
-                            <span class="confirm-label">Jenis:</span>
+                            <span class="confirm-label">Jenis Penilaian:</span>
                             <span class="confirm-value" id="confirm-jenis">-</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">Materi:</span>
+                            <span class="confirm-value" id="confirm-materi">-</span>
                         </div>
                         <div class="confirm-row">
                             <span class="confirm-label">Semester:</span>
@@ -1112,18 +1279,37 @@
     let inputNilaiData = {
         kelas: '',
         mapel: '',
-        jenis: 'UH',
+        jenis: '',
+        materi: '',
         semester: 'Ganjil',
         tahun_ajaran: '',
         students: []
     };
 
+    // Jenis label mapping for display
+    const JENIS_LABELS = {
+        'penugasan': 'Penugasan',
+        'tes_tulis': 'Tes Tulis',
+        'tes_lisan': 'Tes Lisan',
+        'portofolio': 'Portofolio',
+        'praktek': 'Praktek',
+        'proyek': 'Proyek',
+        'uts': 'UTS',
+        'uas': 'UAS'
+    };
+
     window.openInputNilaiModal = async function() {
         inputNilaiStep = 1;
-        inputNilaiData = { kelas: '', mapel: '', jenis: 'UH', semester: 'Ganjil', tahun_ajaran: '', students: [] };
+        inputNilaiData = { kelas: '', mapel: '', jenis: '', materi: '', semester: 'Ganjil', tahun_ajaran: '', students: [] };
 
         document.getElementById('input-nilai-modal').classList.add('active');
         updateInputStepUI();
+
+        // Reset jenis selection
+        document.querySelectorAll('input[name="input_jenis"]').forEach(r => r.checked = false);
+        document.getElementById('input-jenis').value = '';
+        document.getElementById('input-materi').value = '';
+        document.getElementById('mapel-error-msg').style.display = 'none';
 
         // Load classes
         await loadMyTeachingClasses();
@@ -1174,6 +1360,38 @@
         } catch (err) {
             console.error('Error loading classes:', err);
             select.innerHTML = '<option value="">Error memuat kelas</option>';
+        }
+    }
+
+    async function loadMapelList() {
+        const select = document.getElementById('input-mapel');
+        const errorMsg = document.getElementById('mapel-error-msg');
+        select.innerHTML = '<option value="">Memuat mata pelajaran...</option>';
+        errorMsg.style.display = 'none';
+
+        try {
+            const token = localStorage.getItem('access_token');
+            const resp = await fetch('/api/grades/mapel-list/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await resp.json();
+
+            if (data.success && data.mapel_list && data.mapel_list.length > 0) {
+                select.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+                data.mapel_list.forEach(mapel => {
+                    const opt = document.createElement('option');
+                    opt.value = mapel;
+                    opt.textContent = mapel;
+                    select.appendChild(opt);
+                });
+            } else {
+                select.innerHTML = '<option value="">Tidak ada mata pelajaran</option>';
+                errorMsg.style.display = 'flex';
+            }
+        } catch (err) {
+            console.error('Error loading mapel list:', err);
+            select.innerHTML = '<option value="">Error memuat mapel</option>';
+            errorMsg.style.display = 'flex';
         }
     }
 
@@ -1274,7 +1492,10 @@
                 valid = !!document.getElementById('input-kelas').value;
                 break;
             case 2:
-                valid = !!document.getElementById('input-mapel').value.trim();
+                // Check mapel and jenis selection
+                const mapelValue = document.getElementById('input-mapel').value;
+                const jenisSelected = document.querySelector('input[name="input_jenis"]:checked');
+                valid = !!mapelValue && !!jenisSelected;
                 break;
             case 3:
                 // At least one nilai filled
@@ -1297,21 +1518,40 @@
                 showToast('Pilih kelas terlebih dahulu', 'error');
                 return;
             }
-            // Auto-fill mapel if available from assignment
+
+            // Load mapel list for step 2
+            await loadMapelList();
+
+            // Auto-select mapel if available from assignment
             const selectedOpt = document.getElementById('input-kelas').selectedOptions[0];
             if (selectedOpt && selectedOpt.dataset.mapel) {
-                document.getElementById('input-mapel').value = selectedOpt.dataset.mapel;
+                setTimeout(() => {
+                    const mapelSelect = document.getElementById('input-mapel');
+                    const optToSelect = Array.from(mapelSelect.options).find(o => o.value === selectedOpt.dataset.mapel);
+                    if (optToSelect) {
+                        mapelSelect.value = selectedOpt.dataset.mapel;
+                    }
+                }, 100);
             }
         }
 
         if (inputNilaiStep === 2) {
-            inputNilaiData.mapel = document.getElementById('input-mapel').value.trim();
-            inputNilaiData.jenis = document.getElementById('input-jenis').value;
+            inputNilaiData.mapel = document.getElementById('input-mapel').value;
+            inputNilaiData.materi = document.getElementById('input-materi').value.trim();
             inputNilaiData.semester = document.getElementById('input-semester').value;
             inputNilaiData.tahun_ajaran = document.getElementById('input-tahun').value;
 
+            // Get jenis from card selection
+            const jenisSelected = document.querySelector('input[name="input_jenis"]:checked');
+            if (!jenisSelected) {
+                showToast('Pilih jenis penilaian', 'error');
+                return;
+            }
+            inputNilaiData.jenis = jenisSelected.value;
+            document.getElementById('input-jenis').value = jenisSelected.value;
+
             if (!inputNilaiData.mapel) {
-                showToast('Mata pelajaran harus diisi', 'error');
+                showToast('Pilih mata pelajaran', 'error');
                 return;
             }
 
@@ -1339,7 +1579,8 @@
             // NOW populate confirmation panel (after panel is visible)
             document.getElementById('confirm-kelas').textContent = inputNilaiData.kelas;
             document.getElementById('confirm-mapel').textContent = inputNilaiData.mapel;
-            document.getElementById('confirm-jenis').textContent = inputNilaiData.jenis;
+            document.getElementById('confirm-jenis').textContent = JENIS_LABELS[inputNilaiData.jenis] || inputNilaiData.jenis;
+            document.getElementById('confirm-materi').textContent = inputNilaiData.materi || '-';
             document.getElementById('confirm-semester').textContent = `${inputNilaiData.semester} ${inputNilaiData.tahun_ajaran}`;
             document.getElementById('confirm-count').textContent = `${filledCount} siswa`;
 
@@ -1388,6 +1629,7 @@
                     kelas: inputNilaiData.kelas,
                     mata_pelajaran: inputNilaiData.mapel,
                     jenis: inputNilaiData.jenis,
+                    materi: inputNilaiData.materi,
                     semester: inputNilaiData.semester,
                     tahun_ajaran: inputNilaiData.tahun_ajaran,
                     data: gradesData
@@ -1439,14 +1681,22 @@
     // Event listeners for validation
     document.addEventListener('DOMContentLoaded', function() {
         const kelasSelect = document.getElementById('input-kelas');
-        const mapelInput = document.getElementById('input-mapel');
+        const mapelSelect = document.getElementById('input-mapel');
 
         if (kelasSelect) {
             kelasSelect.addEventListener('change', validateInputStep);
         }
-        if (mapelInput) {
-            mapelInput.addEventListener('input', validateInputStep);
+        if (mapelSelect) {
+            mapelSelect.addEventListener('change', validateInputStep);
         }
+
+        // Jenis card selection listeners
+        document.querySelectorAll('input[name="input_jenis"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('input-jenis').value = this.value;
+                validateInputStep();
+            });
+        });
 
         // Delegate event for nilai inputs
         document.getElementById('students-input-body')?.addEventListener('input', function(e) {

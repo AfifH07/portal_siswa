@@ -18,4 +18,5 @@ urlpatterns = [
     path('my-classes/', views.get_my_teaching_classes, name='my-teaching-classes'),
     path('students/<str:kelas>/', views.get_students_by_class, name='students-by-class'),
     path('input-batch/', views.input_batch_grades, name='input-batch-grades'),
+    path('mapel-list/', views.get_mapel_list, name='mapel-list'),
 ]

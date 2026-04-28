@@ -10,12 +10,23 @@ class Grade(models.Model):
         ('Genap', 'Genap'),
     ]
 
+    # JENIS_CHOICES v2 - extended with more assessment types
+    # NOTE: Old values ('UH', 'Tugas', 'Proyek', 'UTS', 'UAS') tetap valid di database
     JENIS_CHOICES = [
+        ('penugasan', 'Penugasan'),
+        ('tes_tulis', 'Tes Tulis'),
+        ('tes_lisan', 'Tes Lisan'),
+        ('portofolio', 'Portofolio'),
+        ('praktek', 'Praktek'),
+        ('proyek', 'Proyek'),
+        ('uts', 'UTS'),
+        ('uas', 'UAS'),
+        # Legacy values (untuk backward compatibility)
         ('UH', 'Ulangan Harian'),
         ('UTS', 'Ujian Tengah Semester'),
         ('UAS', 'Ujian Akhir Semester'),
         ('Tugas', 'Tugas'),
-        ('Proyek', 'Proyek'),
+        ('Proyek', 'Proyek (Legacy)'),
     ]
 
     nisn = models.ForeignKey(
@@ -31,6 +42,12 @@ class Grade(models.Model):
     jenis = models.CharField(max_length=50, choices=JENIS_CHOICES)
     kelas = models.CharField(max_length=20)
     guru = models.CharField(max_length=100)
+    materi = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Materi/topik yang dinilai"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

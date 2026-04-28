@@ -292,6 +292,7 @@ async function openViewModal(id) {
         const data = await res.json();
 
         const modalBody = document.getElementById('view-modal-body');
+        const jenisDisplay = JENIS_DISPLAY_LABELS[data.jenis] || data.jenis || '-';
         modalBody.innerHTML = `
             <div class="view-detail-grid">
                 <div class="detail-item">
@@ -319,8 +320,12 @@ async function openViewModal(id) {
                     <span class="detail-value">${data.nilai >= 75 ? 'Tuntas' : 'Remedi'}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Jenis</span>
-                    <span class="detail-value">${escapeHtml(data.jenis)}</span>
+                    <span class="detail-label">Jenis Penilaian</span>
+                    <span class="detail-value">${escapeHtml(jenisDisplay)}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Materi</span>
+                    <span class="detail-value">${escapeHtml(data.materi || '-')}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Semester</span>
@@ -729,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadGrades(page = 1) {
     const tbody = document.getElementById('grades-table-body');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
 
     try {
         const token = localStorage.getItem('access_token');
@@ -775,16 +780,34 @@ async function loadGrades(page = 1) {
 
     } catch (error) {
         console.error('Load grades error:', error);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Gagal memuat data</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Gagal memuat data</td></tr>';
     }
 }
+
+// Jenis label mapping for display
+const JENIS_DISPLAY_LABELS = {
+    'penugasan': 'Penugasan',
+    'tes_tulis': 'Tes Tulis',
+    'tes_lisan': 'Tes Lisan',
+    'portofolio': 'Portofolio',
+    'praktek': 'Praktek',
+    'proyek': 'Proyek',
+    'uts': 'UTS',
+    'uas': 'UAS',
+    // Legacy values
+    'UH': 'Ulangan Harian',
+    'UTS': 'UTS',
+    'UAS': 'UAS',
+    'Tugas': 'Tugas',
+    'Proyek': 'Proyek'
+};
 
 function renderGradesTable(grades) {
     const tbody = document.getElementById('grades-table-body');
     if (!tbody) return;
 
     if (grades.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data nilai ditemukan</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center">Tidak ada data nilai ditemukan</td></tr>';
         return;
     }
 
@@ -794,6 +817,8 @@ function renderGradesTable(grades) {
 
     tbody.innerHTML = grades.map((grade, index) => {
         const nilai = grade.nilai || 0;
+        const jenisLabel = JENIS_DISPLAY_LABELS[grade.jenis] || grade.jenis || '-';
+        const materiText = grade.materi || '-';
 
         // Auto-color badges based on KKM (75)
         let badgeClass, statusBadge, statusText;
@@ -823,7 +848,8 @@ function renderGradesTable(grades) {
             <td>${escapeHtml(grade.nisn_nama || grade.nama)}</td>
             <td>${escapeHtml(grade.mata_pelajaran)}</td>
             <td><span class="grade-value ${badgeClass}">${nilai}</span></td>
-            <td><span class="badge badge-secondary">${escapeHtml(grade.jenis)}</span></td>
+            <td><span class="badge badge-secondary">${escapeHtml(jenisLabel)}</span></td>
+            <td class="materi-cell">${escapeHtml(materiText)}</td>
             <td>${escapeHtml(grade.kelas)}</td>
             <td><span class="badge ${statusBadge}">${statusText}</span></td>
             <td>

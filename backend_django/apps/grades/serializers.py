@@ -16,7 +16,7 @@ class GradeSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'nisn', 'nisn_nisn', 'nisn_nama', 'nisn_kelas',
             'mata_pelajaran', 'nilai', 'semester', 'tahun_ajaran',
-            'jenis', 'kelas', 'guru', 'created_at', 'updated_at',
+            'jenis', 'kelas', 'guru', 'materi', 'created_at', 'updated_at',
             'created_at_formatted', 'rata_rata_kelas'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -44,15 +44,17 @@ class GradeCreateSerializer(serializers.ModelSerializer):
     nisn = serializers.CharField(write_only=True)
     # guru is set automatically by perform_create, so make it optional
     guru = serializers.CharField(required=False, allow_blank=True)
+    materi = serializers.CharField(required=False, allow_blank=True, default='')
 
     class Meta:
         model = Grade
         fields = [
             'nisn', 'mata_pelajaran', 'nilai', 'semester',
-            'tahun_ajaran', 'jenis', 'kelas', 'guru'
+            'tahun_ajaran', 'jenis', 'kelas', 'guru', 'materi'
         ]
         extra_kwargs = {
-            'guru': {'required': False}
+            'guru': {'required': False},
+            'materi': {'required': False}
         }
 
     def validate_nisn(self, value):
@@ -74,9 +76,18 @@ class GradeCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_jenis(self, value):
-        valid_jenis = ['UH', 'UTS', 'UAS', 'Tugas', 'Proyek']
+        # New jenis values + legacy values for backward compatibility
+        valid_jenis = [
+            'penugasan', 'tes_tulis', 'tes_lisan', 'portofolio',
+            'praktek', 'proyek', 'uts', 'uas',
+            # Legacy values
+            'UH', 'UTS', 'UAS', 'Tugas', 'Proyek'
+        ]
         if value not in valid_jenis:
-            raise serializers.ValidationError("Jenis harus UH, UTS, UAS, Tugas, atau Proyek")
+            raise serializers.ValidationError(
+                "Jenis harus salah satu dari: penugasan, tes_tulis, tes_lisan, "
+                "portofolio, praktek, proyek, uts, uas"
+            )
         return value
 
     def create(self, validated_data):
@@ -132,7 +143,7 @@ class WalisantriGradeSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'mata_pelajaran', 'nilai', 'jenis',
             'semester', 'tahun_ajaran', 'kelas', 'guru',
-            'created_at'
+            'materi', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
 

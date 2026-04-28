@@ -13,7 +13,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from io import BytesIO
 
 from apps.accounts.models import Assignment
-from apps.core.models import TahunAjaran
+from apps.core.models import TahunAjaran, MasterMapel
 
 
 class GradePagination(PageNumberPagination):
@@ -1442,9 +1442,10 @@ def input_batch_grades(request):
     {
         "kelas": "XI A",
         "mata_pelajaran": "Matematika",
-        "jenis": "UH",
+        "jenis": "penugasan",  // penugasan|tes_tulis|tes_lisan|portofolio|praktek|proyek|uts|uas
         "semester": "Genap",
         "tahun_ajaran": "2024/2025",
+        "materi": "Bab 5 - Integral",  // optional
         "data": [
             {"nisn": "0012345678", "nilai": 85},
             {"nisn": "0012345679", "nilai": 90}
@@ -1457,9 +1458,10 @@ def input_batch_grades(request):
         # Validate required fields
         kelas = data.get('kelas')
         mata_pelajaran = data.get('mata_pelajaran')
-        jenis = data.get('jenis', 'UH')
+        jenis = data.get('jenis', 'penugasan')
         semester = data.get('semester', 'Ganjil')
         tahun_ajaran = data.get('tahun_ajaran', '2024/2025')
+        materi = data.get('materi', '')  # New field - optional
         grades_data = data.get('data', [])
 
         if not kelas:
@@ -1530,6 +1532,8 @@ def input_batch_grades(request):
                 if existing:
                     existing.nilai = nilai
                     existing.guru = guru_name
+                    if materi:  # Update materi only if provided
+                        existing.materi = materi
                     existing.save()
                     updated_count += 1
                 else:
@@ -1541,7 +1545,8 @@ def input_batch_grades(request):
                         semester=semester,
                         tahun_ajaran=tahun_ajaran,
                         kelas=kelas,
-                        guru=guru_name
+                        guru=guru_name,
+                        materi=materi
                     )
                     success_count += 1
 
@@ -1570,3 +1575,72 @@ def input_batch_grades(request):
             'success': False,
             'message': f'Terjadi kesalahan: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_mapel_list(request):
+    """
+    Get list of mata pelajaran for grade input dropdown.
+
+    Logic:
+    - guru/musyrif: return unique mata_pelajaran from active Assignments
+    - superadmin/admin/pimpinan: return all active MasterMapel
+
+    Response:
+    {
+        "success": true,
+        "mapel_list": ["Matematika", "Bahasa Indonesia", ...]
+    }
+    """
+    user = request.user
+
+    # For guru/musyrif: get from their active assignments
+    if user.role in ['guru', 'musyrif']:
+        # Get active TahunAjaran
+        tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+        if not tahun_ajaran:
+            return Response({
+                'success': True,
+                'mapel_list': [],
+                'message': 'Tidak ada tahun ajaran aktif'
+            })
+
+        # Get unique mata_pelajaran from active assignments (excluding piket, wali_kelas)
+        assignments = Assignment.objects.filter(
+            user=user,
+            status='active',
+            tahun_ajaran=tahun_ajaran.nama
+        ).exclude(
+            assignment_type__in=['piket', 'wali_kelas']
+        ).values_list('mata_pelajaran', flat=True).distinct()
+
+        # Filter out None/empty values and sort
+        mapel_list = sorted([mp for mp in assignments if mp])
+
+        return Response({
+            'success': True,
+            'mapel_list': mapel_list
+        })
+
+    # For superadmin/admin/pimpinan: get all active MasterMapel
+    elif user.role in ['superadmin', 'admin', 'pimpinan']:
+        master_mapel = MasterMapel.objects.filter(
+            is_active=True
+        ).values_list('nama', flat=True).distinct()
+
+        mapel_list = sorted(list(set(master_mapel)))
+
+        return Response({
+            'success': True,
+            'mapel_list': mapel_list
+        })
+
+    # Other roles: return empty or limited list
+    else:
+        return Response({
+            'success': True,
+            'mapel_list': [],
+            'message': 'Role tidak memiliki akses ke daftar mata pelajaran'
+        })
