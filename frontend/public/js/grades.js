@@ -1155,15 +1155,15 @@ function renderTrendChart(trendData) {
     if (!ctx) return;
     if (trendChart) trendChart.destroy();
 
-    // v2.3.7: No fallback dummy data - show empty state if no data
+    // v2.3.11: No fallback dummy data - show empty state if no data
     if (!trendData || !trendData.labels || trendData.labels.length === 0) {
         const container = ctx.parentElement;
         if (container) {
             container.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #6b7280;">
                     <div style="font-size: 48px; margin-bottom: 12px;">📈</div>
-                    <p style="margin: 0; font-size: 14px;">Belum ada data trend nilai</p>
-                    <p style="margin: 4px 0 0; font-size: 12px; color: #9ca3af;">Data akan muncul setelah semester berjalan</p>
+                    <p style="margin: 0; font-size: 14px;">Belum ada data nilai per jenis penilaian</p>
+                    <p style="margin: 4px 0 0; font-size: 12px; color: #9ca3af;">Data akan muncul setelah nilai diinput</p>
                 </div>
             `;
         }

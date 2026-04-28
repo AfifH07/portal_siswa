@@ -686,18 +686,61 @@ def get_statistics(request):
         else:
             distribution['91-100'] += 1
 
-    # Trend data by jenis (UH, UTS, UAS, etc.)
-    jenis_trend = queryset.values('jenis').annotate(
+    # Trend data by jenis penilaian - with fixed order
+    # Order: Penugasan → Tes Tulis → Tes Lisan → Portofolio → Praktek → Proyek → UTS → UAS → Lainnya
+    JENIS_ORDER = [
+        'penugasan', 'tes_tulis', 'tes_lisan', 'portofolio',
+        'praktek', 'proyek', 'uts', 'uas'
+    ]
+    JENIS_LABELS = {
+        'penugasan': 'Penugasan',
+        'tes_tulis': 'Tes Tulis',
+        'tes_lisan': 'Tes Lisan',
+        'portofolio': 'Portofolio',
+        'praktek': 'Praktek',
+        'proyek': 'Proyek',
+        'uts': 'UTS',
+        'uas': 'UAS',
+        # Legacy values
+        'UH': 'Lainnya',
+        'UTS': 'UTS (Lama)',
+        'UAS': 'UAS (Lama)',
+        'Tugas': 'Lainnya',
+        'Proyek': 'Lainnya',
+    }
+
+    # Get all jenis with their averages
+    jenis_trend_raw = queryset.values('jenis').annotate(
         avg_nilai=Avg('nilai'),
         count=Count('id')
-    ).order_by('jenis')
+    )
 
+    # Build a dict for quick lookup
+    jenis_avg_map = {}
+    legacy_values = []
+    for item in jenis_trend_raw:
+        if item['jenis']:
+            jenis_val = item['jenis']
+            avg_val = round(item['avg_nilai'], 2) if item['avg_nilai'] else 0
+            if jenis_val in JENIS_ORDER:
+                jenis_avg_map[jenis_val] = avg_val
+            else:
+                # Legacy values - collect for "Lainnya"
+                legacy_values.append(avg_val)
+
+    # Build trend arrays in fixed order
     trend_labels = []
     trend_data = []
-    for item in jenis_trend:
-        if item['jenis']:
-            trend_labels.append(item['jenis'])
-            trend_data.append(round(item['avg_nilai'], 2) if item['avg_nilai'] else 0)
+    for jenis in JENIS_ORDER:
+        if jenis in jenis_avg_map:
+            trend_labels.append(JENIS_LABELS.get(jenis, jenis))
+            trend_data.append(jenis_avg_map[jenis])
+
+    # Add "Lainnya" for legacy values if any exist
+    if legacy_values:
+        avg_lainnya = round(sum(legacy_values) / len(legacy_values), 2)
+        trend_labels.append('Lainnya')
+        trend_data.append(avg_lainnya)
 
     # Ketuntasan data for doughnut chart
     ketuntasan_data = {
