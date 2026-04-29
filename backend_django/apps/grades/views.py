@@ -56,14 +56,11 @@ class GradeViewSet(viewsets.ModelViewSet):
         if user.role == 'walisantri':
             # Filter by linked student's NISN (linked_student_nisn is a string, nisn is FK)
             queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
-        elif user.role == 'guru':
+        elif user.role in ['guru', 'musyrif']:
             # Filter by guru name - consistent with save logic
             guru_name = user.name or user.username
             queryset = queryset.filter(guru=guru_name)
-        elif user.role == 'pimpinan':
-            pass
-        elif user.role == 'superadmin':
-            pass
+        # superadmin, pimpinan, admin → no filter, see all data
 
         kelas = self.request.query_params.get('kelas')
         semester = self.request.query_params.get('semester')
@@ -570,10 +567,10 @@ def get_statistics(request):
     # Get guru name consistently - use name if available, fallback to username
     guru_name = user.name or user.username
 
-    if user.role == 'guru':
-        # Filter by guru name for guru role
+    if user.role in ['guru', 'musyrif']:
+        # Filter by guru name for guru/musyrif role
         queryset = queryset.filter(guru=guru_name)
-        print(f"[get_statistics] Filtering for guru: '{guru_name}', role: '{user.role}'")
+        print(f"[get_statistics] Filtering for role '{user.role}': guru_name='{guru_name}'")
     elif user.role == 'walisantri':
         queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
     # superadmin, pimpinan, admin → no filter, see all data
