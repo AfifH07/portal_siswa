@@ -204,13 +204,15 @@
     const STATUS_ICONS = {
         'open': '🔴',
         'in_discussion': '🟡',
+        'dalam_pembahasan': '🟡',
         'resolved': '🟢',
         'closed': '⚫'
     };
 
     const STATUS_LABELS = {
         'open': 'Open',
-        'in_discussion': 'Dalam Pembahasan',
+        'in_discussion': 'Dalam Penanganan',
+        'dalam_pembahasan': 'Dalam Penanganan',
         'resolved': 'Selesai',
         'closed': 'Ditutup'
     };
@@ -225,7 +227,11 @@
         'lainnya': 'Lainnya'
     };
 
+    // PERUBAHAN 5: Type labels untuk pembinaan
     const TYPE_LABELS = {
+        'diskusi': 'Diskusi',
+        'pembinaan': 'Pembinaan',
+        // Legacy types (backward compatibility)
         'observation': 'Observasi',
         'suggestion': 'Saran',
         'decision': 'Keputusan',
@@ -1143,7 +1149,7 @@
                     <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px;">Ubah Status:</label>
                     <select id="thread-status-dropdown" onchange="window.onStatusDropdownChange(this)" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:white;">
                         <option value="open" ${incident.status === 'open' ? 'selected' : ''}>🔴 Open</option>
-                        <option value="in_discussion" ${incident.status === 'in_discussion' ? 'selected' : ''}>🟡 Dalam Pembahasan</option>
+                        <option value="dalam_pembahasan" ${incident.status === 'dalam_pembahasan' || incident.status === 'in_discussion' ? 'selected' : ''}>🟡 Dalam Penanganan</option>
                         <option value="resolved">🟢 Selesaikan (Final)</option>
                     </select>
                 </div>
@@ -1272,7 +1278,7 @@
                     <span class="status-action-label">Ubah Status:</span>
                     <select id="thread-status-dropdown" class="status-dropdown glass-input" onchange="window.onStatusDropdownChange(this)">
                         <option value="open" ${incident.status === 'open' ? 'selected' : ''}>🔴 Open</option>
-                        <option value="in_discussion" ${incident.status === 'in_discussion' ? 'selected' : ''}>🟡 Dalam Pembahasan</option>
+                        <option value="dalam_pembahasan" ${incident.status === 'dalam_pembahasan' || incident.status === 'in_discussion' ? 'selected' : ''}>🟡 Dalam Penanganan</option>
                         <option value="resolved">🟢 Selesaikan (Final)</option>
                     </select>
                     <span class="status-hint">Hanya Pimpinan dapat menyelesaikan kasus</span>

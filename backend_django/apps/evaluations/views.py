@@ -1,14 +1,18 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q
 
-from .models import Evaluation
-from .serializers import EvaluationSerializer, EvaluationCreateSerializer
+from .models import Evaluation, EvaluationComment
+from .serializers import (
+    EvaluationSerializer, EvaluationCreateSerializer,
+    EvaluationCommentSerializer, EvaluationCommentCreateSerializer
+)
 from apps.accounts.permissions import IsSuperAdmin, IsPimpinan, IsGuru, IsWalisantri
+from apps.accounts.models import Assignment
 from apps.students.models import Student
 
 
@@ -38,23 +42,47 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        queryset = Evaluation.objects.select_related('nisn')
+        queryset = Evaluation.objects.select_related('nisn', 'approved_by').prefetch_related('comments__user')
         user = self.request.user
+        evaluator_name = user.name if user.name else user.username
 
         if user.role == 'walisantri':
-            # Support multi-child: get all linked student NISNs
+            # Walisantri: hanya lihat evaluasi anak yang sudah approved & public
             linked_nisns = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
             if linked_nisns:
-                queryset = queryset.filter(nisn__nisn__in=linked_nisns)
+                queryset = queryset.filter(
+                    nisn__nisn__in=linked_nisns,
+                    is_approved=True,
+                    visibility='public'
+                )
             else:
-                # FIX: Compare nisn field (NISN string), not FK object
-                queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
-        elif user.role == 'guru':
-            # FIX: Match both user.name and user.username for evaluator filter
-            evaluator_name = user.name if user.name else user.username
-            queryset = queryset.filter(evaluator=evaluator_name)
+                queryset = queryset.filter(
+                    nisn__nisn=user.linked_student_nisn,
+                    is_approved=True,
+                    visibility='public'
+                )
+        elif user.role in ['guru', 'musyrif']:
+            # PERUBAHAN 4: Guru lihat kasus yang ia buat ATAU kasus di kelas yang ia ampu
+            # Get kelas yang diampu dari Assignment (wali_kelas)
+            assigned_kelas = list(Assignment.objects.filter(
+                user=user,
+                assignment_type='wali_kelas',
+                status='active'
+            ).values_list('kelas', flat=True))
 
-        # Superadmin and pimpinan can see all evaluations
+            # Logic:
+            # - Evaluasi yang dibuat sendiri (termasuk yang belum approved)
+            # - ATAU evaluasi di kelas yang diampu (hanya yang sudah approved)
+            if assigned_kelas:
+                queryset = queryset.filter(
+                    Q(evaluator=evaluator_name) |  # Kasus yang dibuat sendiri
+                    Q(nisn__kelas__in=assigned_kelas, is_approved=True)  # Kasus di kelas ampu (approved)
+                )
+            else:
+                # Guru tanpa wali kelas: hanya lihat kasus yang dibuat sendiri
+                queryset = queryset.filter(evaluator=evaluator_name)
+        # Superadmin, pimpinan, bk: lihat semua evaluasi (termasuk yang belum approved)
+
         # Filter by kelas (dari query parameter)
         kelas = self.request.query_params.get('kelas')
         if kelas:
@@ -69,6 +97,16 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         kategori = self.request.query_params.get('kategori')
         if kategori:
             queryset = queryset.filter(kategori=kategori)
+
+        # Filter by status
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        # Filter by is_approved
+        is_approved = self.request.query_params.get('is_approved')
+        if is_approved is not None:
+            queryset = queryset.filter(is_approved=(is_approved.lower() == 'true'))
 
         # Search by student name or NISN
         search = self.request.query_params.get('search')
@@ -282,22 +320,41 @@ def delete_evaluation(request, pk):
 @permission_classes([IsAuthenticated])
 def evaluation_statistics(request):
     user = request.user
+    evaluator_name = user.name if user.name else user.username
 
     try:
         queryset = Evaluation.objects.all()
 
         if user.role == 'walisantri':
-            # Support multi-child
+            # Walisantri: hanya evaluasi anak yang sudah approved & public
             linked_nisns = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
             if linked_nisns:
-                queryset = queryset.filter(nisn__nisn__in=linked_nisns)
+                queryset = queryset.filter(
+                    nisn__nisn__in=linked_nisns,
+                    is_approved=True,
+                    visibility='public'
+                )
             else:
-                # FIX: Compare nisn field (NISN string), not FK object
-                queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
-        elif user.role == 'guru':
-            # FIX: Match both user.name and user.username for evaluator filter
-            evaluator_name = user.name if user.name else user.username
-            queryset = queryset.filter(evaluator=evaluator_name)
+                queryset = queryset.filter(
+                    nisn__nisn=user.linked_student_nisn,
+                    is_approved=True,
+                    visibility='public'
+                )
+        elif user.role in ['guru', 'musyrif']:
+            # Guru: kasus yang dibuat sendiri ATAU kasus di kelas yang diampu (approved)
+            assigned_kelas = list(Assignment.objects.filter(
+                user=user,
+                assignment_type='wali_kelas',
+                status='active'
+            ).values_list('kelas', flat=True))
+
+            if assigned_kelas:
+                queryset = queryset.filter(
+                    Q(evaluator=evaluator_name) |
+                    Q(nisn__kelas__in=assigned_kelas, is_approved=True)
+                )
+            else:
+                queryset = queryset.filter(evaluator=evaluator_name)
 
         total_evaluations = queryset.count()
         total_prestasi = queryset.filter(jenis='prestasi').count()
@@ -434,3 +491,162 @@ def evaluation_statistics(request):
             'success': False,
             'message': f'Terjadi kesalahan: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# =============================================================
+# PERUBAHAN 4: Endpoint Approval
+# =============================================================
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated, IsSuperAdmin | IsPimpinan])
+def approve_evaluation(request, pk):
+    """
+    Approve evaluasi. Hanya admin/superadmin/pimpinan yang bisa approve.
+    PATCH /api/evaluations/<id>/approve/
+    """
+    try:
+        evaluation = Evaluation.objects.get(pk=pk)
+
+        if evaluation.is_approved:
+            return Response({
+                'success': False,
+                'message': 'Evaluasi sudah diapprove sebelumnya'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        evaluation.is_approved = True
+        evaluation.approved_by = request.user
+        evaluation.save()
+
+        return Response({
+            'success': True,
+            'message': 'Evaluasi berhasil diapprove',
+            'data': {
+                'id': evaluation.id,
+                'is_approved': evaluation.is_approved,
+                'approved_by': request.user.name or request.user.username
+            }
+        })
+    except Evaluation.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Evaluasi tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': f'Terjadi kesalahan: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated, IsSuperAdmin | IsPimpinan])
+def unapprove_evaluation(request, pk):
+    """
+    Batalkan approval evaluasi.
+    PATCH /api/evaluations/<id>/unapprove/
+    """
+    try:
+        evaluation = Evaluation.objects.get(pk=pk)
+
+        if not evaluation.is_approved:
+            return Response({
+                'success': False,
+                'message': 'Evaluasi belum diapprove'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        evaluation.is_approved = False
+        evaluation.approved_by = None
+        evaluation.save()
+
+        return Response({
+            'success': True,
+            'message': 'Approval evaluasi dibatalkan'
+        })
+    except Evaluation.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Evaluasi tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+# =============================================================
+# PERUBAHAN 5: Endpoint Tanggapan (Diskusi & Pembinaan)
+# =============================================================
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def evaluation_comments(request, evaluation_id):
+    """
+    GET: Ambil semua komentar untuk evaluasi tertentu
+    POST: Tambah komentar baru (jenis: diskusi/pembinaan)
+    """
+    try:
+        evaluation = Evaluation.objects.get(pk=evaluation_id)
+    except Evaluation.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Evaluasi tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        comments = EvaluationComment.objects.filter(evaluation=evaluation).select_related('user')
+        serializer = EvaluationCommentSerializer(comments, many=True)
+        return Response({
+            'success': True,
+            'comments': serializer.data
+        })
+
+    elif request.method == 'POST':
+        # Only guru, bk, pimpinan, superadmin can add comments
+        if request.user.role not in ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin']:
+            return Response({
+                'success': False,
+                'message': 'Anda tidak memiliki izin untuk menambah tanggapan'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        data['evaluation'] = evaluation_id
+
+        serializer = EvaluationCommentCreateSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response({
+                'success': True,
+                'message': 'Tanggapan berhasil ditambahkan',
+                'data': EvaluationCommentSerializer(serializer.instance).data
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'success': False,
+                'message': 'Data tidak valid',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_comment(request, comment_id):
+    """
+    Hapus komentar. Hanya pemilik komentar atau admin yang bisa hapus.
+    DELETE /api/evaluations/comments/<comment_id>/
+    """
+    try:
+        comment = EvaluationComment.objects.get(pk=comment_id)
+
+        # Check permission: owner or admin
+        if comment.user != request.user and request.user.role not in ['superadmin', 'pimpinan']:
+            return Response({
+                'success': False,
+                'message': 'Anda tidak memiliki izin untuk menghapus tanggapan ini'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        comment.delete()
+        return Response({
+            'success': True,
+            'message': 'Tanggapan berhasil dihapus'
+        })
+    except EvaluationComment.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Tanggapan tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)

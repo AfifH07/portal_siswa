@@ -669,7 +669,7 @@ function renderEvaluationsTable() {
     if (totalCountEl) totalCountEl.textContent = totalCount;
 
     if (!currentEvaluations || currentEvaluations.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="loading">Tidak ada data evaluasi</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center"><div class="loading">Tidak ada data evaluasi</div></td></tr>`;
         return;
     }
 
@@ -688,7 +688,12 @@ function renderEvaluationsTable() {
 
         const safeId = escapeAttr(eval.id);
 
-        // New column order: No, Tanggal, Kategori, Nama Siswa, Kelas, Deskripsi, Jenis, Aksi
+        // PERUBAHAN 4: Approval badge
+        const approvalBadge = eval.is_approved
+            ? '<span class="badge badge-approved" title="Sudah Disetujui">✅ Disetujui</span>'
+            : '<span class="badge badge-pending" title="Belum Disetujui">⏳ Pending</span>';
+
+        // Column order: No, Tanggal, Kategori, Nama Siswa, Kelas, Deskripsi, Jenis, Approval, Aksi
         return `
             <tr data-id="${safeId}">
                 <td>${(currentPage - 1) * 25 + index + 1}</td>
@@ -698,6 +703,7 @@ function renderEvaluationsTable() {
                 <td>${escapeHtml(eval.nisn_kelas || '-')}</td>
                 <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(eval.name || '')}">${escapeHtml(eval.name) || '-'}</td>
                 <td>${jenisBadge}</td>
+                <td>${approvalBadge}</td>
                 <td>
                     <button onclick="window.viewEvaluation('${safeId}')" class="action-btn action-view" title="Lihat">👁️</button>
                     <button onclick="window.editEvaluation('${safeId}')" class="action-btn action-edit" title="Edit">✏️</button>
@@ -1081,6 +1087,44 @@ async function viewEvaluation(id) {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         }) : '-';
 
+        // PERUBAHAN 4: Status Approval
+        const userRole = currentUser?.role || '';
+        const canApprove = ['superadmin', 'pimpinan'].includes(userRole);
+
+        let approvalSection = '';
+        if (evaluation.is_approved) {
+            approvalSection = `
+                <div style="margin-top: 16px; padding: 12px 16px; background: var(--emerald-50); border-radius: var(--radius-sm); border-left: 4px solid var(--emerald-500);">
+                    <div class="detail-value" style="color: var(--emerald-700);">
+                        ✅ Disetujui oleh ${escapeHtml(evaluation.approved_by_name || 'Admin')}
+                    </div>
+                </div>
+            `;
+        } else if (canApprove) {
+            approvalSection = `
+                <div style="margin-top: 16px; padding: 12px 16px; background: var(--gold-50); border-radius: var(--radius-sm); border-left: 4px solid var(--gold-500);">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="color: var(--gold-700);">⏳ Menunggu persetujuan</span>
+                        <button onclick="window.approveEvaluation(${evaluation.id})" class="btn btn-primary btn-sm">
+                            ✅ Setujui Kasus
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            approvalSection = `
+                <div style="margin-top: 16px; padding: 12px 16px; background: var(--gray-50); border-radius: var(--radius-sm);">
+                    <div class="detail-value" style="color: var(--text-muted);">
+                        ⏳ Menunggu persetujuan admin
+                    </div>
+                </div>
+            `;
+        }
+
+        // PERUBAHAN 1: Status display (Dalam Penanganan)
+        const statusDisplay = evaluation.status === 'dalam_pembahasan' ? 'Dalam Penanganan' :
+                             evaluation.status === 'resolved' ? 'Selesai' : (evaluation.status_display || '-');
+
         document.getElementById('view-modal-body').innerHTML = `
             <div class="detail-grid">
                 <div class="detail-item">
@@ -1107,6 +1151,14 @@ async function viewEvaluation(id) {
                     <div class="detail-label">Kelas</div>
                     <div class="detail-value">${escapeHtml(evaluation.nisn_kelas || '-')}</div>
                 </div>
+                <div class="detail-item">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">${escapeHtml(statusDisplay)}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Visibilitas</div>
+                    <div class="detail-value">${evaluation.visibility === 'public' ? '🌐 Semua Pihak' : '🔒 Internal'}</div>
+                </div>
             </div>
             <div class="detail-card" style="margin-top: 20px;">
                 <div class="detail-label">Nama Evaluasi</div>
@@ -1124,10 +1176,13 @@ async function viewEvaluation(id) {
                     <div class="detail-value">${escapeHtml(evaluation.evaluator)}</div>
                 </div>
             ` : ''}
+            ${approvalSection}
             ${evaluation.photo ? `
                 <div style="margin-top: 16px;">
                     <div class="detail-label">Bukti Foto</div>
-                    <img src="${evaluation.photo}" alt="Bukti" style="max-width: 100%; max-height: 300px; border-radius: var(--radius-md); margin-top: 8px;">
+                    <a href="${evaluation.photo}" target="_blank" title="Klik untuk buka fullscreen">
+                        <img src="${evaluation.photo}" alt="Bukti" style="max-width: 100%; max-height: 300px; border-radius: var(--radius-md); margin-top: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
                 </div>
             ` : ''}
         `;
@@ -1609,6 +1664,87 @@ function exportEvaluations() {
     showToast('Fitur export akan segera tersedia', 'warning');
 }
 
+// ============================================
+// PERUBAHAN 4: APPROVE EVALUATION
+// ============================================
+
+async function approveEvaluation(id) {
+    if (!confirm('Apakah Anda yakin ingin menyetujui evaluasi ini?')) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/evaluations/${id}/approve/`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showToast('Evaluasi berhasil disetujui');
+            // Refresh the view modal
+            viewEvaluation(id);
+            // Refresh the table
+            loadEvaluations(currentPage);
+        } else {
+            throw new Error(data.message || 'Gagal menyetujui evaluasi');
+        }
+    } catch (error) {
+        console.error('Error approving evaluation:', error);
+        showToast(error.message || 'Gagal menyetujui evaluasi', 'error');
+    }
+}
+
+// ============================================
+// PERUBAHAN 2: INCIDENT PHOTO UPLOAD
+// ============================================
+
+function previewIncidentPhoto(input) {
+    const file = input.files[0];
+    const previewDiv = document.getElementById('incident-foto-preview');
+    const previewImg = document.getElementById('incident-preview-img');
+
+    if (file) {
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Ukuran file maksimal 5MB', 'error');
+            input.value = '';
+            return;
+        }
+
+        // Validate file type
+        if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+            showToast('Format file harus JPG atau PNG', 'error');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewDiv.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewDiv.style.display = 'none';
+    }
+}
+
+function removeIncidentPhoto() {
+    const input = document.getElementById('incident-foto');
+    const previewDiv = document.getElementById('incident-foto-preview');
+    const previewImg = document.getElementById('incident-preview-img');
+
+    if (input) input.value = '';
+    if (previewImg) previewImg.src = '';
+    if (previewDiv) previewDiv.style.display = 'none';
+}
+
 function animateValue(id, end) {
     const element = document.getElementById(id);
     if (!element) return;
@@ -1663,3 +1799,6 @@ window.handlePhotoPreview = handlePhotoPreview;
 window.removePhoto = removePhoto;
 window.exportEvaluations = exportEvaluations;
 window.resetWizardState = resetWizardState;
+window.approveEvaluation = approveEvaluation;
+window.previewIncidentPhoto = previewIncidentPhoto;
+window.removeIncidentPhoto = removeIncidentPhoto;

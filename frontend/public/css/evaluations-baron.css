@@ -219,6 +219,21 @@ body:not([data-role="pimpinan"]):not([data-role="superadmin"]) .pimpinan-only {
     border: 1px solid rgba(244, 63, 94, 0.2);
 }
 
+/* PERUBAHAN 4: Approval badges */
+.badge-approved {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--emerald-600);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    font-size: 10px;
+}
+
+.badge-pending {
+    background: rgba(156, 163, 175, 0.15);
+    color: #6b7280;
+    border: 1px solid rgba(156, 163, 175, 0.25);
+    font-size: 10px;
+}
+
 .badge-kategori {
     background: rgba(200, 150, 28, 0.1);
     color: #a37215;
@@ -1301,4 +1316,62 @@ button:disabled {
 
 .text-muted {
     color: var(--text-muted);
+}
+
+/* ============================================
+   PERUBAHAN 2: FILE UPLOAD STYLES
+   ============================================ */
+.file-upload-wrapper {
+    position: relative;
+}
+
+.file-upload-wrapper .file-input {
+    padding: 12px;
+    border: 2px dashed var(--border-light);
+    background: var(--bg-secondary);
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.file-upload-wrapper .file-input:hover {
+    border-color: var(--emerald-400);
+    background: rgba(31, 168, 122, 0.05);
+}
+
+.file-upload-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.photo-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+}
+
+.photo-preview img {
+    max-width: 120px;
+    max-height: 80px;
+    border-radius: var(--radius-xs);
+    object-fit: cover;
+}
+
+.btn-sm {
+    font-size: 11px;
+    padding: 4px 10px;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
 }

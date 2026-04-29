@@ -255,11 +255,12 @@
                                 <th>Kelas</th>
                                 <th>Deskripsi</th>
                                 <th>Jenis</th>
+                                <th>Approval</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="evaluations-table-body">
-                            <tr><td colspan="8" class="text-center"><div class="loading-spinner"></div></td></tr>
+                            <tr><td colspan="9" class="text-center"><div class="loading-spinner"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -427,7 +428,7 @@
                         <div class="is-icon">🟡</div>
                         <div class="is-body">
                             <div class="is-val" id="incident-discussion-count">0</div>
-                            <div class="is-label">Dalam Pembahasan</div>
+                            <div class="is-label">Dalam Penanganan</div>
                         </div>
                     </div>
                     <div class="incident-stat is-resolved">
@@ -453,9 +454,8 @@
                     <select id="incident-filter-status" class="glass-input" onchange="window.filterIncidents()">
                         <option value="">Semua Status</option>
                         <option value="open">🔴 Open</option>
-                        <option value="in_discussion">🟡 In Discussion</option>
-                        <option value="resolved">🟢 Resolved</option>
-                        <option value="closed">⚫ Closed</option>
+                        <option value="dalam_pembahasan">🟡 Dalam Penanganan</option>
+                        <option value="resolved">🟢 Selesai</option>
                     </select>
                     <select id="incident-filter-kategori" class="glass-input" onchange="window.filterIncidents()">
                         <option value="">Semua Kategori</option>
@@ -710,6 +710,28 @@
                     <textarea id="incident-deskripsi" name="deskripsi" class="glass-input" rows="4" placeholder="Jelaskan detail kejadian, kronologi, dan observasi..." required></textarea>
                 </div>
 
+                <!-- PERUBAHAN 2: Upload Foto -->
+                <div class="form-group">
+                    <label for="incident-foto">Foto Kejadian (Opsional)</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="incident-foto" name="foto" class="glass-input file-input" accept="image/jpeg,image/png,image/jpg" onchange="window.previewIncidentPhoto(this)">
+                        <div class="file-upload-hint">📎 Pilih Foto atau drag & drop (JPG, PNG, max 5MB)</div>
+                    </div>
+                    <div id="incident-foto-preview" class="photo-preview" style="display: none;">
+                        <img id="incident-preview-img" src="" alt="Preview">
+                        <button type="button" onclick="window.removeIncidentPhoto()" class="btn btn-sm btn-danger">Hapus</button>
+                    </div>
+                </div>
+
+                <!-- PERUBAHAN 3: Visibilitas (2 pilihan saja) -->
+                <div class="form-group">
+                    <label for="incident-visibility">Visibilitas</label>
+                    <select id="incident-visibility" name="visibility" class="glass-input">
+                        <option value="internal">🔒 Internal (Guru & Admin)</option>
+                        <option value="public">🌐 Semua Pihak</option>
+                    </select>
+                </div>
+
                 <div class="form-actions">
                     <button type="button" onclick="window.closeIncidentModal()" class="btn btn-secondary">Batal</button>
                     <button type="submit" class="btn btn-primary" id="incident-submit-btn">💾 Simpan Catatan</button>
@@ -738,7 +760,7 @@
             <!-- Comments Thread -->
             <div class="thread-section">
                 <h3 class="thread-section-title">
-                    <span>💬</span> Diskusi & Tanggapan
+                    <span>💬</span> Pembinaan
                     <span class="comment-count" id="thread-comment-count">0</span>
                 </h3>
                 <div class="thread-comments" id="thread-comments">
@@ -748,28 +770,24 @@
 
             <!-- Add Comment Form (Admin Only) -->
             <div class="thread-add-comment admin-only" id="thread-add-comment">
-                <h4>Tambah Tanggapan</h4>
+                <h4>Tambah Pembinaan</h4>
                 <form id="comment-form">
                     <input type="hidden" id="comment-incident-id">
                     <input type="hidden" id="comment-parent-id">
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="comment-type">Jenis Tanggapan</label>
+                            <label for="comment-type">Jenis Pembinaan</label>
                             <select id="comment-type" class="glass-input">
-                                <option value="observation">📋 Observasi</option>
-                                <option value="suggestion">💡 Saran</option>
-                                <option value="follow_up">🔄 Follow Up</option>
-                                <option value="decision">⚖️ Keputusan</option>
-                                <option value="note">📝 Catatan</option>
+                                <option value="diskusi">💬 Diskusi</option>
+                                <option value="pembinaan">📋 Pembinaan</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="comment-visibility">Visibilitas</label>
                             <select id="comment-visibility" class="glass-input">
-                                <option value="internal">🔒 Internal (Staff Only)</option>
-                                <option value="public">👁️ Public (Visible to Wali)</option>
-                                <option value="final_decision">✅ Final Decision</option>
+                                <option value="internal">🔒 Internal (Guru & Admin)</option>
+                                <option value="public">🌐 Semua Pihak</option>
                             </select>
                         </div>
                     </div>
