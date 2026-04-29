@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q
+from django.utils import timezone
 
 from .models import Evaluation, EvaluationComment
 from .serializers import (
@@ -42,46 +43,53 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        queryset = Evaluation.objects.select_related('nisn', 'approved_by').prefetch_related('comments__user')
+        queryset = Evaluation.objects.select_related('nisn', 'approved_by', 'created_by').prefetch_related('comments__user')
         user = self.request.user
-        evaluator_name = user.name if user.name else user.username
 
-        if user.role == 'walisantri':
-            # Walisantri: hanya lihat evaluasi anak yang sudah approved & public
-            linked_nisns = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
-            if linked_nisns:
-                queryset = queryset.filter(
-                    nisn__nisn__in=linked_nisns,
-                    is_approved=True,
-                    visibility='public'
-                )
-            else:
-                queryset = queryset.filter(
-                    nisn__nisn=user.linked_student_nisn,
-                    is_approved=True,
-                    visibility='public'
-                )
-        elif user.role in ['guru', 'musyrif']:
-            # PERUBAHAN 4: Guru lihat kasus yang ia buat ATAU kasus di kelas yang ia ampu
-            # Get kelas yang diampu dari Assignment (wali_kelas)
-            assigned_kelas = list(Assignment.objects.filter(
+        # PERUBAHAN 4: Filter berdasarkan role
+
+        # Admin/Superadmin/Pimpinan: lihat semua (termasuk yang belum approved)
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
+            pass  # No filter, see all
+
+        # BK & Musyrif: lihat semua yang sudah approved
+        elif user.role in ['bk', 'musyrif']:
+            queryset = queryset.filter(is_approved=True)
+
+        # Guru: lihat kasus yang dia buat + kasus santri di kelas yang dia jadi wali kelas
+        elif user.role == 'guru':
+            # Kasus yang dia buat sendiri (approved atau tidak)
+            own_cases = Q(created_by=user)
+
+            # Kelas yang dia jadi wali kelas
+            wali_assignments = Assignment.objects.filter(
                 user=user,
                 assignment_type='wali_kelas',
                 status='active'
-            ).values_list('kelas', flat=True))
+            ).values_list('kelas', flat=True)
 
-            # Logic:
-            # - Evaluasi yang dibuat sendiri (termasuk yang belum approved)
-            # - ATAU evaluasi di kelas yang diampu (hanya yang sudah approved)
-            if assigned_kelas:
-                queryset = queryset.filter(
-                    Q(evaluator=evaluator_name) |  # Kasus yang dibuat sendiri
-                    Q(nisn__kelas__in=assigned_kelas, is_approved=True)  # Kasus di kelas ampu (approved)
-                )
-            else:
-                # Guru tanpa wali kelas: hanya lihat kasus yang dibuat sendiri
-                queryset = queryset.filter(evaluator=evaluator_name)
-        # Superadmin, pimpinan, bk: lihat semua evaluasi (termasuk yang belum approved)
+            # Kasus santri di kelas tsb yang sudah approved
+            wali_cases = Q(
+                nisn__kelas__in=wali_assignments,
+                is_approved=True
+            )
+
+            queryset = queryset.filter(own_cases | wali_cases)
+
+        # Walisantri: lihat kasus anak sendiri yang sudah approved saja
+        elif user.role == 'walisantri':
+            nisn_list = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
+            if not nisn_list:
+                nisn_list = [user.linked_student_nisn] if user.linked_student_nisn else []
+
+            queryset = queryset.filter(
+                nisn__nisn__in=nisn_list,
+                is_approved=True
+            )
+
+        # Role lain: tidak bisa lihat apa-apa
+        else:
+            queryset = queryset.none()
 
         # Filter by kelas (dari query parameter)
         kelas = self.request.query_params.get('kelas')
@@ -146,8 +154,13 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
-        evaluator_name = self.request.user.name if hasattr(self.request.user, 'name') and self.request.user.name else self.request.user.username
-        serializer.save(evaluator=evaluator_name)
+        # PERUBAHAN 5: Set created_by dan evaluator otomatis
+        user = self.request.user
+        evaluator_name = user.name if hasattr(user, 'name') and user.name else user.username
+        serializer.save(
+            evaluator=evaluator_name,
+            created_by=user  # Set created_by ke user yang membuat
+        )
 
     def update(self, request, *args, **kwargs):
         """Override update to add debug logging and better error response"""
@@ -320,41 +333,45 @@ def delete_evaluation(request, pk):
 @permission_classes([IsAuthenticated])
 def evaluation_statistics(request):
     user = request.user
-    evaluator_name = user.name if user.name else user.username
 
     try:
         queryset = Evaluation.objects.all()
 
-        if user.role == 'walisantri':
-            # Walisantri: hanya evaluasi anak yang sudah approved & public
-            linked_nisns = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
-            if linked_nisns:
-                queryset = queryset.filter(
-                    nisn__nisn__in=linked_nisns,
-                    is_approved=True,
-                    visibility='public'
-                )
-            else:
-                queryset = queryset.filter(
-                    nisn__nisn=user.linked_student_nisn,
-                    is_approved=True,
-                    visibility='public'
-                )
-        elif user.role in ['guru', 'musyrif']:
-            # Guru: kasus yang dibuat sendiri ATAU kasus di kelas yang diampu (approved)
-            assigned_kelas = list(Assignment.objects.filter(
+        # PERUBAHAN 4: Filter berdasarkan role (sama dengan get_queryset)
+
+        # Admin/Superadmin/Pimpinan: lihat semua
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
+            pass  # No filter
+
+        # BK & Musyrif: lihat semua yang sudah approved
+        elif user.role in ['bk', 'musyrif']:
+            queryset = queryset.filter(is_approved=True)
+
+        # Guru: kasus yang dibuat sendiri + kasus di kelas yang diampu (approved)
+        elif user.role == 'guru':
+            wali_assignments = Assignment.objects.filter(
                 user=user,
                 assignment_type='wali_kelas',
                 status='active'
-            ).values_list('kelas', flat=True))
+            ).values_list('kelas', flat=True)
 
-            if assigned_kelas:
-                queryset = queryset.filter(
-                    Q(evaluator=evaluator_name) |
-                    Q(nisn__kelas__in=assigned_kelas, is_approved=True)
-                )
-            else:
-                queryset = queryset.filter(evaluator=evaluator_name)
+            own_cases = Q(created_by=user)
+            wali_cases = Q(nisn__kelas__in=wali_assignments, is_approved=True)
+            queryset = queryset.filter(own_cases | wali_cases)
+
+        # Walisantri: kasus anak sendiri yang sudah approved
+        elif user.role == 'walisantri':
+            nisn_list = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
+            if not nisn_list:
+                nisn_list = [user.linked_student_nisn] if user.linked_student_nisn else []
+            queryset = queryset.filter(
+                nisn__nisn__in=nisn_list,
+                is_approved=True
+            )
+
+        # Role lain: tidak bisa lihat
+        else:
+            queryset = queryset.none()
 
         total_evaluations = queryset.count()
         total_prestasi = queryset.filter(jenis='prestasi').count()
@@ -513,8 +530,10 @@ def approve_evaluation(request, pk):
                 'message': 'Evaluasi sudah diapprove sebelumnya'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # PERUBAHAN 3: Set is_approved, approved_by, dan approved_at
         evaluation.is_approved = True
         evaluation.approved_by = request.user
+        evaluation.approved_at = timezone.now()
         evaluation.save()
 
         return Response({
@@ -523,7 +542,8 @@ def approve_evaluation(request, pk):
             'data': {
                 'id': evaluation.id,
                 'is_approved': evaluation.is_approved,
-                'approved_by': request.user.name or request.user.username
+                'approved_by': request.user.name or request.user.username,
+                'approved_at': evaluation.approved_at.isoformat()
             }
         })
     except Evaluation.DoesNotExist:
@@ -556,6 +576,7 @@ def unapprove_evaluation(request, pk):
 
         evaluation.is_approved = False
         evaluation.approved_by = None
+        evaluation.approved_at = None
         evaluation.save()
 
         return Response({

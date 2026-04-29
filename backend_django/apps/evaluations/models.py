@@ -40,24 +40,28 @@ class Evaluation(models.Model):
     summary = models.TextField()
     catatan = models.TextField(blank=True, null=True)
 
-    # PERUBAHAN 2: Foto (sudah ada, update path)
-    photo = models.ImageField(upload_to='evaluations/foto/', blank=True, null=True)
+    # PERUBAHAN 1: Foto field
+    foto = models.ImageField(
+        upload_to='evaluations/foto/',
+        null=True,
+        blank=True
+    )
 
-    # PERUBAHAN 1: Status field
+    # Status field
     status = models.CharField(
         max_length=30,
         choices=STATUS_CHOICES,
         default='dalam_pembahasan'
     )
 
-    # PERUBAHAN 3: Visibility field
+    # Visibility field
     visibility = models.CharField(
         max_length=20,
         choices=VISIBILITY_CHOICES,
         default='internal'
     )
 
-    # PERUBAHAN 4: Approval fields
+    # PERUBAHAN 2: Approval fields
     is_approved = models.BooleanField(default=False)
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -65,6 +69,16 @@ class Evaluation(models.Model):
         null=True,
         blank=True,
         related_name='approved_evaluations'
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    # PERUBAHAN 5: Created by field
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_evaluations'
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

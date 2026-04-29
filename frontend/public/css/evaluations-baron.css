@@ -1375,3 +1375,127 @@ button:disabled {
 .btn-danger:hover {
     background: #dc2626;
 }
+
+/* ============================================
+   PERUBAHAN 2: THREAD FOTO SECTION
+   ============================================ */
+.thread-foto-section {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+}
+
+.thread-foto-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.thread-foto-container {
+    display: flex;
+    justify-content: center;
+}
+
+.thread-foto-link {
+    position: relative;
+    display: inline-block;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.thread-foto-link:hover {
+    transform: scale(1.02);
+}
+
+.thread-foto-thumbnail {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: var(--radius-md);
+    object-fit: contain;
+    display: block;
+}
+
+.thread-foto-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.thread-foto-link:hover .thread-foto-overlay {
+    opacity: 1;
+}
+
+/* ============================================
+   PERUBAHAN 3: THREAD APPROVAL SECTION
+   ============================================ */
+.thread-approval-section {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.thread-approval-section.approval-approved {
+    background: var(--emerald-50);
+    border-left: 4px solid var(--emerald-500);
+}
+
+.thread-approval-section.approval-pending {
+    background: var(--gold-50, rgba(200, 150, 28, 0.08));
+    border-left: 4px solid var(--gold-500, #c8961c);
+}
+
+.approval-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.approval-badge.badge-approved {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--emerald-600);
+}
+
+.approval-badge.badge-pending {
+    background: rgba(200, 150, 28, 0.15);
+    color: #a37215;
+}
+
+.approval-info {
+    font-size: 12px;
+    color: var(--text-sub);
+}
+
+/* ============================================
+   PERUBAHAN 5: WALISANTRI PROGRESS VIEW
+   ============================================ */
+body[data-role="walisantri"] .thread-add-comment {
+    display: none !important;
+}
+
+body[data-role="walisantri"] .comment-internal {
+    display: none !important;
+}

@@ -26,6 +26,8 @@ class EvaluationSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     visibility_display = serializers.CharField(source='get_visibility_display', read_only=True)
     approved_by_name = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
+    foto_url = serializers.SerializerMethodField()
     comments = EvaluationCommentSerializer(many=True, read_only=True)
 
     class Meta:
@@ -33,15 +35,30 @@ class EvaluationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'nisn', 'nisn_nisn', 'nisn_nama', 'nisn_kelas', 'tanggal',
             'jenis', 'kategori', 'evaluator', 'name', 'summary', 'catatan',
-            'photo', 'status', 'status_display', 'visibility', 'visibility_display',
-            'is_approved', 'approved_by', 'approved_by_name', 'comments',
+            'foto', 'foto_url', 'status', 'status_display', 'visibility', 'visibility_display',
+            'is_approved', 'approved_by', 'approved_by_name', 'approved_at',
+            'created_by', 'created_by_name', 'comments',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'approved_by', 'is_approved']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'approved_by', 'approved_at', 'is_approved', 'created_by']
 
     def get_approved_by_name(self, obj):
         if obj.approved_by:
             return obj.approved_by.name or obj.approved_by.username
+        return None
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.name or obj.created_by.username
+        return None
+
+    def get_foto_url(self, obj):
+        """Return absolute URL for foto field"""
+        if obj.foto:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.foto.url)
+            return obj.foto.url
         return None
 
 
@@ -53,12 +70,12 @@ class EvaluationCreateSerializer(serializers.ModelSerializer):
         model = Evaluation
         fields = [
             'nisn', 'tanggal', 'jenis', 'kategori', 'evaluator',
-            'name', 'summary', 'catatan', 'photo', 'status', 'visibility'
+            'name', 'summary', 'catatan', 'foto', 'status', 'visibility'
         ]
         extra_kwargs = {
             'evaluator': {'required': False},  # Set by backend
             'catatan': {'required': False, 'allow_blank': True},
-            'photo': {'required': False},
+            'foto': {'required': False},
             'status': {'required': False},  # Default: dalam_pembahasan
             'visibility': {'required': False},  # Default: internal
         }

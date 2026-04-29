@@ -832,8 +832,9 @@ async function editEvaluation(id) {
 
         const previewDiv = document.getElementById('photo-preview');
         const previewImg = document.getElementById('preview-img');
-        if (editingEvaluation.photo) {
-            previewImg.src = editingEvaluation.photo;
+        const fotoUrl = editingEvaluation.foto_url || editingEvaluation.foto;
+        if (fotoUrl) {
+            previewImg.src = fotoUrl;
             previewDiv.style.display = 'flex';
         } else {
             previewDiv.style.display = 'none';
@@ -943,9 +944,10 @@ async function handleFormSubmit(e) {
     formData.append('summary', summary);
     formData.append('catatan', catatan);
 
+    // PERUBAHAN 1: Gunakan field 'foto' (bukan 'photo')
     const photoInput = document.getElementById('evaluation-photo');
     if (photoInput && photoInput.files[0]) {
-        formData.append('photo', photoInput.files[0]);
+        formData.append('foto', photoInput.files[0]);
     }
 
     try {
@@ -1177,12 +1179,15 @@ async function viewEvaluation(id) {
                 </div>
             ` : ''}
             ${approvalSection}
-            ${evaluation.photo ? `
-                <div style="margin-top: 16px;">
-                    <div class="detail-label">Bukti Foto</div>
-                    <a href="${evaluation.photo}" target="_blank" title="Klik untuk buka fullscreen">
-                        <img src="${evaluation.photo}" alt="Bukti" style="max-width: 100%; max-height: 300px; border-radius: var(--radius-md); margin-top: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                    </a>
+            ${(evaluation.foto_url || evaluation.foto) ? `
+                <div class="thread-foto-section" style="margin-top: 16px;">
+                    <div class="thread-foto-label">📷 Foto Kejadian</div>
+                    <div class="thread-foto-container">
+                        <a href="${evaluation.foto_url || evaluation.foto}" target="_blank" class="thread-foto-link" title="Klik untuk buka fullscreen">
+                            <img src="${evaluation.foto_url || evaluation.foto}" alt="Bukti" class="thread-foto-thumbnail">
+                            <span class="thread-foto-overlay">🔍 Lihat Fullscreen</span>
+                        </a>
+                    </div>
                 </div>
             ` : ''}
         `;

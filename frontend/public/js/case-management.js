@@ -733,6 +733,7 @@
     };
 
     // ======================== SAVE ENFORCER - DIRECT FORM HANDLER ========================
+    // PERUBAHAN 1: Menggunakan FormData untuk mendukung upload foto
     window.handleIncidentSubmit = async function(e) {
         console.log('[CaseManagement] 🔄 ===== handleIncidentSubmit TRIGGERED =====');
 
@@ -754,39 +755,56 @@
             }
             console.log('[CaseManagement] Loading state shown');
 
-            // ===== STEP 2: Collect data from form =====
-            const formData = new FormData(form);
+            // ===== STEP 2: Collect data - Build FormData for file upload =====
+            // PERUBAHAN 1: Gunakan FormData bukan JSON.stringify
+            const formData = new FormData();
+
+            // Get values from form elements
+            const siswa_nisn = document.getElementById('incident-siswa')?.value || '';
+            const tanggal_kejadian = document.getElementById('incident-tanggal')?.value || '';
+            const judul = (document.getElementById('incident-judul')?.value || '').trim();
+            const kategori = document.getElementById('incident-kategori')?.value || '';
+            const tingkat = document.getElementById('incident-tingkat')?.value || '';
+            const deskripsi = (document.getElementById('incident-deskripsi')?.value || '').trim();
+            const visibility = document.getElementById('incident-visibility')?.value || 'internal';
+            const incidentId = document.getElementById('incident-id')?.value || '';
+
+            // Append to FormData
+            formData.append('siswa_nisn', siswa_nisn);
+            formData.append('tanggal_kejadian', tanggal_kejadian);
+            formData.append('judul', judul);
+            formData.append('kategori', kategori);
+            formData.append('tingkat', tingkat);
+            formData.append('deskripsi', deskripsi);
+            formData.append('visibility', visibility);
+
+            // PERUBAHAN 1: Append foto if exists
+            const fotoInput = document.getElementById('incident-foto');
+            if (fotoInput && fotoInput.files && fotoInput.files[0]) {
+                formData.append('foto', fotoInput.files[0]);
+                console.log('[CaseManagement] 📷 Foto attached:', fotoInput.files[0].name);
+            }
 
             // Debug: Log all FormData entries
             console.log('[CaseManagement] 📋 FormData entries:');
             for (let [key, value] of formData.entries()) {
-                console.log(`  ${key}: "${value}"`);
+                if (value instanceof File) {
+                    console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
+                } else {
+                    console.log(`  ${key}: "${value}"`);
+                }
             }
 
-            // Build payload - use FormData with fallback to getElementById
-            // CRITICAL: Backend expects 'siswa_nisn' NOT 'siswa'!
-            const payload = {
-                siswa_nisn: formData.get('siswa_nisn') || document.getElementById('incident-siswa')?.value || '',
-                tanggal_kejadian: formData.get('tanggal_kejadian') || document.getElementById('incident-tanggal')?.value || '',
-                judul: (formData.get('judul') || document.getElementById('incident-judul')?.value || '').trim(),
-                kategori: formData.get('kategori') || document.getElementById('incident-kategori')?.value || '',
-                tingkat: formData.get('tingkat') || document.getElementById('incident-tingkat')?.value || '',
-                deskripsi: (formData.get('deskripsi') || document.getElementById('incident-deskripsi')?.value || '').trim()
-            };
-
-            const incidentId = formData.get('incident-id') || document.getElementById('incident-id')?.value || '';
-
-            console.log('[CaseManagement] 📦 Payload to send:', payload);
             console.log('[CaseManagement] Edit mode:', !!incidentId, 'ID:', incidentId);
 
             // ===== STEP 3: Validation =====
             const errors = [];
-            if (!payload.siswa_nisn) errors.push('❌ Siswa/Santri belum dipilih!');
-            if (!payload.tanggal_kejadian) errors.push('❌ Tanggal kejadian belum diisi!');
-            if (!payload.judul) errors.push('❌ Judul catatan belum diisi!');
-            if (!payload.kategori) errors.push('❌ Kategori belum dipilih!');
-            if (!payload.tingkat) errors.push('❌ Tingkat belum dipilih!');
-            if (!payload.deskripsi) errors.push('❌ Deskripsi belum diisi!');
+            if (!siswa_nisn) errors.push('❌ Siswa/Santri belum dipilih!');
+            if (!tanggal_kejadian) errors.push('❌ Tanggal kejadian belum diisi!');
+            if (!judul) errors.push('❌ Judul catatan belum diisi!');
+            if (!kategori) errors.push('❌ Kategori belum dipilih!');
+            if (!tingkat) errors.push('❌ Tingkat belum dipilih!');
+            if (!deskripsi) errors.push('❌ Deskripsi belum diisi!');
 
             if (errors.length > 0) {
                 console.error('[CaseManagement] Validation failed:', errors);
@@ -807,9 +825,11 @@
 
             console.log(`[CaseManagement] 🌐 ${method} ${apiUrl}`);
 
+            // PERUBAHAN 1: Kirim FormData langsung (apiFetch auto-detect)
+            // JANGAN set Content-Type manual - browser akan set multipart/form-data otomatis
             const response = await window.apiFetch(apiUrl, {
                 method: method,
-                body: JSON.stringify(payload)
+                body: formData  // FormData, bukan JSON.stringify
             });
 
             console.log('[CaseManagement] 📡 Response received:', response);
@@ -1248,6 +1268,7 @@
         const tanggal = formatDate(incident.tanggal_kejadian);
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const canChangeStatus = ['guru', 'musyrif', 'pimpinan', 'superadmin'].includes(user.role);
+        const canApprove = ['superadmin', 'pimpinan'].includes(user.role);
         const isNotClosed = incident.status !== 'resolved' && incident.status !== 'closed';
 
         // Final Decision Banner - Shows at TOP when resolved for walisantri visibility
@@ -1292,6 +1313,51 @@
             `;
         }
 
+        // PERUBAHAN 2: Section Foto Kejadian
+        let fotoSection = '';
+        const fotoUrl = incident.foto_url || incident.foto;
+        if (fotoUrl) {
+            fotoSection = `
+                <div class="thread-foto-section">
+                    <div class="thread-foto-label">📷 Foto Kejadian</div>
+                    <div class="thread-foto-container">
+                        <a href="${fotoUrl}" target="_blank" class="thread-foto-link" title="Klik untuk buka fullscreen">
+                            <img src="${fotoUrl}" alt="Foto Kejadian" class="thread-foto-thumbnail">
+                            <span class="thread-foto-overlay">🔍 Lihat Fullscreen</span>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // PERUBAHAN 3: Approval Section
+        let approvalSection = '';
+        if (incident.is_approved) {
+            const approvedByName = incident.approved_by_name || incident.approved_by_nama || 'Admin';
+            const approvedAt = incident.approved_at ? formatDate(incident.approved_at) : '';
+            approvalSection = `
+                <div class="thread-approval-section approval-approved">
+                    <span class="approval-badge badge-approved">✅ Disetujui</span>
+                    <span class="approval-info">oleh ${escapeHtml(approvedByName)}${approvedAt ? ` pada ${approvedAt}` : ''}</span>
+                </div>
+            `;
+        } else if (canApprove) {
+            approvalSection = `
+                <div class="thread-approval-section approval-pending">
+                    <span class="approval-badge badge-pending">⏳ Menunggu persetujuan</span>
+                    <button onclick="window.approveIncident(${incident.id})" class="btn btn-primary btn-sm">
+                        ✅ Setujui Kasus
+                    </button>
+                </div>
+            `;
+        } else {
+            approvalSection = `
+                <div class="thread-approval-section approval-pending">
+                    <span class="approval-badge badge-pending">⏳ Menunggu persetujuan admin</span>
+                </div>
+            `;
+        }
+
         detailEl.innerHTML = `
             ${finalDecisionBanner}
             <div class="thread-detail-header">
@@ -1309,6 +1375,8 @@
                 <span class="thread-meta-chip">📝 Pelapor: ${escapeHtml(incident.pelapor_nama || '-')} (${escapeHtml(incident.pelapor_role_display || '-')})</span>
             </div>
             <div class="thread-detail-content">${escapeHtml(incident.deskripsi)}</div>
+            ${fotoSection}
+            ${approvalSection}
             ${statusActions}
         `;
     }
@@ -1316,15 +1384,47 @@
     function renderComments(comments) {
         const commentsEl = document.getElementById('thread-comments');
         const countEl = document.getElementById('thread-comment-count');
+        const sectionTitle = document.querySelector('.thread-section-title');
+        const addCommentForm = document.getElementById('thread-add-comment');
 
-        countEl.textContent = comments.length;
+        // PERUBAHAN 5: Get user role to filter comments for walisantri
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const isWalisantri = user.role === 'walisantri';
 
-        if (!comments || comments.length === 0) {
-            commentsEl.innerHTML = '<p class="text-muted">Belum ada tanggapan.</p>';
+        // Filter comments for walisantri - only show public visibility
+        let filteredComments = comments;
+        if (isWalisantri) {
+            filteredComments = comments.filter(c => c.visibility === 'public' || c.visibility === 'final_decision');
+
+            // PERUBAHAN 5: Change title to "Perkembangan Penanganan" for walisantri
+            if (sectionTitle) {
+                sectionTitle.innerHTML = '<span>📋</span> Perkembangan Penanganan <span class="comment-count" id="thread-comment-count">' + filteredComments.length + '</span>';
+            }
+
+            // PERUBAHAN 5: Hide add comment form for walisantri
+            if (addCommentForm) {
+                addCommentForm.style.display = 'none';
+            }
+        } else {
+            // Admin view - show "Pembinaan" title and form
+            if (sectionTitle) {
+                sectionTitle.innerHTML = '<span>💬</span> Pembinaan <span class="comment-count" id="thread-comment-count">' + comments.length + '</span>';
+            }
+            if (addCommentForm) {
+                addCommentForm.style.display = 'block';
+            }
+        }
+
+        countEl.textContent = filteredComments.length;
+
+        if (!filteredComments || filteredComments.length === 0) {
+            commentsEl.innerHTML = isWalisantri
+                ? '<p class="text-muted">Belum ada perkembangan yang dapat ditampilkan.</p>'
+                : '<p class="text-muted">Belum ada tanggapan.</p>';
             return;
         }
 
-        commentsEl.innerHTML = comments.map(comment => renderComment(comment)).join('');
+        commentsEl.innerHTML = filteredComments.map(comment => renderComment(comment)).join('');
     }
 
     function renderComment(comment) {
@@ -1383,6 +1483,41 @@
         const commentForm = document.getElementById('thread-add-comment');
         if (commentForm) {
             commentForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
+
+    // ======================== PERUBAHAN 3: APPROVE INCIDENT ========================
+    window.approveIncident = async function(incidentId) {
+        if (!confirm('Apakah Anda yakin ingin menyetujui kasus ini?')) {
+            return;
+        }
+
+        try {
+            console.log('[CaseManagement] Approving incident:', incidentId);
+
+            const response = await window.apiFetch(`/kesantrian/incidents/${incidentId}/approve/`, {
+                method: 'PATCH'
+            });
+
+            if (!response || !response.ok) {
+                const errorData = await response?.json().catch(() => ({}));
+                throw new Error(errorData.message || errorData.detail || `HTTP ${response?.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('✅ Kasus berhasil disetujui');
+                // Refresh the thread modal
+                window.openThreadModal(incidentId);
+                // Refresh the incidents list
+                if (typeof loadIncidents === 'function') loadIncidents();
+            } else {
+                throw new Error(data.message || 'Gagal menyetujui kasus');
+            }
+        } catch (err) {
+            console.error('[CaseManagement] Error approving incident:', err);
+            showToast('❌ Gagal menyetujui kasus: ' + err.message, 'error');
         }
     };
 
