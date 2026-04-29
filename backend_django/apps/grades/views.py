@@ -57,7 +57,9 @@ class GradeViewSet(viewsets.ModelViewSet):
             # Filter by linked student's NISN (linked_student_nisn is a string, nisn is FK)
             queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
         elif user.role == 'guru':
-            queryset = queryset.filter(guru=user.name if hasattr(user, 'name') else user.username)
+            # IMPORTANT: Must match the save logic - check hasattr AND truthy value
+            guru_name = user.name if hasattr(user, 'name') and user.name else user.username
+            queryset = queryset.filter(guru=guru_name)
         elif user.role == 'pimpinan':
             pass
         elif user.role == 'superadmin':
@@ -460,7 +462,7 @@ def import_excel_grades(request):
         semester = request.data.get('semester', 'Ganjil')
         tahun_ajaran = request.data.get('tahun_ajaran', '2024/2025')
         jenis = request.data.get('jenis', 'UH')
-        guru_name = request.user.name if hasattr(request.user, 'name') else request.user.username
+        guru_name = request.user.name if hasattr(request.user, 'name') and request.user.name else request.user.username
 
         if not kelas:
             return Response({
@@ -566,7 +568,9 @@ def get_statistics(request):
     queryset = Grade.objects.select_related('nisn')
 
     if user.role == 'guru':
-        queryset = queryset.filter(guru=user.name if hasattr(user, 'name') else user.username)
+        # IMPORTANT: Must match the save logic - check hasattr AND truthy value
+        guru_name = user.name if hasattr(user, 'name') and user.name else user.username
+        queryset = queryset.filter(guru=guru_name)
     elif user.role == 'walisantri':
         queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
 
