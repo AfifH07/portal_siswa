@@ -57,8 +57,8 @@ class GradeViewSet(viewsets.ModelViewSet):
             # Filter by linked student's NISN (linked_student_nisn is a string, nisn is FK)
             queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
         elif user.role == 'guru':
-            # IMPORTANT: Must match the save logic - check hasattr AND truthy value
-            guru_name = user.name if hasattr(user, 'name') and user.name else user.username
+            # Filter by guru name - consistent with save logic
+            guru_name = user.name or user.username
             queryset = queryset.filter(guru=guru_name)
         elif user.role == 'pimpinan':
             pass
@@ -91,7 +91,7 @@ class GradeViewSet(viewsets.ModelViewSet):
         return queryset.order_by('-created_at')
 
     def perform_create(self, serializer):
-        guru_name = self.request.user.name if hasattr(self.request.user, 'name') and self.request.user.name else self.request.user.username
+        guru_name = self.request.user.name or self.request.user.username
         serializer.save(guru=guru_name)
 
     def perform_update(self, serializer):
@@ -462,7 +462,7 @@ def import_excel_grades(request):
         semester = request.data.get('semester', 'Ganjil')
         tahun_ajaran = request.data.get('tahun_ajaran', '2024/2025')
         jenis = request.data.get('jenis', 'UH')
-        guru_name = request.user.name if hasattr(request.user, 'name') and request.user.name else request.user.username
+        guru_name = request.user.name or request.user.username
 
         if not kelas:
             return Response({
@@ -567,12 +567,16 @@ def get_statistics(request):
     # Build base queryset based on user role
     queryset = Grade.objects.select_related('nisn')
 
+    # Get guru name consistently - use name if available, fallback to username
+    guru_name = user.name or user.username
+
     if user.role == 'guru':
-        # IMPORTANT: Must match the save logic - check hasattr AND truthy value
-        guru_name = user.name if hasattr(user, 'name') and user.name else user.username
+        # Filter by guru name for guru role
         queryset = queryset.filter(guru=guru_name)
+        print(f"[get_statistics] Filtering for guru: '{guru_name}', role: '{user.role}'")
     elif user.role == 'walisantri':
         queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
+    # superadmin, pimpinan, admin → no filter, see all data
 
     # Apply filters from query params
     search = request.query_params.get('search')
@@ -1143,7 +1147,7 @@ def import_grades_v2(request):
         default_jenis = request.data.get('jenis', 'UH')
 
         # Get guru name from authenticated user
-        guru_name = request.user.name if hasattr(request.user, 'name') and request.user.name else request.user.username
+        guru_name = request.user.name or request.user.username
 
         workbook = openpyxl.load_workbook(excel_file)
         sheet = workbook.active
@@ -1530,7 +1534,7 @@ def input_batch_grades(request):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Get guru name
-        guru_name = request.user.name if hasattr(request.user, 'name') and request.user.name else request.user.username
+        guru_name = request.user.name or request.user.username
 
         success_count = 0
         updated_count = 0
