@@ -58,7 +58,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
 
         # Guru: lihat kasus yang dia buat + kasus santri di kelas yang dia jadi wali kelas
         elif user.role == 'guru':
-            # Kasus yang dia buat sendiri (approved atau tidak)
+            # Kasus yang dia buat sendiri (hanya jika created_by tidak None)
             own_cases = Q(created_by=user)
 
             # Kelas yang dia jadi wali kelas
@@ -68,13 +68,16 @@ class EvaluationViewSet(viewsets.ModelViewSet):
                 status='active'
             ).values_list('kelas', flat=True)
 
-            # Kasus santri di kelas tsb yang sudah approved
-            wali_cases = Q(
-                nisn__kelas__in=wali_assignments,
-                is_approved=True
-            )
-
-            queryset = queryset.filter(own_cases | wali_cases)
+            if wali_assignments.exists():
+                # Wali kelas: lihat kasus santri di kelasnya HANYA yang sudah approved
+                wali_cases = Q(
+                    nisn__kelas__in=list(wali_assignments),
+                    is_approved=True
+                )
+                queryset = queryset.filter(own_cases | wali_cases)
+            else:
+                # Guru biasa tanpa wali kelas: hanya lihat kasus yang dia buat
+                queryset = queryset.filter(own_cases)
 
         # Walisantri: lihat kasus anak sendiri yang sudah approved saja
         elif user.role == 'walisantri':
@@ -356,8 +359,14 @@ def evaluation_statistics(request):
             ).values_list('kelas', flat=True)
 
             own_cases = Q(created_by=user)
-            wali_cases = Q(nisn__kelas__in=wali_assignments, is_approved=True)
-            queryset = queryset.filter(own_cases | wali_cases)
+
+            if wali_assignments.exists():
+                # Wali kelas: lihat kasus santri di kelasnya HANYA yang sudah approved
+                wali_cases = Q(nisn__kelas__in=list(wali_assignments), is_approved=True)
+                queryset = queryset.filter(own_cases | wali_cases)
+            else:
+                # Guru biasa tanpa wali kelas: hanya lihat kasus yang dia buat
+                queryset = queryset.filter(own_cases)
 
         # Walisantri: kasus anak sendiri yang sudah approved
         elif user.role == 'walisantri':
