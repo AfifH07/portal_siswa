@@ -119,13 +119,19 @@ class StudentViewSet(viewsets.ModelViewSet):
     lookup_field = 'nisn'
 
     def get_permissions(self):
-        if self.action in ['create', 'destroy']:
-            permission_classes = [IsSuperAdmin]
-        elif self.action in ['update', 'partial_update']:
-            permission_classes = [IsAuthenticated, CanUpdateStudent]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
+        """
+        Permission control:
+        - GET (list/detail): semua role boleh akses
+        - POST/PUT/PATCH/DELETE: hanya superadmin dan admin
+        """
+        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            user = self.request.user
+            if user.is_authenticated and user.role not in ['superadmin', 'admin']:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied(
+                    "Hanya admin yang bisa menambah, mengubah, atau menghapus data santri."
+                )
+        return [IsAuthenticated()]
 
     def get_queryset(self):
         """

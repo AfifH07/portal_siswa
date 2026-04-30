@@ -43,7 +43,11 @@ class StudentListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ['nisn', 'nama', 'kelas', 'program', 'aktif', 'progress_hafalan_percentage', 'hafalan_status', 'current_hafalan', 'target_hafalan']
+        fields = [
+            'nisn', 'nis', 'nama', 'kelas', 'program', 'jenis_kelamin',
+            'aktif', 'progress_hafalan_percentage', 'hafalan_status',
+            'current_hafalan', 'target_hafalan'
+        ]
 
     def get_progress_hafalan_percentage(self, obj):
         if obj.target_hafalan > 0:
@@ -65,10 +69,10 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = [
-            'nisn', 'nama', 'kelas', 'program', 'email', 'phone',
-            'wali_nama', 'wali_phone', 'tanggal_masuk',
+            'nisn', 'nis', 'nama', 'kelas', 'program', 'jenis_kelamin',
+            'email', 'phone', 'wali_nama', 'wali_phone', 'tanggal_masuk',
             'target_hafalan', 'current_hafalan', 'target_nilai',
-            'aktif', 'progress_hafalan_percentage',
+            'aktif', 'catatan', 'progress_hafalan_percentage',
             'progress_nilai_percentage', 'hafalan_status', 'nilai_status'
         ]
 
@@ -95,14 +99,24 @@ class StudentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = [
-            'nisn', 'nama', 'kelas', 'program', 'email', 'phone',
-            'wali_nama', 'wali_phone', 'tanggal_masuk',
-            'target_hafalan', 'target_nilai', 'aktif'
+            'nisn', 'nis', 'nama', 'kelas', 'program', 'jenis_kelamin',
+            'email', 'phone', 'wali_nama', 'wali_phone', 'tanggal_masuk',
+            'target_hafalan', 'target_nilai', 'aktif', 'catatan'
         ]
 
     def validate_nisn(self, value):
         if Student.objects.filter(nisn=value).exists():
             raise serializers.ValidationError('NISN sudah terdaftar!')
+        return value
+
+    def validate_nis(self, value):
+        if value and Student.objects.filter(nis=value).exists():
+            raise serializers.ValidationError('NIS sudah terdaftar!')
+        return value
+
+    def validate_jenis_kelamin(self, value):
+        if value and value not in ['L', 'P']:
+            raise serializers.ValidationError('Jenis kelamin harus L atau P!')
         return value
 
     def validate_kelas(self, value):
@@ -126,10 +140,21 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = [
-            'nama', 'kelas', 'program', 'email', 'phone',
-            'wali_nama', 'wali_phone', 'tanggal_masuk',
-            'target_hafalan', 'current_hafalan', 'target_nilai', 'aktif'
+            'nis', 'nama', 'kelas', 'program', 'jenis_kelamin',
+            'email', 'phone', 'wali_nama', 'wali_phone', 'tanggal_masuk',
+            'target_hafalan', 'current_hafalan', 'target_nilai', 'aktif', 'catatan'
         ]
+
+    def validate_nis(self, value):
+        instance = self.instance
+        if value and Student.objects.filter(nis=value).exclude(nisn=instance.nisn).exists():
+            raise serializers.ValidationError('NIS sudah terdaftar!')
+        return value
+
+    def validate_jenis_kelamin(self, value):
+        if value and value not in ['L', 'P']:
+            raise serializers.ValidationError('Jenis kelamin harus L atau P!')
+        return value
 
     def validate_kelas(self, value):
         """Validate and normalize class format"""

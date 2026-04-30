@@ -565,7 +565,7 @@ async function loadStudents(page = 1) {
     try {
         document.getElementById('students-table-body').innerHTML = `
             <tr>
-                <td colspan="7" class="text-center">
+                <td colspan="8" class="text-center">
                     <div class="loading-spinner" style="margin: 30px auto;"></div>
                 </td>
             </tr>
@@ -583,7 +583,7 @@ async function loadStudents(page = 1) {
             showError(`Error: ${data.detail}`);
             document.getElementById('students-table-body').innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center">
+                    <td colspan="8" class="text-center">
                         Error: ${data.detail}
                     </td>
                 </tr>
@@ -593,7 +593,7 @@ async function loadStudents(page = 1) {
             showError('Gagal memuat data siswa - format data tidak valid');
             document.getElementById('students-table-body').innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center">
+                    <td colspan="8" class="text-center">
                         Format data tidak valid
                     </td>
                 </tr>
@@ -603,7 +603,7 @@ async function loadStudents(page = 1) {
         console.error('Error loading students:', error);
         document.getElementById('students-table-body').innerHTML = `
             <tr>
-                <td colspan="7" class="text-center">
+                <td colspan="8" class="text-center">
                     Error: ${error.message}
                 </td>
             </tr>
@@ -614,13 +614,13 @@ async function loadStudents(page = 1) {
 function renderStudents(students) {
     const tbody = document.getElementById('students-table-body');
     const userRole = window.getUserRole();
-    const isWalisantri = userRole === 'walisantri';
+    const canManage = ['superadmin', 'admin'].includes(userRole);
     const countBadge = document.getElementById('table-count-badge');
 
     if (!students || students.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center text-muted" style="padding: 40px;">
+                <td colspan="8" class="text-center text-muted" style="padding: 40px;">
                     Tidak ada data siswa
                 </td>
             </tr>
@@ -633,38 +633,38 @@ function renderStudents(students) {
     if (countBadge) countBadge.textContent = `${totalCount} data`;
 
     tbody.innerHTML = students.map(student => {
-        const statusBadge = student.aktif
-            ? `<span class="badge badge-success">Aktif</span>`
-            : `<span class="badge badge-danger">Tidak Aktif</span>`;
+        // Format jenis kelamin
+        const jenisKelaminText = student.jenis_kelamin === 'L' ? 'Laki-laki'
+            : student.jenis_kelamin === 'P' ? 'Perempuan'
+            : '-';
 
-        const progressPercent = student.progress_hafalan_percentage || 0;
-        const progressClass = student.hafalan_status === 'above_target' ? 'progress-above' : 'progress-below';
-
-        const currentHafalan = student.current_hafalan || 0;
-        const targetHafalan = student.target_hafalan || 0;
+        // Format catatan (max 50 chars)
+        let catatanText = '-';
+        if (student.catatan && student.catatan.trim()) {
+            catatanText = student.catatan.length > 50
+                ? escapeHtml(student.catatan.substring(0, 50)) + '...'
+                : escapeHtml(student.catatan);
+        }
 
         const safeNisn = escapeAttr(student.nisn);
-        const actionButtons = isWalisantri
-            ? `<button onclick="window.viewStudent('${safeNisn}')" class="action-btn action-view" title="Lihat">👁️</button>`
-            : `<button onclick="window.viewStudent('${safeNisn}')" class="action-btn action-view" title="Lihat">👁️</button>
+
+        // Action buttons based on role
+        let actionButtons = `<button onclick="window.viewStudent('${safeNisn}')" class="action-btn action-view" title="Lihat">👁️</button>`;
+        if (canManage) {
+            actionButtons += `
                 <button onclick="window.editStudent('${safeNisn}')" class="action-btn action-edit" title="Edit">✏️</button>
                 <button onclick="window.deleteStudent('${safeNisn}')" class="action-btn action-delete" title="Hapus">🗑️</button>`;
+        }
 
         return `
             <tr>
                 <td>${escapeHtml(student.nisn) || '-'}</td>
+                <td>${escapeHtml(student.nis) || '-'}</td>
                 <td><strong>${escapeHtml(student.nama) || '-'}</strong></td>
                 <td>${escapeHtml(student.kelas) || '-'}</td>
                 <td>${escapeHtml(student.program) || '-'}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <div class="hafalan-display">
-                        <div class="progress-bar-container">
-                            <div class="progress-bar ${progressClass}" style="width: ${progressPercent}%"></div>
-                        </div>
-                        <span class="hafalan-text">${currentHafalan}/${targetHafalan} Juz</span>
-                    </div>
-                </td>
+                <td>${jenisKelaminText}</td>
+                <td title="${escapeAttr(student.catatan || '')}">${catatanText}</td>
                 <td>
                     ${actionButtons}
                 </td>
@@ -705,8 +705,9 @@ function resetFilters() {
 // Modal Functions
 function openAddModal() {
     const userRole = window.getUserRole();
-    if (userRole === 'walisantri') {
-        showError('Walisantri tidak memiliki izin untuk menambah siswa');
+    // Only superadmin and admin can add students
+    if (!['superadmin', 'admin'].includes(userRole)) {
+        showError('Anda tidak memiliki izin untuk menambah siswa');
         return;
     }
 
@@ -715,25 +716,29 @@ function openAddModal() {
     document.getElementById('student-form').reset();
     document.getElementById('student-nisn').disabled = false;
     document.getElementById('student-nisn-readonly').value = '';
+    document.getElementById('student-nis').disabled = false;
     document.getElementById('student-modal').classList.add('active');
 }
 
 async function editStudent(nisn) {
     const userRole = window.getUserRole();
-    if (userRole === 'walisantri') {
-        showError('Walisantri tidak memiliki izin untuk mengedit data siswa');
+    // Only superadmin and admin can edit students
+    if (!['superadmin', 'admin'].includes(userRole)) {
+        showError('Anda tidak memiliki izin untuk mengedit data siswa');
         return;
     }
 
     try {
         const student = await apiCall(`students/${nisn}/`);
-        
+
         editingStudent = student;
         document.getElementById('modal-title').textContent = 'Edit Siswa';
         document.getElementById('student-nisn').value = student.nisn;
         document.getElementById('student-nisn').disabled = true;
         document.getElementById('student-nisn-readonly').value = student.nisn;
+        document.getElementById('student-nis').value = student.nis || '';
         document.getElementById('student-nama').value = student.nama;
+        document.getElementById('student-jenis-kelamin').value = student.jenis_kelamin || '';
         document.getElementById('student-kelas').value = student.kelas || '';
         document.getElementById('student-program').value = student.program || '';
         document.getElementById('student-email').value = student.email || '';
@@ -745,7 +750,8 @@ async function editStudent(nisn) {
         document.getElementById('target-hafalan').value = student.target_hafalan;
         document.getElementById('current-hafalan').value = student.current_hafalan;
         document.getElementById('target-nilai').value = student.target_nilai;
-        
+        document.getElementById('student-catatan').value = student.catatan || '';
+
         document.getElementById('student-modal').classList.add('active');
     } catch (error) {
         console.error('Error loading student:', error);
@@ -760,10 +766,19 @@ function closeModal() {
 
 async function handleFormSubmit(e) {
     e.preventDefault();
-    
+
+    // Validate NIS (7 digits)
+    const nisValue = document.getElementById('student-nis').value.trim();
+    if (nisValue && !/^\d{7}$/.test(nisValue)) {
+        showError('NIS harus 7 digit angka');
+        return;
+    }
+
     const formData = {
         nisn: document.getElementById('student-nisn').value,
+        nis: nisValue || null,
         nama: document.getElementById('student-nama').value,
+        jenis_kelamin: document.getElementById('student-jenis-kelamin').value || null,
         kelas: document.getElementById('student-kelas').value,
         program: document.getElementById('student-program').value,
         email: document.getElementById('student-email').value,
@@ -774,7 +789,8 @@ async function handleFormSubmit(e) {
         aktif: document.getElementById('student-aktif').value === 'true',
         target_hafalan: parseInt(document.getElementById('target-hafalan').value) || 0,
         current_hafalan: parseInt(document.getElementById('current-hafalan').value) || 0,
-        target_nilai: parseInt(document.getElementById('target-nilai').value) || 75
+        target_nilai: parseInt(document.getElementById('target-nilai').value) || 75,
+        catatan: document.getElementById('student-catatan').value || ''
     };
     
     try {
@@ -819,6 +835,11 @@ async function viewStudent(nisn) {
             ? '<span class="badge badge-success">Aktif</span>'
             : '<span class="badge badge-danger">Tidak Aktif</span>';
 
+        // Format jenis kelamin
+        const jenisKelaminText = student.jenis_kelamin === 'L' ? 'Laki-laki'
+            : student.jenis_kelamin === 'P' ? 'Perempuan'
+            : '-';
+
         detailBody.innerHTML = `
             <div class="detail-grid">
                 <div class="detail-item">
@@ -826,8 +847,16 @@ async function viewStudent(nisn) {
                     <div class="detail-value" style="font-family: var(--font-mono);">${escapeHtml(student.nisn)}</div>
                 </div>
                 <div class="detail-item">
+                    <div class="detail-label">NIS</div>
+                    <div class="detail-value" style="font-family: var(--font-mono);">${escapeHtml(student.nis) || '-'}</div>
+                </div>
+                <div class="detail-item">
                     <div class="detail-label">Nama</div>
                     <div class="detail-value">${escapeHtml(student.nama)}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Jenis Kelamin</div>
+                    <div class="detail-value">${jenisKelaminText}</div>
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">Kelas</div>
@@ -882,6 +911,10 @@ async function viewStudent(nisn) {
                     <div class="detail-value" style="font-family: var(--font-mono);">${student.target_nilai}</div>
                 </div>
             </div>
+            <div class="detail-section-full" style="margin-top: 20px;">
+                <div class="detail-label">Catatan</div>
+                <div class="detail-value" style="white-space: pre-wrap; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-top: 8px;">${escapeHtml(student.catatan) || '-'}</div>
+            </div>
         `;
     } catch (error) {
         console.error('Error viewing student:', error);
@@ -896,8 +929,9 @@ function closeViewModal() {
 
 async function deleteStudent(nisn) {
     const userRole = window.getUserRole();
-    if (userRole === 'walisantri') {
-        showError('Walisantri tidak memiliki izin untuk menghapus siswa');
+    // Only superadmin and admin can delete students
+    if (!['superadmin', 'admin'].includes(userRole)) {
+        showError('Anda tidak memiliki izin untuk menghapus siswa');
         return;
     }
 
@@ -932,9 +966,10 @@ async function getStudentName(nisn) {
 
     async function exportToExcel() {
       try {
-          const user = getUser();
-          if (user && user.role === 'walisantri') {
-              showError('Walisantri tidak memiliki izin untuk export data');
+          const userRole = window.getUserRole();
+          // Only superadmin and admin can export
+          if (!['superadmin', 'admin'].includes(userRole)) {
+              showError('Anda tidak memiliki izin untuk export data');
               return;
           }
 
@@ -973,14 +1008,19 @@ async function getStudentName(nisn) {
   }
 
 function exportToCSV(students) {
-    const headers = ['NISN', 'Nama', 'Kelas', 'Program', 'Email', 'Phone', 'Wali Nama', 'Wali Phone', 'Tanggal Masuk', 'Target Hafalan', 'Current Hafalan', 'Target Nilai', 'Status'];
-    
+    const headers = ['NISN', 'NIS', 'Nama', 'Jenis Kelamin', 'Kelas', 'Program', 'Email', 'Phone', 'Wali Nama', 'Wali Phone', 'Tanggal Masuk', 'Target Hafalan', 'Current Hafalan', 'Target Nilai', 'Status', 'Catatan'];
+
     let csv = headers.join(',') + '\n';
-    
+
     students.forEach(student => {
+        const jenisKelamin = student.jenis_kelamin === 'L' ? 'Laki-laki'
+            : student.jenis_kelamin === 'P' ? 'Perempuan'
+            : '';
         const row = [
             student.nisn,
+            student.nis || '',
             `"${student.nama}"`,
+            jenisKelamin,
             student.kelas || '',
             student.program || '',
             student.email || '',
@@ -991,7 +1031,8 @@ function exportToCSV(students) {
             student.target_hafalan,
             student.current_hafalan,
             student.target_nilai,
-            student.aktif ? 'Aktif' : 'Tidak Aktif'
+            student.aktif ? 'Aktif' : 'Tidak Aktif',
+            `"${(student.catatan || '').replace(/"/g, '""')}"`
         ];
         csv += row.join(',') + '\n';
     });
@@ -1071,8 +1112,9 @@ window.switchView = function(view) {
 
 function openImportModal() {
     const userRole = window.getUserRole();
-    if (userRole === 'walisantri') {
-        showError('Walisantri tidak memiliki izin untuk import data');
+    // Only superadmin and admin can import
+    if (!['superadmin', 'admin'].includes(userRole)) {
+        showError('Anda tidak memiliki izin untuk import data');
         return;
     }
 
@@ -1322,7 +1364,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function openKenaikanKelasModal() {
     const userRole = window.getUserRole();
-    if (!['superadmin', 'guru'].includes(userRole)) {
+    // Only superadmin and admin can do bulk class promotion
+    if (!['superadmin', 'admin'].includes(userRole)) {
         showError('Anda tidak memiliki izin untuk fitur kenaikan kelas');
         return;
     }

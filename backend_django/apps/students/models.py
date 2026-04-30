@@ -23,7 +23,19 @@ class Student(models.Model):
         ('dikeluarkan', 'Dikeluarkan'),
     ]
 
+    JENIS_KELAMIN_CHOICES = [
+        ('L', 'Laki-laki'),
+        ('P', 'Perempuan'),
+    ]
+
     nisn = models.CharField(max_length=20, unique=True)
+    nis = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=False,
+        help_text="Nomor Induk Siswa lokal (7 digit, misal: 0000664)"
+    )
     nama = models.CharField(max_length=100)
     kelas = models.CharField(max_length=20, blank=True, null=True)
     program = models.CharField(max_length=50, blank=True, null=True)
@@ -36,8 +48,9 @@ class Student(models.Model):
     alamat = models.TextField(blank=True, null=True)
     jenis_kelamin = models.CharField(
         max_length=1,
-        choices=[('L', 'Laki-laki'), ('P', 'Perempuan')],
-        blank=True, null=True
+        choices=JENIS_KELAMIN_CHOICES,
+        null=True,
+        blank=True
     )
 
     # Wali (Guardian) info
@@ -61,6 +74,9 @@ class Student(models.Model):
         help_text="Status santri (aktif/alumni/pindah/dikeluarkan)"
     )
 
+    # Catatan umum
+    catatan = models.TextField(blank=True, default='')
+
     # Alumni specific fields
     tahun_lulus = models.CharField(max_length=10, blank=True, null=True)  # e.g., "2025/2026"
     tanggal_keluar = models.DateField(blank=True, null=True)
@@ -77,6 +93,7 @@ class Student(models.Model):
         ordering = ['nisn']
         indexes = [
             models.Index(fields=['nisn']),
+            models.Index(fields=['nis']),
             models.Index(fields=['nama']),
             models.Index(fields=['kelas']),
             models.Index(fields=['program']),
