@@ -25,12 +25,15 @@ import re
 # ============================================================
 
 COLUMN_MAPPINGS = {
-    'nisn': ['nisn', 'nis', 'no_induk', 'nomor_induk', 'no induk', 'nomor induk siswa',
-             'nomor induk', 'no. induk', 'nomer induk'],
+    'nisn': ['nisn', 'nomor induk siswa nasional', 'no_induk_nasional', 'nomor induk nasional'],
+    'nis': ['nis', 'no_induk', 'nomor_induk', 'no induk', 'nomor induk siswa',
+            'nomor induk', 'no. induk', 'nomer induk', 'nomor induk lokal'],
     'nama': ['nama', 'nama_lengkap', 'nama lengkap', 'nama_siswa', 'nama siswa',
              'fullname', 'name', 'nama santri', 'nama_santri'],
     'kelas': ['kelas', 'class', 'tingkat', 'grade', 'rombel', 'rombongan belajar'],
     'program': ['program', 'jurusan', 'peminatan', 'major', 'konsentrasi'],
+    'jenis_kelamin': ['jenis_kelamin', 'jenis kelamin', 'gender', 'kelamin', 'jk',
+                      'l/p', 'laki/perempuan', 'sex'],
     'status': ['status', 'aktif', 'active', 'status_aktif', 'status siswa', 'keterangan'],
     'email': ['email', 'e-mail', 'email_siswa', 'alamat email'],
     'phone': ['phone', 'hp', 'no_hp', 'telepon', 'no_telepon', 'handphone', 'no hp',
@@ -47,6 +50,7 @@ COLUMN_MAPPINGS = {
     'target_nilai': ['target_nilai', 'target nilai', 'kkm', 'nilai target'],
     'tanggal_masuk': ['tanggal_masuk', 'tanggal masuk', 'tgl_masuk', 'tgl masuk',
                       'entry_date', 'admission_date', 'tanggal daftar', 'tgl daftar'],
+    'catatan': ['catatan', 'keterangan', 'note', 'notes', 'catatan siswa', 'remark'],
 }
 
 # Keywords to identify header row
@@ -147,6 +151,29 @@ def parse_status(value: Any) -> bool:
                        'drop out', 'do', 'berhenti']
 
     return str_value not in inactive_values
+
+
+def parse_jenis_kelamin(value: Any) -> Optional[str]:
+    """
+    Parse jenis kelamin value to 'L' or 'P'.
+    Returns None if not recognized.
+    """
+    if pd.isna(value) or value is None:
+        return None
+
+    str_value = str(value).upper().strip()
+
+    # Check for male indicators
+    male_values = ['L', 'LAKI-LAKI', 'LAKI', 'MALE', 'M', 'PRIA', 'COWOK', '1']
+    if str_value in male_values:
+        return 'L'
+
+    # Check for female indicators
+    female_values = ['P', 'PEREMPUAN', 'FEMALE', 'F', 'WANITA', 'CEWEK', '2']
+    if str_value in female_values:
+        return 'P'
+
+    return None
 
 
 def parse_integer(value: Any, default: int = 0) -> int:
@@ -370,9 +397,15 @@ def parse_student_rows(ws, header_row: int, column_map: Dict[str, int]) -> Tuple
 
         # Build student record
         try:
+            # Parse NIS (local student number)
+            nis_value = sanitize_nisn(get_cell('nis'))
+            nis = nis_value if nis_value else None
+
             student = {
                 'nisn': nisn,
+                'nis': nis,
                 'nama': nama,
+                'jenis_kelamin': parse_jenis_kelamin(get_cell('jenis_kelamin')),
                 'kelas': sanitize_string(get_cell('kelas')) or None,
                 'program': sanitize_string(get_cell('program')) or 'Reguler',
                 'email': sanitize_string(get_cell('email')) or None,
@@ -384,6 +417,7 @@ def parse_student_rows(ws, header_row: int, column_map: Dict[str, int]) -> Tuple
                 'target_nilai': parse_integer(get_cell('target_nilai'), 75),
                 'tanggal_masuk': parse_date_to_iso(get_cell('tanggal_masuk')),
                 'aktif': parse_status(get_cell('status')),
+                'catatan': sanitize_string(get_cell('catatan')) or '',
                 '_row': row_idx
             }
 
@@ -489,9 +523,11 @@ def generate_import_template() -> bytes:
     # Column definitions with widths
     columns = [
         ('NISN', 15, 'Wajib - Nomor Induk Siswa Nasional'),
+        ('NIS', 12, 'Wajib - Nomor Induk Siswa lokal (7 digit)'),
         ('Nama', 30, 'Wajib - Nama lengkap siswa'),
         ('Kelas', 10, 'Contoh: X A, XI B, XII C'),
         ('Program', 15, 'Reguler / Tahfidz / Khusus'),
+        ('Jenis Kelamin', 14, 'L (Laki-laki) / P (Perempuan)'),
         ('Status', 12, 'Aktif / Tidak Aktif'),
         ('Email', 25, 'Alamat email siswa'),
         ('No HP', 15, 'Nomor telepon siswa'),
@@ -501,23 +537,27 @@ def generate_import_template() -> bytes:
         ('Hafalan Sekarang', 16, 'Capaian juz saat ini'),
         ('Target Nilai', 12, 'KKM (default: 75)'),
         ('Tanggal Masuk', 14, 'Format: DD/MM/YYYY'),
+        ('Catatan', 30, 'Catatan tambahan (opsional)'),
     ]
 
     # Sample data
     sample_row = [
-        "'0012345678",  # Leading quote to force text
-        "Ahmad Abdullah",
-        "X A",
-        "Reguler",
+        "'0069028700",  # Leading quote to force text
+        "'0000664",     # Leading quote to force text
+        "Contoh Nama Siswa",
+        "XII A",
+        "Tahfidz",
+        "L",
         "Aktif",
-        "ahmad@email.com",
-        "081234567890",
-        "Bapak Abdullah",
-        "081234567891",
-        "5",
-        "2",
+        "",
+        "",
+        "",
+        "",
+        "30",
+        "15",
         "75",
-        "15/07/2024",
+        "01/01/2024",
+        "",
     ]
 
     # Write headers (Row 1)
@@ -552,9 +592,10 @@ def generate_import_template() -> bytes:
     # Freeze header rows
     ws.freeze_panes = 'A4'
 
-    # Set NISN column to Text format
+    # Set NISN and NIS columns to Text format
     for row in range(3, 1000):  # Format many rows for future data
-        ws.cell(row=row, column=1).number_format = '@'  # Text format
+        ws.cell(row=row, column=1).number_format = '@'  # NISN - Text format
+        ws.cell(row=row, column=2).number_format = '@'  # NIS - Text format
 
     # Add instruction sheet
     ws_info = wb.create_sheet(title="Petunjuk Pengisian")
@@ -562,14 +603,17 @@ def generate_import_template() -> bytes:
     instructions = [
         ("PETUNJUK PENGISIAN DATA SISWA", None),
         ("", None),
-        ("1. Kolom NISN dan Nama WAJIB diisi", None),
-        ("2. Untuk NISN yang diawali angka 0, tambahkan tanda petik (') di depan", None),
-        ("   Contoh: '0012345678", None),
-        ("3. Format tanggal: DD/MM/YYYY (contoh: 15/07/2024)", None),
-        ("4. Status diisi dengan: Aktif atau Tidak Aktif", None),
-        ("5. Program diisi dengan: Reguler, Tahfidz, atau Khusus", None),
-        ("6. Hapus baris contoh (baris 3) sebelum mengimport data asli", None),
-        ("7. Baris petunjuk (baris 2) boleh dihapus atau dibiarkan", None),
+        ("1. Kolom NISN, NIS, dan Nama WAJIB diisi", None),
+        ("2. Untuk NISN/NIS yang diawali angka 0, tambahkan tanda petik (') di depan", None),
+        ("   Contoh NISN: '0069028700", None),
+        ("   Contoh NIS: '0000664 (7 digit)", None),
+        ("3. Jenis Kelamin diisi dengan: L (Laki-laki) atau P (Perempuan)", None),
+        ("4. Format tanggal: DD/MM/YYYY (contoh: 01/01/2024)", None),
+        ("5. Status diisi dengan: Aktif atau Tidak Aktif", None),
+        ("6. Program diisi dengan: Reguler, Tahfidz, atau Khusus", None),
+        ("7. Hapus baris contoh (baris 3) sebelum mengimport data asli", None),
+        ("8. Baris petunjuk (baris 2) boleh dihapus atau dibiarkan", None),
+        ("9. Kolom Catatan bersifat opsional", None),
         ("", None),
         ("KELAS YANG TERSEDIA:", None),
         ("Kelas X: X A, X B, X C, X D", None),
