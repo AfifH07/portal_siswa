@@ -49,7 +49,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         # PERUBAHAN 4: Filter berdasarkan role
 
         # Admin/Superadmin/Pimpinan: lihat semua (termasuk yang belum approved)
-        if user.role in ['superadmin', 'admin', 'pimpinan']:
+        if user.role in ['superadmin', 'pimpinan']:
             pass  # No filter, see all
 
         # BK & Musyrif: lihat semua yang sudah approved
@@ -343,7 +343,7 @@ def evaluation_statistics(request):
         # PERUBAHAN 4: Filter berdasarkan role (sama dengan get_queryset)
 
         # Admin/Superadmin/Pimpinan: lihat semua
-        if user.role in ['superadmin', 'admin', 'pimpinan']:
+        if user.role in ['superadmin', 'pimpinan']:
             pass  # No filter
 
         # BK & Musyrif: lihat semua yang sudah approved

@@ -614,7 +614,7 @@ async function loadStudents(page = 1) {
 function renderStudents(students) {
     const tbody = document.getElementById('students-table-body');
     const userRole = window.getUserRole();
-    const canManage = ['superadmin', 'admin'].includes(userRole);
+    const canManage = userRole === 'superadmin';
     const countBadge = document.getElementById('table-count-badge');
 
     if (!students || students.length === 0) {
@@ -706,7 +706,7 @@ function resetFilters() {
 function openAddModal() {
     const userRole = window.getUserRole();
     // Only superadmin and admin can add students
-    if (!['superadmin', 'admin'].includes(userRole)) {
+    if (!userRole === 'superadmin') {
         showError('Anda tidak memiliki izin untuk menambah siswa');
         return;
     }
@@ -723,7 +723,7 @@ function openAddModal() {
 async function editStudent(nisn) {
     const userRole = window.getUserRole();
     // Only superadmin and admin can edit students
-    if (!['superadmin', 'admin'].includes(userRole)) {
+    if (!userRole === 'superadmin') {
         showError('Anda tidak memiliki izin untuk mengedit data siswa');
         return;
     }
@@ -930,7 +930,7 @@ function closeViewModal() {
 async function deleteStudent(nisn) {
     const userRole = window.getUserRole();
     // Only superadmin and admin can delete students
-    if (!['superadmin', 'admin'].includes(userRole)) {
+    if (!userRole === 'superadmin') {
         showError('Anda tidak memiliki izin untuk menghapus siswa');
         return;
     }
@@ -968,7 +968,7 @@ async function getStudentName(nisn) {
       try {
           const userRole = window.getUserRole();
           // Only superadmin and admin can export
-          if (!['superadmin', 'admin'].includes(userRole)) {
+          if (!userRole === 'superadmin') {
               showError('Anda tidak memiliki izin untuk export data');
               return;
           }
@@ -1113,7 +1113,7 @@ window.switchView = function(view) {
 function openImportModal() {
     const userRole = window.getUserRole();
     // Only superadmin and admin can import
-    if (!['superadmin', 'admin'].includes(userRole)) {
+    if (!userRole === 'superadmin') {
         showError('Anda tidak memiliki izin untuk import data');
         return;
     }
@@ -1365,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function openKenaikanKelasModal() {
     const userRole = window.getUserRole();
     // Only superadmin and admin can do bulk class promotion
-    if (!['superadmin', 'admin'].includes(userRole)) {
+    if (!userRole === 'superadmin') {
         showError('Anda tidak memiliki izin untuk fitur kenaikan kelas');
         return;
     }

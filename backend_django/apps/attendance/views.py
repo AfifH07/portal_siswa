@@ -818,7 +818,7 @@ def get_attendance_history(request):
         queryset = queryset.filter(input_by=user)
 
     # ========== ADMIN VIEW: Filter by specific guru (optional) ==========
-    elif user.role in ['superadmin', 'pimpinan', 'admin'] and guru_filter:
+    elif user.role in ['superadmin', 'pimpinan'] and guru_filter:
         # Admin wants to filter by specific guru
         try:
             target_guru = User.objects.get(username=guru_filter)

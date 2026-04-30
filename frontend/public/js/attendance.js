@@ -454,7 +454,7 @@ function adjustUIForRole() {
         const role = user.role || '';
 
         // Admin roles that can see all guru's jurnal
-        const adminRoles = ['superadmin', 'pimpinan', 'admin'];
+        const adminRoles = ['superadmin', 'pimpinan'];
         const isAdmin = adminRoles.includes(role);
 
         // Guru/musyrif roles that see personal jurnal only

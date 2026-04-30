@@ -126,10 +126,10 @@ class StudentViewSet(viewsets.ModelViewSet):
         """
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             user = self.request.user
-            if user.is_authenticated and user.role not in ['superadmin', 'admin']:
+            if user.is_authenticated and user.role != 'superadmin':
                 from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied(
-                    "Hanya admin yang bisa menambah, mengubah, atau menghapus data santri."
+                    "Hanya superadmin yang bisa menambah, mengubah, atau menghapus data santri."
                 )
         return [IsAuthenticated()]
 
@@ -465,7 +465,7 @@ def alumni_list(request):
         if user.linked_student_nisn:
             linked_nisns.append(user.linked_student_nisn)
         queryset = queryset.filter(nisn__in=linked_nisns)
-    elif user.role not in ['superadmin', 'pimpinan', 'admin']:
+    elif user.role not in ['superadmin', 'pimpinan']:
         return Response(
             {'success': False, 'error': 'Akses tidak diizinkan'},
             status=status.HTTP_403_FORBIDDEN
@@ -538,7 +538,7 @@ def alumni_detail(request, nisn):
                 {'success': False, 'error': 'Akses tidak diizinkan'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role not in ['superadmin', 'pimpinan', 'admin']:
+    elif user.role not in ['superadmin', 'pimpinan']:
         return Response(
             {'success': False, 'error': 'Akses tidak diizinkan'},
             status=status.HTTP_403_FORBIDDEN
@@ -796,7 +796,7 @@ def alumni_statistics(request):
     """
     user = request.user
 
-    if user.role not in ['superadmin', 'pimpinan', 'admin']:
+    if user.role not in ['superadmin', 'pimpinan']:
         return Response(
             {'success': False, 'error': 'Akses tidak diizinkan'},
             status=status.HTTP_403_FORBIDDEN

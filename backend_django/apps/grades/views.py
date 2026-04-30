@@ -1673,7 +1673,7 @@ def get_mapel_list(request):
         })
 
     # For superadmin/admin/pimpinan: get all active MasterMapel
-    elif user.role in ['superadmin', 'admin', 'pimpinan']:
+    elif user.role in ['superadmin', 'pimpinan']:
         master_mapel = MasterMapel.objects.filter(
             is_active=True
         ).values_list('nama', flat=True).distinct()
