@@ -96,8 +96,8 @@ class GradeViewSet(viewsets.ModelViewSet):
         user_role = getattr(self.request.user, 'role', None)
         user_name = self.request.user.name if hasattr(self.request.user, 'name') and self.request.user.name else self.request.user.username
 
-        # Superadmin can update any grade
-        if user_role == 'superadmin':
+        # Superadmin/Admin can update any grade
+        if user_role in ['superadmin', 'admin']:
             serializer.save()
         # Guru can only update their own grades
         elif instance.guru == user_name:
@@ -755,7 +755,7 @@ def get_statistics(request):
 
     # Class comparison (for admin/pimpinan)
     class_comparison = []
-    if user.role in ['superadmin', 'pimpinan']:
+    if user.role in ['superadmin', 'admin', 'pimpinan']:
         class_stats = queryset.values('kelas').annotate(
             avg_nilai=Avg('nilai'),
             count=Count('id'),
@@ -1401,8 +1401,8 @@ def get_my_teaching_classes(request):
                 'message': 'Tidak ada tahun ajaran aktif'
             })
 
-        # Superadmin can see all classes
-        if user.role == 'superadmin':
+        # Superadmin/Admin can see all classes
+        if user.role in ['superadmin', 'admin']:
             classes = Student.objects.values_list('kelas', flat=True).distinct()
             result = [{'kelas': k, 'mata_pelajaran': None} for k in sorted(set(c for c in classes if c))]
             return Response({
@@ -1673,7 +1673,7 @@ def get_mapel_list(request):
         })
 
     # For superadmin/admin/pimpinan: get all active MasterMapel
-    elif user.role in ['superadmin', 'pimpinan']:
+    elif user.role in ['superadmin', 'admin', 'pimpinan']:
         master_mapel = MasterMapel.objects.filter(
             is_active=True
         ).values_list('nama', flat=True).distinct()

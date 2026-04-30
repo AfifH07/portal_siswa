@@ -126,10 +126,10 @@ class StudentViewSet(viewsets.ModelViewSet):
         """
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             user = self.request.user
-            if user.is_authenticated and user.role != 'superadmin':
+            if user.is_authenticated and user.role not in ['superadmin', 'admin']:
                 from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied(
-                    "Hanya superadmin yang bisa menambah, mengubah, atau menghapus data santri."
+                    "Hanya superadmin/admin yang bisa menambah, mengubah, atau menghapus data santri."
                 )
         return [IsAuthenticated()]
 
@@ -191,9 +191,9 @@ class StudentViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         user = request.user
-        if user.role != 'superadmin':
+        if user.role not in ['superadmin', 'admin']:
             return Response(
-                {'success': False, 'message': 'Hanya superadmin yang dapat menghapus data siswa'},
+                {'success': False, 'message': 'Hanya superadmin/admin yang dapat menghapus data siswa'},
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, *args, **kwargs)
@@ -465,7 +465,7 @@ def alumni_list(request):
         if user.linked_student_nisn:
             linked_nisns.append(user.linked_student_nisn)
         queryset = queryset.filter(nisn__in=linked_nisns)
-    elif user.role not in ['superadmin', 'pimpinan']:
+    elif user.role not in ['superadmin', 'admin', 'pimpinan']:
         return Response(
             {'success': False, 'error': 'Akses tidak diizinkan'},
             status=status.HTTP_403_FORBIDDEN
@@ -538,7 +538,7 @@ def alumni_detail(request, nisn):
                 {'success': False, 'error': 'Akses tidak diizinkan'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role not in ['superadmin', 'pimpinan']:
+    elif user.role not in ['superadmin', 'admin', 'pimpinan']:
         return Response(
             {'success': False, 'error': 'Akses tidak diizinkan'},
             status=status.HTTP_403_FORBIDDEN
@@ -570,9 +570,9 @@ def set_alumni_status(request):
     """
     user = request.user
 
-    if user.role != 'superadmin':
+    if user.role not in ['superadmin', 'admin']:
         return Response(
-            {'success': False, 'error': 'Hanya superadmin yang dapat mengubah status alumni'},
+            {'success': False, 'error': 'Hanya superadmin/admin yang dapat mengubah status alumni'},
             status=status.HTTP_403_FORBIDDEN
         )
 
@@ -632,9 +632,9 @@ def bulk_set_alumni(request):
     """
     user = request.user
 
-    if user.role != 'superadmin':
+    if user.role not in ['superadmin', 'admin']:
         return Response(
-            {'success': False, 'error': 'Hanya superadmin yang dapat melakukan kelulusan massal'},
+            {'success': False, 'error': 'Hanya superadmin/admin yang dapat melakukan kelulusan massal'},
             status=status.HTTP_403_FORBIDDEN
         )
 
@@ -689,9 +689,9 @@ def reactivate_student(request):
     """
     user = request.user
 
-    if user.role != 'superadmin':
+    if user.role not in ['superadmin', 'admin']:
         return Response(
-            {'success': False, 'error': 'Hanya superadmin yang dapat mengaktifkan kembali santri'},
+            {'success': False, 'error': 'Hanya superadmin/admin yang dapat mengaktifkan kembali santri'},
             status=status.HTTP_403_FORBIDDEN
         )
 
@@ -754,9 +754,9 @@ def update_alumni_info(request, nisn):
     """
     user = request.user
 
-    if user.role != 'superadmin':
+    if user.role not in ['superadmin', 'admin']:
         return Response(
-            {'success': False, 'error': 'Hanya superadmin yang dapat mengubah data alumni'},
+            {'success': False, 'error': 'Hanya superadmin/admin yang dapat mengubah data alumni'},
             status=status.HTTP_403_FORBIDDEN
         )
 
@@ -796,7 +796,7 @@ def alumni_statistics(request):
     """
     user = request.user
 
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         return Response(
             {'success': False, 'error': 'Akses tidak diizinkan'},
             status=status.HTTP_403_FORBIDDEN

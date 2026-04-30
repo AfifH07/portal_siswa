@@ -31,6 +31,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
         ('superadmin', 'Superadmin'),
+        ('admin', 'Admin'),               # Admin (akses manajemen data, tapi tidak bisa kelola user)
         ('pimpinan', 'Pimpinan'),
         ('guru', 'Guru'),
         ('musyrif', 'Musyrif'),           # Pengawas asrama/halaqoh

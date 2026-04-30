@@ -49,7 +49,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         # PERUBAHAN 4: Filter berdasarkan role
 
         # Admin/Superadmin/Pimpinan: lihat semua (termasuk yang belum approved)
-        if user.role in ['superadmin', 'pimpinan']:
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
             pass  # No filter, see all
 
         # BK & Musyrif: lihat semua yang sudah approved
@@ -272,7 +272,7 @@ def update_evaluation(request, pk):
     try:
         evaluation = Evaluation.objects.get(pk=pk)
         
-        if evaluation.evaluator != request.user.name and request.user.role != 'superadmin':
+        if evaluation.evaluator != request.user.name and request.user.role not in ['superadmin', 'admin']:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki izin untuk mengedit evaluasi ini'
@@ -309,7 +309,7 @@ def delete_evaluation(request, pk):
     try:
         evaluation = Evaluation.objects.get(pk=pk)
         
-        if evaluation.evaluator != request.user.name and request.user.role != 'superadmin':
+        if evaluation.evaluator != request.user.name and request.user.role not in ['superadmin', 'admin']:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki izin untuk menghapus evaluasi ini'
@@ -343,7 +343,7 @@ def evaluation_statistics(request):
         # PERUBAHAN 4: Filter berdasarkan role (sama dengan get_queryset)
 
         # Admin/Superadmin/Pimpinan: lihat semua
-        if user.role in ['superadmin', 'pimpinan']:
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
             pass  # No filter
 
         # BK & Musyrif: lihat semua yang sudah approved
@@ -664,7 +664,7 @@ def delete_comment(request, comment_id):
         comment = EvaluationComment.objects.get(pk=comment_id)
 
         # Check permission: owner or admin
-        if comment.user != request.user and request.user.role not in ['superadmin', 'pimpinan']:
+        if comment.user != request.user and request.user.role not in ['superadmin', 'admin', 'pimpinan']:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki izin untuk menghapus tanggapan ini'

@@ -250,8 +250,8 @@ class MasterMapelListView(APIView):
         })
 
     def post(self, request):
-        # Only superadmin can create
-        if request.user.role not in ['superadmin']:
+        # Only superadmin/admin can create
+        if request.user.role not in ['superadmin', 'admin']:
             return Response({
                 'success': False,
                 'message': 'Tidak memiliki akses'
@@ -336,7 +336,7 @@ class MasterMapelDetailView(APIView):
         })
 
     def patch(self, request, pk):
-        if request.user.role not in ['superadmin']:
+        if request.user.role not in ['superadmin', 'admin']:
             return Response({
                 'success': False,
                 'message': 'Tidak memiliki akses'
@@ -382,7 +382,7 @@ class MasterMapelDetailView(APIView):
         })
 
     def delete(self, request, pk):
-        if request.user.role not in ['superadmin']:
+        if request.user.role not in ['superadmin', 'admin']:
             return Response({
                 'success': False,
                 'message': 'Tidak memiliki akses'

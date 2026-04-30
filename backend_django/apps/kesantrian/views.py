@@ -1142,7 +1142,7 @@ def blp_lock(request, pk):
         )
 
     # Check permissions
-    if user.role not in ['superadmin', 'pimpinan'] and user.username != blp_entry.pencatat_username:
+    if user.role not in ['superadmin', 'admin', 'pimpinan'] and user.username != blp_entry.pencatat_username:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin untuk mengunci BLP ini'},
             status=status.HTTP_403_FORBIDDEN
@@ -1389,7 +1389,7 @@ def inval_verify(request, pk):
     """
     user = request.user
 
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         return Response(
             {'success': False, 'message': 'Hanya pimpinan yang dapat memverifikasi inval'},
             status=status.HTTP_403_FORBIDDEN
@@ -1453,7 +1453,7 @@ def employee_evaluation_list(request):
     user = request.user
 
     # Only admin roles can view all, teachers can view their own
-    if user.role in ['superadmin', 'pimpinan']:
+    if user.role in ['superadmin', 'admin', 'pimpinan']:
         queryset = EmployeeEvaluation.objects.all()
     elif user.role in ['guru', 'musyrif']:
         # Can view their own evaluations
@@ -1465,7 +1465,7 @@ def employee_evaluation_list(request):
         )
 
     # Apply filters (admin only)
-    if user.role in ['superadmin', 'pimpinan']:
+    if user.role in ['superadmin', 'admin', 'pimpinan']:
         user_id = request.query_params.get('user_id')
         if user_id:
             queryset = queryset.filter(user_id=user_id)
@@ -1512,7 +1512,7 @@ def employee_evaluation_summary(request, user_id):
     user = request.user
 
     # Check permissions
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         if user.id != user_id:
             return Response(
                 {'success': False, 'message': 'Anda hanya dapat melihat evaluasi Anda sendiri'},
@@ -2208,7 +2208,7 @@ def incident_comment_detail(request, pk):
 
     elif request.method == 'PUT':
         # Only author can edit
-        if comment.author != user and user.role not in ['superadmin', 'pimpinan']:
+        if comment.author != user and user.role not in ['superadmin', 'admin', 'pimpinan']:
             return Response(
                 {'success': False, 'message': 'Anda tidak dapat mengedit komentar ini'},
                 status=status.HTTP_403_FORBIDDEN
@@ -2235,7 +2235,7 @@ def incident_comment_detail(request, pk):
 
     elif request.method == 'DELETE':
         # Only author or admin can delete
-        if comment.author != user and user.role not in ['superadmin', 'pimpinan']:
+        if comment.author != user and user.role not in ['superadmin', 'admin', 'pimpinan']:
             return Response(
                 {'success': False, 'message': 'Anda tidak dapat menghapus komentar ini'},
                 status=status.HTTP_403_FORBIDDEN
@@ -2277,7 +2277,7 @@ def asatidz_evaluation_list_create(request):
         ).order_by('-tanggal_kejadian', '-created_at')
 
         # RBAC: Filter berdasarkan role
-        if user.role in ['superadmin', 'pimpinan']:
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
             # Pimpinan melihat semua evaluasi
             pass
         else:
@@ -2290,7 +2290,7 @@ def asatidz_evaluation_list_create(request):
         tahun_ajaran = request.query_params.get('tahun_ajaran')
         semester = request.query_params.get('semester')
 
-        if ustadz_id and user.role in ['superadmin', 'pimpinan']:
+        if ustadz_id and user.role in ['superadmin', 'admin', 'pimpinan']:
             queryset = queryset.filter(ustadz_id=ustadz_id)
         if kategori:
             queryset = queryset.filter(kategori=kategori)
@@ -2366,7 +2366,7 @@ def asatidz_evaluation_detail(request, pk):
         )
 
     # Object-level permission check
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         # Ustadz hanya bisa lihat evaluasi diri sendiri
         if evaluation.ustadz_id != user.id:
             return Response(
@@ -2451,7 +2451,7 @@ def asatidz_evaluation_summary(request):
     user = request.user
 
     # Hanya pimpinan/superadmin yang bisa lihat summary
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         return Response(
             {'success': False, 'message': 'Hanya pimpinan yang dapat mengakses summary'},
             status=status.HTTP_403_FORBIDDEN
@@ -2515,7 +2515,7 @@ def asatidz_evaluation_by_ustadz(request, ustadz_id):
     user = request.user
 
     # RBAC check
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         # Ustadz hanya bisa akses data sendiri
         if ustadz_id != user.id:
             return Response(
@@ -2603,7 +2603,7 @@ def indikator_kinerja_list_create(request):
         # Filter: show only active by default
         show_all = request.query_params.get('show_all', 'false').lower() == 'true'
 
-        if show_all and user.role in ['superadmin', 'pimpinan']:
+        if show_all and user.role in ['superadmin', 'admin', 'pimpinan']:
             queryset = IndikatorKinerja.objects.all()
         else:
             queryset = IndikatorKinerja.objects.filter(is_active=True)
@@ -2619,7 +2619,7 @@ def indikator_kinerja_list_create(request):
 
     elif request.method == 'POST':
         # Hanya pimpinan/superadmin yang bisa create
-        if user.role not in ['superadmin', 'pimpinan']:
+        if user.role not in ['superadmin', 'admin', 'pimpinan']:
             return Response(
                 {'success': False, 'message': 'Hanya pimpinan yang dapat membuat indikator'},
                 status=status.HTTP_403_FORBIDDEN
@@ -2669,7 +2669,7 @@ def indikator_kinerja_detail(request, pk):
 
     elif request.method in ['PUT', 'DELETE']:
         # Hanya pimpinan/superadmin yang bisa update/delete
-        if user.role not in ['superadmin', 'pimpinan']:
+        if user.role not in ['superadmin', 'admin', 'pimpinan']:
             return Response(
                 {'success': False, 'message': 'Anda tidak memiliki izin'},
                 status=status.HTTP_403_FORBIDDEN
@@ -2734,7 +2734,7 @@ def penilaian_kinerja_list_create(request):
         ).order_by('-created_at')
 
         # RBAC filter
-        if user.role in ['superadmin', 'pimpinan']:
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
             pass  # See all
         elif user.role in ['guru', 'musyrif', 'bendahara']:
             # See own evaluations only
@@ -2746,7 +2746,7 @@ def penilaian_kinerja_list_create(request):
             )
 
         # Apply filters (admin only)
-        if user.role in ['superadmin', 'pimpinan']:
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
             ustadz_id = request.query_params.get('ustadz')
             if ustadz_id:
                 queryset = queryset.filter(ustadz_id=ustadz_id)
@@ -2772,7 +2772,7 @@ def penilaian_kinerja_list_create(request):
 
     elif request.method == 'POST':
         # Hanya pimpinan/superadmin yang bisa create
-        if user.role not in ['superadmin', 'pimpinan']:
+        if user.role not in ['superadmin', 'admin', 'pimpinan']:
             return Response(
                 {'success': False, 'message': 'Hanya pimpinan yang dapat membuat penilaian'},
                 status=status.HTTP_403_FORBIDDEN
@@ -2833,7 +2833,7 @@ def penilaian_kinerja_detail(request, pk):
         )
 
     # RBAC check
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         if penilaian.ustadz_id != user.id:
             return Response(
                 {'success': False, 'message': 'Anda tidak memiliki akses ke penilaian ini'},
@@ -2945,7 +2945,7 @@ def penilaian_kinerja_finalize(request, pk):
     """
     user = request.user
 
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         return Response(
             {'success': False, 'message': 'Hanya pimpinan yang dapat memfinalisasi penilaian'},
             status=status.HTTP_403_FORBIDDEN
@@ -3013,7 +3013,7 @@ def penilaian_kinerja_summary(request):
     """
     user = request.user
 
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         return Response(
             {'success': False, 'message': 'Hanya pimpinan yang dapat mengakses summary'},
             status=status.HTTP_403_FORBIDDEN
@@ -3095,7 +3095,7 @@ def penilaian_kinerja_by_ustadz(request, ustadz_id):
     user = request.user
 
     # RBAC check
-    if user.role not in ['superadmin', 'pimpinan']:
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
         if ustadz_id != user.id:
             return Response(
                 {'success': False, 'message': 'Anda hanya dapat melihat penilaian Anda sendiri'},
@@ -3205,7 +3205,7 @@ def hafalan_dashboard_stats(request):
     user = request.user
 
     # RBAC: Only manager roles
-    allowed_roles = ['superadmin', 'pimpinan']
+    allowed_roles = ['superadmin', 'admin', 'pimpinan']
     if user.role not in allowed_roles:
         return Response(
             {'success': False, 'message': 'Akses ditolak. Hanya untuk role manager.'},

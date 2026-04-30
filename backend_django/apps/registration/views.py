@@ -48,7 +48,7 @@ class RegistrationListView(APIView):
 
     def get(self, request):
         # Only superadmin and pimpinan can view registrations
-        if request.user.role not in ['superadmin', 'pimpinan']:
+        if request.user.role not in ['superadmin', 'admin', 'pimpinan']:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki akses untuk melihat pendaftaran'
@@ -74,7 +74,7 @@ class RegistrationReviewView(APIView):
 
     def post(self, request, pk):
         # Only superadmin and pimpinan can review registrations
-        if request.user.role not in ['superadmin', 'pimpinan']:
+        if request.user.role not in ['superadmin', 'admin', 'pimpinan']:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki akses untuk memproses pendaftaran'

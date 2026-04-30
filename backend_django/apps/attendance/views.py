@@ -818,7 +818,7 @@ def get_attendance_history(request):
         queryset = queryset.filter(input_by=user)
 
     # ========== ADMIN VIEW: Filter by specific guru (optional) ==========
-    elif user.role in ['superadmin', 'pimpinan'] and guru_filter:
+    elif user.role in ['superadmin', 'admin', 'pimpinan'] and guru_filter:
         # Admin wants to filter by specific guru
         try:
             target_guru = User.objects.get(username=guru_filter)
@@ -1409,7 +1409,7 @@ def jurnal_history(request):
     # 1. input_by = user (jurnal milik guru yang login)
     # 2. Harus ada materi yang diisi (bukan empty string)
     # Role superadmin/pimpinan dapat melihat semua
-    if user.role in ['superadmin', 'pimpinan']:
+    if user.role in ['superadmin', 'admin', 'pimpinan']:
         queryset = Attendance.objects.exclude(
             Q(materi__isnull=True) | Q(materi__exact='')
         ).select_related('nisn')

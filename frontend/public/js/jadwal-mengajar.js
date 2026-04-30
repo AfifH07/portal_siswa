@@ -19,9 +19,9 @@ let deleteTargetId = null;
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Check access - only superadmin
+    // Check access - only superadmin/admin
     const role = localStorage.getItem('user_role');
-    if (role !== 'superadmin') {
+    if (!['superadmin', 'admin'].includes(role)) {
         document.getElementById('admin-view').style.display = 'none';
         document.getElementById('access-denied-view').style.display = 'block';
         return;

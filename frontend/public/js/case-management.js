@@ -1096,7 +1096,7 @@
 
             // Show/hide sections based on role
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const isPimpinan = user.role === 'pimpinan' || user.role === 'superadmin';
+            const isPimpinan = ['superadmin', 'admin', 'pimpinan'].includes(user.role);
             const isWalisantri = user.role === 'walisantri';
             const isClosed = incident.status === 'resolved' || incident.status === 'closed';
 
@@ -1600,7 +1600,7 @@
 
         // For resolved status, use the resolve endpoint (pimpinan only)
         if (newStatus === 'resolved') {
-            const isPimpinan = user.role === 'pimpinan' || user.role === 'superadmin';
+            const isPimpinan = ['superadmin', 'admin', 'pimpinan'].includes(user.role);
             if (!isPimpinan) {
                 showToast('Hanya pimpinan yang bisa menyelesaikan kasus', 'error');
                 return;

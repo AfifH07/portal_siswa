@@ -588,8 +588,8 @@
             return;
         }
 
-        // Only superadmin can create/edit/delete
-        const canManage = role === 'superadmin';
+        // Only superadmin/admin can create/edit/delete
+        const canManage = ['superadmin', 'admin'].includes(role);
         if (!canManage) {
             // Hide all action buttons for non-admin roles
             if (btnAddStudent) btnAddStudent.style.display = 'none';

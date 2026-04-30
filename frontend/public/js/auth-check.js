@@ -399,6 +399,26 @@ function createRoleBasedNav() {
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
             ]
         },
+        'admin': {
+            main: [
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
+                { href: '/students', icon: 'users', label: 'Siswa' },
+                { href: '/attendance', icon: 'calendar-check', label: 'Jurnal Guru' },
+                { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
+                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
+                { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
+                { href: '/grades', icon: 'file-text', label: 'Nilai' },
+                { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' }
+            ],
+            admin: [
+                { href: '/jadwal-mengajar', icon: 'calendar-clock', label: 'Jadwal Mengajar' },
+                { href: '/master-mapel', icon: 'book-open', label: 'Master Mapel' }
+            ],
+            other: [
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
+            ]
+        },
         'pimpinan': {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },

@@ -614,7 +614,7 @@ async function loadStudents(page = 1) {
 function renderStudents(students) {
     const tbody = document.getElementById('students-table-body');
     const userRole = window.getUserRole();
-    const canManage = userRole === 'superadmin';
+    const canManage = ['superadmin', 'admin'].includes(userRole);
     const countBadge = document.getElementById('table-count-badge');
 
     if (!students || students.length === 0) {

@@ -11,10 +11,10 @@ class IsSuperAdmin(permissions.BasePermission):
 
 class IsPimpinan(permissions.BasePermission):
     """
-    Permission: Superadmin dan Pimpinan diizinkan.
+    Permission: Superadmin, Admin, dan Pimpinan diizinkan.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'pimpinan']
+        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'admin', 'pimpinan']
 
     def has_object_permission(self, request, view, obj):
         return True
@@ -22,21 +22,21 @@ class IsPimpinan(permissions.BasePermission):
 
 class IsGuru(permissions.BasePermission):
     """
-    Permission: Superadmin, Pimpinan, dan Guru diizinkan.
+    Permission: Superadmin, Admin, Pimpinan, dan Guru diizinkan.
 
     Object-level: Guru hanya bisa akses data kelas yang di-assign ke mereka.
-    Superadmin dan Pimpinan bisa akses semua.
+    Superadmin, Admin, dan Pimpinan bisa akses semua.
 
     BUG FIX #1: Tambahkan validasi user.kelas tidak None/kosong untuk guru.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'pimpinan', 'guru']
+        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'admin', 'pimpinan', 'guru']
 
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        # Superadmin dan Pimpinan: full access
-        if user.role in ['superadmin', 'pimpinan']:
+        # Superadmin, Admin, dan Pimpinan: full access
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
             return True
 
         # Guru: harus punya kelas yang valid
@@ -63,20 +63,20 @@ class IsGuru(permissions.BasePermission):
 
 class IsWalisantri(permissions.BasePermission):
     """
-    Permission: Superadmin, Pimpinan, dan Walisantri diizinkan.
+    Permission: Superadmin, Admin, Pimpinan, dan Walisantri diizinkan.
 
     Object-level: Walisantri hanya bisa akses data anak yang terhubung via linked_student_nisn.
 
     BUG FIX #2: obj.nisn adalah FK object, gunakan obj.nisn.nisn atau str(obj.nisn_id)
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'pimpinan', 'walisantri']
+        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'admin', 'pimpinan', 'walisantri']
 
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        # Superadmin dan Pimpinan: full access
-        if user.role in ['superadmin', 'pimpinan']:
+        # Superadmin, Admin, dan Pimpinan: full access
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
             return True
 
         # Walisantri: hanya akses data anak yang terhubung
@@ -111,16 +111,17 @@ class CanUpdateStudent(permissions.BasePermission):
     """
     Permission: Untuk update data siswa.
     Superadmin: full access
+    Admin: full access
     Pimpinan: full access
     Guru: hanya siswa di kelas mereka
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'pimpinan', 'guru']
+        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'admin', 'pimpinan', 'guru']
 
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        if user.role in ['superadmin', 'pimpinan']:
+        if user.role in ['superadmin', 'admin', 'pimpinan']:
             return True
 
         if user.role == 'guru':
@@ -144,20 +145,20 @@ class IsPendaftar(permissions.BasePermission):
     Permission: Untuk akses modul pendaftaran.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'pimpinan', 'pendaftar']
+        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'admin', 'pimpinan', 'pendaftar']
 
 
 class IsBendahara(permissions.BasePermission):
     """
     Permission: Untuk akses modul keuangan.
-    Superadmin dan Bendahara diizinkan.
+    Superadmin, Admin, dan Bendahara diizinkan.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'bendahara']
+        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'admin', 'bendahara']
 
     def has_object_permission(self, request, view, obj):
         # Bendahara bisa akses semua data keuangan
-        return request.user.role in ['superadmin', 'bendahara']
+        return request.user.role in ['superadmin', 'admin', 'bendahara']
 
 
 class IsStaffOrReadOnly(permissions.BasePermission):
@@ -195,10 +196,10 @@ class IsAsatidzEvaluationAllowed(permissions.BasePermission):
     """
 
     # Roles yang boleh CREATE/UPDATE/DELETE
-    WRITE_ROLES = ['superadmin', 'pimpinan']
+    WRITE_ROLES = ['superadmin', 'admin', 'pimpinan']
 
     # Roles yang boleh READ (semua staff kecuali walisantri)
-    READ_ROLES = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk']
+    READ_ROLES = ['superadmin', 'admin', 'pimpinan', 'guru', 'musyrif', 'bk']
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
