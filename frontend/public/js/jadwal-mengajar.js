@@ -146,9 +146,12 @@ async function loadJadwalData() {
         console.error('[JadwalMengajar] Error loading jadwal:', error);
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center text-danger">
-                    <p>Gagal memuat data jadwal</p>
-                    <button class="btn btn-sm btn-primary" onclick="loadJadwalData()">Coba Lagi</button>
+                <td colspan="8" class="text-center" style="padding: 40px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                    <p class="text-danger" style="font-weight: 600;">Gagal memuat data jadwal</p>
+                    <button class="btn btn-primary" onclick="loadJadwalData()" style="border-radius: 8px; padding: 10px 20px;">
+                        <i class="fas fa-sync me-2"></i> Coba Lagi
+                    </button>
                 </td>
             </tr>
         `;
@@ -184,7 +187,9 @@ function renderJadwalTable() {
                 <td colspan="8" class="text-center text-muted" style="padding: 40px;">
                     <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
                     <p>Belum ada jadwal mengajar</p>
-                    <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ Tambah Jadwal</button>
+                    <button class="btn btn-primary" onclick="openCreateModal()" style="border-radius: 8px; padding: 10px 20px;">
+                        <i class="fas fa-plus me-2"></i> Tambah Jadwal
+                    </button>
                 </td>
             </tr>
         `;
@@ -236,18 +241,14 @@ function renderJadwalTable() {
                 <td>${jamKeDisplay !== '-' ? `<span class="jam-badge">Jam ${jamKeDisplay}</span>` : '-'}</td>
                 <td><span class="waktu-display">${waktuDisplay}</span></td>
                 <td>
-                    <span class="badge ${jadwal.is_active ? 'badge-success' : 'badge-secondary'}">
+                    <span class="badge badge-status ${jadwal.is_active ? 'active' : 'inactive'}">
                         ${jadwal.is_active ? 'Aktif' : 'Nonaktif'}
                     </span>
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn btn-sm btn-outline" onclick="editJadwal(${jadwal.id})" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal(${jadwal.id})" title="Hapus">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <button class="btn-action" onclick="editJadwal(${jadwal.id})" title="Edit">✏️</button>
+                        <button class="btn-action btn-danger" onclick="openDeleteModal(${jadwal.id})" title="Hapus">🗑️</button>
                     </div>
                 </td>
             </tr>
