@@ -196,12 +196,27 @@ function renderJadwalTable() {
         const initials = getInitials(guru.name || jadwal.username);
         const hariClass = `badge-${jadwal.hari.toLowerCase()}`;
 
-        // Format waktu
-        let waktuDisplay = '-';
-        if (jadwal.jam_mulai && jadwal.jam_selesai) {
-            waktuDisplay = `${jadwal.jam_mulai} - ${jadwal.jam_selesai}`;
-        } else if (jadwal.jam) {
-            waktuDisplay = jadwal.jam;
+        // Format waktu - prefer waktu_display from API, fallback to computed
+        let waktuDisplay = jadwal.waktu_display || '-';
+        if (waktuDisplay === '-') {
+            if (jadwal.jam_mulai) {
+                const jamSelesai = jadwal.jam_selesai_akhir || jadwal.jam_selesai;
+                if (jamSelesai) {
+                    waktuDisplay = `${jadwal.jam_mulai} - ${jamSelesai}`;
+                }
+            } else if (jadwal.jam) {
+                waktuDisplay = jadwal.jam;
+            }
+        }
+
+        // Format jam ke - prefer jam_ke_display from API, fallback to computed
+        let jamKeDisplay = jadwal.jam_ke_display || '-';
+        if (jamKeDisplay === '-' && jadwal.jam_ke) {
+            if (jadwal.jam_ke_akhir && jadwal.jam_ke_akhir !== jadwal.jam_ke) {
+                jamKeDisplay = `${jadwal.jam_ke}-${jadwal.jam_ke_akhir}`;
+            } else {
+                jamKeDisplay = String(jadwal.jam_ke);
+            }
         }
 
         return `
@@ -218,7 +233,7 @@ function renderJadwalTable() {
                 <td><strong>${escapeHtml(jadwal.kelas)}</strong></td>
                 <td>${escapeHtml(jadwal.mata_pelajaran || '-')}</td>
                 <td><span class="badge-hari ${hariClass}">${jadwal.hari}</span></td>
-                <td>${jadwal.jam_ke ? `<span class="jam-badge">Jam ${jadwal.jam_ke}</span>` : '-'}</td>
+                <td>${jamKeDisplay !== '-' ? `<span class="jam-badge">Jam ${jamKeDisplay}</span>` : '-'}</td>
                 <td><span class="waktu-display">${waktuDisplay}</span></td>
                 <td>
                     <span class="badge ${jadwal.is_active ? 'badge-success' : 'badge-secondary'}">
@@ -310,9 +325,12 @@ function openCreateModal() {
     // Reset sesi/jam dropdowns
     document.getElementById('form-sesi').value = '';
     document.getElementById('form-master-jam').innerHTML = '<option value="">-- Pilih Sesi dulu --</option>';
+    document.getElementById('form-master-jam-akhir').innerHTML = '<option value="">-- Satu jam saja --</option>';
     document.getElementById('form-jam-ke').value = '';
     document.getElementById('form-jam-mulai').value = '';
     document.getElementById('form-jam-selesai').value = '';
+    document.getElementById('form-jam-ke-akhir').value = '';
+    document.getElementById('form-jam-selesai-akhir').value = '';
     document.getElementById('waktu-preview').innerHTML = '<span class="waktu-preview-text empty">Pilih jam terlebih dahulu</span>';
 
     document.getElementById('jadwal-modal-overlay').classList.add('active');
@@ -341,7 +359,9 @@ async function editJadwal(id) {
     document.getElementById('form-hari').value = jadwal.hari;
 
     // Set sesi and master_jam
-    const masterJamId = jadwal.master_jam;
+    const masterJamId = jadwal.master_jam || jadwal.master_jam_id;
+    const masterJamAkhirId = jadwal.master_jam_akhir || jadwal.master_jam_akhir_id;
+
     if (masterJamId) {
         // Find sesi from master_jam_id
         let foundSesi = null;
@@ -357,20 +377,33 @@ async function editJadwal(id) {
             document.getElementById('form-sesi').value = foundSesi;
             onSesiChange(); // Populate jam dropdown
             document.getElementById('form-master-jam').value = masterJamId;
-            onMasterJamChange(); // Update preview
+            onMasterJamChange(); // Update preview and populate jam akhir options
+
+            // Set jam akhir if exists
+            if (masterJamAkhirId) {
+                document.getElementById('form-master-jam-akhir').value = masterJamAkhirId;
+                onMasterJamAkhirChange(); // Update preview with range
+            }
         }
     } else {
         // Legacy data without master_jam - set hidden fields directly
         document.getElementById('form-sesi').value = '';
         document.getElementById('form-master-jam').innerHTML = '<option value="">-- Pilih Sesi dulu --</option>';
+        document.getElementById('form-master-jam-akhir').innerHTML = '<option value="">-- Satu jam saja --</option>';
         document.getElementById('form-jam-ke').value = jadwal.jam_ke || '';
         document.getElementById('form-jam-mulai').value = jadwal.jam_mulai || '';
         document.getElementById('form-jam-selesai').value = jadwal.jam_selesai || '';
+        document.getElementById('form-jam-ke-akhir').value = jadwal.jam_ke_akhir || '';
+        document.getElementById('form-jam-selesai-akhir').value = jadwal.jam_selesai_akhir || '';
 
         // Update preview for legacy data
         const waktuPreview = document.getElementById('waktu-preview');
         if (jadwal.jam_mulai && jadwal.jam_selesai) {
-            waktuPreview.innerHTML = `<span class="waktu-preview-text">${jadwal.jam_mulai} - ${jadwal.jam_selesai}</span>`;
+            let previewText = `${jadwal.jam_mulai} - ${jadwal.jam_selesai_akhir || jadwal.jam_selesai}`;
+            if (jadwal.jam_ke_akhir) {
+                previewText += ` <small>(Jam ${jadwal.jam_ke}-${jadwal.jam_ke_akhir})</small>`;
+            }
+            waktuPreview.innerHTML = `<span class="waktu-preview-text">${previewText}</span>`;
         } else {
             waktuPreview.innerHTML = '<span class="waktu-preview-text empty">Data lama tanpa master jam</span>';
         }
@@ -519,18 +552,22 @@ async function onKelasChange() {
 }
 
 /**
- * Handle sesi dropdown change - populate jam dropdown
+ * Handle sesi dropdown change - populate jam dropdown and jam akhir dropdown
  */
 function onSesiChange() {
     const sesi = document.getElementById('form-sesi').value;
     const jamSelect = document.getElementById('form-master-jam');
+    const jamAkhirSelect = document.getElementById('form-master-jam-akhir');
     const waktuPreview = document.getElementById('waktu-preview');
 
-    // Reset
+    // Reset both dropdowns
     jamSelect.innerHTML = '<option value="">-- Pilih Jam --</option>';
+    jamAkhirSelect.innerHTML = '<option value="">-- Satu jam saja --</option>';
     document.getElementById('form-jam-ke').value = '';
     document.getElementById('form-jam-mulai').value = '';
     document.getElementById('form-jam-selesai').value = '';
+    document.getElementById('form-jam-ke-akhir').value = '';
+    document.getElementById('form-jam-selesai-akhir').value = '';
     waktuPreview.innerHTML = '<span class="waktu-preview-text empty">Pilih jam terlebih dahulu</span>';
 
     if (!sesi) {
@@ -545,6 +582,7 @@ function onSesiChange() {
         return;
     }
 
+    // Populate jam mulai dropdown
     jamList.forEach(jam => {
         const option = document.createElement('option');
         option.value = jam.id;
@@ -557,12 +595,19 @@ function onSesiChange() {
 }
 
 /**
- * Handle master jam dropdown change - update preview and hidden fields
+ * Handle master jam dropdown change - update preview, hidden fields, and filter jam akhir options
  */
 function onMasterJamChange() {
     const jamSelect = document.getElementById('form-master-jam');
+    const jamAkhirSelect = document.getElementById('form-master-jam-akhir');
     const selectedOption = jamSelect.options[jamSelect.selectedIndex];
     const waktuPreview = document.getElementById('waktu-preview');
+    const sesi = document.getElementById('form-sesi').value;
+
+    // Reset jam akhir
+    jamAkhirSelect.innerHTML = '<option value="">-- Satu jam saja --</option>';
+    document.getElementById('form-jam-ke-akhir').value = '';
+    document.getElementById('form-jam-selesai-akhir').value = '';
 
     if (!jamSelect.value || !selectedOption.dataset.jamKe) {
         document.getElementById('form-jam-ke').value = '';
@@ -572,7 +617,7 @@ function onMasterJamChange() {
         return;
     }
 
-    const jamKe = selectedOption.dataset.jamKe;
+    const jamKe = parseInt(selectedOption.dataset.jamKe);
     const jamMulai = selectedOption.dataset.jamMulai;
     const jamSelesai = selectedOption.dataset.jamSelesai;
 
@@ -581,8 +626,57 @@ function onMasterJamChange() {
     document.getElementById('form-jam-mulai').value = jamMulai;
     document.getElementById('form-jam-selesai').value = jamSelesai;
 
-    // Update preview
+    // Update preview (single jam for now)
     waktuPreview.innerHTML = `<span class="waktu-preview-text">${jamMulai} - ${jamSelesai}</span>`;
+
+    // Populate jam akhir dropdown with jam_ke > selected jam_ke
+    const jamList = masterJamData[sesi] || [];
+    jamList.forEach(jam => {
+        if (jam.jam_ke > jamKe) {
+            const option = document.createElement('option');
+            option.value = jam.id;
+            option.textContent = jam.label;
+            option.dataset.jamKe = jam.jam_ke;
+            option.dataset.jamMulai = jam.jam_mulai;
+            option.dataset.jamSelesai = jam.jam_selesai;
+            jamAkhirSelect.appendChild(option);
+        }
+    });
+}
+
+/**
+ * Handle master jam akhir dropdown change - update preview and hidden fields for range
+ */
+function onMasterJamAkhirChange() {
+    const jamSelect = document.getElementById('form-master-jam');
+    const jamAkhirSelect = document.getElementById('form-master-jam-akhir');
+    const selectedJam = jamSelect.options[jamSelect.selectedIndex];
+    const selectedJamAkhir = jamAkhirSelect.options[jamAkhirSelect.selectedIndex];
+    const waktuPreview = document.getElementById('waktu-preview');
+
+    // If no jam akhir selected, use single jam values
+    if (!jamAkhirSelect.value || !selectedJamAkhir.dataset.jamKe) {
+        document.getElementById('form-jam-ke-akhir').value = '';
+        document.getElementById('form-jam-selesai-akhir').value = '';
+
+        // Update preview to single jam
+        const jamMulai = selectedJam.dataset.jamMulai;
+        const jamSelesai = selectedJam.dataset.jamSelesai;
+        waktuPreview.innerHTML = `<span class="waktu-preview-text">${jamMulai} - ${jamSelesai}</span>`;
+        return;
+    }
+
+    const jamKeAkhir = selectedJamAkhir.dataset.jamKe;
+    const jamSelesaiAkhir = selectedJamAkhir.dataset.jamSelesai;
+
+    // Set hidden fields for range
+    document.getElementById('form-jam-ke-akhir').value = jamKeAkhir;
+    document.getElementById('form-jam-selesai-akhir').value = jamSelesaiAkhir;
+
+    // Update preview with range (jam_mulai dari jam awal, jam_selesai dari jam akhir)
+    const jamMulai = selectedJam.dataset.jamMulai;
+    const jamKe = selectedJam.dataset.jamKe;
+    waktuPreview.innerHTML = `<span class="waktu-preview-text">${jamMulai} - ${jamSelesaiAkhir} <small>(Jam ${jamKe}-${jamKeAkhir})</small></span>`;
 }
 
 // ============================================
@@ -596,6 +690,7 @@ async function saveJadwal(event) {
     const isEdit = !!id;
 
     const masterJamId = document.getElementById('form-master-jam').value;
+    const masterJamAkhirId = document.getElementById('form-master-jam-akhir').value;
 
     const payload = {
         username: document.getElementById('form-guru').value,
@@ -606,6 +701,10 @@ async function saveJadwal(event) {
         jam_mulai: document.getElementById('form-jam-mulai').value || null,
         jam_selesai: document.getElementById('form-jam-selesai').value || null,
         master_jam: masterJamId ? parseInt(masterJamId) : null,
+        // Fields untuk jam range
+        master_jam_akhir: masterJamAkhirId ? parseInt(masterJamAkhirId) : null,
+        jam_ke_akhir: document.getElementById('form-jam-ke-akhir').value || null,
+        jam_selesai_akhir: document.getElementById('form-jam-selesai-akhir').value || null,
         is_active: document.getElementById('form-status').value === 'true'
     };
 
@@ -692,6 +791,7 @@ window.onGuruChange = onGuruChange;
 window.onKelasChange = onKelasChange;
 window.onSesiChange = onSesiChange;
 window.onMasterJamChange = onMasterJamChange;
+window.onMasterJamAkhirChange = onMasterJamAkhirChange;
 window.debounceSearch = debounceSearch;
 window.applyFilters = applyFilters;
 window.prevPage = prevPage;

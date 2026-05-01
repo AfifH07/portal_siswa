@@ -193,6 +193,23 @@ class Schedule(models.Model):
         help_text="Referensi ke master jam (otomatis isi jam_ke, jam_mulai, jam_selesai)"
     )
 
+    # Fields untuk rentang jam (Jam 1-3)
+    master_jam_akhir = models.ForeignKey(
+        'core.MasterJam',
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        related_name='schedules_akhir',
+        help_text="Master jam akhir untuk rentang (opsional, jika lebih dari 1 jam)"
+    )
+    jam_ke_akhir = models.IntegerField(
+        blank=True, null=True,
+        help_text="Jam pelajaran akhir (jika rentang, misal jam 1-3 maka ini = 3)"
+    )
+    jam_selesai_akhir = models.TimeField(
+        blank=True, null=True,
+        help_text="Waktu selesai akhir (dari master_jam_akhir)"
+    )
+
     mata_pelajaran = models.CharField(max_length=100, blank=True, null=True)
 
     # Periode akademik
@@ -231,10 +248,23 @@ class Schedule(models.Model):
     @property
     def waktu_display(self):
         """Return formatted time range."""
-        if self.jam_mulai and self.jam_selesai:
-            return f"{self.jam_mulai.strftime('%H:%M')} - {self.jam_selesai.strftime('%H:%M')}"
+        if self.jam_mulai:
+            # Jika ada jam_selesai_akhir (rentang), gunakan itu
+            if self.jam_selesai_akhir:
+                return f"{self.jam_mulai.strftime('%H:%M')} - {self.jam_selesai_akhir.strftime('%H:%M')}"
+            elif self.jam_selesai:
+                return f"{self.jam_mulai.strftime('%H:%M')} - {self.jam_selesai.strftime('%H:%M')}"
         elif self.jam:
             return self.jam
+        return "-"
+
+    @property
+    def jam_ke_display(self):
+        """Return formatted jam ke range (e.g., '1-3' or '1')."""
+        if self.jam_ke:
+            if self.jam_ke_akhir and self.jam_ke_akhir != self.jam_ke:
+                return f"{self.jam_ke}-{self.jam_ke_akhir}"
+            return str(self.jam_ke)
         return "-"
 
 

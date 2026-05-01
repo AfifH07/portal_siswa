@@ -179,9 +179,43 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
+    waktu_display = serializers.SerializerMethodField()
+    jam_ke_display = serializers.SerializerMethodField()
+    master_jam_id = serializers.IntegerField(source='master_jam.id', read_only=True, allow_null=True)
+    master_jam_akhir_id = serializers.IntegerField(source='master_jam_akhir.id', read_only=True, allow_null=True)
+
     class Meta:
         model = Schedule
-        fields = '__all__'
+        fields = [
+            'id', 'username', 'kelas', 'hari', 'jam',
+            'jam_ke', 'jam_mulai', 'jam_selesai',
+            'master_jam', 'master_jam_id',
+            'master_jam_akhir', 'master_jam_akhir_id',
+            'jam_ke_akhir', 'jam_selesai_akhir',
+            'waktu_display', 'jam_ke_display',
+            'mata_pelajaran', 'tahun_ajaran', 'semester',
+            'is_active', 'created_at', 'updated_at'
+        ]
+
+    def get_waktu_display(self, obj):
+        """Return formatted time range (uses jam_selesai_akhir if available)."""
+        if obj.jam_mulai:
+            # Jika ada jam_selesai_akhir (rentang), gunakan itu
+            if obj.jam_selesai_akhir:
+                return f"{obj.jam_mulai.strftime('%H:%M')} - {obj.jam_selesai_akhir.strftime('%H:%M')}"
+            elif obj.jam_selesai:
+                return f"{obj.jam_mulai.strftime('%H:%M')} - {obj.jam_selesai.strftime('%H:%M')}"
+        elif obj.jam:
+            return obj.jam
+        return "-"
+
+    def get_jam_ke_display(self, obj):
+        """Return formatted jam ke range (e.g., '1-3' or '1')."""
+        if obj.jam_ke:
+            if obj.jam_ke_akhir and obj.jam_ke_akhir != obj.jam_ke:
+                return f"{obj.jam_ke}-{obj.jam_ke_akhir}"
+            return str(obj.jam_ke)
+        return "-"
 
 
 # ============================================

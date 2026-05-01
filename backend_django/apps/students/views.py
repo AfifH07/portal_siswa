@@ -891,6 +891,53 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by('hari', 'jam_ke', 'jam_mulai')
 
+    def perform_create(self, serializer):
+        """Auto-fill jam fields from master_jam and master_jam_akhir."""
+        instance = serializer.save()
+        self._auto_fill_jam_fields(instance)
+
+    def perform_update(self, serializer):
+        """Auto-fill jam fields from master_jam and master_jam_akhir."""
+        instance = serializer.save()
+        self._auto_fill_jam_fields(instance)
+
+    def _auto_fill_jam_fields(self, instance):
+        """
+        Auto-populate jam_ke, jam_mulai, jam_selesai from master_jam.
+        Auto-populate jam_ke_akhir, jam_selesai_akhir from master_jam_akhir.
+        """
+        updated = False
+
+        # Auto-fill dari master_jam
+        if instance.master_jam:
+            if not instance.jam_ke:
+                instance.jam_ke = instance.master_jam.jam_ke
+                updated = True
+            if not instance.jam_mulai:
+                instance.jam_mulai = instance.master_jam.jam_mulai
+                updated = True
+            if not instance.jam_selesai:
+                instance.jam_selesai = instance.master_jam.jam_selesai
+                updated = True
+
+        # Auto-fill dari master_jam_akhir
+        if instance.master_jam_akhir:
+            if not instance.jam_ke_akhir:
+                instance.jam_ke_akhir = instance.master_jam_akhir.jam_ke
+                updated = True
+            if not instance.jam_selesai_akhir:
+                instance.jam_selesai_akhir = instance.master_jam_akhir.jam_selesai
+                updated = True
+        else:
+            # Jika master_jam_akhir dihapus, reset field akhir
+            if instance.jam_ke_akhir or instance.jam_selesai_akhir:
+                instance.jam_ke_akhir = None
+                instance.jam_selesai_akhir = None
+                updated = True
+
+        if updated:
+            instance.save()
+
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """
@@ -1008,8 +1055,12 @@ def jadwal_guru_mingguan(request, username):
                 'kelas': s.kelas,
                 'mata_pelajaran': s.mata_pelajaran or '-',
                 'jam_ke': s.jam_ke,
+                'jam_ke_akhir': s.jam_ke_akhir,
+                'jam_ke_display': s.jam_ke_display,
                 'jam_mulai': s.jam_mulai.strftime('%H:%M') if s.jam_mulai else None,
                 'jam_selesai': s.jam_selesai.strftime('%H:%M') if s.jam_selesai else None,
+                'jam_selesai_akhir': s.jam_selesai_akhir.strftime('%H:%M') if s.jam_selesai_akhir else None,
+                'waktu_display': s.waktu_display,
             }
             for s in hari_schedules
         ]

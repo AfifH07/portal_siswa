@@ -405,6 +405,15 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label>Sampai Jam Ke <small style="color: var(--text-muted);">(opsional)</small></label>
+                            <select id="form-master-jam-akhir" class="form-select" onchange="onMasterJamAkhirChange()">
+                                <option value="">-- Satu jam saja --</option>
+                            </select>
+                            <small class="form-hint">Isi jika rentang jam (misal Jam 1-3)</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
                             <label>Waktu</label>
                             <div class="waktu-preview" id="waktu-preview">
                                 <span class="waktu-preview-text">-</span>
@@ -416,6 +425,8 @@
                     <input type="hidden" id="form-jam-ke">
                     <input type="hidden" id="form-jam-mulai">
                     <input type="hidden" id="form-jam-selesai">
+                    <input type="hidden" id="form-jam-ke-akhir">
+                    <input type="hidden" id="form-jam-selesai-akhir">
                 </div>
 
                 <!-- Section: Status -->
