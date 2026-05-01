@@ -314,6 +314,7 @@ def auth_status_view(request):
     # Daftar permission berdasarkan role
     role_permissions = {
         'superadmin': ['create', 'read', 'update', 'delete', 'view_all', 'manage_users', 'manage_finance'],
+        'admin': ['create', 'read', 'update', 'delete', 'view_all', 'manage_finance'],
         'pimpinan': ['read', 'update', 'view_all', 'approve', 'view_finance'],
         'guru': ['create', 'read', 'update', 'view_class'],
         'bendahara': ['create', 'read', 'update', 'view_finance', 'manage_finance'],
@@ -324,6 +325,7 @@ def auth_status_view(request):
     # Daftar halaman yang diizinkan berdasarkan role
     role_allowed_pages = {
         'superadmin': ['/', '/dashboard', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/blp', '/inval', '/ibadah', '/case-management', '/evaluasi-asatidz'],
+        'admin': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/jadwal-mengajar', '/master-mapel', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
         'pimpinan': ['/', '/dashboard', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/finance', '/blp', '/ibadah', '/case-management', '/evaluasi-asatidz'],
         'guru': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/blp', '/inval', '/case-management', '/evaluasi-asatidz'],
         'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/blp', '/inval', '/case-management', '/evaluasi-asatidz'],
