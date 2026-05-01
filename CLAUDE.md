@@ -1,13 +1,13 @@
 # CLAUDE.md — Portal Siswa Baron
 > File ini dibaca otomatis oleh Claude Code setiap sesi. Jangan hapus.
-> Versi: 2.3.11 | Update: 26 April 2026
+> Versi: 2.4.1 | Update: Mei 2026
 
 ---
 
 ## 🎯 IDENTITAS PROYEK
 
 **Nama:** Portal Siswa Baron
-**Versi:** 2.3.11 (Active Development)
+**Versi:** 2.4.1 (Active Development)
 **Institusi:** Pondok Pesantren Baron
 **Deployment:** PythonAnywhere — https://apiiip.pythonanywhere.com
 **Deskripsi:** Sistem Informasi Akademik Terpadu untuk manajemen santri, akademik, evaluasi karakter, dan komunikasi walisantri.
@@ -33,19 +33,20 @@
 
 ---
 
-## 👥 SISTEM ROLE (7 Role Aktif)
-
-> ⚠️ Role `wali_kelas` sudah DIHAPUS — semua dimigrasi ke `guru`
+## 👥 SISTEM ROLE (8 Role Aktif)
 
 | Role | Akses |
 |------|-------|
-| `superadmin` | Full access |
-| `pimpinan` | Lihat semua + evaluasi asatidz |
-| `guru` | Presensi, nilai, evaluasi, jadwal mengajar |
+| `superadmin` | Full access + kelola user |
+| `admin` | Co-superadmin, import/export, tanpa kelola user |
+| `pimpinan` | Lihat semua + evaluasi asatidz + approval |
+| `guru` | Jurnal, nilai, evaluasi |
 | `musyrif` | Ibadah, hafalan, pembinaan |
 | `bk` | Bimbingan konseling |
 | `bendahara` | Keuangan |
 | `walisantri` | Lihat data anak (multi-anak) |
+
+> **v2.4.0:** Role `admin` ditambahkan (akses data seperti superadmin, tapi tidak bisa kelola user)
 
 ---
 
@@ -54,18 +55,45 @@
 | Model | App | Identifier |
 |-------|-----|-----------|
 | `User` | accounts | `id`, `username`, `role`, `name` |
-| `Student` | students | **`nisn`** (PK, bukan auto-id!) |
+| `Student` | students | **`nisn`** (PK), `nis` (7 digit), `jenis_kelamin`, `catatan` |
 | `Assignment` | accounts | user + assignment_type + kelas + mata_pelajaran |
 | `Schedule` | students | guru + hari + sesi + master_jam |
 | `MasterJam` | core | sesi + jam_ke + jam_mulai/selesai |
 | `MasterMapel` | core | nama + sesi + kode + is_active |
 | `TahunAjaran` | core | nama + semester + is_active |
-| `Attendance` | attendance | student + tanggal + jam_ke |
+| `Attendance` | attendance | student + tanggal + jam_ke + **input_by** + **ada_penilaian** + **ketuntasan_materi** + **tujuan_pembelajaran** |
 | `TitipanTugas` | attendance | guru + kelas + tanggal_berlaku |
 | `IzinGuru` | kesantrian | guru + jenis_izin + foto_surat |
 | `Ibadah` | kesantrian | siswa + tanggal + jenis + waktu |
 | `TargetHafalan` | kesantrian | siswa + tahun_ajaran + semester |
-| `Evaluation` | evaluations | nisn (FK) + jenis + kategori + evaluator |
+| `Grade` | grades | nisn + mapel + nilai + jenis + **materi** + **input_by** |
+| `Evaluation` | evaluations | nisn (FK) + jenis + kategori + evaluator + **foto** + **is_approved** + **approved_by** + **created_by** |
+
+### Field Baru v2.4.x
+
+**Attendance:**
+- `ada_penilaian` (BooleanField, default=False)
+- `ketuntasan_materi` (IntegerField, 0-100)
+- `tujuan_pembelajaran` (TextField)
+- `input_by` (FK ke User)
+- `tipe_pengajar` choices: `guru_pengampu` (Guru Pengampu), `guru_piket` (Guru Piket)
+
+**Grade:**
+- `materi` (CharField, opsional)
+- `input_by` (FK ke User)
+- `jenis` choices: penugasan, tes_tulis, tes_lisan, portofolio, praktek, proyek, uts, uas
+
+**Evaluation:**
+- `foto` (ImageField, opsional)
+- `is_approved` (BooleanField, default=False)
+- `approved_by` (FK ke User)
+- `approved_at` (DateTimeField)
+- `created_by` (FK ke User)
+
+**Student:**
+- `nis` (CharField, 7 digit, unik)
+- `jenis_kelamin` (CharField, L/P)
+- `catatan` (TextField)
 
 > **⚠️ CRITICAL — Custom User Model:**
 > - Nama lengkap: **`user.name`** (BUKAN first_name/full_name)
@@ -80,6 +108,51 @@
 
 ---
 
+## 🆕 v2.4.1 Updates (Mei 2026)
+
+### 1. Dashboard Guru (Todo List)
+- Widget Todo List: presensi belum diisi, nilai belum diinput, izin tanpa titipan tugas
+- Fix Last Login di Manajemen User
+- "Materi Hari Ini" → "Jurnal Hari Ini"
+- **Endpoint:** `GET /api/dashboard/guru/todo-list/`
+
+### 2. Jurnal Guru (rename dari Presensi)
+- **Rename:** Presensi → Jurnal Guru, Guru Asli → Guru Pengampu, Guru Pengganti → Guru Piket, Capaian Pembelajaran → Tujuan Pembelajaran
+- **Wizard 4 step:** Step 1: Tipe Pengajar, Step 2: Info Kelas (filter per tipe), Step 3: Kehadiran, Step 4: Dokumentasi
+- Guru Pengampu: dropdown dari Assignment
+- Guru Piket: mapel filter per sesi
+- Field baru: ketuntasan_materi (slider), ada_penilaian (toggle)
+- Jurnal personal via field `input_by`
+- **Endpoint:** `GET /api/attendance/jurnal/history/`, `GET /api/attendance/guru/assignment-info/`
+
+### 3. Sistem Nilai
+- 8 jenis penilaian (card grid + icon): penugasan, tes_tulis, tes_lisan, portofolio, praktek, proyek, uts, uas
+- Mapel dari dropdown MasterMapel
+- Field baru: materi (opsional)
+- Filter personal via `input_by`
+- Grafik: Tren Nilai per Jenis Penilaian
+- **Endpoint:** `GET /api/grades/mapel-list/`
+
+### 4. Evaluasi Santri
+- **Rename:** Dalam Pembahasan → Dalam Penanganan, Diskusi & Tanggapan → Pembinaan
+- Upload foto kejadian
+- Sistem approval: Guru input → Admin/Pimpinan approve → visible ke wali kelas, BK, musyrif, pimpinan, walisantri
+- Field: is_approved, approved_by, created_by
+- **Endpoint:** `PATCH /api/evaluations/<id>/approve/`
+
+### 5. Data Santri
+- Field baru: NIS (7 digit), jenis_kelamin, catatan
+- Kolom tabel: NISN, NIS, Nama, Kelas, Program, Jenis Kelamin, Catatan
+- Guru hanya bisa lihat (tidak bisa CRUD)
+- Template import Excel diupdate
+
+### 6. Role & Akses
+- Role `admin` baru (co-superadmin)
+- Hapus link "Daftar sekarang" dari login
+- Permission semua view diupdate
+
+---
+
 ## 🆕 v2.3.11 Updates (2026-04-26)
 
 ### 1. Master Data System
@@ -90,57 +163,26 @@
 | `MasterMapel` | `GET /api/core/master-mapel/grouped/` | Grouped by sesi untuk dropdown |
 | `MasterMapel` | `PATCH/DELETE /api/core/master-mapel/<id>/` | Update/soft-delete mapel |
 
-**Seed Data:**
-- MasterJam: 9 records (1 Tahfidz, 6 KBM, 2 Diniyah)
-- MasterMapel: 27 records (18 KBM, 8 Diniyah, 1 Tahfidz)
-
 ### 2. Jadwal Mengajar (Admin)
 - **Page:** `/jadwal-mengajar/` → `jadwal-mengajar.html`
-- **Features:** CRUD jadwal guru, filter hari/sesi, cascading dropdown (Sesi → Jam)
-- **Endpoint:** `GET/POST /api/jadwal/`, `PATCH/DELETE /api/jadwal/<id>/`
+- **Access:** Superadmin, Admin
 
 ### 3. Master Mapel Management (Admin)
 - **Page:** `/master-mapel/` → `master-mapel.html`
-- **Features:** Tab KBM/Diniyah/Tahfidz, toggle status aktif, CRUD mapel
-- **Access:** Superadmin only
-
-### 4. Jadwal Minggu Ini Widget (Dashboard Guru)
-- Widget di dashboard guru: grid Senin-Sabtu
-- Highlight hari ini, tampilkan jam + mapel + kelas
-- **Endpoint:** `GET /api/jadwal/guru/<username>/`
-
-### 5. Hapus Assignment (User Management)
-- Badge assignment di tabel user dengan tombol × (hover)
-- Konfirmasi sebelum hapus, max 3 badge + "+N lagi" expandable
-- **Endpoint:** `DELETE /api/admin/users/<user_id>/assignments/<assignment_id>/`
-
-### 6. Dropdown Mapel di Assign Modal
-- Dropdown dinamis berdasarkan assignment type (KBM/Diniyah/Halaqoh)
-- Data dari `/api/core/master-mapel/grouped/`
-- Mapping: `halaqoh` → `tahfidz`
+- **Access:** Superadmin, Admin
 
 ---
 
-## 🆕 v2.3.10 Updates (2026-04-24) - Evaluasi Santri Dashboard Fix
+## 📡 ENDPOINT BARU (v2.4.x)
 
-| Bug | Fix |
-|-----|-----|
-| Case sensitivity jenis | `jenis='Prestasi'` → `jenis='prestasi'` |
-| FK vs String comparison | `nisn__nisn=user.linked_student_nisn` |
-| Guru filter mismatch | Fallback: `user.name or user.username` |
-| Multi-child walisantri | Support `get_linked_students()` array |
-| Category query | `kategori__iexact` untuk case-insensitive |
-
----
-
-## 🆕 v2.3.9 Features
-
-| Feature | Files | Endpoints |
-|---------|-------|-----------|
-| Guru Pengganti | attendance.html | Step 3 presensi |
-| Jurnal Piket | jurnal-piket.html | `GET /api/attendance/jurnal-piket/` |
-| Titipan Tugas | titipan-tugas.html | `GET/POST /api/attendance/titipan-tugas/` |
-| Izin Guru | izin-guru.html | `GET/POST /api/kesantrian/izin-guru/` |
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | `/api/dashboard/guru/todo-list/` | Todo list kewajiban guru |
+| GET | `/api/attendance/jurnal/history/` | History jurnal personal guru |
+| GET | `/api/attendance/guru/assignment-info/` | Info kelas & mapel per guru |
+| GET | `/api/core/master-mapel/by-sesi/?sesi=` | Mapel per sesi |
+| GET | `/api/grades/mapel-list/` | List mapel per guru |
+| PATCH | `/api/evaluations/<id>/approve/` | Approve kasus evaluasi |
 
 ---
 
@@ -177,6 +219,12 @@ queryset.filter(nisn=user.linked_student_nisn)
 queryset.filter(nisn__nisn=user.linked_student_nisn)
 ```
 
+### Personal Filter Pattern (input_by)
+```python
+# Filter data berdasarkan guru yang input
+queryset = queryset.filter(input_by=request.user)
+```
+
 ---
 
 ## 🎨 KONVENSI FRONTEND
@@ -184,16 +232,16 @@ queryset.filter(nisn__nisn=user.linked_student_nisn)
 ### Script Dependencies (Baron Emerald Theme)
 ```html
 <!-- CSS -->
-<link href="/static/css/baron-emerald.css?v=20260327" rel="stylesheet">
+<link href="/static/css/baron-emerald.css?v=20260501" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <!-- Scripts (URUTAN PENTING!) -->
-<script src="/static/js/utils.js?v=20260314c"></script>
-<script src="/static/js/apiConfig.js?v=20260314c"></script>
-<script src="/static/js/apiFetch.js?v=20260314c"></script>
-<script src="/static/js/auth-check.js?v=20260420" defer></script>
-<script src="/static/js/nama-halaman.js?v=20260426"></script>
+<script src="/static/js/utils.js?v=20260501"></script>
+<script src="/static/js/apiConfig.js?v=20260501"></script>
+<script src="/static/js/apiFetch.js?v=20260501"></script>
+<script src="/static/js/auth-check.js?v=20260501" defer></script>
+<script src="/static/js/nama-halaman.js?v=20260501"></script>
 ```
 
 ### Sidebar Structure (Baron Theme)
@@ -256,11 +304,30 @@ python manage.py migrate
 | Chart kosong | Lowercase jenis, `nisn__nisn`, `kategori__iexact` |
 | Dropdown mapel kosong | Cek endpoint `/api/core/master-mapel/grouped/` |
 | CSS/sidebar rusak | Pakai `baron-emerald.css`, bukan `main.css` |
+| Todo list kosong meski ada kewajiban | Cek field input_by di Attendance, pastikan terisi saat submit |
+| Jurnal tidak personal | Cek field input_by, pastikan filter by input_by=request.user |
+| Evaluasi terlihat semua guru | Bug pending — filter get_queryset() belum jalan |
+| Role admin ngeblink | Cek roleAccess di auth-check.js, pastikan 'admin' ada |
+| Foto evaluasi tidak tampil | Cek foto_url di serializer, pastikan absolute URL |
 
 ### Cek Log PythonAnywhere
 ```bash
 cat /var/log/apiiip.pythonanywhere.com.error.log | tail -50
 ```
+
+---
+
+## ⚠️ KNOWN BUGS (Belum Diperbaiki)
+
+### 1. Donut Chart "Status Ketuntasan" di Halaman Nilai
+- **Masalah:** Masih hitung semua guru, bukan per guru yang login
+- **Lokasi:** `apps/grades/views.py` endpoint statistik/analytics
+- **Root cause:** Queryset tidak difilter per guru di endpoint donut chart
+
+### 2. Filter Visibilitas Evaluasi Santri
+- **Masalah:** Guru non-wali kelas masih bisa lihat semua kasus
+- **Lokasi:** `apps/evaluations/views.py` get_queryset()
+- **Root cause:** Perubahan belum ter-deploy dengan benar di PythonAnywhere
 
 ---
 
@@ -307,10 +374,10 @@ portal-siswa/
 ├── backend_django/
 │   ├── apps/
 │   │   ├── accounts/            # User, Assignment, permissions
-│   │   ├── attendance/          # Presensi, TitipanTugas
+│   │   ├── attendance/          # Jurnal Guru, TitipanTugas
 │   │   ├── core/                # TahunAjaran, MasterJam, MasterMapel
 │   │   ├── dashboard/           # Dashboard views
-│   │   ├── evaluations/         # Evaluasi santri
+│   │   ├── evaluations/         # Evaluasi santri + approval
 │   │   ├── finance/             # Keuangan
 │   │   ├── grades/              # Nilai
 │   │   ├── kesantrian/          # Ibadah, Hafalan, IzinGuru
@@ -338,24 +405,33 @@ portal-siswa/
 
 ## 📋 DAFTAR TUGAS
 
-### ✅ Selesai (v2.3.11)
+### ✅ Selesai (v2.4.1)
 | Task | Status |
 |------|--------|
-| MasterJam model + seed data | ✅ |
-| MasterMapel CRUD + management page | ✅ |
+| Dashboard Guru Todo List | ✅ |
+| Jurnal Guru (rename + wizard 4 step) | ✅ |
+| 8 Jenis Penilaian | ✅ |
+| Evaluasi Santri Approval System | ✅ |
+| Data Santri field baru (NIS, JK, catatan) | ✅ |
+| Role admin baru | ✅ |
+| MasterJam & MasterMapel | ✅ |
 | Jadwal Mengajar admin page | ✅ |
-| Jadwal Minggu Ini widget (guru dashboard) | ✅ |
 | Dropdown mapel di Assign Modal | ✅ |
-| Hapus assignment dengan konfirmasi | ✅ |
-| Fix master-mapel.html UI (baron theme) | ✅ |
-| Badge assignment compact + expandable | ✅ |
 
 ### 🔄 Belum Selesai
-| # | Task | Priority |
-|---|------|----------|
-| 1 | Poin kinerja otomatis untuk guru pengganti | 🟡 Medium |
-| 2 | Modal detail Titipan Tugas (read-only) | 🟡 Medium |
-| 3 | Notifikasi real-time | 🟢 Low |
+
+**MEDIUM PRIORITY:**
+| # | Task | Deskripsi |
+|---|------|-----------|
+| G | Program Al-Quran | Rename "Hafalan & Ziyadah" → "Program Al-Quran", import hafalan via Excel |
+| H | Dashboard Pimpinan | Efektivitas KBM, presensi guru, breakdown santri per kelas |
+| I | Approval Izin Guru | Alur: Guru submit → Admin/Pimpinan approve/tolak → notif guru |
+
+**LOW PRIORITY:**
+| # | Task | Deskripsi |
+|---|------|-----------|
+| J | Kritik & Saran | Semua akun → inbox Pimpinan (Putra/Putri, anonim/identitas) |
+| K | Walisantri: Pertemuan Pengasuhan | Jadwal + presensi pertemuan pengasuhan |
 
 ---
 
@@ -379,4 +455,4 @@ rtk err python manage.py runserver
 
 ---
 
-*Portal Siswa Baron v2.3.11 — Pondok Pesantren Baron — 26 April 2026*
+*Portal Siswa Baron v2.4.1 — Pondok Pesantren Baron — Mei 2026*

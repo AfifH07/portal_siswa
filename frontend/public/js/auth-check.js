@@ -242,6 +242,7 @@ function getAllowedPages(role) {
     // Fallback: hardcoded defaults (kept in sync with backend)
     const roleAccess = {
         'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/jadwal-mengajar', '/master-mapel', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
+        'admin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/jadwal-mengajar', '/master-mapel', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
         'pimpinan': ['/', '/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
         'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management', '/kelas-saya'],
         'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/inval', '/evaluasi-asatidz', '/case-management'],
@@ -329,6 +330,7 @@ function hasPermission(permission) {
     // Fallback: hardcoded defaults (kept in sync with backend)
     const rolePermissions = {
         'superadmin': ['create', 'read', 'update', 'delete', 'view_all', 'manage_users', 'manage_finance'],
+        'admin': ['create', 'read', 'update', 'delete', 'view_all', 'manage_finance'],
         'pimpinan': ['read', 'update', 'view_all', 'approve', 'view_finance'],
         'guru': ['create', 'read', 'update', 'view_class'],
         'bendahara': ['create', 'read', 'update', 'view_finance', 'manage_finance'],
@@ -696,6 +698,7 @@ function updateUserRoleDisplay() {
 
     const roleDisplayMap = {
         'superadmin': 'Super Admin',
+        'admin': 'Admin',
         'pimpinan': 'Pimpinan',
         'guru': 'Guru/Ustadz',
         'musyrif': 'Musyrif',

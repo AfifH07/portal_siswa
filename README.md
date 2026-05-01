@@ -1,4 +1,4 @@
-# Portal Siswa Baron v2.3.11
+# Portal Siswa Baron v2.4.1
 
 Sistem Informasi Akademik Terpadu untuk manajemen santri, evaluasi, dan pemantauan akademik di **Pondok Pesantren Baron**.
 
@@ -15,8 +15,8 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 - **Dashboard Real-time** dengan visualisasi data dan statistik per role
 - **Manajemen Akademik** (nilai, kehadiran, jadwal mengajar)
 - **Modul Kesantrian** (ibadah, hafalan, halaqoh, BLP)
-- **Sistem Evaluasi Poin** untuk pembinaan santri
-- **Multi-Role Access** dengan 7 level akses berbeda
+- **Sistem Evaluasi Poin** untuk pembinaan santri dengan approval system
+- **Multi-Role Access** dengan 8 level akses berbeda
 - **Manajemen Guru** (assignment, jadwal, titipan tugas, izin)
 
 ---
@@ -27,16 +27,23 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 | Role | Akses |
 |------|-------|
 | `superadmin` | Full system access - kelola user, konfigurasi sistem, master data |
-| `pimpinan` | Lihat semua data, evaluasi asatidz, dashboard manajemen |
-| `guru` | Input nilai & kehadiran, evaluasi santri, jadwal mengajar |
+| `admin` | Co-superadmin - akses data, import/export, tanpa kelola user |
+| `pimpinan` | Lihat semua data, evaluasi asatidz, approval, dashboard manajemen |
+| `guru` | Input jurnal & nilai, evaluasi santri, jadwal mengajar |
 | `musyrif` | Pemantauan ibadah, hafalan, pembinaan santri |
 | `bk` | Bimbingan konseling, penanganan kasus |
 | `bendahara` | Modul keuangan, pembayaran |
 | `walisantri` | Lihat data anak (multi-anak supported) |
 
-> **Note:** Role `wali_kelas` sudah dimigrasi ke `guru`
+### Fitur v2.4.1 (Terbaru)
+- **Dashboard Guru Todo List** - Widget kewajiban yang belum dipenuhi
+- **Jurnal Guru** - Wizard 4 step (Tipe, Info Kelas, Kehadiran, Dokumentasi)
+- **8 Jenis Penilaian** - Penugasan, Tes Tulis, Tes Lisan, Portofolio, Praktek, Proyek, UTS, UAS
+- **Evaluasi Santri Approval** - Guru input → Admin/Pimpinan approve → visible ke stakeholder
+- **Data Santri Lengkap** - NIS, Jenis Kelamin, Catatan
+- **Role Admin Baru** - Co-superadmin tanpa akses kelola user
 
-### Fitur v2.3.11 (Terbaru)
+### Fitur Sebelumnya
 - **Master Jam & Mapel** - Data master jam pelajaran dan mata pelajaran
 - **Jadwal Mengajar** - CRUD jadwal guru dengan cascading dropdown
 - **Widget Jadwal Mingguan** - Tampilan jadwal minggu ini di dashboard guru
@@ -44,10 +51,10 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 - **Dropdown Mapel Dinamis** - Di modal assign tugas berdasarkan sesi
 
 ### Bulk Import
-- Import data siswa via Excel/CSV
+- Import data siswa via Excel/CSV dengan validasi
 - Import nilai batch per mata pelajaran
 - Import kehadiran harian otomatis
-- Validasi data sebelum insert
+- Template Excel dengan kolom baru (NIS, Jenis Kelamin, Catatan)
 
 ### Dashboard Real-time
 - Statistik kehadiran dengan chart interaktif
@@ -55,14 +62,17 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 - Distribusi nilai akademik
 - Ringkasan evaluasi santri
 - Jadwal mingguan guru (grid Senin-Sabtu)
+- **Todo List** kewajiban guru
 
-### Sistem Evaluasi Poin
+### Sistem Evaluasi
 - **BLP (Buku Laporan Pembinaan)**: 25 indikator, 6 domain
 - **Incident Management**: Pelaporan dan tracking kasus
 - **Evaluasi Asatidz**: Penilaian kinerja ustadz/karyawan
+- **Approval System**: Guru input → Admin approve → visible
 - Predikat otomatis (Mumtaz, Jayyid Jiddan, Jayyid, Maqbul, Perlu Pembinaan)
 
 ### Manajemen HR Guru
+- **Jurnal Guru**: Input kehadiran siswa dengan tujuan pembelajaran
 - **Titipan Tugas**: Guru menitipkan tugas untuk kelas
 - **Izin Guru**: Pengajuan izin dengan upload surat
 - **Jurnal Piket**: Catatan piket harian
@@ -112,19 +122,20 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 ```
 portal-siswa/
 ├── CLAUDE.md                    # Dokumentasi untuk Claude Code
+├── HANDOVER_v2_4_1.md          # Handover document
 ├── README.md                    # File ini
 ├── backend_django/
 │   ├── apps/
 │   │   ├── accounts/            # Auth, Users, JWT, Permissions, Assignment
 │   │   ├── core/                # TahunAjaran, MasterJam, MasterMapel
 │   │   ├── students/            # CRUD Siswa, Schedule, Alumni
-│   │   ├── attendance/          # Presensi, TitipanTugas, JurnalPiket
+│   │   ├── attendance/          # Jurnal Guru, TitipanTugas, JurnalPiket
 │   │   ├── grades/              # Nilai & Analytics
-│   │   ├── evaluations/         # Evaluasi Santri + Upload
+│   │   ├── evaluations/         # Evaluasi Santri + Approval System
 │   │   ├── kesantrian/          # Ibadah, Hafalan, BLP, Incident, IzinGuru
 │   │   ├── finance/             # Modul Keuangan
 │   │   ├── registration/        # Pendaftaran
-│   │   └── dashboard/           # Statistik
+│   │   └── dashboard/           # Statistik & Todo List
 │   ├── backend_django/          # Django settings
 │   └── requirements.txt
 ├── frontend/
@@ -207,13 +218,31 @@ python manage.py runserver
 | GET | `/api/core/master-jam/` | Master jam pelajaran |
 | GET | `/api/core/master-mapel/` | Master mata pelajaran |
 | GET | `/api/core/master-mapel/grouped/` | Mapel grouped by sesi |
+| GET | `/api/core/master-mapel/by-sesi/?sesi=` | Mapel per sesi |
 
-### Students & Schedule
+### Dashboard
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| GET/POST | `/api/students/` | List/Create siswa |
-| GET | `/api/jadwal/guru/<username>/` | Jadwal guru mingguan |
-| GET/POST | `/api/jadwal/` | CRUD jadwal |
+| GET | `/api/dashboard/guru/todo-list/` | Todo list kewajiban guru |
+
+### Attendance (Jurnal Guru)
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET/POST | `/api/attendance/` | CRUD jurnal guru |
+| GET | `/api/attendance/jurnal/history/` | History jurnal personal |
+| GET | `/api/attendance/guru/assignment-info/` | Info kelas & mapel guru |
+
+### Grades (Nilai)
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET/POST | `/api/grades/` | CRUD nilai |
+| GET | `/api/grades/mapel-list/` | List mapel per guru |
+
+### Evaluations
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET/POST | `/api/evaluations/` | CRUD evaluasi |
+| PATCH | `/api/evaluations/<id>/approve/` | Approve evaluasi |
 
 ### Admin (User Management)
 | Method | Endpoint | Deskripsi |
@@ -221,6 +250,13 @@ python manage.py runserver
 | GET/POST | `/api/admin/users/` | List/Create users |
 | PATCH | `/api/admin/users/<id>/assign/` | Assign guru ke kelas |
 | DELETE | `/api/admin/users/<id>/assignments/<aid>/` | Hapus assignment |
+
+### Students & Schedule
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET/POST | `/api/students/` | List/Create siswa |
+| GET | `/api/jadwal/guru/<username>/` | Jadwal guru mingguan |
+| GET/POST | `/api/jadwal/` | CRUD jadwal |
 
 ### Kesantrian
 | Method | Endpoint | Deskripsi |
@@ -237,6 +273,7 @@ python manage.py runserver
 ```bash
 cd ~/portal_siswa && git pull
 cd backend_django
+python manage.py makemigrations
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 # Reload di Web tab
@@ -260,6 +297,7 @@ python manage.py collectstatic --noinput
 - SQL injection prevention (Django ORM)
 - HTTPS enforcement (production)
 - Role-based permission system
+- Approval system untuk evaluasi sensitif
 
 ---
 
@@ -280,6 +318,9 @@ Cek endpoint `/api/core/master-mapel/grouped/` dan pastikan data master sudah di
 - Access token: 60 menit
 - Refresh token: 24 jam
 - Frontend otomatis refresh token
+
+### Role Admin Tidak Muncul
+Cek `auth-check.js` — pastikan `navConfig['admin']` sudah ada.
 
 ---
 
@@ -305,4 +346,4 @@ Cek endpoint `/api/core/master-mapel/grouped/` dan pastikan data master sudah di
 
 ---
 
-**Status**: Production Ready | **Versi**: 2.3.11 | **Update**: 26 April 2026
+**Status**: Production Ready | **Versi**: 2.4.1 | **Update**: Mei 2026
