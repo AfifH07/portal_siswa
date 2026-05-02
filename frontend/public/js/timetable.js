@@ -1,6 +1,7 @@
 /**
  * timetable.js - Jadwal Pelajaran View
  * Displays all schedules in a grid format per day
+ * Shows ALL sesi (Tahfidz → KBM → Diniyah) in each day table
  */
 
 // ============================================
@@ -8,9 +9,17 @@
 // ============================================
 let allSchedules = [];
 let allClasses = [];
-let masterJamData = {};
-let masterMapelData = {}; // Lookup: { nama_mapel: kode }
-let currentSesi = 'all';
+let masterJamBySesi = {}; // { tahfidz: [...], kbm: [...], diniyah: [...] }
+let masterMapelKode = {}; // { 'Matematika': 'MTK', ... }
+let allGuruMap = new Map(); // Deduplicated guru for legend
+
+// Sesi order and config
+const SESI_ORDER = ['tahfidz', 'kbm', 'diniyah'];
+const SESI_CONFIG = {
+    tahfidz: { icon: '🕌', label: 'TAHFIDZ', cssClass: 'tahfidz' },
+    kbm: { icon: '📗', label: 'KBM', cssClass: 'kbm' },
+    diniyah: { icon: '📖', label: 'DINIYAH', cssClass: 'diniyah' }
+};
 
 // ============================================
 // INITIALIZATION
@@ -21,9 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize date display
     initDateDisplay();
-
-    // Setup sesi filter
-    setupSesiFilter();
 
     // Load data
     await loadAllData();
@@ -38,44 +44,42 @@ function initDateDisplay() {
     }
 }
 
-function setupSesiFilter() {
-    const filterContainer = document.getElementById('sesi-filter');
-    if (!filterContainer) return;
-
-    filterContainer.addEventListener('click', (e) => {
-        const pill = e.target.closest('.sesi-pill');
-        if (!pill) return;
-
-        // Update active state
-        filterContainer.querySelectorAll('.sesi-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-
-        // Update current sesi and re-render
-        currentSesi = pill.dataset.sesi;
-        renderTimetable();
-    });
-}
-
 // ============================================
 // DATA LOADING
 // ============================================
 async function loadAllData() {
     try {
-        // Load all data in parallel
-        const [schedulesRes, classesRes, masterJamRes, masterMapelRes] = await Promise.all([
-            window.apiFetch('schedules/'),
-            window.apiFetch('students/classes/'),
-            window.apiFetch('core/master-jam/'),
-            window.apiFetch('core/master-mapel/')
-        ]);
-
-        // Parse schedules
-        if (schedulesRes && schedulesRes.ok) {
-            const data = await schedulesRes.json();
-            allSchedules = Array.isArray(data) ? data : (data.results || []);
+        // Load all data in order as specified
+        // 1. Master Jam
+        const masterJamRes = await window.apiFetch('core/master-jam/');
+        if (masterJamRes && masterJamRes.ok) {
+            const data = await masterJamRes.json();
+            // Handle { data: { tahfidz: [...], kbm: [...], diniyah: [...] } } format
+            if (data.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
+                masterJamBySesi = data.data;
+            } else {
+                // Handle array format - group by sesi
+                const jamList = Array.isArray(data) ? data : (data.results || []);
+                masterJamBySesi = { tahfidz: [], kbm: [], diniyah: [] };
+                jamList.forEach(jam => {
+                    if (masterJamBySesi[jam.sesi]) {
+                        masterJamBySesi[jam.sesi].push(jam);
+                    }
+                });
+            }
+            // Sort each sesi by jam_mulai ascending
+            Object.keys(masterJamBySesi).forEach(sesi => {
+                masterJamBySesi[sesi].sort((a, b) => {
+                    if (a.jam_mulai && b.jam_mulai) {
+                        return a.jam_mulai.localeCompare(b.jam_mulai);
+                    }
+                    return (a.jam_ke || 0) - (b.jam_ke || 0);
+                });
+            });
         }
 
-        // Parse classes
+        // 2. Classes
+        const classesRes = await window.apiFetch('students/classes/');
         if (classesRes && classesRes.ok) {
             const data = await classesRes.json();
             allClasses = Array.isArray(data) ? data : (data.results || data.classes || []);
@@ -87,42 +91,29 @@ async function loadAllData() {
                 if (gradeOrder[gradeA] !== gradeOrder[gradeB]) {
                     return gradeOrder[gradeA] - gradeOrder[gradeB];
                 }
-                return sectionA.localeCompare(sectionB);
+                return (sectionA || '').localeCompare(sectionB || '');
             });
         }
 
-        // Parse master jam grouped by sesi
-        if (masterJamRes && masterJamRes.ok) {
-            const data = await masterJamRes.json();
-            // Handle both direct array and { data: { sesi: [...] } } format
-            if (data.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
-                masterJamData = data.data;
-            } else {
-                const jamList = Array.isArray(data) ? data : (data.results || []);
-                masterJamData = {};
-                jamList.forEach(jam => {
-                    if (!masterJamData[jam.sesi]) {
-                        masterJamData[jam.sesi] = [];
-                    }
-                    masterJamData[jam.sesi].push(jam);
-                });
-            }
-            // Sort each sesi by jam_ke
-            Object.keys(masterJamData).forEach(sesi => {
-                masterJamData[sesi].sort((a, b) => a.jam_ke - b.jam_ke);
-            });
-        }
-
-        // Parse master mapel - build lookup { nama: kode }
+        // 3. Master Mapel
+        const masterMapelRes = await window.apiFetch('core/master-mapel/');
         if (masterMapelRes && masterMapelRes.ok) {
             const data = await masterMapelRes.json();
             const mapelList = Array.isArray(data) ? data : (data.results || data.data || []);
-            masterMapelData = {};
+            masterMapelKode = {};
             mapelList.forEach(mapel => {
                 if (mapel.nama) {
-                    masterMapelData[mapel.nama] = mapel.kode || mapel.nama;
+                    // Use kode if available, fallback to nama
+                    masterMapelKode[mapel.nama] = mapel.kode || mapel.nama;
                 }
             });
+        }
+
+        // 4. Schedules
+        const schedulesRes = await window.apiFetch('schedules/?page_size=500&is_active=true');
+        if (schedulesRes && schedulesRes.ok) {
+            const data = await schedulesRes.json();
+            allSchedules = Array.isArray(data) ? data : (data.results || []);
         }
 
         // Update stats and render
@@ -136,24 +127,19 @@ async function loadAllData() {
 }
 
 function updateStats() {
-    // Filter by sesi if needed
-    const filtered = currentSesi === 'all'
-        ? allSchedules
-        : allSchedules.filter(s => s.sesi === currentSesi);
-
     // Total jadwal
-    document.getElementById('stat-total-jadwal').textContent = filtered.length;
+    document.getElementById('stat-total-jadwal').textContent = allSchedules.length;
 
     // Unique guru
-    const uniqueGuru = new Set(filtered.map(s => s.username));
+    const uniqueGuru = new Set(allSchedules.map(s => s.username));
     document.getElementById('stat-total-guru').textContent = uniqueGuru.size;
 
     // Unique kelas
-    const uniqueKelas = new Set(filtered.map(s => s.kelas));
+    const uniqueKelas = new Set(allSchedules.map(s => s.kelas));
     document.getElementById('stat-total-kelas').textContent = uniqueKelas.size;
 
     // Unique mapel
-    const uniqueMapel = new Set(filtered.map(s => s.mata_pelajaran).filter(Boolean));
+    const uniqueMapel = new Set(allSchedules.map(s => s.mata_pelajaran).filter(Boolean));
     document.getElementById('stat-total-mapel').textContent = uniqueMapel.size;
 }
 
@@ -164,21 +150,13 @@ function renderTimetable() {
     const container = document.getElementById('timetable-container');
     const legendCard = document.getElementById('legend-card');
 
-    // Filter schedules by sesi
-    const filtered = currentSesi === 'all'
-        ? allSchedules
-        : allSchedules.filter(s => s.sesi === currentSesi);
-
-    // Update stats
-    updateStats();
-
-    if (filtered.length === 0) {
+    if (allSchedules.length === 0) {
         container.innerHTML = `
             <div class="glass-card">
                 <div class="empty-state">
                     <div class="empty-icon">📅</div>
                     <div class="empty-title">Belum Ada Jadwal</div>
-                    <div class="empty-desc">Tidak ada jadwal untuk sesi yang dipilih.</div>
+                    <div class="empty-desc">Tidak ada jadwal yang aktif saat ini.</div>
                 </div>
             </div>
         `;
@@ -186,11 +164,13 @@ function renderTimetable() {
         return;
     }
 
-    // Collect all unique guru for legend
-    const guruMap = new Map();
-    filtered.forEach(s => {
-        if (!guruMap.has(s.username)) {
-            guruMap.set(s.username, {
+    // Reset guru map for legend
+    allGuruMap.clear();
+
+    // Collect all guru for legend
+    allSchedules.forEach(s => {
+        if (!allGuruMap.has(s.username)) {
+            allGuruMap.set(s.username, {
                 username: s.username,
                 name: s.guru_name || s.username,
                 color: getGuruColor(s.username)
@@ -198,70 +178,20 @@ function renderTimetable() {
         }
     });
 
-    // Determine which jam slots to show based on sesi filter
-    let jamSlots = [];
-    if (currentSesi === 'all') {
-        // Combine all sesi slots
-        const allJamKe = new Set();
-        Object.values(masterJamData).flat().forEach(jam => {
-            allJamKe.add(jam.jam_ke);
-        });
-        // Create generic slots
-        Array.from(allJamKe).sort((a, b) => a - b).forEach(jamKe => {
-            // Find first matching jam data for waktu
-            let jamMulai = null;
-            let jamSelesai = null;
-            for (const sesi of Object.keys(masterJamData)) {
-                const jam = masterJamData[sesi].find(j => j.jam_ke === jamKe);
-                if (jam) {
-                    jamMulai = jam.jam_mulai;
-                    jamSelesai = jam.jam_selesai;
-                    break;
-                }
-            }
-            jamSlots.push({ jam_ke: jamKe, jam_mulai: jamMulai, jam_selesai: jamSelesai });
-        });
-    } else {
-        // Use specific sesi jam slots
-        const sesiJam = masterJamData[currentSesi] || [];
-        jamSlots = sesiJam.map(jam => ({
-            jam_ke: jam.jam_ke,
-            jam_mulai: jam.jam_mulai,
-            jam_selesai: jam.jam_selesai
-        }));
-    }
-
-    // If no jam slots from master data, extract from schedules
-    if (jamSlots.length === 0) {
-        const jamKeSet = new Set();
-        filtered.forEach(s => {
-            if (s.jam_ke) jamKeSet.add(s.jam_ke);
-            if (s.jam_ke_akhir) {
-                for (let i = s.jam_ke; i <= s.jam_ke_akhir; i++) {
-                    jamKeSet.add(i);
-                }
-            }
-        });
-        jamSlots = Array.from(jamKeSet).sort((a, b) => a - b).map(jamKe => ({
-            jam_ke: jamKe,
-            jam_mulai: null,
-            jam_selesai: null
-        }));
-    }
-
     // Group schedules by day
     const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     const schedulesByDay = {};
     days.forEach(day => {
-        schedulesByDay[day] = filtered.filter(s => s.hari === day);
+        schedulesByDay[day] = allSchedules.filter(s => s.hari === day);
     });
+
+    // Calculate column count for colspan
+    const colCount = allClasses.length + 1; // +1 for JAM column
 
     // Render each day
     let html = '';
     days.forEach(day => {
         const daySchedules = schedulesByDay[day];
-        if (daySchedules.length === 0 && currentSesi !== 'all') return; // Skip empty days if filtered
-
         const dayIcon = day.toLowerCase();
         const dayLetter = day.charAt(0);
 
@@ -284,7 +214,7 @@ function renderTimetable() {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${renderDayRows(day, jamSlots, daySchedules, guruMap)}
+                                ${renderDayBody(day, daySchedules, colCount)}
                             </tbody>
                         </table>
                     </div>
@@ -296,112 +226,144 @@ function renderTimetable() {
     container.innerHTML = html;
 
     // Render legend
-    renderLegend(guruMap);
+    renderLegend();
 }
 
-function renderDayRows(day, jamSlots, daySchedules, guruMap) {
-    // Build a map of kelas -> jam_ke -> schedule (with rowspan tracking)
-    const scheduleMap = {};
-    const rowspanMap = {}; // Track which cells to skip due to rowspan
+function renderDayBody(day, daySchedules, colCount) {
+    let bodyHtml = '';
 
-    allClasses.forEach(kelas => {
-        scheduleMap[kelas] = {};
-        rowspanMap[kelas] = {};
+    // Group day schedules by sesi
+    const schedulesBySesi = {};
+    SESI_ORDER.forEach(sesi => {
+        schedulesBySesi[sesi] = daySchedules.filter(s => s.sesi === sesi);
     });
 
-    // Populate schedule map
-    daySchedules.forEach(schedule => {
-        const kelas = schedule.kelas;
-        if (!scheduleMap[kelas]) return;
+    // Render each sesi section
+    SESI_ORDER.forEach(sesi => {
+        const config = SESI_CONFIG[sesi];
+        const sesiSchedules = schedulesBySesi[sesi];
+        const jamList = masterJamBySesi[sesi] || [];
 
-        const jamKeStart = schedule.jam_ke;
-        const jamKeEnd = schedule.jam_ke_akhir || schedule.jam_ke;
-        const rowspan = jamKeEnd - jamKeStart + 1;
-
-        // Place in first jam slot
-        scheduleMap[kelas][jamKeStart] = {
-            schedule,
-            rowspan,
-            color: guruMap.get(schedule.username)?.color || '#6b7280'
-        };
-
-        // Mark subsequent slots as spanned
-        for (let i = jamKeStart + 1; i <= jamKeEnd; i++) {
-            rowspanMap[kelas][i] = true;
-        }
-    });
-
-    // Render rows
-    let rowsHtml = '';
-    jamSlots.forEach(slot => {
-        rowsHtml += `<tr>`;
-
-        // Jam column - show time instead of number
-        const jamMulaiFormatted = formatTimeOnly(slot.jam_mulai);
-        const jamSelesaiFormatted = formatTimeOnly(slot.jam_selesai);
-
-        if (jamMulaiFormatted) {
-            rowsHtml += `
-                <td class="jam-cell">
-                    <div class="jam-waktu-start">${jamMulaiFormatted}</div>
-                    <div class="jam-waktu-end">- ${jamSelesaiFormatted || ''}</div>
+        // Subheader row
+        bodyHtml += `
+            <tr>
+                <td colspan="${colCount}" class="sesi-subheader ${config.cssClass}">
+                    ${config.icon} ${config.label}
                 </td>
-            `;
-        } else {
-            // Fallback if no master jam data
-            rowsHtml += `
-                <td class="jam-cell">
-                    <div class="jam-ke-fallback">Jam ${slot.jam_ke}</div>
-                </td>
-            `;
-        }
+            </tr>
+        `;
 
-        // Class columns
-        allClasses.forEach(kelas => {
-            // Skip if this cell is spanned from above
-            if (rowspanMap[kelas][slot.jam_ke]) {
-                return; // Don't render <td>
-            }
-
-            const cellData = scheduleMap[kelas][slot.jam_ke];
-            if (cellData) {
-                const { schedule, rowspan, color } = cellData;
-                const rowspanAttr = rowspan > 1 ? `rowspan="${rowspan}"` : '';
-
-                // Get mapel kode from lookup, fallback to full name
-                const mapelNama = schedule.mata_pelajaran || '-';
-                const mapelDisplay = masterMapelData[mapelNama] || mapelNama;
-
-                rowsHtml += `
-                    <td ${rowspanAttr}>
-                        <div class="schedule-cell" style="background: ${color};">
-                            <div class="schedule-mapel">${mapelDisplay}</div>
-                            <div class="schedule-guru">${schedule.guru_name || schedule.username}</div>
-                        </div>
+        // If no jam data for this sesi, show placeholder
+        if (jamList.length === 0) {
+            bodyHtml += `
+                <tr>
+                    <td colspan="${colCount}" style="padding: 16px; color: #9ca3af; font-style: italic; text-align: center;">
+                        Tidak ada data jam untuk sesi ini
                     </td>
-                `;
-            } else {
-                rowsHtml += `<td><span class="empty-cell">-</span></td>`;
+                </tr>
+            `;
+            return;
+        }
+
+        // Build schedule map for this sesi: { kelas: { jam_ke: schedule } }
+        const scheduleMap = {};
+        const rowspanMap = {};
+        allClasses.forEach(kelas => {
+            scheduleMap[kelas] = {};
+            rowspanMap[kelas] = {};
+        });
+
+        sesiSchedules.forEach(schedule => {
+            const kelas = schedule.kelas;
+            if (!scheduleMap[kelas]) return;
+
+            const jamKeStart = schedule.jam_ke;
+            const jamKeEnd = schedule.jam_ke_akhir || schedule.jam_ke;
+            const rowspan = jamKeEnd - jamKeStart + 1;
+
+            scheduleMap[kelas][jamKeStart] = {
+                schedule,
+                rowspan,
+                color: allGuruMap.get(schedule.username)?.color || '#6b7280'
+            };
+
+            for (let i = jamKeStart + 1; i <= jamKeEnd; i++) {
+                rowspanMap[kelas][i] = true;
             }
         });
 
-        rowsHtml += `</tr>`;
+        // Render jam rows
+        jamList.forEach(jam => {
+            const jamMulai = formatTimeOnly(jam.jam_mulai);
+            const jamSelesai = formatTimeOnly(jam.jam_selesai);
+
+            bodyHtml += `<tr>`;
+
+            // Jam column
+            if (jamMulai) {
+                bodyHtml += `
+                    <td class="jam-cell">
+                        <div class="jam-waktu-start">${jamMulai}</div>
+                        <div class="jam-waktu-end">- ${jamSelesai || ''}</div>
+                    </td>
+                `;
+            } else {
+                bodyHtml += `
+                    <td class="jam-cell">
+                        <div class="jam-ke-fallback">Jam ${jam.jam_ke}</div>
+                    </td>
+                `;
+            }
+
+            // Class columns
+            allClasses.forEach(kelas => {
+                // Skip if this cell is spanned from above
+                if (rowspanMap[kelas][jam.jam_ke]) {
+                    return;
+                }
+
+                const cellData = scheduleMap[kelas][jam.jam_ke];
+                if (cellData) {
+                    const { schedule, rowspan, color } = cellData;
+                    const rowspanAttr = rowspan > 1 ? `rowspan="${rowspan}"` : '';
+                    const mapelNama = schedule.mata_pelajaran || '-';
+                    const mapelDisplay = masterMapelKode[mapelNama] || mapelNama;
+
+                    bodyHtml += `
+                        <td ${rowspanAttr}>
+                            <div class="schedule-cell" style="background: ${color};">
+                                <div class="schedule-mapel">${mapelDisplay}</div>
+                                <div class="schedule-guru">${schedule.guru_name || schedule.username}</div>
+                            </div>
+                        </td>
+                    `;
+                } else {
+                    bodyHtml += `
+                        <td>
+                            <div class="empty-cell">-</div>
+                        </td>
+                    `;
+                }
+            });
+
+            bodyHtml += `</tr>`;
+        });
     });
 
-    return rowsHtml;
+    return bodyHtml;
 }
 
-function renderLegend(guruMap) {
+function renderLegend() {
     const legendCard = document.getElementById('legend-card');
     const legendGrid = document.getElementById('legend-grid');
 
-    if (guruMap.size === 0) {
+    if (allGuruMap.size === 0) {
         legendCard.style.display = 'none';
         return;
     }
 
     // Sort by name
-    const sortedGuru = Array.from(guruMap.values()).sort((a, b) =>
+    const sortedGuru = Array.from(allGuruMap.values()).sort((a, b) =>
         a.name.localeCompare(b.name)
     );
 
@@ -421,7 +383,6 @@ function renderLegend(guruMap) {
 
 /**
  * Generate a consistent color for a guru based on username hash.
- * Uses HSL for pleasant, distinct colors.
  */
 function getGuruColor(username) {
     if (!username) return '#6b7280';
@@ -440,21 +401,7 @@ function getGuruColor(username) {
  */
 function formatTimeOnly(time) {
     if (!time) return null;
-    // Handle both "HH:MM:SS" and "HH:MM" formats
     return time.substring(0, 5);
-}
-
-/**
- * Format time range string.
- */
-function formatWaktu(jamMulai, jamSelesai) {
-    if (!jamMulai) return '-';
-
-    const start = formatTimeOnly(jamMulai);
-    const end = formatTimeOnly(jamSelesai);
-
-    if (!end) return start;
-    return `${start}-${end}`;
 }
 
 /**

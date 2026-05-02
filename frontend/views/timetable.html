@@ -23,34 +23,6 @@
            TIMETABLE PAGE SPECIFIC STYLES
         ============================================ */
 
-        /* Sesi Filter Pills */
-        .sesi-filter {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .sesi-pill {
-            padding: 8px 20px;
-            border-radius: 20px;
-            border: 2px solid var(--emerald-300, #6ee7b7);
-            background: white;
-            color: var(--emerald-700, #047857);
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .sesi-pill:hover {
-            background: var(--emerald-50, #ecfdf5);
-            border-color: var(--emerald-500, #10b981);
-        }
-        .sesi-pill.active {
-            background: linear-gradient(135deg, #059669, #047857);
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-        }
-
         /* Day Section */
         .day-section {
             margin-bottom: 24px;
@@ -91,7 +63,7 @@
             color: var(--text-sub, #6b7280);
         }
 
-        /* Timetable Grid - Non-responsive with horizontal scroll */
+        /* Timetable Grid */
         .timetable-grid {
             overflow-x: auto;
             border-radius: 12px;
@@ -100,8 +72,8 @@
         }
         .timetable-table {
             border-collapse: collapse;
-            min-width: max-content;
-            width: max-content;
+            width: 100%;
+            table-layout: fixed;
         }
         .timetable-table th,
         .timetable-table td {
@@ -110,7 +82,6 @@
             text-align: center;
             vertical-align: middle;
             font-size: 0.8rem;
-            white-space: nowrap;
         }
         .timetable-table thead th {
             background: var(--emerald-50, #ecfdf5);
@@ -120,7 +91,6 @@
             position: sticky;
             top: 0;
             z-index: 10;
-            min-width: 100px;
         }
         .timetable-table th.jam-col {
             width: 80px;
@@ -129,7 +99,29 @@
             background: var(--emerald-100, #d1fae5);
         }
 
-        /* Jam Cell - Show time vertically */
+        /* Sesi Subheader Row */
+        .sesi-subheader {
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            padding: 6px 12px !important;
+            text-transform: uppercase;
+            text-align: left !important;
+        }
+        .sesi-subheader.tahfidz {
+            background: #059669;
+            color: white;
+        }
+        .sesi-subheader.kbm {
+            background: #065f46;
+            color: white;
+        }
+        .sesi-subheader.diniyah {
+            background: #1e3a5f;
+            color: white;
+        }
+
+        /* Jam Cell */
         .jam-cell {
             background: var(--emerald-50, #ecfdf5);
             font-family: 'DM Mono', monospace;
@@ -161,7 +153,7 @@
             border-radius: 6px;
             color: white;
             text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            min-height: 50px;
+            min-height: 44px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -174,13 +166,19 @@
             line-height: 1.2;
         }
         .schedule-guru {
-            font-size: 0.75rem;
-            opacity: 0.9;
+            font-size: 0.7rem;
+            opacity: 0.85;
         }
+
+        /* Empty Cell */
         .empty-cell {
-            color: var(--text-muted, #9ca3af);
-            font-style: italic;
+            background: #f3f4f6;
+            color: #9ca3af;
             font-size: 0.8rem;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* Legend */
@@ -324,21 +322,6 @@
     </div>
 
     <div class="page-body">
-
-        <!-- Header with Sesi Filter -->
-        <div class="glass-card" style="margin-bottom: 24px;">
-            <div class="card-head">
-                <h3><span class="ch-icon">🗓️</span> Filter Sesi</h3>
-            </div>
-            <div class="card-body">
-                <div class="sesi-filter" id="sesi-filter">
-                    <button class="sesi-pill active" data-sesi="all">Semua Sesi</button>
-                    <button class="sesi-pill" data-sesi="tahfidz">🕌 Tahfidz</button>
-                    <button class="sesi-pill" data-sesi="kbm">📚 KBM</button>
-                    <button class="sesi-pill" data-sesi="diniyah">📖 Diniyah</button>
-                </div>
-            </div>
-        </div>
 
         <!-- Stats -->
         <div class="timetable-stats" id="timetable-stats">
