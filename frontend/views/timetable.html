@@ -91,54 +91,68 @@
             color: var(--text-sub, #6b7280);
         }
 
-        /* Timetable Grid */
+        /* Timetable Grid - Non-responsive with horizontal scroll */
         .timetable-grid {
             overflow-x: auto;
             border-radius: 12px;
             border: 1px solid var(--glass-border, rgba(16, 185, 129, 0.1));
+            -webkit-overflow-scrolling: touch;
         }
         .timetable-table {
-            width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
+            min-width: max-content;
+            width: max-content;
         }
         .timetable-table th,
         .timetable-table td {
             border: 1px solid var(--glass-border, rgba(16, 185, 129, 0.15));
-            padding: 8px 10px;
+            padding: 6px 8px;
             text-align: center;
             vertical-align: middle;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            white-space: nowrap;
         }
         .timetable-table thead th {
             background: var(--emerald-50, #ecfdf5);
             color: var(--emerald-800, #065f46);
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             position: sticky;
             top: 0;
             z-index: 10;
+            min-width: 100px;
         }
         .timetable-table th.jam-col {
-            width: 100px;
-            min-width: 100px;
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
             background: var(--emerald-100, #d1fae5);
         }
 
-        /* Jam Cell */
+        /* Jam Cell - Show time vertically */
         .jam-cell {
             background: var(--emerald-50, #ecfdf5);
-            font-weight: 600;
+            font-family: 'DM Mono', monospace;
+            padding: 8px 6px !important;
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
         }
-        .jam-ke {
-            font-size: 1rem;
+        .jam-waktu-start {
+            font-size: 0.9rem;
             font-weight: 700;
             color: var(--emerald-700, #047857);
+            line-height: 1.2;
         }
-        .jam-waktu {
+        .jam-waktu-end {
             font-size: 0.75rem;
             color: var(--text-muted, #9ca3af);
-            font-family: 'DM Mono', monospace;
+            line-height: 1.2;
+        }
+        .jam-ke-fallback {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--emerald-600, #059669);
         }
 
         /* Schedule Cell */

@@ -9,6 +9,7 @@
 let allSchedules = [];
 let allClasses = [];
 let masterJamData = {};
+let masterMapelData = {}; // Lookup: { nama_mapel: kode }
 let currentSesi = 'all';
 
 // ============================================
@@ -61,10 +62,11 @@ function setupSesiFilter() {
 async function loadAllData() {
     try {
         // Load all data in parallel
-        const [schedulesRes, classesRes, masterJamRes] = await Promise.all([
+        const [schedulesRes, classesRes, masterJamRes, masterMapelRes] = await Promise.all([
             window.apiFetch('schedules/'),
             window.apiFetch('students/classes/'),
-            window.apiFetch('core/master-jam/')
+            window.apiFetch('core/master-jam/'),
+            window.apiFetch('core/master-mapel/')
         ]);
 
         // Parse schedules
@@ -92,18 +94,34 @@ async function loadAllData() {
         // Parse master jam grouped by sesi
         if (masterJamRes && masterJamRes.ok) {
             const data = await masterJamRes.json();
-            const jamList = Array.isArray(data) ? data : (data.results || []);
-            // Group by sesi
-            masterJamData = {};
-            jamList.forEach(jam => {
-                if (!masterJamData[jam.sesi]) {
-                    masterJamData[jam.sesi] = [];
-                }
-                masterJamData[jam.sesi].push(jam);
-            });
+            // Handle both direct array and { data: { sesi: [...] } } format
+            if (data.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
+                masterJamData = data.data;
+            } else {
+                const jamList = Array.isArray(data) ? data : (data.results || []);
+                masterJamData = {};
+                jamList.forEach(jam => {
+                    if (!masterJamData[jam.sesi]) {
+                        masterJamData[jam.sesi] = [];
+                    }
+                    masterJamData[jam.sesi].push(jam);
+                });
+            }
             // Sort each sesi by jam_ke
             Object.keys(masterJamData).forEach(sesi => {
                 masterJamData[sesi].sort((a, b) => a.jam_ke - b.jam_ke);
+            });
+        }
+
+        // Parse master mapel - build lookup { nama: kode }
+        if (masterMapelRes && masterMapelRes.ok) {
+            const data = await masterMapelRes.json();
+            const mapelList = Array.isArray(data) ? data : (data.results || data.data || []);
+            masterMapelData = {};
+            mapelList.forEach(mapel => {
+                if (mapel.nama) {
+                    masterMapelData[mapel.nama] = mapel.kode || mapel.nama;
+                }
             });
         }
 
@@ -191,22 +209,25 @@ function renderTimetable() {
         // Create generic slots
         Array.from(allJamKe).sort((a, b) => a - b).forEach(jamKe => {
             // Find first matching jam data for waktu
-            let waktu = '-';
+            let jamMulai = null;
+            let jamSelesai = null;
             for (const sesi of Object.keys(masterJamData)) {
                 const jam = masterJamData[sesi].find(j => j.jam_ke === jamKe);
                 if (jam) {
-                    waktu = formatWaktu(jam.jam_mulai, jam.jam_selesai);
+                    jamMulai = jam.jam_mulai;
+                    jamSelesai = jam.jam_selesai;
                     break;
                 }
             }
-            jamSlots.push({ jam_ke: jamKe, waktu });
+            jamSlots.push({ jam_ke: jamKe, jam_mulai: jamMulai, jam_selesai: jamSelesai });
         });
     } else {
         // Use specific sesi jam slots
         const sesiJam = masterJamData[currentSesi] || [];
         jamSlots = sesiJam.map(jam => ({
             jam_ke: jam.jam_ke,
-            waktu: formatWaktu(jam.jam_mulai, jam.jam_selesai)
+            jam_mulai: jam.jam_mulai,
+            jam_selesai: jam.jam_selesai
         }));
     }
 
@@ -223,7 +244,8 @@ function renderTimetable() {
         });
         jamSlots = Array.from(jamKeSet).sort((a, b) => a - b).map(jamKe => ({
             jam_ke: jamKe,
-            waktu: '-'
+            jam_mulai: null,
+            jam_selesai: null
         }));
     }
 
@@ -314,13 +336,25 @@ function renderDayRows(day, jamSlots, daySchedules, guruMap) {
     jamSlots.forEach(slot => {
         rowsHtml += `<tr>`;
 
-        // Jam column
-        rowsHtml += `
-            <td class="jam-cell">
-                <div class="jam-ke">${slot.jam_ke}</div>
-                <div class="jam-waktu">${slot.waktu}</div>
-            </td>
-        `;
+        // Jam column - show time instead of number
+        const jamMulaiFormatted = formatTimeOnly(slot.jam_mulai);
+        const jamSelesaiFormatted = formatTimeOnly(slot.jam_selesai);
+
+        if (jamMulaiFormatted) {
+            rowsHtml += `
+                <td class="jam-cell">
+                    <div class="jam-waktu-start">${jamMulaiFormatted}</div>
+                    <div class="jam-waktu-end">- ${jamSelesaiFormatted || ''}</div>
+                </td>
+            `;
+        } else {
+            // Fallback if no master jam data
+            rowsHtml += `
+                <td class="jam-cell">
+                    <div class="jam-ke-fallback">Jam ${slot.jam_ke}</div>
+                </td>
+            `;
+        }
 
         // Class columns
         allClasses.forEach(kelas => {
@@ -333,10 +367,15 @@ function renderDayRows(day, jamSlots, daySchedules, guruMap) {
             if (cellData) {
                 const { schedule, rowspan, color } = cellData;
                 const rowspanAttr = rowspan > 1 ? `rowspan="${rowspan}"` : '';
+
+                // Get mapel kode from lookup, fallback to full name
+                const mapelNama = schedule.mata_pelajaran || '-';
+                const mapelDisplay = masterMapelData[mapelNama] || mapelNama;
+
                 rowsHtml += `
                     <td ${rowspanAttr}>
                         <div class="schedule-cell" style="background: ${color};">
-                            <div class="schedule-mapel">${schedule.mata_pelajaran || '-'}</div>
+                            <div class="schedule-mapel">${mapelDisplay}</div>
                             <div class="schedule-guru">${schedule.guru_name || schedule.username}</div>
                         </div>
                     </td>
@@ -397,19 +436,22 @@ function getGuruColor(username) {
 }
 
 /**
+ * Format time to HH:MM only.
+ */
+function formatTimeOnly(time) {
+    if (!time) return null;
+    // Handle both "HH:MM:SS" and "HH:MM" formats
+    return time.substring(0, 5);
+}
+
+/**
  * Format time range string.
  */
 function formatWaktu(jamMulai, jamSelesai) {
     if (!jamMulai) return '-';
 
-    const formatTime = (time) => {
-        if (!time) return '';
-        // Handle both "HH:MM:SS" and "HH:MM" formats
-        return time.substring(0, 5);
-    };
-
-    const start = formatTime(jamMulai);
-    const end = formatTime(jamSelesai);
+    const start = formatTimeOnly(jamMulai);
+    const end = formatTimeOnly(jamSelesai);
 
     if (!end) return start;
     return `${start}-${end}`;

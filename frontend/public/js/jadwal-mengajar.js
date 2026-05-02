@@ -478,34 +478,24 @@ async function onGuruChange() {
             }
         });
 
-        // If no assignments, show all kelas
+        // If no assignments, keep dropdown empty (don't show all kelas)
         if (kelasSet.size === 0) {
-            const allKelas = ['X A', 'X B', 'X C', 'XI A', 'XI B', 'XI C', 'XII A', 'XII B', 'XII C'];
-            allKelas.forEach(k => {
-                const option = document.createElement('option');
-                option.value = k;
-                option.textContent = k;
-                kelasSelect.appendChild(option);
-            });
-        } else {
-            Array.from(kelasSet).sort().forEach(k => {
-                const option = document.createElement('option');
-                option.value = k;
-                option.textContent = k;
-                kelasSelect.appendChild(option);
-            });
+            kelasSelect.innerHTML = '<option value="">-- Guru belum memiliki assignment --</option>';
+            return;
         }
 
-    } catch (error) {
-        console.error('[JadwalMengajar] Error loading assignments:', error);
-        // Fallback: show all kelas
-        const allKelas = ['X A', 'X B', 'X C', 'XI A', 'XI B', 'XI C', 'XII A', 'XII B', 'XII C'];
-        allKelas.forEach(k => {
+        // Populate with assigned kelas only
+        Array.from(kelasSet).sort().forEach(k => {
             const option = document.createElement('option');
             option.value = k;
             option.textContent = k;
             kelasSelect.appendChild(option);
         });
+
+    } catch (error) {
+        console.error('[JadwalMengajar] Error loading assignments:', error);
+        // On error, show message - don't fallback to all kelas
+        kelasSelect.innerHTML = '<option value="">-- Gagal memuat assignment --</option>';
     }
 }
 
@@ -529,27 +519,19 @@ async function onKelasChange() {
         }
     });
 
-    // If no specific mapel, allow free input (add common ones)
+    // If no specific mapel for this kelas, show empty dropdown
     if (mapelSet.size === 0) {
-        const commonMapel = [
-            'Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'Bahasa Arab',
-            'IPA', 'IPS', 'PKN', 'PAI', 'Fiqih', 'Aqidah', 'Akhlak',
-            'Al-Quran Hadist', 'SKI', 'Penjaskes', 'Seni Budaya', 'TIK'
-        ];
-        commonMapel.forEach(m => {
-            const option = document.createElement('option');
-            option.value = m;
-            option.textContent = m;
-            mapelSelect.appendChild(option);
-        });
-    } else {
-        Array.from(mapelSet).sort().forEach(m => {
-            const option = document.createElement('option');
-            option.value = m;
-            option.textContent = m;
-            mapelSelect.appendChild(option);
-        });
+        mapelSelect.innerHTML = '<option value="">-- Tidak ada mapel untuk kelas ini --</option>';
+        return;
     }
+
+    // Populate with assigned mapel only
+    Array.from(mapelSet).sort().forEach(m => {
+        const option = document.createElement('option');
+        option.value = m;
+        option.textContent = m;
+        mapelSelect.appendChild(option);
+    });
 }
 
 /**
