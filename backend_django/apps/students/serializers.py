@@ -181,21 +181,33 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
 class ScheduleSerializer(serializers.ModelSerializer):
     waktu_display = serializers.SerializerMethodField()
     jam_ke_display = serializers.SerializerMethodField()
+    guru_name = serializers.SerializerMethodField()
+    sesi = serializers.SerializerMethodField()
     master_jam_id = serializers.IntegerField(source='master_jam.id', read_only=True, allow_null=True)
     master_jam_akhir_id = serializers.IntegerField(source='master_jam_akhir.id', read_only=True, allow_null=True)
 
     class Meta:
         model = Schedule
         fields = [
-            'id', 'username', 'kelas', 'hari', 'jam',
+            'id', 'username', 'guru_name', 'kelas', 'hari', 'jam',
             'jam_ke', 'jam_mulai', 'jam_selesai',
-            'master_jam', 'master_jam_id',
+            'master_jam', 'master_jam_id', 'sesi',
             'master_jam_akhir', 'master_jam_akhir_id',
             'jam_ke_akhir', 'jam_selesai_akhir',
             'waktu_display', 'jam_ke_display',
             'mata_pelajaran', 'tahun_ajaran', 'semester',
             'is_active', 'created_at', 'updated_at'
         ]
+
+    def get_guru_name(self, obj):
+        """Return guru's full name from User model."""
+        from apps.accounts.models import User
+        user = User.objects.filter(username=obj.username).first()
+        return (user.name or user.username) if user else obj.username
+
+    def get_sesi(self, obj):
+        """Return sesi from master_jam (tahfidz/kbm/diniyah)."""
+        return obj.master_jam.sesi if obj.master_jam else None
 
     def get_waktu_display(self, obj):
         """Return formatted time range (uses jam_selesai_akhir if available)."""
