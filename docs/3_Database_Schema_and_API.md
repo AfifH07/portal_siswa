@@ -3,8 +3,8 @@
 ## Document Information
 | Item | Value |
 |------|-------|
-| Version | 2.3.4 |
-| Last Updated | 2026-03-21 |
+| Version | 2.4.2 |
+| Last Updated | 2026-05-04 |
 | Database | SQLite (dev) / PostgreSQL (prod) |
 | API Style | REST with Django REST Framework |
 
@@ -170,6 +170,11 @@ Assignment of staff to classes, halaqoh, or duties.
 - `halaqoh` - Halaqoh Tahfidz/Tahsin
 - `piket` - Daily duty
 - `wali_kelas` - Homeroom teacher
+
+**Hafalan Type (v2.4.2):**
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| hafalan_type | CharField(20) | Nullable | tahfidz/tahsin/murojaah |
 
 ### 3.3 ResetToken
 **Table:** `reset_tokens`
@@ -340,7 +345,7 @@ Temporary attendance data before submission.
 ### 7.1 Evaluation
 **Table:** `evaluations`
 
-Student evaluations (prestasi/pelanggaran).
+Student evaluations (prestasi/pelanggaran) with approval and close case system.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
@@ -353,12 +358,49 @@ Student evaluations (prestasi/pelanggaran).
 | name | CharField(200) | Required | Evaluation title |
 | summary | TextField | Required | Description |
 | catatan | TextField | Nullable | Additional notes |
-| photo | ImageField | Nullable | Evidence photo |
+| foto | ImageField | Nullable | Evidence photo |
+| status | CharField(20) | Choices | dalam_penanganan/resolved |
+| visibility | CharField(20) | Choices | internal/public |
+| is_approved | BooleanField | Default: False | Approval status |
+| approved_by | ForeignKey | FK → User | Approver |
+| approved_at | DateTimeField | Nullable | Approval timestamp |
+| created_by | ForeignKey | FK → User | Creator |
+| keputusan_final | TextField | Nullable | Final decision (v2.4.2) |
+| closed_by | ForeignKey | FK → User | Case closer (v2.4.2) |
+| closed_at | DateTimeField | Nullable | Close timestamp (v2.4.2) |
 | created_at | DateTimeField | Auto | Creation timestamp |
 | updated_at | DateTimeField | Auto | Update timestamp |
 
 **Kategori Choices:**
 - adab, kedisiplinan, akademik, kebersihan, hafalan, sosial
+
+**Status Choices:**
+- dalam_penanganan, resolved
+
+### 7.2 EvaluationComment (v2.4.2)
+**Table:** `evaluation_comments`
+
+Comments/pembinaan on evaluations with visibility control.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | BigAutoField | PK | Primary key |
+| evaluation | ForeignKey | FK → Evaluation | Evaluation reference |
+| user | ForeignKey | FK → User | Comment author |
+| jenis | CharField(20) | Choices | diskusi/pembinaan |
+| content | TextField | Required | Comment content |
+| visibility | CharField(20) | Choices | internal/semua (v2.4.2) |
+| foto | ImageField | Nullable | Documentation photo (v2.4.2) |
+| created_at | DateTimeField | Auto | Creation timestamp |
+| updated_at | DateTimeField | Auto | Update timestamp |
+
+**Visibility Choices:**
+- `internal` - Only staff (guru, admin, pimpinan) can see
+- `semua` - All parties including walisantri can see
+
+**Jenis Choices:**
+- `diskusi` - Discussion/notes
+- `pembinaan` - Guidance/counseling record
 
 ---
 
@@ -602,7 +644,25 @@ Teacher substitution records.
 | created_at | DateTimeField | Auto | Creation timestamp |
 | updated_at | DateTimeField | Auto | Update timestamp |
 
-### 8.10 EmployeeEvaluation
+### 8.10 HafalanRecord (v2.4.2)
+**Table:** `kesantrian_hafalanrecord`
+
+Quran memorization records.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | BigAutoField | PK | Primary key |
+| siswa | ForeignKey | FK → Student | Student reference |
+| tanggal | DateField | Required | Record date |
+| juz | IntegerField | 1-30 | Juz number |
+| halaman_dari | IntegerField | Required | Start page |
+| halaman_sampai | IntegerField | Required | End page |
+| jumlah_halaman | IntegerField | Required | Total pages |
+| catatan | TextField | Nullable | Notes |
+| input_by | ForeignKey | FK → User | Recorder |
+| created_at | DateTimeField | Auto | Creation timestamp |
+
+### 8.11 EmployeeEvaluation
 **Table:** `employee_evaluations`
 
 Point-based staff evaluation (auto-generated from Inval).
@@ -842,6 +902,29 @@ Monthly financial reports.
 | GET | `/student/{nisn}/` | Student evaluations | Staff/Walisantri |
 | GET | `/all/` | All evaluations | Staff |
 | GET | `/statistics/` | Evaluation statistics | Staff |
+| PATCH | `/{id}/approve/` | Approve evaluation | Admin/Pimpinan |
+| PATCH | `/{id}/unapprove/` | Unapprove evaluation | Admin/Pimpinan |
+| PATCH | `/{id}/close/` | Close case with final decision | Pimpinan (v2.4.2) |
+| GET | `/{id}/comments/` | Get evaluation comments | Staff |
+| POST | `/{id}/comments/` | Add comment/pembinaan | Staff |
+| DELETE | `/comments/{id}/` | Delete comment | Author/Admin |
+
+**Close Case Request Body (v2.4.2):**
+```json
+{
+    "keputusan_final": "Santri diberi pembinaan intensif selama 2 minggu..."
+}
+```
+
+**Comment Request Body (v2.4.2):**
+```json
+{
+    "jenis": "pembinaan",
+    "content": "Hasil pembinaan...",
+    "visibility": "internal"
+}
+```
+Supports FormData with `foto` field for photo upload.
 
 ### 10.8 Kesantrian API
 **Base:** `/api/kesantrian/`
@@ -928,6 +1011,17 @@ Monthly financial reports.
 |--------|----------|-------------|--------|
 | GET | `/download-rapor/{nisn}/` | Download rapor PDF | Staff |
 | GET | `/download-blp/{nisn}/` | Download BLP PDF | Staff |
+
+#### Hafalan Endpoints (v2.4.2)
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/hafalan/` | List hafalan records | Staff |
+| POST | `/hafalan/` | Create hafalan record | Guru/Musyrif |
+| GET | `/hafalan/{id}/` | Get hafalan detail | Staff |
+| PATCH | `/hafalan/{id}/` | Update hafalan | Owner/Admin |
+| DELETE | `/hafalan/{id}/` | Delete hafalan | Owner/Admin |
+| POST | `/hafalan/import/` | Import from Excel | Admin |
+| GET | `/hafalan/template/` | Download import template | Admin |
 
 ### 10.9 Finance API
 **Base:** `/api/finance/`
@@ -1017,6 +1111,16 @@ Monthly financial reports.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.4.2 | 2026-05-04 | Close case & keputusan final for evaluations |
+| - | - | EvaluationComment visibility & foto fields |
+| - | - | HafalanRecord model for setoran hafalan |
+| - | - | Assignment.hafalan_type field |
+| - | - | New hafalan CRUD & import endpoints |
+| 2.4.1 | 2026-05-01 | Dashboard Guru Todo List |
+| - | - | Jurnal Guru wizard 4 step |
+| - | - | 8 jenis penilaian |
+| - | - | Evaluasi approval system |
+| - | - | Role admin baru |
 | 2.3.4 | 2026-03-21 | Initial documentation |
 | - | - | Added TahunAjaran model |
 | - | - | Complete API endpoint mapping |

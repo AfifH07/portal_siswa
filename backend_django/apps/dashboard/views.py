@@ -1050,3 +1050,208 @@ def guru_todo_list(request):
         'total_items': len(todo_items),
         'items': todo_items
     })
+
+
+# =============================================================
+# PIMPINAN DASHBOARD SUMMARY
+# =============================================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def pimpinan_dashboard_summary(request):
+    """
+    GET /api/dashboard/pimpinan/summary/
+
+    Dashboard khusus pimpinan dengan data:
+    - Stats: total santri, guru, efektivitas KBM, jam kosong
+    - Presensi guru mengajar hari ini
+    - Hafalan per kelas
+    - Evaluasi santri stats
+    - Breakdown santri per kelas
+    """
+    user = request.user
+
+    # Validate role
+    if user.role not in ['pimpinan', 'superadmin', 'admin']:
+        return Response({
+            'success': False,
+            'error': 'Forbidden'
+        }, status=403)
+
+    try:
+        from apps.students.models import Schedule
+        from apps.core.models import TahunAjaran
+
+        today = timezone.localdate()
+        hari_map = {
+            0: 'Senin', 1: 'Selasa', 2: 'Rabu',
+            3: 'Kamis', 4: 'Jumat', 5: 'Sabtu', 6: 'Minggu'
+        }
+        hari_ini = hari_map.get(today.weekday(), 'Senin')
+        tahun_aktif = TahunAjaran.objects.filter(is_active=True).first()
+
+        # =============================================
+        # 1. STATS CARDS
+        # =============================================
+        total_santri = Student.objects.filter(aktif=True).count()
+        total_guru = User.objects.filter(
+            role__in=['guru', 'musyrif'], is_active=True
+        ).count()
+
+        # =============================================
+        # 2. EFEKTIVITAS KBM HARI INI
+        # =============================================
+        total_jadwal_hari_ini = Schedule.objects.filter(
+            hari=hari_ini, is_active=True
+        ).count()
+
+        # Hitung jurnal yang sudah diisi (unique input_by + jam_ke per hari)
+        jurnal_terisi_hari_ini = Attendance.objects.filter(
+            tanggal=today
+        ).values('input_by', 'jam_ke').distinct().count()
+
+        efektivitas_kbm = round(
+            (jurnal_terisi_hari_ini / total_jadwal_hari_ini * 100), 1
+        ) if total_jadwal_hari_ini > 0 else 0
+
+        jam_kosong = max(0, total_jadwal_hari_ini - jurnal_terisi_hari_ini)
+
+        # =============================================
+        # 3. PRESENSI GURU MENGAJAR HARI INI
+        # =============================================
+        guru_list = User.objects.filter(role='guru', is_active=True)
+        presensi_guru = []
+
+        for guru in guru_list:
+            jadwal_guru = Schedule.objects.filter(
+                username=guru.username, hari=hari_ini, is_active=True
+            ).count()
+
+            if jadwal_guru > 0:
+                jurnal_guru = Attendance.objects.filter(
+                    input_by=guru, tanggal=today
+                ).values('jam_ke').distinct().count()
+
+                presensi_guru.append({
+                    'nama': guru.name or guru.username,
+                    'username': guru.username,
+                    'jadwal': jadwal_guru,
+                    'terisi': jurnal_guru,
+                    'kosong': jadwal_guru - jurnal_guru,
+                    'persentase': round(jurnal_guru / jadwal_guru * 100, 0) if jadwal_guru > 0 else 0
+                })
+
+        # Sort by kosong descending, then nama
+        presensi_guru.sort(key=lambda x: (-x['kosong'], x['nama']))
+
+        # =============================================
+        # 4. HAFALAN — rata-rata per kelas
+        # =============================================
+        hafalan_per_kelas = []
+        kelas_list = Student.objects.filter(
+            aktif=True
+        ).values_list('kelas', flat=True).distinct().order_by()
+
+        for kelas in kelas_list:
+            if not kelas:
+                continue
+            siswa_kelas = Student.objects.filter(kelas=kelas, aktif=True)
+            avg_current = siswa_kelas.aggregate(
+                avg=Avg('current_hafalan')
+            )['avg'] or 0
+            avg_target = siswa_kelas.aggregate(
+                avg=Avg('target_hafalan')
+            )['avg'] or 1
+
+            persentase = round(avg_current / avg_target * 100, 0) if avg_target > 0 else 0
+
+            hafalan_per_kelas.append({
+                'kelas': kelas,
+                'rata_hafalan': round(avg_current, 1),
+                'target': round(avg_target, 1),
+                'persentase': min(persentase, 100)  # Cap at 100%
+            })
+
+        # Sort by kelas (X A, X B, XI A, XI B, XII A, XII B)
+        def sort_kelas(item):
+            kelas = item['kelas']
+            grade_order = {'X': 1, 'XI': 2, 'XII': 3}
+            parts = kelas.split(' ') if kelas else ['', '']
+            grade = parts[0] if parts else ''
+            section = parts[1] if len(parts) > 1 else ''
+            return (grade_order.get(grade, 99), section)
+
+        hafalan_per_kelas.sort(key=sort_kelas)
+
+        # =============================================
+        # 5. EVALUASI SANTRI STATS
+        # =============================================
+        evaluasi_stats = {
+            'total': Evaluation.objects.count(),
+            'prestasi': Evaluation.objects.filter(jenis='prestasi').count(),
+            'pelanggaran': Evaluation.objects.filter(jenis='pelanggaran').count(),
+            'pending_approval': Evaluation.objects.filter(is_approved=False).count(),
+        }
+
+        # 5 evaluasi terbaru
+        evaluasi_terbaru = Evaluation.objects.select_related('nisn').order_by(
+            '-tanggal', '-created_at'
+        )[:5]
+
+        evaluasi_stats['terbaru'] = [
+            {
+                'id': ev.id,
+                'name': ev.name,
+                'jenis': ev.jenis,
+                'kategori': ev.kategori,
+                'tanggal': ev.tanggal.strftime('%d %b %Y') if ev.tanggal else '-',
+                'siswa_nama': ev.nisn.nama if ev.nisn else '-',
+                'siswa_kelas': ev.nisn.kelas if ev.nisn else '-',
+                'is_approved': ev.is_approved
+            }
+            for ev in evaluasi_terbaru
+        ]
+
+        # =============================================
+        # 6. BREAKDOWN SANTRI PER KELAS
+        # =============================================
+        breakdown_kelas = list(
+            Student.objects.filter(aktif=True).values(
+                'kelas'
+            ).annotate(total=Count('nisn')).order_by('kelas')
+        )
+
+        # Sort dengan fungsi yang sama
+        breakdown_kelas.sort(key=lambda x: sort_kelas({'kelas': x['kelas'] or ''}))
+
+        # =============================================
+        # 7. TAHUN AJARAN INFO
+        # =============================================
+        tahun_ajaran_display = f"{tahun_aktif.nama} - {tahun_aktif.semester}" if tahun_aktif else "-"
+
+        return Response({
+            'success': True,
+            'tanggal': today.strftime('%Y-%m-%d'),
+            'hari': hari_ini,
+            'tahun_ajaran': tahun_ajaran_display,
+            'stats': {
+                'total_santri': total_santri,
+                'total_guru': total_guru,
+                'efektivitas_kbm': efektivitas_kbm,
+                'jam_kosong': jam_kosong,
+                'total_jadwal_hari_ini': total_jadwal_hari_ini,
+                'jurnal_terisi': jurnal_terisi_hari_ini,
+            },
+            'presensi_guru': presensi_guru,
+            'hafalan_per_kelas': hafalan_per_kelas,
+            'evaluasi': evaluasi_stats,
+            'breakdown_kelas': breakdown_kelas,
+        })
+
+    except Exception as e:
+        import traceback
+        return Response({
+            'success': False,
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)

@@ -104,6 +104,14 @@ urlpatterns = [
     path('hafalan/dashboard-stats/', views.hafalan_dashboard_stats, name='hafalan-dashboard-stats'),
 
     # ============================================
+    # HAFALAN RECORD (CRUD + Import)
+    # ============================================
+    path('hafalan/records/', views.hafalan_record_list, name='hafalan-record-list'),
+    path('hafalan/records/<int:pk>/', views.hafalan_record_detail, name='hafalan-record-detail'),
+    path('hafalan/siswa/<str:nisn>/', views.hafalan_per_siswa, name='hafalan-per-siswa'),
+    path('hafalan/import/', views.import_hafalan_excel, name='hafalan-import'),
+
+    # ============================================
     # IZIN GURU
     # ============================================
     path('izin-guru/', views.izin_guru_list_create, name='izin-guru-list-create'),

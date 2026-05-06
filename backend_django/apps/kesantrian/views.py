@@ -15,11 +15,12 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import timedelta
 
-from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan
+from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, HafalanRecord
 from .serializers import (
     IbadahSerializer, IbadahCreateSerializer,
     PembinaanSerializer, PembinaanCreateSerializer,
-    TargetHafalanSerializer, HalaqohSerializer, HalaqohMemberSerializer
+    TargetHafalanSerializer, HalaqohSerializer, HalaqohMemberSerializer,
+    HafalanRecordSerializer, HafalanRecordCreateSerializer, HafalanRecordUpdateSerializer
 )
 from .utils import (
     get_student_behavior_summary,
@@ -3643,6 +3644,446 @@ def izin_guru_export_pdf(request):
         return Response({
             'success': False,
             'message': 'reportlab tidak terinstall. Jalankan: pip install reportlab'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        import traceback
+        return Response({
+            'success': False,
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================
+# HAFALAN RECORD CRUD VIEWS
+# ============================================
+
+from apps.accounts.models import Assignment
+from apps.core.models import TahunAjaran
+
+
+def check_hafalan_permission(user):
+    """
+    Check if user has permission to input hafalan.
+    Returns True if user has assignment type='hafalan' or is admin.
+    """
+    if user.role in ['superadmin', 'admin', 'pimpinan']:
+        return True
+
+    # Check if user has hafalan assignment
+    has_assignment = Assignment.objects.filter(
+        user=user,
+        assignment_type='hafalan',
+        status='active'
+    ).exists()
+
+    # Also allow musyrif to input hafalan
+    if user.role == 'musyrif':
+        return True
+
+    return has_assignment
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def hafalan_record_list(request):
+    """
+    GET: List semua hafalan records dengan filter.
+    POST: Tambah hafalan record baru.
+
+    Query params (GET):
+    - nisn: Filter by student NISN
+    - kelas: Filter by class
+    - tanggal: Filter by date (YYYY-MM-DD)
+    - tahun_ajaran: Filter by tahun ajaran ID
+
+    Permission:
+    - GET: All authenticated users
+    - POST: musyrif, admin, or users with assignment type='hafalan'
+    """
+    user = request.user
+
+    if request.method == 'GET':
+        queryset = HafalanRecord.objects.select_related(
+            'siswa', 'input_by', 'tahun_ajaran'
+        ).all()
+
+        # Apply filters
+        nisn = request.query_params.get('nisn')
+        if nisn:
+            queryset = queryset.filter(siswa__nisn=nisn)
+
+        kelas = request.query_params.get('kelas')
+        if kelas:
+            queryset = queryset.filter(siswa__kelas=kelas)
+
+        tanggal = request.query_params.get('tanggal')
+        if tanggal:
+            queryset = queryset.filter(tanggal=tanggal)
+
+        tahun_ajaran_id = request.query_params.get('tahun_ajaran')
+        if tahun_ajaran_id:
+            queryset = queryset.filter(tahun_ajaran_id=tahun_ajaran_id)
+
+        # Walisantri: only see their children's records
+        if user.role == 'walisantri':
+            linked_nisns = user.get_linked_students()
+            queryset = queryset.filter(siswa__nisn__in=linked_nisns)
+
+        # For musyrif/guru: show only their own inputs unless admin
+        if user.role in ['guru', 'musyrif'] and user.role not in ['superadmin', 'admin', 'pimpinan']:
+            queryset = queryset.filter(input_by=user)
+
+        serializer = HafalanRecordSerializer(queryset[:100], many=True)
+        return Response({
+            'success': True,
+            'count': queryset.count(),
+            'data': serializer.data
+        })
+
+    elif request.method == 'POST':
+        # Check permission
+        if not check_hafalan_permission(user):
+            return Response({
+                'success': False,
+                'message': 'Anda tidak memiliki izin untuk input hafalan. Hubungi admin untuk assignment.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = HafalanRecordCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            # Get active tahun ajaran
+            tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+            # Save with input_by and tahun_ajaran
+            record = serializer.save(
+                input_by=user,
+                tahun_ajaran=tahun_ajaran
+            )
+
+            # Return created record
+            response_serializer = HafalanRecordSerializer(record)
+            return Response({
+                'success': True,
+                'message': 'Hafalan berhasil dicatat',
+                'data': response_serializer.data
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def hafalan_record_detail(request, pk):
+    """
+    GET: Get single hafalan record.
+    PUT: Update hafalan record (only input_by can edit).
+    DELETE: Delete hafalan record (only input_by can delete).
+    """
+    user = request.user
+
+    try:
+        record = HafalanRecord.objects.select_related(
+            'siswa', 'input_by', 'tahun_ajaran'
+        ).get(pk=pk)
+    except HafalanRecord.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Record tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = HafalanRecordSerializer(record)
+        return Response({
+            'success': True,
+            'data': serializer.data
+        })
+
+    elif request.method == 'PUT':
+        # Only input_by or admin can edit
+        if record.input_by != user and user.role not in ['superadmin', 'admin']:
+            return Response({
+                'success': False,
+                'message': 'Anda hanya dapat mengedit record yang Anda input'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = HafalanRecordUpdateSerializer(record, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            response_serializer = HafalanRecordSerializer(record)
+            return Response({
+                'success': True,
+                'message': 'Record berhasil diupdate',
+                'data': response_serializer.data
+            })
+        else:
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        # Only input_by or admin can delete
+        if record.input_by != user and user.role not in ['superadmin', 'admin']:
+            return Response({
+                'success': False,
+                'message': 'Anda hanya dapat menghapus record yang Anda input'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        record.delete()
+        return Response({
+            'success': True,
+            'message': 'Record berhasil dihapus'
+        })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def hafalan_per_siswa(request, nisn):
+    """
+    Get summary hafalan untuk satu santri.
+
+    Returns:
+    - total_halaman: Total halaman yang sudah dihafal
+    - total_records: Jumlah records
+    - juz_summary: Summary per juz (juz berapa sudah berapa halaman)
+    - records: List recent records
+    """
+    user = request.user
+
+    # Validate access for walisantri
+    if user.role == 'walisantri':
+        linked_nisns = user.get_linked_students()
+        if nisn not in linked_nisns:
+            return Response({
+                'success': False,
+                'message': 'Anda tidak memiliki akses ke data siswa ini'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        student = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Siswa tidak ditemukan'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    # Get all hafalan records for this student
+    records = HafalanRecord.objects.filter(siswa=student).select_related(
+        'input_by', 'tahun_ajaran'
+    ).order_by('-tanggal', '-created_at')
+
+    # Calculate totals
+    from django.db.models import Sum
+    total_halaman = records.aggregate(total=Sum('jumlah_halaman'))['total'] or 0
+    total_records = records.count()
+
+    # Calculate juz summary
+    juz_data = records.exclude(juz__isnull=True).values('juz').annotate(
+        halaman=Sum('jumlah_halaman')
+    ).order_by('juz')
+
+    juz_summary = [
+        {'juz': item['juz'], 'halaman': item['halaman']}
+        for item in juz_data
+    ]
+
+    # Serialize recent records (last 50)
+    recent_records = HafalanRecordSerializer(records[:50], many=True).data
+
+    return Response({
+        'success': True,
+        'data': {
+            'siswa': {
+                'nisn': student.nisn,
+                'nama': student.nama,
+                'kelas': student.kelas
+            },
+            'total_halaman': total_halaman,
+            'total_records': total_records,
+            'juz_summary': juz_summary,
+            'records': recent_records
+        }
+    })
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
+@permission_classes([IsAuthenticated])
+def import_hafalan_excel(request):
+    """
+    Import hafalan data dari Excel.
+
+    Format Excel yang diterima:
+    Kolom: NISN | Target Halaman | Capaian Halaman
+
+    Proses:
+    1. Update Student.target_hafalan dan Student.current_hafalan
+    2. Update/Create TargetHafalan records
+
+    Returns:
+    {
+        "success": true,
+        "berhasil": 25,
+        "gagal": 2,
+        "errors": ["Row 3: NISN tidak ditemukan", ...]
+    }
+    """
+    user = request.user
+
+    # Only admin can import
+    if user.role not in ['superadmin', 'admin']:
+        return Response({
+            'success': False,
+            'message': 'Hanya admin yang dapat import data hafalan'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    # Check file
+    if 'file' not in request.FILES:
+        return Response({
+            'success': False,
+            'message': 'File tidak ditemukan'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    uploaded_file = request.FILES['file']
+    filename = uploaded_file.name
+
+    # Validate extension
+    if not filename.lower().endswith(('.xlsx', '.xls')):
+        return Response({
+            'success': False,
+            'message': 'Format file tidak didukung. Gunakan file Excel (.xlsx)'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        from openpyxl import load_workbook
+        from io import BytesIO
+
+        # Read file
+        file_content = uploaded_file.read()
+        wb = load_workbook(filename=BytesIO(file_content), data_only=True)
+        ws = wb.active
+
+        # Find header row
+        header_row = 1
+        for row_idx in range(1, min(10, ws.max_row + 1)):
+            cell_values = [str(ws.cell(row=row_idx, column=col).value or '').lower() for col in range(1, 10)]
+            if 'nisn' in cell_values:
+                header_row = row_idx
+                break
+
+        # Map columns
+        column_map = {}
+        for col_idx in range(1, ws.max_column + 1):
+            header = str(ws.cell(row=header_row, column=col_idx).value or '').strip().lower()
+            if 'nisn' in header:
+                column_map['nisn'] = col_idx
+            elif 'target' in header and 'halaman' in header:
+                column_map['target_halaman'] = col_idx
+            elif 'capaian' in header and 'halaman' in header:
+                column_map['capaian_halaman'] = col_idx
+            elif 'target' in header and ('juz' in header or not column_map.get('target_halaman')):
+                column_map['target_juz'] = col_idx
+            elif 'capaian' in header and ('juz' in header or not column_map.get('capaian_halaman')):
+                column_map['capaian_juz'] = col_idx
+
+        # Validate required columns
+        if 'nisn' not in column_map:
+            return Response({
+                'success': False,
+                'message': 'Kolom NISN tidak ditemukan di file'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get active tahun ajaran
+        tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+        tahun_str = tahun_ajaran.nama if tahun_ajaran else '2025/2026'
+        semester = tahun_ajaran.semester if tahun_ajaran else 'Ganjil'
+
+        # Process rows
+        berhasil = 0
+        gagal = 0
+        errors = []
+
+        for row_idx in range(header_row + 1, ws.max_row + 1):
+            nisn_val = ws.cell(row=row_idx, column=column_map['nisn']).value
+            if not nisn_val:
+                continue
+
+            nisn = str(nisn_val).strip()
+
+            try:
+                student = Student.objects.get(nisn=nisn)
+            except Student.DoesNotExist:
+                errors.append(f"Row {row_idx}: NISN {nisn} tidak ditemukan")
+                gagal += 1
+                continue
+
+            try:
+                # Get values
+                target_halaman = None
+                capaian_halaman = None
+
+                if 'target_halaman' in column_map:
+                    val = ws.cell(row=row_idx, column=column_map['target_halaman']).value
+                    target_halaman = int(val) if val else None
+
+                if 'capaian_halaman' in column_map:
+                    val = ws.cell(row=row_idx, column=column_map['capaian_halaman']).value
+                    capaian_halaman = int(val) if val else None
+
+                # Convert halaman to juz (1 juz ≈ 20 halaman)
+                target_juz = round(target_halaman / 20, 2) if target_halaman else None
+                capaian_juz = round(capaian_halaman / 20, 2) if capaian_halaman else None
+
+                # Or use direct juz columns if available
+                if 'target_juz' in column_map:
+                    val = ws.cell(row=row_idx, column=column_map['target_juz']).value
+                    if val:
+                        target_juz = float(val)
+
+                if 'capaian_juz' in column_map:
+                    val = ws.cell(row=row_idx, column=column_map['capaian_juz']).value
+                    if val:
+                        capaian_juz = float(val)
+
+                # Update Student fields
+                if target_halaman is not None:
+                    student.target_hafalan = target_halaman
+                if capaian_halaman is not None:
+                    student.current_hafalan = capaian_halaman
+                student.save()
+
+                # Update or create TargetHafalan
+                if target_juz is not None or capaian_juz is not None:
+                    target_obj, created = TargetHafalan.objects.update_or_create(
+                        siswa=student,
+                        semester=semester,
+                        tahun_ajaran=tahun_str,
+                        defaults={
+                            'target_juz': target_juz or 0,
+                            'tercapai_juz': capaian_juz or 0
+                        }
+                    )
+
+                berhasil += 1
+
+            except Exception as e:
+                errors.append(f"Row {row_idx}: Error - {str(e)}")
+                gagal += 1
+
+        return Response({
+            'success': True,
+            'berhasil': berhasil,
+            'gagal': gagal,
+            'errors': errors[:20]  # Limit errors to first 20
+        })
+
+    except ImportError:
+        return Response({
+            'success': False,
+            'message': 'openpyxl tidak terinstall. Jalankan: pip install openpyxl'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         import traceback

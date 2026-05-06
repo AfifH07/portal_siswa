@@ -9,8 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- Baron Light Emerald Theme -->
-    <link href="/static/css/baron-emerald.css?v=20260327" rel="stylesheet">
-    <link href="/static/css/hafalan-baron.css?v=20260327" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
+    <link href="/static/css/hafalan-baron.css?v=20260504" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -74,6 +74,25 @@
     </div>
 
     <div class="page-body">
+
+        <!-- ==================== TAB NAVIGATION (Guru/Musyrif Only) ==================== -->
+        <div class="tab-navigation" id="tab-navigation" style="display: none;">
+            <button class="tab-btn active" data-tab="overview" onclick="switchHafalanTab('overview')">
+                <i data-lucide="layout-grid" class="tab-icon"></i>
+                <span>Overview</span>
+            </button>
+            <button class="tab-btn" data-tab="setoran" onclick="switchHafalanTab('setoran')">
+                <i data-lucide="file-plus" class="tab-icon"></i>
+                <span>Setoran Hafalan</span>
+            </button>
+            <button class="tab-btn" data-tab="import" onclick="switchHafalanTab('import')">
+                <i data-lucide="upload" class="tab-icon"></i>
+                <span>Import Excel</span>
+            </button>
+        </div>
+
+        <!-- ==================== TAB: OVERVIEW (Default - existing content) ==================== -->
+        <div class="tab-content active" id="tab-overview">
 
         <!-- ==================== STUDENT IDENTITY HEADER ==================== -->
         <section class="student-identity-header" id="student-identity-header">
@@ -389,25 +408,279 @@
             </div>
         </section>
 
+        </div><!-- /tab-overview -->
+
+        <!-- ==================== TAB: SETORAN HAFALAN (Guru/Musyrif) ==================== -->
+        <div class="tab-content" id="tab-setoran" style="display: none;">
+            <!-- Filter Bar -->
+            <div class="glass-card filter-bar-section">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label for="filter-kelas-setoran">Kelas</label>
+                        <select id="filter-kelas-setoran" class="form-select">
+                            <option value="">Semua Kelas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-tanggal-dari">Dari Tanggal</label>
+                        <input type="date" id="filter-tanggal-dari" class="form-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-tanggal-sampai">Sampai Tanggal</label>
+                        <input type="date" id="filter-tanggal-sampai" class="form-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="search-siswa">Cari Siswa</label>
+                        <input type="text" id="search-siswa" class="form-input" placeholder="Nama atau NISN...">
+                    </div>
+                    <button class="btn btn-primary" onclick="loadSetoranHafalan()">
+                        <i data-lucide="search"></i> Filter
+                    </button>
+                    <button class="btn btn-success" onclick="openModalSetoranBaru()">
+                        <i data-lucide="plus"></i> Tambah Setoran
+                    </button>
+                </div>
+            </div>
+
+            <!-- Setoran Table -->
+            <div class="glass-card">
+                <div class="card-head">
+                    <h3><i data-lucide="list" class="ch-icon"></i> Riwayat Setoran Hafalan</h3>
+                    <span class="badge badge-info" id="setoran-count">0 data</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="data-table" id="setoran-table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Siswa</th>
+                                    <th>Kelas</th>
+                                    <th>Juz</th>
+                                    <th>Halaman</th>
+                                    <th>Jumlah</th>
+                                    <th>Catatan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="setoran-tbody">
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">
+                                        <div class="empty-state">
+                                            <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
+                                            <p>Belum ada data setoran hafalan</p>
+                                            <p class="text-sm">Klik "Tambah Setoran" untuk menambah data baru</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="pagination-container" id="setoran-pagination"></div>
+                </div>
+            </div>
+        </div><!-- /tab-setoran -->
+
+        <!-- ==================== TAB: IMPORT EXCEL (Admin/Superadmin) ==================== -->
+        <div class="tab-content" id="tab-import" style="display: none;">
+            <div class="glass-card">
+                <div class="card-head">
+                    <h3><i data-lucide="file-spreadsheet" class="ch-icon"></i> Import Data Hafalan dari Excel</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Instructions -->
+                    <div class="import-instructions">
+                        <h4>Panduan Import:</h4>
+                        <ol>
+                            <li>Download template Excel terlebih dahulu</li>
+                            <li>Isi data sesuai format yang ditentukan</li>
+                            <li>Kolom wajib: <code>nisn</code>, <code>tanggal</code>, <code>jumlah_halaman</code></li>
+                            <li>Kolom opsional: <code>juz</code>, <code>halaman_dari</code>, <code>halaman_sampai</code>, <code>catatan</code></li>
+                            <li>Format tanggal: <code>YYYY-MM-DD</code> (contoh: 2026-05-04)</li>
+                            <li>Upload file Excel (.xlsx atau .xls)</li>
+                        </ol>
+                        <div class="import-actions">
+                            <a href="/static/templates/template_import_hafalan.xlsx" class="btn btn-outline" download>
+                                <i data-lucide="download"></i> Download Template
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Upload Area -->
+                    <div class="upload-area" id="upload-area-hafalan">
+                        <div class="upload-dropzone" id="dropzone-hafalan" ondrop="handleDropHafalan(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                            <i data-lucide="upload-cloud" style="width: 64px; height: 64px; color: var(--emerald-500);"></i>
+                            <p class="upload-text">Drag & drop file Excel di sini</p>
+                            <p class="upload-subtext">atau klik untuk memilih file</p>
+                            <input type="file" id="file-import-hafalan" accept=".xlsx,.xls" style="display: none;" onchange="handleFileSelectHafalan(event)">
+                            <button class="btn btn-primary" onclick="document.getElementById('file-import-hafalan').click()">
+                                <i data-lucide="folder-open"></i> Pilih File
+                            </button>
+                        </div>
+
+                        <!-- File Preview -->
+                        <div class="file-preview" id="file-preview-hafalan" style="display: none;">
+                            <div class="file-info">
+                                <i data-lucide="file-spreadsheet" class="file-icon"></i>
+                                <div class="file-details">
+                                    <span class="file-name" id="file-name-hafalan">-</span>
+                                    <span class="file-size" id="file-size-hafalan">-</span>
+                                </div>
+                                <button class="btn btn-icon btn-danger" onclick="clearFileHafalan()">
+                                    <i data-lucide="x"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-success btn-lg" onclick="importHafalanExcel()">
+                                <i data-lucide="upload"></i> Import Data
+                            </button>
+                        </div>
+
+                        <!-- Import Result -->
+                        <div class="import-result" id="import-result-hafalan" style="display: none;">
+                            <div class="result-header">
+                                <i data-lucide="check-circle" class="result-icon success"></i>
+                                <h4>Import Selesai</h4>
+                            </div>
+                            <div class="result-stats">
+                                <div class="result-stat">
+                                    <span class="stat-value" id="import-total">0</span>
+                                    <span class="stat-label">Total Baris</span>
+                                </div>
+                                <div class="result-stat success">
+                                    <span class="stat-value" id="import-success">0</span>
+                                    <span class="stat-label">Berhasil</span>
+                                </div>
+                                <div class="result-stat error">
+                                    <span class="stat-value" id="import-failed">0</span>
+                                    <span class="stat-label">Gagal</span>
+                                </div>
+                            </div>
+                            <div class="result-errors" id="import-errors" style="display: none;">
+                                <h5>Detail Error:</h5>
+                                <ul id="import-error-list"></ul>
+                            </div>
+                            <button class="btn btn-primary" onclick="resetImportHafalan()">
+                                <i data-lucide="refresh-cw"></i> Import Lagi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /tab-import -->
+
         <!-- Footer -->
         <footer class="page-footer">
             <p class="footer-text">Portal Ponpes Baron - Program Tahfidz & Tartil Al-Qur'an</p>
             <p class="footer-copyright">2024/2025</p>
         </footer>
     </div><!-- /page-body -->
+
+    <!-- ==================== MODAL: SETORAN BARU ==================== -->
+    <div class="modal-overlay" id="modal-setoran" style="display: none;">
+        <div class="modal-container modal-md">
+            <div class="modal-header">
+                <h3 id="modal-setoran-title">Tambah Setoran Hafalan</h3>
+                <button class="btn-close" onclick="closeModalSetoran()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-setoran">
+                    <input type="hidden" id="setoran-id" value="">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="setoran-siswa">Siswa <span class="required">*</span></label>
+                            <select id="setoran-siswa" class="form-select" required>
+                                <option value="">Pilih Siswa...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="setoran-tanggal">Tanggal <span class="required">*</span></label>
+                            <input type="date" id="setoran-tanggal" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="setoran-juz">Juz</label>
+                            <select id="setoran-juz" class="form-select">
+                                <option value="">Pilih Juz...</option>
+                                <option value="1">Juz 1</option>
+                                <option value="2">Juz 2</option>
+                                <option value="3">Juz 3</option>
+                                <option value="4">Juz 4</option>
+                                <option value="5">Juz 5</option>
+                                <option value="6">Juz 6</option>
+                                <option value="7">Juz 7</option>
+                                <option value="8">Juz 8</option>
+                                <option value="9">Juz 9</option>
+                                <option value="10">Juz 10</option>
+                                <option value="11">Juz 11</option>
+                                <option value="12">Juz 12</option>
+                                <option value="13">Juz 13</option>
+                                <option value="14">Juz 14</option>
+                                <option value="15">Juz 15</option>
+                                <option value="16">Juz 16</option>
+                                <option value="17">Juz 17</option>
+                                <option value="18">Juz 18</option>
+                                <option value="19">Juz 19</option>
+                                <option value="20">Juz 20</option>
+                                <option value="21">Juz 21</option>
+                                <option value="22">Juz 22</option>
+                                <option value="23">Juz 23</option>
+                                <option value="24">Juz 24</option>
+                                <option value="25">Juz 25</option>
+                                <option value="26">Juz 26</option>
+                                <option value="27">Juz 27</option>
+                                <option value="28">Juz 28</option>
+                                <option value="29">Juz 29</option>
+                                <option value="30">Juz 30</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="setoran-jumlah">Jumlah Halaman <span class="required">*</span></label>
+                            <input type="number" id="setoran-jumlah" class="form-input" min="1" max="20" required placeholder="1-20">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="setoran-halaman-dari">Halaman Dari</label>
+                            <input type="number" id="setoran-halaman-dari" class="form-input" min="1" max="604" placeholder="1-604">
+                        </div>
+                        <div class="form-group">
+                            <label for="setoran-halaman-sampai">Halaman Sampai</label>
+                            <input type="number" id="setoran-halaman-sampai" class="form-input" min="1" max="604" placeholder="1-604">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="setoran-catatan">Catatan</label>
+                        <textarea id="setoran-catatan" class="form-textarea" rows="3" placeholder="Catatan tambahan..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModalSetoran()">Batal</button>
+                <button class="btn btn-primary" onclick="submitSetoranHafalan()">
+                    <i data-lucide="save"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </div>
 </main>
 
 <!-- Toast -->
 <div id="toast" class="toast"><span id="toast-message"></span></div>
 
 <!-- Scripts -->
-<script src="/static/js/utils.js?v=20260312c" defer></script>
-<script src="/static/js/apiConfig.js?v=20260312c" defer></script>
-<script src="/static/js/apiFetch.js?v=20260312c" defer></script>
-<script src="/static/js/auth-check.js?v=20260420" defer></script>
-<script src="/static/js/auth.js?v=20260312c" defer></script>
-<script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/hafalan.js?v=20260314" defer></script>
+<script src="/static/js/utils.js?v=20260504" defer></script>
+<script src="/static/js/apiConfig.js?v=20260504" defer></script>
+<script src="/static/js/apiFetch.js?v=20260504" defer></script>
+<script src="/static/js/auth-check.js?v=20260504" defer></script>
+<script src="/static/js/auth.js?v=20260504" defer></script>
+<script src="/static/js/page-events.js?v=20260504" defer></script>
+<script src="/static/js/hafalan.js?v=20260504" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init

@@ -162,6 +162,7 @@ class Assignment(models.Model):
         ('halaqoh', 'Halaqoh Tahfidz/Tahsin'),
         ('piket', 'Piket Harian'),
         ('wali_kelas', 'Wali Kelas'),
+        ('hafalan', 'Input Hafalan'),
     ]
 
     STATUS_CHOICES = [

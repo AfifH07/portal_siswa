@@ -6,6 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 from .models import Evaluation, EvaluationComment
 from .serializers import (
@@ -15,6 +16,77 @@ from .serializers import (
 from apps.accounts.permissions import IsSuperAdmin, IsPimpinan, IsGuru, IsWalisantri
 from apps.accounts.models import Assignment
 from apps.students.models import Student
+
+
+# =============================================================
+# HELPER: Reusable queryset filter by role
+# =============================================================
+
+def get_filtered_queryset_for_user(user, base_queryset=None):
+    """
+    Get filtered queryset based on user role.
+    Reusable for both EvaluationViewSet.get_queryset() and evaluation_statistics().
+    """
+    if base_queryset is None:
+        base_queryset = Evaluation.objects.select_related('nisn', 'approved_by', 'created_by').prefetch_related('comments__user')
+
+    queryset = base_queryset
+
+    # superadmin, admin: lihat semua evaluasi
+    if user.role in ['superadmin', 'admin']:
+        pass  # No filter, see all
+
+    # pimpinan: lihat semua yang is_approved=True
+    elif user.role == 'pimpinan':
+        queryset = queryset.filter(is_approved=True)
+
+    # bk: lihat semua evaluasi yang is_approved=True (semua santri)
+    elif user.role == 'bk':
+        queryset = queryset.filter(is_approved=True)
+
+    # musyrif: lihat is_approved=True untuk santri di halaqoh yang dia handle
+    # Note: Untuk implementasi penuh perlu model HalaqohAssignment
+    # Sementara: musyrif lihat semua yang approved
+    elif user.role == 'musyrif':
+        queryset = queryset.filter(is_approved=True)
+
+    # guru (wali kelas): is_approved=True AND nisn__kelas IN wali_classes OR created_by=user
+    # guru (bukan wali kelas): created_by=user SAJA
+    elif user.role == 'guru':
+        own_cases = Q(created_by=user)
+
+        wali_assignments = Assignment.objects.filter(
+            user=user,
+            assignment_type='wali_kelas',
+            status='active'
+        ).values_list('kelas', flat=True)
+
+        if wali_assignments.exists():
+            wali_cases = Q(
+                nisn__kelas__in=list(wali_assignments),
+                is_approved=True
+            )
+            queryset = queryset.filter(own_cases | wali_cases)
+        else:
+            # Guru biasa tanpa wali kelas: hanya lihat kasus yang dia buat
+            queryset = queryset.filter(own_cases)
+
+    # walisantri: nisn__nisn__in=linked_nisns AND is_approved=True
+    elif user.role == 'walisantri':
+        nisn_list = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
+        if not nisn_list:
+            nisn_list = [user.linked_student_nisn] if user.linked_student_nisn else []
+
+        queryset = queryset.filter(
+            nisn__nisn__in=nisn_list,
+            is_approved=True
+        )
+
+    # Role lain: tidak bisa lihat apa-apa
+    else:
+        queryset = queryset.none()
+
+    return queryset
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -43,56 +115,13 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        queryset = Evaluation.objects.select_related('nisn', 'approved_by', 'created_by').prefetch_related('comments__user')
+        """
+        Get queryset filtered by user role using helper function.
+        """
         user = self.request.user
 
-        # PERUBAHAN 4: Filter berdasarkan role
-
-        # Admin/Superadmin/Pimpinan: lihat semua (termasuk yang belum approved)
-        if user.role in ['superadmin', 'admin', 'pimpinan']:
-            pass  # No filter, see all
-
-        # BK & Musyrif: lihat semua yang sudah approved
-        elif user.role in ['bk', 'musyrif']:
-            queryset = queryset.filter(is_approved=True)
-
-        # Guru: lihat kasus yang dia buat + kasus santri di kelas yang dia jadi wali kelas
-        elif user.role == 'guru':
-            # Kasus yang dia buat sendiri (hanya jika created_by tidak None)
-            own_cases = Q(created_by=user)
-
-            # Kelas yang dia jadi wali kelas
-            wali_assignments = Assignment.objects.filter(
-                user=user,
-                assignment_type='wali_kelas',
-                status='active'
-            ).values_list('kelas', flat=True)
-
-            if wali_assignments.exists():
-                # Wali kelas: lihat kasus santri di kelasnya HANYA yang sudah approved
-                wali_cases = Q(
-                    nisn__kelas__in=list(wali_assignments),
-                    is_approved=True
-                )
-                queryset = queryset.filter(own_cases | wali_cases)
-            else:
-                # Guru biasa tanpa wali kelas: hanya lihat kasus yang dia buat
-                queryset = queryset.filter(own_cases)
-
-        # Walisantri: lihat kasus anak sendiri yang sudah approved saja
-        elif user.role == 'walisantri':
-            nisn_list = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
-            if not nisn_list:
-                nisn_list = [user.linked_student_nisn] if user.linked_student_nisn else []
-
-            queryset = queryset.filter(
-                nisn__nisn__in=nisn_list,
-                is_approved=True
-            )
-
-        # Role lain: tidak bisa lihat apa-apa
-        else:
-            queryset = queryset.none()
+        # Use helper function for role-based filtering
+        queryset = get_filtered_queryset_for_user(user)
 
         # Filter by kelas (dari query parameter)
         kelas = self.request.query_params.get('kelas')
@@ -335,52 +364,15 @@ def delete_evaluation(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def evaluation_statistics(request):
+    """
+    Get evaluation statistics filtered by user role.
+    Uses the same queryset logic as EvaluationViewSet.get_queryset().
+    """
     user = request.user
 
     try:
-        queryset = Evaluation.objects.all()
-
-        # PERUBAHAN 4: Filter berdasarkan role (sama dengan get_queryset)
-
-        # Admin/Superadmin/Pimpinan: lihat semua
-        if user.role in ['superadmin', 'admin', 'pimpinan']:
-            pass  # No filter
-
-        # BK & Musyrif: lihat semua yang sudah approved
-        elif user.role in ['bk', 'musyrif']:
-            queryset = queryset.filter(is_approved=True)
-
-        # Guru: kasus yang dibuat sendiri + kasus di kelas yang diampu (approved)
-        elif user.role == 'guru':
-            wali_assignments = Assignment.objects.filter(
-                user=user,
-                assignment_type='wali_kelas',
-                status='active'
-            ).values_list('kelas', flat=True)
-
-            own_cases = Q(created_by=user)
-
-            if wali_assignments.exists():
-                # Wali kelas: lihat kasus santri di kelasnya HANYA yang sudah approved
-                wali_cases = Q(nisn__kelas__in=list(wali_assignments), is_approved=True)
-                queryset = queryset.filter(own_cases | wali_cases)
-            else:
-                # Guru biasa tanpa wali kelas: hanya lihat kasus yang dia buat
-                queryset = queryset.filter(own_cases)
-
-        # Walisantri: kasus anak sendiri yang sudah approved
-        elif user.role == 'walisantri':
-            nisn_list = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
-            if not nisn_list:
-                nisn_list = [user.linked_student_nisn] if user.linked_student_nisn else []
-            queryset = queryset.filter(
-                nisn__nisn__in=nisn_list,
-                is_approved=True
-            )
-
-        # Role lain: tidak bisa lihat
-        else:
-            queryset = queryset.none()
+        # FIXED: Use the same helper function as get_queryset()
+        queryset = get_filtered_queryset_for_user(user, Evaluation.objects.all())
 
         total_evaluations = queryset.count()
         total_prestasi = queryset.filter(jenis='prestasi').count()
@@ -605,10 +597,12 @@ def unapprove_evaluation(request, pk):
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def evaluation_comments(request, evaluation_id):
     """
     GET: Ambil semua komentar untuk evaluasi tertentu
-    POST: Tambah komentar baru (jenis: diskusi/pembinaan)
+         - Walisantri hanya lihat comment dengan visibility='semua'
+    POST: Tambah komentar baru (jenis: diskusi/pembinaan, dengan foto opsional)
     """
     try:
         evaluation = Evaluation.objects.get(pk=evaluation_id)
@@ -620,15 +614,20 @@ def evaluation_comments(request, evaluation_id):
 
     if request.method == 'GET':
         comments = EvaluationComment.objects.filter(evaluation=evaluation).select_related('user')
-        serializer = EvaluationCommentSerializer(comments, many=True)
+
+        # Walisantri hanya bisa lihat comment dengan visibility='semua'
+        if request.user.role == 'walisantri':
+            comments = comments.filter(visibility='semua')
+
+        serializer = EvaluationCommentSerializer(comments, many=True, context={'request': request})
         return Response({
             'success': True,
             'comments': serializer.data
         })
 
     elif request.method == 'POST':
-        # Only guru, bk, pimpinan, superadmin can add comments
-        if request.user.role not in ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin']:
+        # Only guru, bk, musyrif, pimpinan, superadmin, admin can add comments
+        if request.user.role not in ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin', 'admin']:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki izin untuk menambah tanggapan'
@@ -639,11 +638,13 @@ def evaluation_comments(request, evaluation_id):
 
         serializer = EvaluationCommentCreateSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            # Handle foto upload if present
+            foto = request.FILES.get('foto')
+            serializer.save(user=request.user, foto=foto)
             return Response({
                 'success': True,
                 'message': 'Tanggapan berhasil ditambahkan',
-                'data': EvaluationCommentSerializer(serializer.instance).data
+                'data': EvaluationCommentSerializer(serializer.instance, context={'request': request}).data
             }, status=status.HTTP_201_CREATED)
         else:
             return Response({
@@ -680,3 +681,52 @@ def delete_comment(request, comment_id):
             'success': False,
             'message': 'Tanggapan tidak ditemukan'
         }, status=status.HTTP_404_NOT_FOUND)
+
+
+# =============================================================
+# ENDPOINT: Close Evaluation (Keputusan Final oleh Pimpinan)
+# =============================================================
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def close_evaluation(request, pk):
+    """
+    Close/selesaikan kasus evaluasi dengan keputusan final.
+    Hanya pimpinan atau superadmin yang bisa close kasus.
+    PATCH /api/evaluations/<id>/close/
+    """
+    # Permission check: hanya pimpinan atau superadmin
+    if request.user.role not in ['pimpinan', 'superadmin']:
+        return Response({
+            'success': False,
+            'message': 'Hanya pimpinan yang dapat menyelesaikan kasus'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    evaluation = get_object_or_404(Evaluation, pk=pk)
+
+    keputusan = request.data.get('keputusan_final', '').strip()
+
+    if not keputusan:
+        return Response({
+            'success': False,
+            'message': 'Keputusan final wajib diisi'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Update evaluation
+    evaluation.keputusan_final = keputusan
+    evaluation.status = 'resolved'
+    evaluation.closed_by = request.user
+    evaluation.closed_at = timezone.now()
+    evaluation.save()
+
+    return Response({
+        'success': True,
+        'message': 'Kasus berhasil diselesaikan',
+        'data': {
+            'id': evaluation.id,
+            'status': evaluation.status,
+            'keputusan_final': evaluation.keputusan_final,
+            'closed_by': request.user.name or request.user.username,
+            'closed_at': evaluation.closed_at.isoformat()
+        }
+    })

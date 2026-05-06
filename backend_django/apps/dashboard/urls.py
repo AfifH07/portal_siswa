@@ -29,4 +29,7 @@ urlpatterns = [
 
     # Guru TODO List API
     path('guru/todo-list/', views.guru_todo_list, name='guru_todo_list'),
+
+    # Pimpinan Dashboard Summary API
+    path('pimpinan/summary/', views.pimpinan_dashboard_summary, name='pimpinan_dashboard_summary'),
 ]

@@ -408,6 +408,92 @@ class TargetHafalan(models.Model):
         return round((self.tercapai_juz / self.target_juz) * 100, 1)
 
 
+class HafalanRecord(models.Model):
+    """
+    Model untuk mencatat progress hafalan harian santri.
+
+    Setiap record mencatat ziyadah (tambahan halaman) yang dihafal
+    pada tanggal tertentu. Total halaman dihitung dari sum semua records.
+
+    Diinput oleh musyrif/guru yang punya assignment type='hafalan'.
+    """
+
+    id = models.BigAutoField(primary_key=True)
+    siswa = models.ForeignKey(
+        Student,
+        to_field='nisn',
+        on_delete=models.CASCADE,
+        related_name='hafalan_records',
+        help_text="Santri yang dihafal"
+    )
+    tanggal = models.DateField(
+        help_text="Tanggal setoran hafalan"
+    )
+    jumlah_halaman = models.PositiveIntegerField(
+        help_text="Jumlah halaman yang ditambah hari ini"
+    )
+    juz = models.PositiveIntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(30)],
+        help_text="Juz yang dihafal (1-30, boleh loncat)"
+    )
+    halaman_dari = models.PositiveIntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(604)],
+        help_text="Halaman awal (1-604)"
+    )
+    halaman_sampai = models.PositiveIntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(604)],
+        help_text="Halaman akhir (1-604)"
+    )
+    catatan = models.TextField(
+        blank=True,
+        help_text="Catatan tambahan dari pembimbing"
+    )
+    input_by = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='hafalan_inputs',
+        help_text="Musyrif/Guru yang menginput"
+    )
+    tahun_ajaran = models.ForeignKey(
+        'core.TahunAjaran',
+        on_delete=models.SET_NULL,
+        null=True,
+        help_text="Tahun ajaran aktif saat input"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'kesantrian_hafalan_record'
+        ordering = ['-tanggal', '-created_at']
+        verbose_name = 'Hafalan Record'
+        verbose_name_plural = 'Hafalan Records'
+        indexes = [
+            models.Index(fields=['siswa', 'tanggal'], name='idx_hafalan_rec_siswa_tgl'),
+            models.Index(fields=['tanggal'], name='idx_hafalan_rec_tanggal'),
+            models.Index(fields=['juz'], name='idx_hafalan_rec_juz'),
+            models.Index(fields=['input_by'], name='idx_hafalan_rec_input_by'),
+            models.Index(fields=['tahun_ajaran'], name='idx_hafalan_rec_tahun'),
+        ]
+
+    def __str__(self):
+        return f"{self.siswa.nama} - {self.tanggal} - {self.jumlah_halaman} hal"
+
+    def clean(self):
+        """Validate halaman range"""
+        from django.core.exceptions import ValidationError
+
+        if self.halaman_dari and self.halaman_sampai:
+            if self.halaman_sampai < self.halaman_dari:
+                raise ValidationError({
+                    'halaman_sampai': 'Halaman akhir harus >= halaman awal'
+                })
+
+
 # ============================================
 # BLP (BUKU LAPANGAN PESANTREN) - 59 INDIKATOR
 # ============================================

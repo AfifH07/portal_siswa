@@ -387,6 +387,175 @@
     .admin-section.active { display: block; }
     .walisantri-section { display: none; }
     .walisantri-section.active { display: block; }
+    .pimpinan-section { display: none; }
+    .pimpinan-section.active { display: block; }
+
+    /* ===================== PIMPINAN DASHBOARD STYLES ===================== */
+
+    /* Pimpinan Banner */
+    .pimpinan-banner {
+        background: linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%);
+    }
+
+    /* Stats Card Colors */
+    .stat-card.sc-red {
+        border-left-color: #ef4444;
+    }
+    .stat-card.sc-red .stat-icon-wrap {
+        background: linear-gradient(135deg, #fef2f2, #fee2e2);
+        color: #ef4444;
+    }
+    .stat-card.sc-red .stat-val {
+        color: #ef4444;
+    }
+
+    /* Dynamic color based on value */
+    .stat-card.status-good { border-left-color: #10b981; }
+    .stat-card.status-good .stat-val { color: #10b981; }
+    .stat-card.status-warning { border-left-color: #f59e0b; }
+    .stat-card.status-warning .stat-val { color: #f59e0b; }
+    .stat-card.status-danger { border-left-color: #ef4444; }
+    .stat-card.status-danger .stat-val { color: #ef4444; }
+
+    /* Presensi Guru Table Badges */
+    .presensi-status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .presensi-status-badge.status-lengkap {
+        background: #dcfce7;
+        color: #166534;
+    }
+    .presensi-status-badge.status-ada-kosong {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .presensi-status-badge.status-belum {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    /* Pimpinan Charts Row */
+    .pimpinan-charts-row,
+    .pimpinan-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    @media (max-width: 1024px) {
+        .pimpinan-charts-row,
+        .pimpinan-row-3 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Evaluasi Card Styles */
+    .pimpinan-evaluasi-stats {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-light, #e5e7eb);
+    }
+    .eval-stat {
+        flex: 1;
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--emerald-50, #f0faf7);
+        border-radius: 8px;
+    }
+    .eval-stat-val {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--emerald-600, #059669);
+    }
+    .eval-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted, #6b7280);
+    }
+    .eval-stat.eval-prestasi {
+        background: #dcfce7;
+    }
+    .eval-stat.eval-prestasi .eval-stat-val {
+        color: #166534;
+    }
+    .eval-stat.eval-pelanggaran {
+        background: #fee2e2;
+    }
+    .eval-stat.eval-pelanggaran .eval-stat-val {
+        color: #dc2626;
+    }
+
+    /* Evaluasi Feed */
+    .pimpinan-evaluasi-feed {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .eval-feed-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--border-light, #e5e7eb);
+    }
+    .eval-feed-item:last-child {
+        border-bottom: none;
+    }
+    .eval-feed-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .eval-feed-content {
+        flex: 1;
+        min-width: 0;
+    }
+    .eval-feed-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text-main, #1f2937);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .eval-feed-meta {
+        font-size: 0.75rem;
+        color: var(--text-muted, #6b7280);
+    }
+    .eval-feed-badge {
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    .eval-feed-badge.approved {
+        background: #dcfce7;
+        color: #166534;
+    }
+    .eval-feed-badge.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    /* Breakdown Card */
+    .pimpinan-breakdown-card {
+        margin-top: 0;
+    }
+
+    /* Empty state for presensi */
+    .presensi-empty {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted, #6b7280);
+    }
+    .presensi-empty-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
 
     /* ===================== JADWAL MINGGU INI STYLES ===================== */
     .guru-jadwal-mingguan-card {
@@ -997,6 +1166,173 @@
 
             </div>
         </section>
+
+        <!-- ===================== PIMPINAN DASHBOARD ===================== -->
+        <section id="pimpinan-dashboard" class="pimpinan-section" style="display: none;">
+
+            <!-- Welcome Banner -->
+            <div class="welcome-banner pimpinan-banner">
+                <div class="welcome-text">
+                    <h2 id="pimpinan-welcome-title">Selamat Datang, Pimpinan 👋</h2>
+                    <p>Monitor perkembangan pesantren <span class="highlight" id="pimpinan-hari-display">hari ini</span></p>
+                </div>
+                <div class="welcome-badge">
+                    <div class="wb-label">Efektivitas KBM</div>
+                    <div class="wb-val" id="pimpinan-efektivitas-badge">-</div>
+                    <div class="wb-sub" id="pimpinan-efektivitas-detail">Memuat data...</div>
+                </div>
+            </div>
+
+            <!-- Stats Row (4 Cards) -->
+            <div class="stats-row pimpinan-stats-row">
+                <div class="stat-card sc-green">
+                    <div class="stat-icon-wrap">👥</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="pimpinan-stat-santri">-</div>
+                        <div class="stat-label">Total Santri Aktif</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-blue">
+                    <div class="stat-icon-wrap">🎓</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="pimpinan-stat-guru">-</div>
+                        <div class="stat-label">Guru Aktif</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-gold" id="pimpinan-stat-efektivitas-card">
+                    <div class="stat-icon-wrap">📊</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="pimpinan-stat-efektivitas">-%</div>
+                        <div class="stat-label">Efektivitas KBM Hari Ini</div>
+                    </div>
+                </div>
+                <div class="stat-card sc-red" id="pimpinan-stat-kosong-card">
+                    <div class="stat-icon-wrap">📅</div>
+                    <div class="stat-body">
+                        <div class="stat-val" id="pimpinan-stat-kosong">-</div>
+                        <div class="stat-label">Jam Kosong Hari Ini</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Presensi Guru Mengajar Table -->
+            <div class="glass-card pimpinan-presensi-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">👨‍🏫</span> Presensi Guru Mengajar Hari Ini</h3>
+                    <div class="card-badge" id="pimpinan-presensi-badge">Memuat...</div>
+                </div>
+                <div class="card-body-table">
+                    <div class="table-scroll-container" style="max-height: 320px;">
+                        <table class="data-table">
+                            <thead class="sticky-header">
+                                <tr>
+                                    <th>Guru</th>
+                                    <th style="width: 80px; text-align: center;">Jadwal</th>
+                                    <th style="width: 80px; text-align: center;">Terisi</th>
+                                    <th style="width: 80px; text-align: center;">Kosong</th>
+                                    <th style="width: 120px; text-align: center;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pimpinan-presensi-tbody">
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <div class="loading-spinner" style="margin: 20px auto;"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row (2 columns) -->
+            <div class="charts-row pimpinan-charts-row">
+                <!-- Distribusi Nilai -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📊</span> Distribusi Nilai</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap" style="height: 260px;">
+                            <canvas id="pimpinan-grades-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Hafalan per Kelas -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📖</span> Progress Hafalan per Kelas</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap" style="height: 260px;">
+                            <canvas id="pimpinan-hafalan-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Absensi Chart + Evaluasi -->
+            <div class="charts-row pimpinan-row-3">
+                <!-- Statistik Absensi 6 Bulan -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">📈</span> Statistik Absensi 6 Bulan Terakhir</h3>
+                        <div class="card-badge">Live</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrap" style="height: 260px;">
+                            <canvas id="pimpinan-attendance-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evaluasi Santri -->
+                <div class="glass-card pimpinan-evaluasi-card">
+                    <div class="card-head">
+                        <h3><span class="ch-icon">⭐</span> Evaluasi Santri</h3>
+                        <div class="card-badge badge-warning" id="pimpinan-evaluasi-pending-badge">0 Pending</div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mini Stats -->
+                        <div class="pimpinan-evaluasi-stats">
+                            <div class="eval-stat">
+                                <div class="eval-stat-val" id="pimpinan-eval-total">-</div>
+                                <div class="eval-stat-label">Total</div>
+                            </div>
+                            <div class="eval-stat eval-prestasi">
+                                <div class="eval-stat-val" id="pimpinan-eval-prestasi">-</div>
+                                <div class="eval-stat-label">Prestasi</div>
+                            </div>
+                            <div class="eval-stat eval-pelanggaran">
+                                <div class="eval-stat-val" id="pimpinan-eval-pelanggaran">-</div>
+                                <div class="eval-stat-label">Pelanggaran</div>
+                            </div>
+                        </div>
+                        <!-- Feed Evaluasi Terbaru -->
+                        <div class="pimpinan-evaluasi-feed" id="pimpinan-evaluasi-feed">
+                            <div class="loading-state">
+                                <div class="loading-spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Breakdown Santri per Kelas -->
+            <div class="glass-card pimpinan-breakdown-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🏫</span> Breakdown Santri per Kelas</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-wrap" style="height: 200px;">
+                        <canvas id="pimpinan-breakdown-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
     </div><!-- /page-body -->
 </main>
 
@@ -1010,7 +1346,7 @@
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/auth.js?v=20260327B" defer></script>
 <script src="/static/js/page-events.js?v=20260327B" defer></script>
-<script src="/static/js/dashboard.js?v=20260426" defer></script>
+<script src="/static/js/dashboard.js?v=20260502" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init

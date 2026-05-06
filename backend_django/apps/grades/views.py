@@ -564,13 +564,12 @@ def get_statistics(request):
     # Build base queryset based on user role
     queryset = Grade.objects.select_related('nisn')
 
-    # Get guru name consistently - use name if available, fallback to username
-    guru_name = user.name or user.username
-
     if user.role in ['guru', 'musyrif']:
-        # Filter by guru name for guru/musyrif role
-        queryset = queryset.filter(guru=guru_name)
-        print(f"[get_statistics] Filtering for role '{user.role}': guru_name='{guru_name}'")
+        # Filter by both legacy username and current display name if available
+        filters = Q(guru=user.username)
+        if user.name:
+            filters |= Q(guru=user.name)
+        queryset = queryset.filter(filters)
     elif user.role == 'walisantri':
         queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
     # superadmin, pimpinan, admin → no filter, see all data
@@ -747,10 +746,15 @@ def get_statistics(request):
         trend_labels.append('Lainnya')
         trend_data.append(avg_lainnya)
 
-    # Ketuntasan data for doughnut chart
+    # Ketuntasan data for doughnut chart — dihitung per SISWA UNIK
+    # (queryset sudah difilter by role/guru di atas, tidak perlu filter ulang)
+    all_students = queryset.values('nisn').distinct()
+    remedial_students = queryset.filter(nilai__lt=KKM).values('nisn').distinct()
+    remedial_count = remedial_students.count()
+    tuntas_count = all_students.count() - remedial_count
     ketuntasan_data = {
-        'tuntas': above_kkm,
-        'tidak_tuntas': below_kkm
+        'tuntas': tuntas_count,
+        'tidak_tuntas': remedial_count
     }
 
     # Class comparison (for admin/pimpinan)

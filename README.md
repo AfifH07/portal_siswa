@@ -1,4 +1,4 @@
-# Portal Siswa Baron v2.4.1
+# Portal Siswa Baron v2.4.2
 
 Sistem Informasi Akademik Terpadu untuk manajemen santri, evaluasi, dan pemantauan akademik di **Pondok Pesantren Baron**.
 
@@ -35,7 +35,14 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 | `bendahara` | Modul keuangan, pembayaran |
 | `walisantri` | Lihat data anak (multi-anak supported) |
 
-### Fitur v2.4.1 (Terbaru)
+### Fitur v2.4.2 (Terbaru)
+- **Close Case & Keputusan Final** - Pimpinan dapat menyelesaikan kasus evaluasi dengan keputusan final
+- **Comment Visibility** - Pembinaan dapat diatur internal (guru/admin) atau semua pihak (termasuk walisantri)
+- **Foto Pembinaan** - Upload foto dokumentasi pembinaan pada comment evaluasi
+- **Program Al-Quran** - Setoran hafalan dengan CRUD dan import Excel
+- **Fix Stats Card** - Statistik evaluasi sekarang konsisten dengan data yang ditampilkan
+
+### Fitur v2.4.1
 - **Dashboard Guru Todo List** - Widget kewajiban yang belum dipenuhi
 - **Jurnal Guru** - Wizard 4 step (Tipe, Info Kelas, Kehadiran, Dokumentasi)
 - **8 Jenis Penilaian** - Penugasan, Tes Tulis, Tes Lisan, Portofolio, Praktek, Proyek, UTS, UAS
@@ -69,6 +76,8 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 - **Incident Management**: Pelaporan dan tracking kasus
 - **Evaluasi Asatidz**: Penilaian kinerja ustadz/karyawan
 - **Approval System**: Guru input → Admin approve → visible
+- **Close Case**: Pimpinan dapat menyelesaikan kasus dengan keputusan final
+- **Comment Visibility**: Pembinaan internal vs semua pihak (walisantri)
 - Predikat otomatis (Mumtaz, Jayyid Jiddan, Jayyid, Maqbul, Perlu Pembinaan)
 
 ### Manajemen HR Guru
@@ -122,7 +131,7 @@ Portal Siswa Baron adalah platform terintegrasi yang menghubungkan manajemen pes
 ```
 portal-siswa/
 ├── CLAUDE.md                    # Dokumentasi untuk Claude Code
-├── HANDOVER_v2_4_1.md          # Handover document
+├── HANDOVER_v2_4_2.md          # Handover document
 ├── README.md                    # File ini
 ├── backend_django/
 │   ├── apps/
@@ -243,6 +252,16 @@ python manage.py runserver
 |--------|----------|-----------|
 | GET/POST | `/api/evaluations/` | CRUD evaluasi |
 | PATCH | `/api/evaluations/<id>/approve/` | Approve evaluasi |
+| PATCH | `/api/evaluations/<id>/close/` | Close kasus (pimpinan) |
+| GET/POST | `/api/evaluations/<id>/comments/` | CRUD pembinaan |
+
+### Kesantrian (Hafalan)
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET/POST | `/api/kesantrian/hafalan/` | CRUD setoran hafalan |
+| PATCH/DELETE | `/api/kesantrian/hafalan/<id>/` | Update/hapus setoran |
+| POST | `/api/kesantrian/hafalan/import/` | Import Excel |
+| GET | `/api/kesantrian/hafalan/template/` | Download template |
 
 ### Admin (User Management)
 | Method | Endpoint | Deskripsi |
@@ -346,4 +365,4 @@ Cek `auth-check.js` — pastikan `navConfig['admin']` sudah ada.
 
 ---
 
-**Status**: Production Ready | **Versi**: 2.4.1 | **Update**: Mei 2026
+**Status**: Production Ready | **Versi**: 2.4.2 | **Update**: Mei 2026

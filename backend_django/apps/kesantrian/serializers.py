@@ -12,7 +12,7 @@ from .models import (
     BLPEntry, EmployeeEvaluation, InvalRecord, BLP_INDICATORS,
     Incident, IncidentComment, AsatidzEvaluation,
     IndikatorKinerja, PenilaianKinerjaAsatidz, DetailPenilaianKinerja,
-    IzinGuru
+    IzinGuru, HafalanRecord
 )
 from apps.students.models import Student
 
@@ -1071,3 +1071,115 @@ class IzinGuruCreateSerializer(serializers.ModelSerializer):
             })
 
         return data
+
+
+# ============================================
+# HAFALAN RECORD SERIALIZERS
+# ============================================
+
+class HafalanRecordSerializer(serializers.ModelSerializer):
+    """Serializer untuk HafalanRecord (read)."""
+    siswa_nama = serializers.SerializerMethodField()
+    siswa_kelas = serializers.SerializerMethodField()
+    input_by_nama = serializers.SerializerMethodField()
+    tahun_ajaran_nama = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HafalanRecord
+        fields = [
+            'id', 'siswa', 'siswa_id', 'siswa_nama', 'siswa_kelas',
+            'tanggal', 'jumlah_halaman', 'juz',
+            'halaman_dari', 'halaman_sampai',
+            'catatan', 'input_by', 'input_by_nama',
+            'tahun_ajaran', 'tahun_ajaran_nama',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'input_by', 'created_at', 'updated_at']
+
+    def get_siswa_nama(self, obj):
+        return obj.siswa.nama if obj.siswa else '-'
+
+    def get_siswa_kelas(self, obj):
+        return obj.siswa.kelas if obj.siswa else '-'
+
+    def get_input_by_nama(self, obj):
+        if obj.input_by:
+            return obj.input_by.name or obj.input_by.username
+        return '-'
+
+    def get_tahun_ajaran_nama(self, obj):
+        if obj.tahun_ajaran:
+            return str(obj.tahun_ajaran)
+        return '-'
+
+
+class HafalanRecordCreateSerializer(serializers.ModelSerializer):
+    """Serializer untuk create HafalanRecord."""
+    siswa_nisn = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = HafalanRecord
+        fields = [
+            'siswa_nisn', 'tanggal', 'jumlah_halaman', 'juz',
+            'halaman_dari', 'halaman_sampai', 'catatan'
+        ]
+
+    def validate_siswa_nisn(self, value):
+        try:
+            Student.objects.get(nisn=value)
+        except Student.DoesNotExist:
+            raise serializers.ValidationError('Siswa tidak ditemukan')
+        return value
+
+    def validate(self, data):
+        # Validasi halaman range
+        halaman_dari = data.get('halaman_dari')
+        halaman_sampai = data.get('halaman_sampai')
+
+        if halaman_dari and halaman_sampai:
+            if halaman_sampai < halaman_dari:
+                raise serializers.ValidationError({
+                    'halaman_sampai': 'Halaman akhir harus >= halaman awal'
+                })
+
+        return data
+
+    def create(self, validated_data):
+        nisn = validated_data.pop('siswa_nisn')
+        student = Student.objects.get(nisn=nisn)
+        validated_data['siswa'] = student
+        return super().create(validated_data)
+
+
+class HafalanRecordUpdateSerializer(serializers.ModelSerializer):
+    """Serializer untuk update HafalanRecord."""
+
+    class Meta:
+        model = HafalanRecord
+        fields = [
+            'tanggal', 'jumlah_halaman', 'juz',
+            'halaman_dari', 'halaman_sampai', 'catatan'
+        ]
+
+    def validate(self, data):
+        halaman_dari = data.get('halaman_dari', self.instance.halaman_dari if self.instance else None)
+        halaman_sampai = data.get('halaman_sampai', self.instance.halaman_sampai if self.instance else None)
+
+        if halaman_dari and halaman_sampai:
+            if halaman_sampai < halaman_dari:
+                raise serializers.ValidationError({
+                    'halaman_sampai': 'Halaman akhir harus >= halaman awal'
+                })
+
+        return data
+
+
+class HafalanSiswaSerializer(serializers.Serializer):
+    """Serializer untuk summary hafalan per siswa."""
+    nisn = serializers.CharField()
+    nama = serializers.CharField()
+    kelas = serializers.CharField()
+    total_halaman = serializers.IntegerField()
+    total_records = serializers.IntegerField()
+    juz_summary = serializers.ListField(child=serializers.DictField())
+    records = HafalanRecordSerializer(many=True)

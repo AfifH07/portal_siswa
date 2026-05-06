@@ -455,7 +455,7 @@ function createRoleBasedNav() {
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             kesantrian: [
-                { href: '/hafalan', icon: 'book-open', label: 'Hafalan & Ziyadah', id: 'nav-hafalan' }
+                { href: '/hafalan', icon: 'book-open', label: 'Program Al-Quran', id: 'nav-hafalan' }
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
@@ -474,7 +474,7 @@ function createRoleBasedNav() {
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             kesantrian: [
-                { href: '/hafalan', icon: 'book-open', label: 'Hafalan & Ziyadah', id: 'nav-hafalan' }
+                { href: '/hafalan', icon: 'book-open', label: 'Program Al-Quran', id: 'nav-hafalan' }
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },

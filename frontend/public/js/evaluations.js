@@ -1092,6 +1092,8 @@ async function viewEvaluation(id) {
         // PERUBAHAN 4: Status Approval
         const userRole = currentUser?.role || '';
         const canApprove = ['superadmin', 'pimpinan'].includes(userRole);
+        const canClose = ['pimpinan', 'superadmin'].includes(userRole);
+        const canComment = ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin', 'admin'].includes(userRole);
 
         let approvalSection = '';
         if (evaluation.is_approved) {
@@ -1127,6 +1129,76 @@ async function viewEvaluation(id) {
         const statusDisplay = evaluation.status === 'dalam_pembahasan' ? 'Dalam Penanganan' :
                              evaluation.status === 'resolved' ? 'Selesai' : (evaluation.status_display || '-');
 
+        // Filter comments for walisantri (only show visibility='semua')
+        let comments = evaluation.comments || [];
+        if (userRole === 'walisantri') {
+            comments = comments.filter(c => c.visibility === 'semua');
+        }
+
+        // Render comments section
+        const commentsHtml = renderEvaluationComments(comments, userRole);
+
+        // Close case section for pimpinan (if not already closed)
+        let closeCaseSection = '';
+        if (canClose && evaluation.status !== 'resolved' && evaluation.is_approved) {
+            closeCaseSection = `
+                <div class="close-case-section" style="margin-top: 24px; padding: 16px; background: var(--blue-50); border-radius: var(--radius-md); border: 1px solid var(--blue-200);">
+                    <h4 style="margin: 0 0 12px; color: var(--blue-700);">✅ Selesaikan Kasus</h4>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 600;">Keputusan Final <span style="color: var(--rose-500);">*</span></label>
+                        <textarea id="close-keputusan" class="glass-input" rows="3" placeholder="Tuliskan keputusan final dan tindak lanjut..." style="width: 100%;"></textarea>
+                    </div>
+                    <button onclick="window.closeEvaluationCase(${evaluation.id})" class="btn btn-success">✅ Selesaikan Kasus</button>
+                </div>
+            `;
+        } else if (evaluation.status === 'resolved' && evaluation.keputusan_final) {
+            closeCaseSection = `
+                <div class="close-case-section" style="margin-top: 24px; padding: 16px; background: var(--emerald-50); border-radius: var(--radius-md); border: 1px solid var(--emerald-200);">
+                    <h4 style="margin: 0 0 8px; color: var(--emerald-700);">✅ Kasus Selesai</h4>
+                    <div class="detail-label">Keputusan Final</div>
+                    <div class="detail-value" style="line-height: 1.6;">${escapeHtml(evaluation.keputusan_final)}</div>
+                    ${evaluation.closed_by_name ? `<div class="text-muted" style="margin-top: 8px; font-size: 12px;">Diselesaikan oleh ${escapeHtml(evaluation.closed_by_name)}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // Comment form (for non-walisantri with permission)
+        let commentFormHtml = '';
+        if (canComment) {
+            commentFormHtml = `
+                <div class="add-comment-section" style="margin-top: 24px; padding: 16px; background: var(--gray-50); border-radius: var(--radius-md);">
+                    <h4 style="margin: 0 0 12px;">💬 Tambah Pembinaan</h4>
+                    <form id="eval-comment-form" onsubmit="return window.submitEvaluationComment(event, ${evaluation.id})">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Jenis</label>
+                                <select id="eval-comment-jenis" class="glass-input" style="width: 100%;">
+                                    <option value="diskusi">💬 Diskusi</option>
+                                    <option value="pembinaan">📋 Pembinaan</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Visibilitas</label>
+                                <select id="eval-comment-visibility" class="glass-input" style="width: 100%;">
+                                    <option value="internal">🔒 Internal (Guru & Admin)</option>
+                                    <option value="semua">🌐 Semua Pihak</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 600;">Isi Tanggapan <span style="color: var(--rose-500);">*</span></label>
+                            <textarea id="eval-comment-content" class="glass-input" rows="3" placeholder="Tulis tanggapan atau pembinaan..." required style="width: 100%;"></textarea>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 600;">Foto (Opsional)</label>
+                            <input type="file" id="eval-comment-foto" class="glass-input file-input" accept="image/*" style="width: 100%;">
+                        </div>
+                        <button type="submit" class="btn btn-primary">💬 Kirim Tanggapan</button>
+                    </form>
+                </div>
+            `;
+        }
+
         document.getElementById('view-modal-body').innerHTML = `
             <div class="detail-grid">
                 <div class="detail-item">
@@ -1159,7 +1231,7 @@ async function viewEvaluation(id) {
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">Visibilitas</div>
-                    <div class="detail-value">${evaluation.visibility === 'public' ? '🌐 Semua Pihak' : '🔒 Internal'}</div>
+                    <div class="detail-value">${evaluation.visibility === 'public' || evaluation.visibility === 'semua' ? '🌐 Semua Pihak' : '🔒 Internal'}</div>
                 </div>
             </div>
             <div class="detail-card" style="margin-top: 20px;">
@@ -1190,12 +1262,172 @@ async function viewEvaluation(id) {
                     </div>
                 </div>
             ` : ''}
+            ${commentsHtml}
+            ${commentFormHtml}
+            ${closeCaseSection}
         `;
 
         document.getElementById('view-modal').classList.add('active');
     } catch (error) {
         console.error('Error viewing evaluation:', error);
         showToast('Gagal memuat detail evaluasi', 'error');
+    }
+}
+
+/**
+ * Render evaluation comments section
+ */
+function renderEvaluationComments(comments, userRole) {
+    if (!comments || comments.length === 0) {
+        return `
+            <div class="comments-section" style="margin-top: 24px;">
+                <h4 style="margin-bottom: 12px;">💬 Pembinaan</h4>
+                <p class="text-muted">Belum ada pembinaan.</p>
+            </div>
+        `;
+    }
+
+    const commentsHtml = comments.map(comment => {
+        const commentDate = comment.created_at ? new Date(comment.created_at).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : '-';
+
+        const visibilityBadge = comment.visibility === 'semua'
+            ? '<span class="badge badge-info" style="font-size: 10px;">🌐 Publik</span>'
+            : '<span class="badge badge-secondary" style="font-size: 10px;">🔒 Internal</span>';
+
+        const jenisBadge = comment.jenis === 'pembinaan'
+            ? '<span class="badge badge-pass" style="font-size: 10px;">📋 Pembinaan</span>'
+            : '<span class="badge badge-secondary" style="font-size: 10px;">💬 Diskusi</span>';
+
+        const fotoHtml = comment.foto_url ? `
+            <div style="margin-top: 8px;">
+                <a href="${comment.foto_url}" target="_blank">
+                    <img src="${comment.foto_url}" alt="Foto" style="max-width: 200px; border-radius: 8px;">
+                </a>
+            </div>
+        ` : '';
+
+        return `
+            <div class="comment-item" style="padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div>
+                        <strong>${escapeHtml(comment.user_nama || comment.user_name || 'User')}</strong>
+                        <span class="text-muted" style="font-size: 12px; margin-left: 8px;">${escapeHtml(comment.user_role || '')}</span>
+                    </div>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        ${jenisBadge}
+                        ${visibilityBadge}
+                    </div>
+                </div>
+                <div style="line-height: 1.6;">${escapeHtml(comment.content || '')}</div>
+                ${fotoHtml}
+                <div class="text-muted" style="font-size: 11px; margin-top: 8px;">${commentDate}</div>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="comments-section" style="margin-top: 24px;">
+            <h4 style="margin-bottom: 12px;">💬 Pembinaan (${comments.length})</h4>
+            ${commentsHtml}
+        </div>
+    `;
+}
+
+/**
+ * Submit evaluation comment with FormData (supports foto upload)
+ */
+async function submitEvaluationComment(event, evaluationId) {
+    event.preventDefault();
+
+    const content = document.getElementById('eval-comment-content')?.value?.trim();
+    const jenis = document.getElementById('eval-comment-jenis')?.value || 'diskusi';
+    const visibility = document.getElementById('eval-comment-visibility')?.value || 'internal';
+    const fotoInput = document.getElementById('eval-comment-foto');
+
+    if (!content) {
+        showToast('Isi tanggapan wajib diisi', 'error');
+        return false;
+    }
+
+    // Build FormData
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('jenis', jenis);
+    formData.append('visibility', visibility);
+
+    if (fotoInput && fotoInput.files[0]) {
+        formData.append('foto', fotoInput.files[0]);
+    }
+
+    try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/evaluations/${evaluationId}/comments/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showToast('Tanggapan berhasil ditambahkan');
+            // Refresh the view modal
+            viewEvaluation(evaluationId);
+        } else {
+            throw new Error(data.message || 'Gagal menambahkan tanggapan');
+        }
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        showToast(error.message || 'Gagal menambahkan tanggapan', 'error');
+    }
+
+    return false;
+}
+
+/**
+ * Close evaluation case (keputusan final)
+ */
+async function closeEvaluationCase(evaluationId) {
+    const keputusan = document.getElementById('close-keputusan')?.value?.trim();
+
+    if (!keputusan) {
+        showToast('Keputusan final wajib diisi', 'error');
+        return;
+    }
+
+    if (!confirm('Apakah Anda yakin ingin menyelesaikan kasus ini?')) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/evaluations/${evaluationId}/close/`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ keputusan_final: keputusan })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showToast('Kasus berhasil diselesaikan');
+            // Refresh the view modal
+            viewEvaluation(evaluationId);
+            // Refresh the table
+            loadEvaluations(currentPage);
+        } else {
+            throw new Error(data.message || 'Gagal menyelesaikan kasus');
+        }
+    } catch (error) {
+        console.error('Error closing case:', error);
+        showToast(error.message || 'Gagal menyelesaikan kasus', 'error');
     }
 }
 
@@ -1807,3 +2039,6 @@ window.resetWizardState = resetWizardState;
 window.approveEvaluation = approveEvaluation;
 window.previewIncidentPhoto = previewIncidentPhoto;
 window.removeIncidentPhoto = removeIncidentPhoto;
+window.submitEvaluationComment = submitEvaluationComment;
+window.closeEvaluationCase = closeEvaluationCase;
+window.renderEvaluationComments = renderEvaluationComments;

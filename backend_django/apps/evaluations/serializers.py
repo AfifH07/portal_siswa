@@ -8,15 +8,34 @@ class EvaluationCommentSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.name', read_only=True)
     user_username = serializers.CharField(source='user.username', read_only=True)
     user_role = serializers.CharField(source='user.role', read_only=True)
+    user_nama = serializers.SerializerMethodField()
     jenis_display = serializers.CharField(source='get_jenis_display', read_only=True)
+    visibility_display = serializers.CharField(source='get_visibility_display', read_only=True)
+    foto_url = serializers.SerializerMethodField()
 
     class Meta:
         model = EvaluationComment
         fields = [
-            'id', 'evaluation', 'user', 'user_name', 'user_username', 'user_role',
-            'jenis', 'jenis_display', 'content', 'created_at', 'updated_at'
+            'id', 'evaluation', 'user', 'user_name', 'user_username', 'user_role', 'user_nama',
+            'jenis', 'jenis_display', 'content', 'visibility', 'visibility_display',
+            'foto', 'foto_url', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+    def get_user_nama(self, obj):
+        """Return user.name or user.username"""
+        if obj.user:
+            return obj.user.name or obj.user.username
+        return None
+
+    def get_foto_url(self, obj):
+        """Return absolute URL for foto field"""
+        if obj.foto:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.foto.url)
+            return obj.foto.url
+        return None
 
 
 class EvaluationSerializer(serializers.ModelSerializer):
@@ -27,6 +46,7 @@ class EvaluationSerializer(serializers.ModelSerializer):
     visibility_display = serializers.CharField(source='get_visibility_display', read_only=True)
     approved_by_name = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
+    closed_by_name = serializers.SerializerMethodField()
     foto_url = serializers.SerializerMethodField()
     comments = EvaluationCommentSerializer(many=True, read_only=True)
 
@@ -37,10 +57,11 @@ class EvaluationSerializer(serializers.ModelSerializer):
             'jenis', 'kategori', 'evaluator', 'name', 'summary', 'catatan',
             'foto', 'foto_url', 'status', 'status_display', 'visibility', 'visibility_display',
             'is_approved', 'approved_by', 'approved_by_name', 'approved_at',
-            'created_by', 'created_by_name', 'comments',
-            'created_at', 'updated_at'
+            'created_by', 'created_by_name',
+            'keputusan_final', 'closed_by', 'closed_by_name', 'closed_at',
+            'comments', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'approved_by', 'approved_at', 'is_approved', 'created_by']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'approved_by', 'approved_at', 'is_approved', 'created_by', 'closed_by', 'closed_at']
 
     def get_approved_by_name(self, obj):
         if obj.approved_by:
@@ -50,6 +71,11 @@ class EvaluationSerializer(serializers.ModelSerializer):
     def get_created_by_name(self, obj):
         if obj.created_by:
             return obj.created_by.name or obj.created_by.username
+        return None
+
+    def get_closed_by_name(self, obj):
+        if obj.closed_by:
+            return obj.closed_by.name or obj.closed_by.username
         return None
 
     def get_foto_url(self, obj):
@@ -145,7 +171,10 @@ class EvaluationCommentCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EvaluationComment
-        fields = ['evaluation', 'jenis', 'content']
+        fields = ['evaluation', 'jenis', 'content', 'visibility']
+        extra_kwargs = {
+            'visibility': {'required': False}  # Default: internal
+        }
 
     def validate_jenis(self, value):
         if not value:
@@ -159,6 +188,13 @@ class EvaluationCommentCreateSerializer(serializers.ModelSerializer):
         if not value or not str(value).strip():
             raise serializers.ValidationError("Isi tanggapan wajib diisi")
         return str(value).strip()
+
+    def validate_visibility(self, value):
+        if value:
+            valid_visibility = [choice[0] for choice in EvaluationComment.VISIBILITY_CHOICES]
+            if value not in valid_visibility:
+                raise serializers.ValidationError(f"Visibility harus 'internal' atau 'semua'")
+        return value or 'internal'
 
     def create(self, validated_data):
         return EvaluationComment.objects.create(**validated_data)

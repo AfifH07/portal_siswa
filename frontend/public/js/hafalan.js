@@ -42,6 +42,12 @@ let isEditing = false;
 let unsavedChanges = {};
 let chartInstances = {};
 
+// Initialize hafalanData with empty state (will be populated from API)
+let hafalanData = JSON.parse(JSON.stringify(EMPTY_STATE));
+
+// Initialize summaryData for pimpinan view
+let summaryData = JSON.parse(JSON.stringify(EMPTY_SUMMARY));
+
 // ============================================
 // SECTION 3: UTILITY FUNCTIONS
 // ============================================
@@ -1334,6 +1340,24 @@ function initHafalan() {
         }
     }
 
+    // Show tab navigation for roles that can input hafalan
+    const canInputHafalan = ['superadmin', 'admin', 'guru', 'musyrif'].includes(currentRole);
+    const tabNavigation = document.getElementById('tab-navigation');
+    if (tabNavigation && canInputHafalan) {
+        tabNavigation.style.display = 'flex';
+
+        // Hide import tab for non-admin roles
+        const importTab = tabNavigation.querySelector('[data-tab="import"]');
+        if (importTab && !['superadmin', 'admin'].includes(currentRole)) {
+            importTab.style.display = 'none';
+        }
+
+        // Re-initialize Lucide icons for tab buttons
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+    }
+
     // Render based on actual user role from session
     if (currentRole === 'pimpinan') {
         renderHafalanPimpinan();
@@ -1375,7 +1399,632 @@ function initHafalan() {
 }
 
 // ============================================
-// SECTION 11: WINDOW EXPORTS
+// SECTION 11: SETORAN HAFALAN (CRUD)
+// ============================================
+
+let setoranData = [];
+let setoranPage = 1;
+let setoranPageSize = 10;
+let selectedFileHafalan = null;
+
+/**
+ * Switch between hafalan tabs (Overview, Setoran, Import)
+ */
+function switchHafalanTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+        content.classList.remove('active');
+    });
+
+    const activeTab = document.getElementById(`tab-${tabName}`);
+    if (activeTab) {
+        activeTab.style.display = 'block';
+        activeTab.classList.add('active');
+    }
+
+    // Load data for specific tabs
+    if (tabName === 'setoran') {
+        loadSetoranHafalan();
+        loadSiswaDropdown();
+        loadKelasDropdown();
+    }
+
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+    }
+}
+
+/**
+ * Load setoran hafalan data from API
+ */
+async function loadSetoranHafalan() {
+    const tbody = document.getElementById('setoran-tbody');
+    const countBadge = document.getElementById('setoran-count');
+
+    if (!tbody) return;
+
+    // Show loading
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" class="text-center">
+                <div class="loading-spinner"></div>
+                <p>Memuat data...</p>
+            </td>
+        </tr>
+    `;
+
+    try {
+        // Build query params
+        const params = new URLSearchParams();
+        params.append('page', setoranPage);
+        params.append('page_size', setoranPageSize);
+
+        const kelas = document.getElementById('filter-kelas-setoran')?.value;
+        const tanggalDari = document.getElementById('filter-tanggal-dari')?.value;
+        const tanggalSampai = document.getElementById('filter-tanggal-sampai')?.value;
+        const search = document.getElementById('search-siswa')?.value;
+
+        if (kelas) params.append('kelas', kelas);
+        if (tanggalDari) params.append('tanggal_dari', tanggalDari);
+        if (tanggalSampai) params.append('tanggal_sampai', tanggalSampai);
+        if (search) params.append('search', search);
+
+        const response = await window.apiFetch(`kesantrian/hafalan/records/?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Gagal memuat data');
+        }
+
+        const list = data.results ?? data;
+        setoranData = Array.isArray(list) ? list : [];
+        const totalCount = data.count || setoranData.length;
+
+        if (countBadge) {
+            countBadge.textContent = `${totalCount} data`;
+        }
+
+        if (setoranData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        <div class="empty-state">
+                            <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
+                            <p>Belum ada data setoran hafalan</p>
+                            <p class="text-sm">Klik "Tambah Setoran" untuk menambah data baru</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            return;
+        }
+
+        // Render table rows
+        const setoranList = Array.isArray(setoranData) ? setoranData : (setoranData.results ?? []);
+        tbody.innerHTML = setoranList.map(item => `
+            <tr data-id="${item.id}">
+                <td>${formatDate(item.tanggal)}</td>
+                <td>
+                    <div class="student-info">
+                        <span class="student-name">${item.siswa_nama || item.siswa}</span>
+                        <span class="student-nisn text-muted">${item.siswa}</span>
+                    </div>
+                </td>
+                <td>${item.siswa_kelas || '-'}</td>
+                <td>${item.juz ? `Juz ${item.juz}` : '-'}</td>
+                <td>${item.halaman_dari && item.halaman_sampai ? `${item.halaman_dari} - ${item.halaman_sampai}` : '-'}</td>
+                <td><span class="badge badge-success">${item.jumlah_halaman} hal</span></td>
+                <td class="text-truncate" title="${item.catatan || ''}">${item.catatan || '-'}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-icon btn-sm btn-outline" onclick="editSetoran(${item.id})" title="Edit">
+                            <i data-lucide="edit-2"></i>
+                        </button>
+                        <button class="btn btn-icon btn-sm btn-danger" onclick="deleteSetoran(${item.id})" title="Hapus">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // Render pagination
+        renderSetoranPagination(totalCount);
+
+        // Re-initialize Lucide icons
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    } catch (error) {
+        console.error('[Hafalan] Error loading setoran:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-danger">
+                    <p>Gagal memuat data: ${error.message}</p>
+                    <button class="btn btn-primary btn-sm" onclick="loadSetoranHafalan()">Coba Lagi</button>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+/**
+ * Render pagination for setoran table
+ */
+function renderSetoranPagination(totalCount) {
+    const container = document.getElementById('setoran-pagination');
+    if (!container) return;
+
+    const totalPages = Math.ceil(totalCount / setoranPageSize);
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '<div class="pagination">';
+
+    // Previous button
+    html += `<button class="btn btn-sm ${setoranPage === 1 ? 'disabled' : ''}"
+             onclick="goToSetoranPage(${setoranPage - 1})" ${setoranPage === 1 ? 'disabled' : ''}>
+             <i data-lucide="chevron-left"></i>
+             </button>`;
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= setoranPage - 2 && i <= setoranPage + 2)) {
+            html += `<button class="btn btn-sm ${i === setoranPage ? 'btn-primary' : ''}"
+                     onclick="goToSetoranPage(${i})">${i}</button>`;
+        } else if (i === setoranPage - 3 || i === setoranPage + 3) {
+            html += '<span class="pagination-dots">...</span>';
+        }
+    }
+
+    // Next button
+    html += `<button class="btn btn-sm ${setoranPage === totalPages ? 'disabled' : ''}"
+             onclick="goToSetoranPage(${setoranPage + 1})" ${setoranPage === totalPages ? 'disabled' : ''}>
+             <i data-lucide="chevron-right"></i>
+             </button>`;
+
+    html += '</div>';
+    container.innerHTML = html;
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function goToSetoranPage(page) {
+    setoranPage = page;
+    loadSetoranHafalan();
+}
+
+/**
+ * Load siswa dropdown for setoran modal
+ */
+async function loadSiswaDropdown() {
+    const select = document.getElementById('setoran-siswa');
+    if (!select) return;
+
+    try {
+        const response = await window.apiFetch('students/');
+        const data = await response.json();
+
+        const students = data.results || data;
+
+        select.innerHTML = '<option value="">Pilih Siswa...</option>';
+        students.forEach(s => {
+            select.innerHTML += `<option value="${s.nisn}">${s.nama} (${s.nisn}) - ${s.kelas}</option>`;
+        });
+
+    } catch (error) {
+        console.error('[Hafalan] Error loading siswa:', error);
+    }
+}
+
+/**
+ * Load kelas dropdown for filter
+ */
+async function loadKelasDropdown() {
+    const select = document.getElementById('filter-kelas-setoran');
+    if (!select || select.options.length > 1) return; // Already loaded
+
+    try {
+        const response = await window.apiFetch('students/classes/');
+        const data = await response.json();
+
+        const kelasList = data.classes || data;
+
+        if (Array.isArray(kelasList)) {
+            kelasList.forEach(k => {
+                select.innerHTML += `<option value="${k}">${k}</option>`;
+            });
+        }
+
+    } catch (error) {
+        console.error('[Hafalan] Error loading kelas:', error);
+    }
+}
+
+/**
+ * Open modal for new setoran
+ */
+function openModalSetoranBaru() {
+    const modal = document.getElementById('modal-setoran');
+    const title = document.getElementById('modal-setoran-title');
+    const form = document.getElementById('form-setoran');
+
+    if (!modal) return;
+
+    // Reset form
+    if (form) form.reset();
+    document.getElementById('setoran-id').value = '';
+
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('setoran-tanggal').value = today;
+
+    // Update title
+    if (title) title.textContent = 'Tambah Setoran Hafalan';
+
+    // Show modal
+    modal.style.display = 'flex';
+
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/**
+ * Edit setoran
+ */
+function editSetoran(id) {
+    const item = setoranData.find(s => s.id === id);
+    if (!item) return;
+
+    const modal = document.getElementById('modal-setoran');
+    const title = document.getElementById('modal-setoran-title');
+
+    if (!modal) return;
+
+    // Fill form
+    document.getElementById('setoran-id').value = item.id;
+    document.getElementById('setoran-siswa').value = item.siswa;
+    document.getElementById('setoran-tanggal').value = item.tanggal;
+    document.getElementById('setoran-juz').value = item.juz || '';
+    document.getElementById('setoran-jumlah').value = item.jumlah_halaman;
+    document.getElementById('setoran-halaman-dari').value = item.halaman_dari || '';
+    document.getElementById('setoran-halaman-sampai').value = item.halaman_sampai || '';
+    document.getElementById('setoran-catatan').value = item.catatan || '';
+
+    // Update title
+    if (title) title.textContent = 'Edit Setoran Hafalan';
+
+    // Show modal
+    modal.style.display = 'flex';
+}
+
+/**
+ * Close setoran modal
+ */
+function closeModalSetoran() {
+    const modal = document.getElementById('modal-setoran');
+    if (modal) modal.style.display = 'none';
+}
+
+/**
+ * Submit setoran (create/update)
+ */
+async function submitSetoranHafalan() {
+    const id = document.getElementById('setoran-id').value;
+    const siswa = document.getElementById('setoran-siswa').value;
+    const tanggal = document.getElementById('setoran-tanggal').value;
+    const juz = document.getElementById('setoran-juz').value;
+    const jumlah = document.getElementById('setoran-jumlah').value;
+    const halamanDari = document.getElementById('setoran-halaman-dari').value;
+    const halamanSampai = document.getElementById('setoran-halaman-sampai').value;
+    const catatan = document.getElementById('setoran-catatan').value;
+
+    // Validation
+    if (!siswa || !tanggal || !jumlah) {
+        showToast('Siswa, tanggal, dan jumlah halaman wajib diisi', 'error');
+        return;
+    }
+
+    const payload = {
+        siswa_nisn: siswa,
+        tanggal: tanggal,
+        jumlah_halaman: parseInt(jumlah),
+        juz: juz ? parseInt(juz) : null,
+        halaman_dari: halamanDari ? parseInt(halamanDari) : null,
+        halaman_sampai: halamanSampai ? parseInt(halamanSampai) : null,
+        catatan: catatan
+    };
+
+    try {
+        let response;
+        if (id) {
+            // Update
+            response = await window.apiFetch(`kesantrian/hafalan/records/${id}/`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            // Create
+            response = await window.apiFetch('kesantrian/hafalan/records/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || data.detail || 'Gagal menyimpan data');
+        }
+
+        showToast(id ? 'Setoran berhasil diupdate' : 'Setoran berhasil ditambahkan', 'success');
+        closeModalSetoran();
+        loadSetoranHafalan();
+
+    } catch (error) {
+        console.error('[Hafalan] Error saving setoran:', error);
+        showToast(error.message, 'error');
+    }
+}
+
+/**
+ * Delete setoran
+ */
+async function deleteSetoran(id) {
+    if (!confirm('Yakin ingin menghapus data setoran ini?')) return;
+
+    try {
+        const response = await window.apiFetch(`kesantrian/hafalan/records/${id}/`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Gagal menghapus data');
+        }
+
+        showToast('Setoran berhasil dihapus', 'success');
+        loadSetoranHafalan();
+
+    } catch (error) {
+        console.error('[Hafalan] Error deleting setoran:', error);
+        showToast(error.message, 'error');
+    }
+}
+
+// ============================================
+// SECTION 12: IMPORT EXCEL
+// ============================================
+
+/**
+ * Handle drag over for dropzone
+ */
+function handleDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add('dragover');
+}
+
+/**
+ * Handle drag leave for dropzone
+ */
+function handleDragLeave(event) {
+    event.currentTarget.classList.remove('dragover');
+}
+
+/**
+ * Handle file drop for hafalan import
+ */
+function handleDropHafalan(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('dragover');
+
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        handleFileHafalan(files[0]);
+    }
+}
+
+/**
+ * Handle file select for hafalan import
+ */
+function handleFileSelectHafalan(event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+        handleFileHafalan(files[0]);
+    }
+}
+
+/**
+ * Process selected file
+ */
+function handleFileHafalan(file) {
+    // Validate file type
+    const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
+        showToast('File harus berformat Excel (.xlsx atau .xls)', 'error');
+        return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Ukuran file maksimal 5MB', 'error');
+        return;
+    }
+
+    selectedFileHafalan = file;
+
+    // Show file preview
+    const dropzone = document.getElementById('dropzone-hafalan');
+    const preview = document.getElementById('file-preview-hafalan');
+    const fileName = document.getElementById('file-name-hafalan');
+    const fileSize = document.getElementById('file-size-hafalan');
+
+    if (dropzone) dropzone.style.display = 'none';
+    if (preview) preview.style.display = 'flex';
+    if (fileName) fileName.textContent = file.name;
+    if (fileSize) fileSize.textContent = formatFileSize(file.size);
+
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/**
+ * Format file size
+ */
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+/**
+ * Clear selected file
+ */
+function clearFileHafalan() {
+    selectedFileHafalan = null;
+
+    const dropzone = document.getElementById('dropzone-hafalan');
+    const preview = document.getElementById('file-preview-hafalan');
+    const fileInput = document.getElementById('file-import-hafalan');
+
+    if (dropzone) dropzone.style.display = 'flex';
+    if (preview) preview.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+}
+
+/**
+ * Import hafalan from Excel
+ */
+async function importHafalanExcel() {
+    if (!selectedFileHafalan) {
+        showToast('Pilih file Excel terlebih dahulu', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', selectedFileHafalan);
+
+    // Show loading
+    const preview = document.getElementById('file-preview-hafalan');
+    const submitBtn = preview?.querySelector('.btn-success');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i data-lucide="loader"></i> Mengimport...';
+    }
+
+    try {
+        const response = await window.apiFetch('kesantrian/hafalan/import/', {
+            method: 'POST',
+            body: formData
+            // Note: Don't set Content-Type header - browser will set it with boundary for FormData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Import gagal');
+        }
+
+        // Show result
+        showImportResult(data);
+
+    } catch (error) {
+        console.error('[Hafalan] Import error:', error);
+        showToast(error.message, 'error');
+
+        // Reset button
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i data-lucide="upload"></i> Import Data';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    }
+}
+
+/**
+ * Show import result
+ */
+function showImportResult(data) {
+    const preview = document.getElementById('file-preview-hafalan');
+    const result = document.getElementById('import-result-hafalan');
+    const dropzone = document.getElementById('dropzone-hafalan');
+
+    if (preview) preview.style.display = 'none';
+    if (dropzone) dropzone.style.display = 'none';
+    if (result) result.style.display = 'block';
+
+    // Update stats
+    document.getElementById('import-total').textContent = data.total || 0;
+    document.getElementById('import-success').textContent = data.success || 0;
+    document.getElementById('import-failed').textContent = data.failed || 0;
+
+    // Show errors if any
+    const errorsContainer = document.getElementById('import-errors');
+    const errorList = document.getElementById('import-error-list');
+
+    if (data.errors && data.errors.length > 0) {
+        errorsContainer.style.display = 'block';
+        errorList.innerHTML = data.errors.map(e => `<li>${e}</li>`).join('');
+    } else {
+        errorsContainer.style.display = 'none';
+    }
+
+    // Update result icon based on success/failure
+    const resultIcon = result?.querySelector('.result-icon');
+    if (resultIcon) {
+        if (data.failed > 0) {
+            resultIcon.classList.remove('success');
+            resultIcon.classList.add('warning');
+            resultIcon.setAttribute('data-lucide', 'alert-triangle');
+        } else {
+            resultIcon.classList.remove('warning');
+            resultIcon.classList.add('success');
+            resultIcon.setAttribute('data-lucide', 'check-circle');
+        }
+    }
+
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    showToast(`Import selesai: ${data.success} berhasil, ${data.failed} gagal`, data.failed > 0 ? 'warning' : 'success');
+}
+
+/**
+ * Reset import section
+ */
+function resetImportHafalan() {
+    selectedFileHafalan = null;
+
+    const dropzone = document.getElementById('dropzone-hafalan');
+    const preview = document.getElementById('file-preview-hafalan');
+    const result = document.getElementById('import-result-hafalan');
+    const fileInput = document.getElementById('file-import-hafalan');
+
+    if (dropzone) dropzone.style.display = 'flex';
+    if (preview) preview.style.display = 'none';
+    if (result) result.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// ============================================
+// SECTION 13: WINDOW EXPORTS
 // ============================================
 
 window.saveItemChanges = saveItemChanges;
@@ -1384,8 +2033,27 @@ window.saveAllChanges = saveAllChanges;
 window.exportHafalanData = exportHafalanData;
 window.switchRole = switchRole;
 
+// Setoran exports
+window.switchHafalanTab = switchHafalanTab;
+window.loadSetoranHafalan = loadSetoranHafalan;
+window.openModalSetoranBaru = openModalSetoranBaru;
+window.editSetoran = editSetoran;
+window.closeModalSetoran = closeModalSetoran;
+window.submitSetoranHafalan = submitSetoranHafalan;
+window.deleteSetoran = deleteSetoran;
+window.goToSetoranPage = goToSetoranPage;
+
+// Import exports
+window.handleDragOver = handleDragOver;
+window.handleDragLeave = handleDragLeave;
+window.handleDropHafalan = handleDropHafalan;
+window.handleFileSelectHafalan = handleFileSelectHafalan;
+window.clearFileHafalan = clearFileHafalan;
+window.importHafalanExcel = importHafalanExcel;
+window.resetImportHafalan = resetImportHafalan;
+
 // ============================================
-// SECTION 12: DOM READY
+// SECTION 14: DOM READY
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {

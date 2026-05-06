@@ -81,6 +81,17 @@ class Evaluation(models.Model):
         related_name='created_evaluations'
     )
 
+    # Field baru: Close case (keputusan final oleh pimpinan)
+    keputusan_final = models.TextField(blank=True)
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='closed_evaluations'
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -104,6 +115,11 @@ class EvaluationComment(models.Model):
         ('pembinaan', 'Pembinaan'),
     ]
 
+    VISIBILITY_CHOICES = [
+        ('internal', 'Internal (Guru & Admin)'),
+        ('semua', 'Semua Pihak'),
+    ]
+
     id = models.BigAutoField(primary_key=True)
     evaluation = models.ForeignKey(
         Evaluation,
@@ -121,6 +137,21 @@ class EvaluationComment(models.Model):
         default='diskusi'
     )
     content = models.TextField(help_text="Isi tanggapan/pembinaan")
+
+    # Field baru: visibility untuk kontrol siapa yang bisa lihat komentar
+    visibility = models.CharField(
+        max_length=20,
+        choices=VISIBILITY_CHOICES,
+        default='internal'
+    )
+
+    # Field baru: foto bukti pembinaan
+    foto = models.ImageField(
+        upload_to='evaluations/pembinaan/',
+        null=True,
+        blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

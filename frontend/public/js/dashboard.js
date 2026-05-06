@@ -123,8 +123,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else if (currentUser && currentUser.role === 'guru') {
         debugLog('[Dashboard] Guru detected, rendering guru dashboard');
         renderGuruDashboard();
+    } else if (currentUser && currentUser.role === 'pimpinan') {
+        debugLog('[Dashboard] Pimpinan detected, rendering pimpinan dashboard');
+        renderPimpinanDashboard();
     } else {
-        debugLog('[Dashboard] Admin/Pimpinan detected, rendering admin dashboard');
+        debugLog('[Dashboard] Admin/Superadmin detected, rendering admin dashboard');
         loadDashboardData();
     }
 });
@@ -2794,6 +2797,598 @@ async function printBulkRapor(kelas) {
 
 // ============================================
 // WINDOW EXPORTS FOR WALISANTRI FUNCTIONS
+// ============================================================
+// PIMPINAN DASHBOARD
+// ============================================================
+
+// Chart instances for pimpinan
+let pimpinanGradesChart = null;
+let pimpinanHafalanChart = null;
+let pimpinanAttendanceChart = null;
+let pimpinanBreakdownChart = null;
+
+/**
+ * Render Pimpinan Dashboard - Main entry point
+ */
+async function renderPimpinanDashboard() {
+    // Hide other dashboard sections
+    const adminDashboard = document.getElementById('dashboard-section');
+    const walisantriDashboard = document.getElementById('walisantri-dashboard');
+    const guruDashboard = document.getElementById('guru-dashboard');
+    const pimpinanDashboard = document.getElementById('pimpinan-dashboard');
+    const pageTitle = document.getElementById('page-title');
+
+    if (adminDashboard) adminDashboard.style.display = 'none';
+    if (walisantriDashboard) walisantriDashboard.style.display = 'none';
+    if (guruDashboard) guruDashboard.style.display = 'none';
+    if (pimpinanDashboard) {
+        pimpinanDashboard.style.display = 'block';
+        pimpinanDashboard.classList.add('active');
+    }
+    if (pageTitle) pageTitle.textContent = 'Dashboard Pimpinan';
+
+    // Update welcome title
+    const welcomeTitle = document.getElementById('pimpinan-welcome-title');
+    if (welcomeTitle && currentUser) {
+        const name = currentUser.name || currentUser.username || 'Pimpinan';
+        welcomeTitle.textContent = `Selamat Datang, ${name} 👋`;
+    }
+
+    // Load pimpinan data
+    await loadPimpinanDashboardData();
+
+    // Also load attendance chart (reuse existing endpoint)
+    await loadPimpinanAttendanceChart();
+
+    // Also load grades distribution
+    await loadPimpinanGradesChart();
+}
+
+/**
+ * Load pimpinan dashboard data from API
+ */
+async function loadPimpinanDashboardData() {
+    try {
+        debugLog('[PimpinanDashboard] Fetching pimpinan summary...');
+        const response = await window.apiFetch('dashboard/pimpinan/summary/');
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        debugLog('[PimpinanDashboard] API Response:', data);
+
+        // Update hari display
+        const hariDisplay = document.getElementById('pimpinan-hari-display');
+        if (hariDisplay && data.hari) {
+            hariDisplay.textContent = `hari ${data.hari}`;
+        }
+
+        // Update stats cards
+        updatePimpinanStats(data.stats || {});
+
+        // Render presensi guru table
+        renderPimpinanPresensiGuru(data.presensi_guru || []);
+
+        // Render hafalan per kelas chart
+        renderPimpinanHafalanChart(data.hafalan_per_kelas || []);
+
+        // Render evaluasi stats
+        renderPimpinanEvaluasi(data.evaluasi || {});
+
+        // Render breakdown chart
+        renderPimpinanBreakdownChart(data.breakdown_kelas || []);
+
+    } catch (error) {
+        console.error('[PimpinanDashboard] Error loading data:', error);
+        showPimpinanError('Gagal memuat data dashboard');
+    }
+}
+
+/**
+ * Update pimpinan stats cards
+ */
+function updatePimpinanStats(stats) {
+    // Total Santri
+    const santriEl = document.getElementById('pimpinan-stat-santri');
+    if (santriEl) santriEl.textContent = stats.total_santri || 0;
+
+    // Total Guru
+    const guruEl = document.getElementById('pimpinan-stat-guru');
+    if (guruEl) guruEl.textContent = stats.total_guru || 0;
+
+    // Efektivitas KBM
+    const efektivitasEl = document.getElementById('pimpinan-stat-efektivitas');
+    const efektivitasCard = document.getElementById('pimpinan-stat-efektivitas-card');
+    const efektivitas = stats.efektivitas_kbm || 0;
+
+    if (efektivitasEl) efektivitasEl.textContent = `${efektivitas}%`;
+
+    // Color coding for efektivitas
+    if (efektivitasCard) {
+        efektivitasCard.classList.remove('status-good', 'status-warning', 'status-danger', 'sc-gold', 'sc-green', 'sc-red');
+        if (efektivitas >= 80) {
+            efektivitasCard.classList.add('sc-green');
+        } else if (efektivitas >= 50) {
+            efektivitasCard.classList.add('sc-gold');
+        } else {
+            efektivitasCard.classList.add('sc-red');
+        }
+    }
+
+    // Welcome banner efektivitas
+    const efektivitasBadge = document.getElementById('pimpinan-efektivitas-badge');
+    const efektivitasDetail = document.getElementById('pimpinan-efektivitas-detail');
+    if (efektivitasBadge) efektivitasBadge.textContent = `${efektivitas}%`;
+    if (efektivitasDetail) {
+        efektivitasDetail.textContent = `${stats.jurnal_terisi || 0} dari ${stats.total_jadwal_hari_ini || 0} jadwal terisi`;
+    }
+
+    // Jam Kosong
+    const kosongEl = document.getElementById('pimpinan-stat-kosong');
+    const kosongCard = document.getElementById('pimpinan-stat-kosong-card');
+    const jamKosong = stats.jam_kosong || 0;
+
+    if (kosongEl) kosongEl.textContent = jamKosong;
+
+    // Color coding for jam kosong
+    if (kosongCard) {
+        kosongCard.classList.remove('sc-red', 'sc-green', 'sc-gold');
+        if (jamKosong === 0) {
+            kosongCard.classList.add('sc-green');
+        } else if (jamKosong <= 3) {
+            kosongCard.classList.add('sc-gold');
+        } else {
+            kosongCard.classList.add('sc-red');
+        }
+    }
+}
+
+/**
+ * Render presensi guru table
+ */
+function renderPimpinanPresensiGuru(presensiGuru) {
+    const tbody = document.getElementById('pimpinan-presensi-tbody');
+    const badge = document.getElementById('pimpinan-presensi-badge');
+
+    if (!tbody) return;
+
+    // Update badge
+    if (badge) {
+        const totalGuru = presensiGuru.length;
+        const guruLengkap = presensiGuru.filter(g => g.kosong === 0).length;
+        badge.textContent = `${guruLengkap}/${totalGuru} Lengkap`;
+    }
+
+    // Empty state (weekend/holiday)
+    if (!presensiGuru || presensiGuru.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    <div class="presensi-empty">
+                        <div class="presensi-empty-icon">📅</div>
+                        <div>Tidak ada jadwal mengajar hari ini</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // Render rows
+    tbody.innerHTML = presensiGuru.map(guru => {
+        let statusClass = 'status-lengkap';
+        let statusText = 'Lengkap';
+
+        if (guru.terisi === 0) {
+            statusClass = 'status-belum';
+            statusText = 'Belum Mengajar';
+        } else if (guru.kosong > 0) {
+            statusClass = 'status-ada-kosong';
+            statusText = 'Ada Kosong';
+        }
+
+        return `
+            <tr>
+                <td><strong>${escapeHtml(guru.nama)}</strong></td>
+                <td style="text-align: center;">${guru.jadwal}</td>
+                <td style="text-align: center;">${guru.terisi}</td>
+                <td style="text-align: center; ${guru.kosong > 0 ? 'color: #dc2626; font-weight: 700;' : ''}">${guru.kosong}</td>
+                <td style="text-align: center;">
+                    <span class="presensi-status-badge ${statusClass}">${statusText}</span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+/**
+ * Render hafalan per kelas chart (horizontal bar)
+ */
+function renderPimpinanHafalanChart(hafalanData) {
+    const canvas = document.getElementById('pimpinan-hafalan-chart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    // Destroy existing chart
+    if (pimpinanHafalanChart) {
+        pimpinanHafalanChart.destroy();
+    }
+
+    if (!hafalanData || hafalanData.length === 0) {
+        // Empty state
+        ctx.font = '14px Plus Jakarta Sans';
+        ctx.fillStyle = '#6b7280';
+        ctx.textAlign = 'center';
+        ctx.fillText('Tidak ada data hafalan', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
+    const labels = hafalanData.map(h => h.kelas);
+    const values = hafalanData.map(h => h.persentase);
+
+    // Generate colors based on percentage
+    const backgroundColors = values.map(v => {
+        if (v >= 70) return 'rgba(16, 185, 129, 0.7)';  // green
+        if (v >= 40) return 'rgba(245, 158, 11, 0.7)';  // yellow
+        return 'rgba(239, 68, 68, 0.7)';  // red
+    });
+
+    const borderColors = values.map(v => {
+        if (v >= 70) return '#10b981';
+        if (v >= 40) return '#f59e0b';
+        return '#ef4444';
+    });
+
+    pimpinanHafalanChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Progress Hafalan (%)',
+                data: values,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 0,
+                borderRadius: 4,
+                barThickness: 20
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: EMERALD_COLORS.emerald700,
+                    callbacks: {
+                        label: (ctx) => `Progress: ${ctx.raw}%`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: EMERALD_COLORS.gridColor },
+                    ticks: {
+                        color: EMERALD_COLORS.textMuted,
+                        callback: v => v + '%'
+                    }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { color: EMERALD_COLORS.textMain }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Load pimpinan attendance chart (6 months)
+ */
+async function loadPimpinanAttendanceChart() {
+    const canvas = document.getElementById('pimpinan-attendance-chart');
+    if (!canvas) return;
+
+    try {
+        const response = await window.apiFetch('dashboard/attendance-chart/');
+        if (response.ok) {
+            const data = await response.json();
+            renderPimpinanAttendanceChartData(data.data);
+        }
+    } catch (error) {
+        console.error('[PimpinanDashboard] Error loading attendance chart:', error);
+    }
+}
+
+/**
+ * Render pimpinan attendance chart
+ */
+function renderPimpinanAttendanceChartData(data) {
+    const canvas = document.getElementById('pimpinan-attendance-chart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    if (pimpinanAttendanceChart) {
+        pimpinanAttendanceChart.destroy();
+    }
+
+    const colorMap = {
+        'Hadir': { bg: 'rgba(31, 168, 122, 0.7)', border: EMERALD_COLORS.emerald500 },
+        'Sakit': { bg: 'rgba(59, 130, 246, 0.5)', border: EMERALD_COLORS.blue },
+        'Izin': { bg: 'rgba(200, 150, 28, 0.5)', border: EMERALD_COLORS.baronGold },
+        'Alpha': { bg: 'rgba(239, 68, 68, 0.5)', border: EMERALD_COLORS.red }
+    };
+
+    pimpinanAttendanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: data.datasets.map(ds => {
+                const colors = colorMap[ds.label] || { bg: 'rgba(31, 168, 122, 0.7)', border: EMERALD_COLORS.emerald500 };
+                return {
+                    ...ds,
+                    backgroundColor: colors.bg,
+                    borderColor: colors.border,
+                    borderWidth: 0,
+                    borderRadius: 6
+                };
+            })
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: EMERALD_COLORS.textSub,
+                        usePointStyle: true,
+                        padding: 12,
+                        boxWidth: 10,
+                        font: { size: 10 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: EMERALD_COLORS.emerald700
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: EMERALD_COLORS.gridColor },
+                    ticks: { color: EMERALD_COLORS.textMuted, font: { size: 10 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: EMERALD_COLORS.textMuted, font: { size: 10 } }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Load and render grades distribution chart
+ */
+async function loadPimpinanGradesChart() {
+    const canvas = document.getElementById('pimpinan-grades-chart');
+    if (!canvas) return;
+
+    try {
+        const response = await window.apiFetch('dashboard/grades-distribution/');
+        if (response.ok) {
+            const data = await response.json();
+            renderPimpinanGradesChartData(data.data);
+        }
+    } catch (error) {
+        console.error('[PimpinanDashboard] Error loading grades chart:', error);
+    }
+}
+
+/**
+ * Render pimpinan grades donut chart
+ */
+function renderPimpinanGradesChartData(data) {
+    const canvas = document.getElementById('pimpinan-grades-chart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    if (pimpinanGradesChart) {
+        pimpinanGradesChart.destroy();
+    }
+
+    const emeraldPalette = [
+        'rgba(31, 168, 122, 0.85)',   // A
+        'rgba(52, 201, 154, 0.7)',     // B
+        'rgba(200, 150, 28, 0.75)',    // C
+        'rgba(239, 68, 68, 0.65)'      // D
+    ];
+
+    pimpinanGradesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.labels,
+            datasets: data.datasets.map(ds => ({
+                ...ds,
+                backgroundColor: emeraldPalette.slice(0, data.labels.length),
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                hoverOffset: 8
+            }))
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: EMERALD_COLORS.textSub,
+                        usePointStyle: true,
+                        padding: 10,
+                        boxWidth: 10,
+                        font: { size: 10 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: EMERALD_COLORS.emerald700
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Render evaluasi stats and feed
+ */
+function renderPimpinanEvaluasi(evaluasi) {
+    // Update stats
+    const totalEl = document.getElementById('pimpinan-eval-total');
+    const prestasiEl = document.getElementById('pimpinan-eval-prestasi');
+    const pelanggaranEl = document.getElementById('pimpinan-eval-pelanggaran');
+    const pendingBadge = document.getElementById('pimpinan-evaluasi-pending-badge');
+
+    if (totalEl) totalEl.textContent = evaluasi.total || 0;
+    if (prestasiEl) prestasiEl.textContent = evaluasi.prestasi || 0;
+    if (pelanggaranEl) pelanggaranEl.textContent = evaluasi.pelanggaran || 0;
+    if (pendingBadge) pendingBadge.textContent = `${evaluasi.pending_approval || 0} Pending`;
+
+    // Render feed
+    const feedContainer = document.getElementById('pimpinan-evaluasi-feed');
+    if (!feedContainer) return;
+
+    const terbaru = evaluasi.terbaru || [];
+
+    if (terbaru.length === 0) {
+        feedContainer.innerHTML = `
+            <div class="empty-state" style="padding: 1rem; text-align: center; color: #6b7280;">
+                <span style="font-size: 1.5rem;">📋</span>
+                <p style="margin-top: 0.5rem; font-size: 0.85rem;">Belum ada evaluasi</p>
+            </div>
+        `;
+        return;
+    }
+
+    feedContainer.innerHTML = terbaru.map(ev => {
+        const icon = ev.jenis === 'prestasi' ? '🏆' : '⚠️';
+        const badgeClass = ev.is_approved ? 'approved' : 'pending';
+        const badgeText = ev.is_approved ? 'Approved' : 'Pending';
+
+        return `
+            <div class="eval-feed-item">
+                <span class="eval-feed-icon">${icon}</span>
+                <div class="eval-feed-content">
+                    <div class="eval-feed-title">${escapeHtml(ev.name)}</div>
+                    <div class="eval-feed-meta">${escapeHtml(ev.siswa_nama)} · ${ev.siswa_kelas} · ${ev.tanggal}</div>
+                </div>
+                <span class="eval-feed-badge ${badgeClass}">${badgeText}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Render breakdown santri per kelas chart
+ */
+function renderPimpinanBreakdownChart(breakdownData) {
+    const canvas = document.getElementById('pimpinan-breakdown-chart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    if (pimpinanBreakdownChart) {
+        pimpinanBreakdownChart.destroy();
+    }
+
+    if (!breakdownData || breakdownData.length === 0) {
+        ctx.font = '14px Plus Jakarta Sans';
+        ctx.fillStyle = '#6b7280';
+        ctx.textAlign = 'center';
+        ctx.fillText('Tidak ada data kelas', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
+    const labels = breakdownData.map(b => b.kelas || '-');
+    const values = breakdownData.map(b => b.total);
+
+    // Generate gradient colors
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop(0, EMERALD_COLORS.emerald400);
+    gradient.addColorStop(1, EMERALD_COLORS.emerald600);
+
+    pimpinanBreakdownChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Jumlah Santri',
+                data: values,
+                backgroundColor: gradient,
+                borderColor: EMERALD_COLORS.emerald600,
+                borderWidth: 0,
+                borderRadius: 4,
+                barThickness: 28
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: EMERALD_COLORS.emerald700,
+                    callbacks: {
+                        label: (ctx) => `${ctx.raw} santri`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: { color: EMERALD_COLORS.gridColor },
+                    ticks: { color: EMERALD_COLORS.textMuted }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { color: EMERALD_COLORS.textMain }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Show error state for pimpinan dashboard
+ */
+function showPimpinanError(message) {
+    const presensiTbody = document.getElementById('pimpinan-presensi-tbody');
+    if (presensiTbody) {
+        presensiTbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem; color: #dc2626;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <p style="margin-top: 0.5rem;">${escapeHtml(message)}</p>
+                    <button onclick="loadPimpinanDashboardData()" class="btn btn-primary btn-sm" style="margin-top: 0.5rem;">Coba Lagi</button>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Export pimpinan dashboard functions
+window.renderPimpinanDashboard = renderPimpinanDashboard;
+window.loadPimpinanDashboardData = loadPimpinanDashboardData;
+
 // ============================================
 window.syncGradesUI = syncGradesUI;
 window.renderWalisantriGradesTable = renderWalisantriGradesTable;

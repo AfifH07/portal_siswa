@@ -12,6 +12,9 @@ urlpatterns = [
     path('<int:pk>/approve/', views.approve_evaluation, name='approve_evaluation'),
     path('<int:pk>/unapprove/', views.unapprove_evaluation, name='unapprove_evaluation'),
 
+    # Close case endpoint (keputusan final oleh pimpinan)
+    path('<int:pk>/close/', views.close_evaluation, name='close_evaluation'),
+
     # PERUBAHAN 5: Comment/Tanggapan endpoints
     path('<int:evaluation_id>/comments/', views.evaluation_comments, name='evaluation_comments'),
     path('comments/<int:comment_id>/', views.delete_comment, name='delete_comment'),
