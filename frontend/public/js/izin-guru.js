@@ -6,6 +6,9 @@
 // State
 let izinData = [];
 let isAdmin = false;
+let isApprover = false;
+let pendingApprovalId = null;
+let pendingApprovalAction = null;
 
 // ============================================
 // INITIALIZATION
@@ -19,7 +22,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const role = user.role || '';
 
     // Check if admin (can see all data)
-    isAdmin = ['superadmin', 'pimpinan', 'bk'].includes(role);
+    isAdmin = ['superadmin', 'admin', 'pimpinan', 'bk'].includes(role);
+    isApprover = ['superadmin', 'admin', 'pimpinan'].includes(role);
 
     // Hide form for pimpinan/superadmin (they don't need to submit leave)
     if (['superadmin', 'pimpinan'].includes(role)) {
@@ -34,6 +38,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const thGuru = document.getElementById('th-guru');
         if (thGuru) thGuru.style.display = '';
+    }
+
+    if (isApprover) {
+        const thAksi = document.getElementById('th-aksi');
+        if (thAksi) thAksi.style.display = '';
     }
 
     // Set default dates
@@ -85,7 +94,7 @@ async function loadIzinList() {
     // Show loading
     tbody.innerHTML = `
         <tr>
-            <td colspan="${isAdmin ? 6 : 5}" class="text-center">
+            <td colspan="${isAdmin ? (isApprover ? 8 : 7) : (isApprover ? 7 : 6)}" class="text-center">
                 <div class="loading-spinner" style="margin: 30px auto;"></div>
             </td>
         </tr>
@@ -126,7 +135,7 @@ async function loadIzinList() {
         console.error('[IzinGuru] Error:', error);
         tbody.innerHTML = `
             <tr>
-                <td colspan="${isAdmin ? 6 : 5}" class="text-center text-muted">
+                <td colspan="${isAdmin ? (isApprover ? 8 : 7) : (isApprover ? 7 : 6)}" class="text-center text-muted">
                     Gagal memuat data: ${error.message}
                 </td>
             </tr>
@@ -159,7 +168,6 @@ function renderIzinTable(data) {
     data.forEach((item) => {
         const tr = document.createElement('tr');
 
-        const badgeClass = getBadgeClass(item.jenis_izin);
         const tanggalDisplay = `${formatDate(item.tanggal_mulai)} - ${formatDate(item.tanggal_selesai)}`;
 
         let html = '';
@@ -170,18 +178,41 @@ function renderIzinTable(data) {
         }
 
         html += `
-            <td><span class="status-badge ${badgeClass}">${escapeHtml(item.jenis_izin_display || item.jenis_izin)}</span></td>
+            <td><span class="status-badge ${getBadgeClass(item.jenis_izin)}">${escapeHtml(item.jenis_izin_display || item.jenis_izin)}</span></td>
             <td>${tanggalDisplay}</td>
             <td>${item.durasi_hari} hari</td>
             <td class="keterangan-cell">${escapeHtml(truncateText(item.keterangan, 50))}</td>
+            <td>${getStatusBadge(item.status)}</td>
             <td>
                 ${item.foto_surat_url ? `
-                    <button class="btn btn-sm btn-outline" onclick="openFotoModal('${escapeHtml(item.foto_surat_url)}', '${escapeHtml(item.guru_nama || 'Guru')}')">
+                    <button class="btn btn-sm btn-outline" onclick="openFotoModal('${escapeHtml(item.foto_surat_url)}', '${escapeHtml(item.guru_name || item.guru_nama || 'Guru')}')">
                         <i data-lucide="image"></i> Lihat
                     </button>
                 ` : '<span class="text-muted">-</span>'}
             </td>
         `;
+
+        if (isApprover) {
+            if (item.status === 'pending') {
+                html += `
+                    <td>
+                        <button class="btn btn-sm btn-primary" style="margin-right:4px;"
+                            onclick="openApproveModal(${item.id}, 'disetujui', '${escapeHtml(item.guru_name || item.guru_nama || '')}')">
+                            <i data-lucide="check"></i> Setujui
+                        </button>
+                        <button class="btn btn-sm btn-outline" style="color: var(--danger, #ef4444);"
+                            onclick="openApproveModal(${item.id}, 'ditolak', '${escapeHtml(item.guru_name || item.guru_nama || '')}')">
+                            <i data-lucide="x"></i> Tolak
+                        </button>
+                    </td>
+                `;
+            } else {
+                const approvedInfo = item.approved_by_name
+                    ? `<span class="text-muted" style="font-size:12px;">oleh ${escapeHtml(item.approved_by_name)}</span>`
+                    : '';
+                html += `<td>${approvedInfo}</td>`;
+            }
+        }
 
         tr.innerHTML = html;
         tbody.appendChild(tr);
@@ -201,6 +232,16 @@ function getBadgeClass(jenis) {
         'lainnya': 'badge-gray'
     };
     return classMap[jenis] || 'badge-gray';
+}
+
+function getStatusBadge(status) {
+    const map = {
+        'pending':   { cls: 'badge-yellow', label: 'Menunggu' },
+        'disetujui': { cls: 'badge-green',  label: 'Disetujui' },
+        'ditolak':   { cls: 'badge-red',    label: 'Ditolak' },
+    };
+    const s = map[status] || { cls: 'badge-gray', label: status || '-' };
+    return `<span class="status-badge ${s.cls}">${s.label}</span>`;
 }
 
 // ============================================
@@ -373,6 +414,65 @@ function closeFotoModal() {
     if (modal) modal.classList.remove('show');
 }
 
+function openApproveModal(id, action, guruNama) {
+    pendingApprovalId = id;
+    pendingApprovalAction = action;
+
+    const modal = document.getElementById('approve-modal');
+    const title = document.getElementById('approve-modal-title');
+    const desc = document.getElementById('approve-modal-desc');
+    const btnConfirm = document.getElementById('btn-confirm-approval');
+    const catatanInput = document.getElementById('input-catatan-approval');
+
+    if (title) title.textContent = action === 'disetujui' ? 'Setujui Izin' : 'Tolak Izin';
+    if (desc) desc.textContent = `${action === 'disetujui' ? 'Setujui' : 'Tolak'} izin dari ${guruNama}?`;
+    if (catatanInput) catatanInput.value = '';
+
+    if (btnConfirm) {
+        btnConfirm.style.background = action === 'disetujui' ? '' : 'var(--danger, #ef4444)';
+        btnConfirm.textContent = action === 'disetujui' ? 'Setujui' : 'Tolak';
+    }
+
+    if (modal) modal.classList.add('show');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeApproveModal() {
+    const modal = document.getElementById('approve-modal');
+    if (modal) modal.classList.remove('show');
+    pendingApprovalId = null;
+    pendingApprovalAction = null;
+}
+
+async function confirmApproval() {
+    if (!pendingApprovalId || !pendingApprovalAction) return;
+
+    const catatan = document.getElementById('input-catatan-approval')?.value || '';
+    const btnConfirm = document.getElementById('btn-confirm-approval');
+
+    if (btnConfirm) { btnConfirm.disabled = true; btnConfirm.textContent = 'Memproses...'; }
+
+    try {
+        const response = await window.apiFetch(`/kesantrian/izin-guru/${pendingApprovalId}/approve/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: pendingApprovalAction, catatan_approval: catatan })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            closeApproveModal();
+            await loadIzinList();
+        } else {
+            alert('Gagal: ' + (result.message || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Error: ' + err.message);
+    } finally {
+        if (btnConfirm) { btnConfirm.disabled = false; }
+    }
+}
+
 // ============================================
 // EXPORT PDF
 // ============================================
@@ -490,4 +590,7 @@ window.resetFilters = resetFilters;
 window.exportPDF = exportPDF;
 window.openFotoModal = openFotoModal;
 window.closeFotoModal = closeFotoModal;
+window.openApproveModal = openApproveModal;
+window.closeApproveModal = closeApproveModal;
+window.confirmApproval = confirmApproval;
 window.removePreview = removePreview;
