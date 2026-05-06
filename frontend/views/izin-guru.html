@@ -178,12 +178,14 @@
                                 <th>Tanggal</th>
                                 <th>Durasi</th>
                                 <th>Keterangan</th>
+                                <th>Status</th>
                                 <th>Foto Surat</th>
+                                <th id="th-aksi" style="display: none;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-izin">
                             <tr>
-                                <td colspan="6" class="text-center">
+                                <td colspan="7" class="text-center">
                                     <div class="loading-spinner" style="margin: 30px auto;"></div>
                                 </td>
                             </tr>
@@ -219,6 +221,29 @@
             <a id="foto-download-link" href="" download class="btn btn-primary">
                 <i data-lucide="download"></i> Download
             </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Approve/Tolak Izin -->
+<div class="modal" id="approve-modal">
+    <div class="modal-backdrop" onclick="closeApproveModal()"></div>
+    <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-header">
+            <h2 id="approve-modal-title">Konfirmasi</h2>
+            <button class="btn-close" onclick="closeApproveModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="approve-modal-desc" style="margin-bottom: 12px; color: var(--text-secondary);"></p>
+            <div class="filter-group">
+                <label for="input-catatan-approval">Catatan</label>
+                <textarea id="input-catatan-approval" class="filter-input"
+                    rows="3" placeholder="Tambahkan catatan (opsional)..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeApproveModal()">Batal</button>
+            <button class="btn btn-primary" id="btn-confirm-approval">Konfirmasi</button>
         </div>
     </div>
 </div>
