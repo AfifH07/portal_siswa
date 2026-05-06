@@ -3458,6 +3458,56 @@ def izin_guru_detail(request, pk):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def izin_guru_approve(request, pk):
+    """Approve atau tolak pengajuan izin guru."""
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response(
+            {'success': False, 'message': 'Tidak memiliki akses'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        izin = IzinGuru.objects.select_related('guru', 'tahun_ajaran').get(pk=pk)
+    except IzinGuru.DoesNotExist:
+        return Response(
+            {'success': False, 'message': 'Izin tidak ditemukan'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    action = request.data.get('action')  # 'disetujui' atau 'ditolak'
+    catatan = request.data.get('catatan_approval', '')
+
+    if action not in ['disetujui', 'ditolak']:
+        return Response(
+            {'success': False, 'message': 'Action harus disetujui atau ditolak'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if izin.status != 'pending':
+        return Response(
+            {'success': False, 'message': f'Izin sudah {izin.status}, tidak bisa diubah'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    izin.status = action
+    izin.catatan_approval = catatan
+    izin.approved_by = user
+    izin.approved_at = timezone.now()
+    izin.save()
+
+    from apps.kesantrian.serializers import IzinGuruSerializer
+    serializer = IzinGuruSerializer(izin)
+    label = 'disetujui' if action == 'disetujui' else 'ditolak'
+    return Response({
+        'success': True,
+        'message': f'Izin berhasil {label}',
+        'data': serializer.data
+    })
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def izin_guru_export_pdf(request):

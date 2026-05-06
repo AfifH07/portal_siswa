@@ -1891,6 +1891,12 @@ class IzinGuru(models.Model):
         ('lainnya', 'Lainnya'),
     ]
 
+    STATUS_APPROVAL_CHOICES = [
+        ('pending', 'Menunggu Persetujuan'),
+        ('disetujui', 'Disetujui'),
+        ('ditolak', 'Ditolak'),
+    ]
+
     id = models.BigAutoField(primary_key=True)
 
     # Guru yang mengajukan izin
@@ -1929,6 +1935,30 @@ class IzinGuru(models.Model):
         on_delete=models.CASCADE,
         related_name='izin_guru',
         help_text="Tahun ajaran saat pengajuan"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_APPROVAL_CHOICES,
+        default='pending',
+        help_text="Status persetujuan izin"
+    )
+    catatan_approval = models.TextField(
+        blank=True,
+        default='',
+        help_text="Catatan dari approver saat menyetujui/menolak"
+    )
+    approved_by = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_izin_guru',
+        help_text="Admin/Pimpinan yang menyetujui/menolak"
+    )
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Waktu persetujuan/penolakan"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

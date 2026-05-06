@@ -117,4 +117,5 @@ urlpatterns = [
     path('izin-guru/', views.izin_guru_list_create, name='izin-guru-list-create'),
     path('izin-guru/export-pdf/', views.izin_guru_export_pdf, name='izin-guru-export-pdf'),
     path('izin-guru/<int:pk>/', views.izin_guru_detail, name='izin-guru-detail'),
+    path('izin-guru/<int:pk>/approve/', views.izin_guru_approve, name='izin-guru-approve'),
 ]

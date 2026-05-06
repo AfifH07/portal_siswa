@@ -1010,11 +1010,13 @@ class PenilaianKinerjaSummarySerializer(serializers.Serializer):
 class IzinGuruSerializer(serializers.ModelSerializer):
     """Serializer untuk IzinGuru (read)."""
     guru_nama = serializers.SerializerMethodField()
+    guru_name = serializers.SerializerMethodField()
     guru_username = serializers.CharField(source='guru.username', read_only=True)
     jenis_izin_display = serializers.CharField(source='get_jenis_izin_display', read_only=True)
     tahun_ajaran_nama = serializers.CharField(source='tahun_ajaran.nama', read_only=True)
     durasi_hari = serializers.IntegerField(read_only=True)
     foto_surat_url = serializers.SerializerMethodField()
+    approved_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = IzinGuru
@@ -1024,13 +1026,23 @@ class IzinGuruSerializer(serializers.ModelSerializer):
             'tanggal_mulai', 'tanggal_selesai', 'durasi_hari',
             'keterangan', 'foto_surat', 'foto_surat_url',
             'tahun_ajaran', 'tahun_ajaran_nama',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at',
+            'status', 'catatan_approval', 'approved_by', 'approved_by_name', 'approved_at',
+            'guru_name'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_guru_nama(self, obj):
         if obj.guru:
             return obj.guru.name or obj.guru.username
+        return None
+
+    def get_guru_name(self, obj):
+        return obj.guru.name or obj.guru.username if obj.guru else ''
+
+    def get_approved_by_name(self, obj):
+        if obj.approved_by:
+            return obj.approved_by.name or obj.approved_by.username
         return None
 
     def get_foto_surat_url(self, obj):
