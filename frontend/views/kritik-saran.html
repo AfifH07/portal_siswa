@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kritik & Saran - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260507" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-role="">
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+    <a class="back-chip" href="/"><span class="arrow">←</span><span>Kembali ke Website</span></a>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Kritik &amp; Saran</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Kritik &amp; Saran</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Form Kirim (semua role) -->
+        <section class="form-section">
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">✉️</span> Kirim Kritik &amp; Saran</h3>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="input-jenis">Jenis <span class="required">*</span></label>
+                        <select id="input-jenis" class="filter-input">
+                            <option value="">-- Pilih --</option>
+                            <option value="kritik">Kritik</option>
+                            <option value="saran">Saran</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="input-unit">Unit</label>
+                        <select id="input-unit" class="filter-input">
+                            <option value="umum">Umum</option>
+                            <option value="putra">Putra</option>
+                            <option value="putri">Putri</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="display:flex;align-items:center;gap:10px;padding-top:22px;">
+                        <input type="checkbox" id="input-anonim" style="width:18px;height:18px;accent-color:var(--primary,#10b981);cursor:pointer;">
+                        <label for="input-anonim" style="cursor:pointer;font-weight:500;">Kirim sebagai Anonim</label>
+                    </div>
+                </div>
+                <div class="filter-group" style="margin-top:16px;">
+                    <label for="input-isi">Isi <span class="required">*</span></label>
+                    <textarea id="input-isi" class="filter-input" rows="4"
+                        placeholder="Tuliskan kritik atau saran Anda..."></textarea>
+                </div>
+                <div class="form-actions" style="margin-top:16px;">
+                    <button onclick="submitKritikSaran()" class="btn btn-primary" id="btn-submit">
+                        <i data-lucide="send"></i> Kirim
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Inbox (pimpinan, admin, superadmin) -->
+        <section id="inbox-section" style="display:none;">
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📥</span> Inbox Masuk</h3>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="filter-jenis">Jenis</label>
+                        <select id="filter-jenis" class="filter-input">
+                            <option value="">Semua</option>
+                            <option value="kritik">Kritik</option>
+                            <option value="saran">Saran</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-unit">Unit</label>
+                        <select id="filter-unit" class="filter-input">
+                            <option value="">Semua</option>
+                            <option value="umum">Umum</option>
+                            <option value="putra">Putra</option>
+                            <option value="putri">Putri</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-status">Status</label>
+                        <select id="filter-status" class="filter-input">
+                            <option value="">Semua</option>
+                            <option value="baru">Baru</option>
+                            <option value="dibaca">Dibaca</option>
+                        </select>
+                    </div>
+                    <div class="filter-group filter-actions">
+                        <button onclick="loadInbox()" class="btn btn-secondary btn-sm">
+                            <i data-lucide="search"></i> Filter
+                        </button>
+                        <button onclick="resetInboxFilter()" class="btn btn-secondary btn-sm">
+                            <i data-lucide="refresh-cw"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card table-section" style="margin-top:16px;">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📋</span> Daftar Masuk</h3>
+                    <div class="card-badge" id="inbox-badge">0 data</div>
+                </div>
+                <div class="table-container" id="inbox-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Pengirim</th>
+                                <th>Jenis</th>
+                                <th>Unit</th>
+                                <th>Isi</th>
+                                <th>Status</th>
+                                <th>Waktu</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-inbox">
+                            <tr><td colspan="7" class="text-center">
+                                <div class="loading-spinner" style="margin:30px auto;"></div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="inbox-empty" style="display:none;">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-title">Inbox Kosong</div>
+                    <div class="empty-desc">Belum ada kritik atau saran masuk.</div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<!-- Modal Detail -->
+<div class="modal" id="detail-modal">
+    <div class="modal-backdrop" onclick="closeDetailModal()"></div>
+    <div class="modal-content" style="max-width:540px;">
+        <div class="modal-header">
+            <h2 id="detail-modal-title">Detail</h2>
+            <button class="btn-close" onclick="closeDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="detail-modal-body" style="padding:20px;"></div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/utils.js?v=20260507" defer></script>
+<script src="/static/js/apiConfig.js?v=20260507" defer></script>
+<script src="/static/js/apiFetch.js?v=20260507" defer></script>
+<script src="/static/js/auth-check.js?v=20260507" defer></script>
+<script src="/static/js/kritik-saran.js?v=20260507" defer></script>
+</body>
+</html>

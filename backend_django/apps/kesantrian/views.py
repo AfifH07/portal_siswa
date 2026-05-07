@@ -3320,12 +3320,92 @@ def hafalan_dashboard_stats(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def kritik_saran_list_create(request):
+    user = request.user
+
+    if request.method == 'POST':
+        jenis = request.data.get('jenis')
+        unit = request.data.get('unit', 'umum')
+        isi = request.data.get('isi', '').strip()
+        is_anonim = request.data.get('is_anonim', False)
+
+        if jenis not in ['kritik', 'saran']:
+            return Response(
+                {'success': False, 'message': 'Jenis harus kritik atau saran'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not isi:
+            return Response(
+                {'success': False, 'message': 'Isi tidak boleh kosong'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        ks = KritikSaran.objects.create(
+            pengirim=user,
+            is_anonim=bool(is_anonim),
+            jenis=jenis,
+            unit=unit,
+            isi=isi,
+        )
+        serializer = KritikSaranSerializer(ks)
+        return Response(
+            {'success': True, 'message': 'Berhasil dikirim', 'data': serializer.data},
+            status=status.HTTP_201_CREATED
+        )
+
+    # GET — hanya pimpinan, superadmin, admin
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response(
+            {'success': False, 'message': 'Tidak memiliki akses'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    queryset = KritikSaran.objects.select_related('pengirim').all()
+
+    jenis_filter = request.query_params.get('jenis')
+    unit_filter = request.query_params.get('unit')
+    status_filter = request.query_params.get('status')
+
+    if jenis_filter:
+        queryset = queryset.filter(jenis=jenis_filter)
+    if unit_filter:
+        queryset = queryset.filter(unit=unit_filter)
+    if status_filter:
+        queryset = queryset.filter(status=status_filter)
+
+    serializer = KritikSaranSerializer(queryset, many=True)
+    return Response({'success': True, 'count': queryset.count(), 'data': serializer.data})
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def kritik_saran_baca(request, pk):
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response(
+            {'success': False, 'message': 'Tidak memiliki akses'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    try:
+        ks = KritikSaran.objects.get(pk=pk)
+    except KritikSaran.DoesNotExist:
+        return Response(
+            {'success': False, 'message': 'Data tidak ditemukan'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    ks.status = 'dibaca'
+    ks.save()
+    return Response({'success': True, 'message': 'Ditandai sudah dibaca'})
+
+
 # ============================================
 # IZIN GURU VIEWS
 # ============================================
 
-from .models import IzinGuru
-from .serializers import IzinGuruSerializer, IzinGuruCreateSerializer
+from .models import IzinGuru, KritikSaran
+from .serializers import IzinGuruSerializer, IzinGuruCreateSerializer, KritikSaranSerializer
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 

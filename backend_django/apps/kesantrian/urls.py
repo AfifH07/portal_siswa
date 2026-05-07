@@ -118,4 +118,6 @@ urlpatterns = [
     path('izin-guru/export-pdf/', views.izin_guru_export_pdf, name='izin-guru-export-pdf'),
     path('izin-guru/<int:pk>/', views.izin_guru_detail, name='izin-guru-detail'),
     path('izin-guru/<int:pk>/approve/', views.izin_guru_approve, name='izin-guru-approve'),
+    path('kritik-saran/', views.kritik_saran_list_create, name='kritik-saran-list'),
+    path('kritik-saran/<int:pk>/baca/', views.kritik_saran_baca, name='kritik-saran-baca'),
 ]

@@ -12,7 +12,7 @@ from .models import (
     BLPEntry, EmployeeEvaluation, InvalRecord, BLP_INDICATORS,
     Incident, IncidentComment, AsatidzEvaluation,
     IndikatorKinerja, PenilaianKinerjaAsatidz, DetailPenilaianKinerja,
-    IzinGuru, HafalanRecord
+    IzinGuru, HafalanRecord, KritikSaran
 )
 from apps.students.models import Student
 
@@ -1195,3 +1195,22 @@ class HafalanSiswaSerializer(serializers.Serializer):
     total_records = serializers.IntegerField()
     juz_summary = serializers.ListField(child=serializers.DictField())
     records = HafalanRecordSerializer(many=True)
+
+
+class KritikSaranSerializer(serializers.ModelSerializer):
+    pengirim_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = KritikSaran
+        fields = [
+            'id', 'pengirim', 'pengirim_name', 'is_anonim',
+            'jenis', 'unit', 'isi', 'status', 'created_at'
+        ]
+
+    def get_pengirim_name(self, obj):
+        # Sembunyikan identitas jika anonim
+        if obj.is_anonim:
+            return 'Anonim'
+        if obj.pengirim:
+            return obj.pengirim.name or obj.pengirim.username
+        return 'Unknown'

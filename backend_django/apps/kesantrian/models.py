@@ -2009,3 +2009,51 @@ def normalize_inval_kelas(sender, instance, **kwargs):
         normalized = normalize_kelas_format(instance.kelas)
         if normalized != instance.kelas:
             instance.kelas = normalized
+
+
+class KritikSaran(models.Model):
+    JENIS_CHOICES = [
+        ('kritik', 'Kritik'),
+        ('saran', 'Saran'),
+    ]
+    STATUS_CHOICES = [
+        ('baru', 'Baru'),
+        ('dibaca', 'Dibaca'),
+    ]
+    UNIT_CHOICES = [
+        ('putra', 'Putra'),
+        ('putri', 'Putri'),
+        ('umum', 'Umum'),
+    ]
+
+    pengirim = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='kritik_saran',
+        help_text="Kosong jika anonim"
+    )
+    is_anonim = models.BooleanField(
+        default=False,
+        help_text="Jika True, identitas pengirim disembunyikan dari pimpinan"
+    )
+    jenis = models.CharField(max_length=10, choices=JENIS_CHOICES)
+    unit = models.CharField(
+        max_length=10, choices=UNIT_CHOICES, default='umum'
+    )
+    isi = models.TextField(help_text="Isi kritik atau saran")
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default='baru'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Kritik & Saran'
+        verbose_name_plural = 'Kritik & Saran'
+
+    def __str__(self):
+        pengirim_str = 'Anonim' if self.is_anonim else (
+            self.pengirim.name or self.pengirim.username if self.pengirim else 'Unknown'
+        )
+        return f"{self.jenis} dari {pengirim_str}"

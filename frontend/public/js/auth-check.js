@@ -399,7 +399,8 @@ function createRoleBasedNav() {
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
-                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
+                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
             ]
         },
         'admin': {
@@ -420,7 +421,8 @@ function createRoleBasedNav() {
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
-                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
+                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
             ]
         },
         'pimpinan': {
@@ -440,7 +442,8 @@ function createRoleBasedNav() {
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
-                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
+                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
             ]
         },
         'guru': {
@@ -459,7 +462,8 @@ function createRoleBasedNav() {
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
-                { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' }
+                { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' },
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
             ]
         },
         'musyrif': {
@@ -478,7 +482,8 @@ function createRoleBasedNav() {
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
-                { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' }
+                { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' },
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
             ]
         },
         'bk': {
@@ -493,7 +498,8 @@ function createRoleBasedNav() {
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
-                { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' }
+                { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' },
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
             ]
         },
         'bendahara': {
@@ -505,7 +511,8 @@ function createRoleBasedNav() {
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             other: [
-                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' }
+                { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
             ]
         },
         'walisantri': {
@@ -518,7 +525,9 @@ function createRoleBasedNav() {
                 { href: '/blp', icon: 'award', label: 'Karakter (BLP)', id: 'nav-blp' },
                 { href: '/finance', icon: 'credit-card', label: 'Tagihan', id: 'nav-finance' }
             ],
-            other: []
+            other: [
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
+            ]
         },
         'pendaftar': { main: [], other: [] }
     };
