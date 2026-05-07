@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     isInbox = ['superadmin', 'admin', 'pimpinan'].includes(role);
 
     if (isInbox) {
+        const inboxFilterSection = document.getElementById('inbox-filter-section');
+        if (inboxFilterSection) inboxFilterSection.style.display = '';
         const inboxSection = document.getElementById('inbox-section');
         if (inboxSection) inboxSection.style.display = '';
         await loadInbox();

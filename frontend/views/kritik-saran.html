@@ -6,6 +6,8 @@
     <title>Kritik & Saran - Portal Ponpes Baron</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="/static/css/baron-emerald.css?v=20260507" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260507" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260507" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body data-role="">
@@ -46,8 +48,8 @@
 
     <div class="page-body">
 
-        <!-- Form Kirim (semua role) -->
-        <section class="form-section">
+        <!-- Form Kirim -->
+        <section class="filter-section">
             <div class="glass-card filters-card">
                 <div class="card-head">
                     <h3><span class="ch-icon">✉️</span> Kirim Kritik &amp; Saran</h3>
@@ -69,15 +71,20 @@
                             <option value="putri">Putri</option>
                         </select>
                     </div>
-                    <div class="filter-group" style="display:flex;align-items:center;gap:10px;padding-top:22px;">
-                        <input type="checkbox" id="input-anonim" style="width:18px;height:18px;accent-color:var(--primary,#10b981);cursor:pointer;">
-                        <label for="input-anonim" style="cursor:pointer;font-weight:500;">Kirim sebagai Anonim</label>
+                    <div class="filter-group filter-actions">
+                        <label>&nbsp;</label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="input-anonim">
+                            Kirim sebagai Anonim
+                        </label>
                     </div>
                 </div>
-                <div class="filter-group" style="margin-top:16px;">
-                    <label for="input-isi">Isi <span class="required">*</span></label>
-                    <textarea id="input-isi" class="filter-input" rows="4"
-                        placeholder="Tuliskan kritik atau saran Anda..."></textarea>
+                <div class="filters-grid" style="margin-top:12px;">
+                    <div class="filter-group" style="grid-column: span 3;">
+                        <label for="input-isi">Isi <span class="required">*</span></label>
+                        <textarea id="input-isi" class="filter-input textarea-input"
+                            rows="4" placeholder="Tuliskan kritik atau saran Anda..."></textarea>
+                    </div>
                 </div>
                 <div class="form-actions" style="margin-top:16px;">
                     <button onclick="submitKritikSaran()" class="btn btn-primary" id="btn-submit">
@@ -87,8 +94,8 @@
             </div>
         </section>
 
-        <!-- Inbox (pimpinan, admin, superadmin) -->
-        <section id="inbox-section" style="display:none;">
+        <!-- Inbox Filter (pimpinan/admin saja) -->
+        <section class="filter-section" id="inbox-filter-section" style="display:none;">
             <div class="glass-card filters-card">
                 <div class="card-head">
                     <h3><span class="ch-icon">📥</span> Inbox Masuk</h3>
@@ -129,8 +136,11 @@
                     </div>
                 </div>
             </div>
+        </section>
 
-            <div class="glass-card table-section" style="margin-top:16px;">
+        <!-- Tabel Inbox -->
+        <section class="table-section-wrap" id="inbox-section" style="display:none;">
+            <div class="glass-card table-section">
                 <div class="card-head">
                     <h3><span class="ch-icon">📋</span> Daftar Masuk</h3>
                     <div class="card-badge" id="inbox-badge">0 data</div>
@@ -169,7 +179,7 @@
 <!-- Modal Detail -->
 <div class="modal" id="detail-modal">
     <div class="modal-backdrop" onclick="closeDetailModal()"></div>
-    <div class="modal-content" style="max-width:540px;">
+    <div class="modal-content modal-lg">
         <div class="modal-header">
             <h2 id="detail-modal-title">Detail</h2>
             <button class="btn-close" onclick="closeDetailModal()">&times;</button>
