@@ -431,6 +431,7 @@ function openApproveModal(id, action, guruNama) {
     if (btnConfirm) {
         btnConfirm.style.background = action === 'disetujui' ? '' : 'var(--danger, #ef4444)';
         btnConfirm.textContent = action === 'disetujui' ? 'Setujui' : 'Tolak';
+        btnConfirm.onclick = confirmApproval;
     }
 
     if (modal) modal.classList.add('show');
