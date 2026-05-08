@@ -123,4 +123,10 @@ urlpatterns = [
     path('pertemuan/', views.pertemuan_list_create, name='pertemuan-list'),
     path('pertemuan/<int:pk>/', views.pertemuan_detail, name='pertemuan-detail'),
     path('pertemuan/<int:pk>/presensi/', views.pertemuan_presensi, name='pertemuan-presensi'),
+    path('kelompok-pengasuhan/', views.kelompok_list_create, name='kelompok-list'),
+    path('kelompok-pengasuhan/<int:pk>/', views.kelompok_detail, name='kelompok-detail'),
+    path('pertemuan-pengasuhan/', views.pertemuan_list_create, name='pertemuan-list'),
+    path('pertemuan-pengasuhan/<int:pk>/', views.pertemuan_detail, name='pertemuan-detail'),
+    path('pertemuan-pengasuhan/<int:pk>/presensi/', views.pertemuan_presensi, name='pertemuan-presensi'),
+    path('pengasuhan/belum-pertemuan/', views.pengasuhan_belum_pertemuan, name='pengasuhan-belum'),
 ]

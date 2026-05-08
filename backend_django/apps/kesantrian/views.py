@@ -15,13 +15,13 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import timedelta
 
-from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, HafalanRecord, PertemuanPengasuhan, PresensiPertemuan
+from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, HafalanRecord, KelompokPengasuhan, PertemuanPengasuhan, PresensiPertemuan
 from .serializers import (
     IbadahSerializer, IbadahCreateSerializer,
     PembinaanSerializer, PembinaanCreateSerializer,
     TargetHafalanSerializer, HalaqohSerializer, HalaqohMemberSerializer,
     HafalanRecordSerializer, HafalanRecordCreateSerializer, HafalanRecordUpdateSerializer,
-    PertemuanPengasuhSerializer, PresensiPertemuanSerializer
+    KelompokPengasuhSerializer, PertemuanPengasuhSerializer, PresensiPertemuanSerializer
 )
 from .utils import (
     get_student_behavior_summary,
@@ -3319,6 +3319,309 @@ def hafalan_dashboard_stats(request):
             'message': str(e),
             'traceback': traceback.format_exc()
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================================
+# HELPER
+# ============================================================
+
+def is_pengasuh_of_kelompok(user, kelompok):
+    return kelompok.pengasuh == user or kelompok.wakil_pengasuh == user
+
+
+def get_kelompok_for_walisantri(user):
+    """Ambil kelompok pengasuhan berdasarkan kelas anak walisantri."""
+    from apps.students.models import Student
+    nisns = []
+    if user.linked_student_nisn:
+        nisns.append(user.linked_student_nisn)
+    if hasattr(user, 'linked_student_nisns') and user.linked_student_nisns:
+        nisns.extend(user.linked_student_nisns)
+    classes = Student.objects.filter(nisn__in=nisns).values_list('kelas', flat=True)
+    return KelompokPengasuhan.objects.filter(kelas__in=classes)
+
+
+# ============================================================
+# KELOMPOK PENGASUHAN
+# ============================================================
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def kelompok_list_create(request):
+    user = request.user
+
+    if request.method == 'POST':
+        if user.role not in ['superadmin', 'admin', 'pimpinan']:
+            return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                            status=status.HTTP_403_FORBIDDEN)
+        try:
+            from apps.core.models import TahunAjaran
+            tahun_ajaran = TahunAjaran.objects.get(is_active=True)
+        except TahunAjaran.DoesNotExist:
+            return Response({'success': False, 'message': 'Tahun ajaran aktif tidak ditemukan'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data
+        pengasuh_id = data.get('pengasuh_id')
+        wakil_id = data.get('wakil_pengasuh_id')
+
+        try:
+            from apps.accounts.models import User
+            pengasuh = User.objects.get(pk=pengasuh_id)
+        except User.DoesNotExist:
+            return Response({'success': False, 'message': 'Pengasuh tidak ditemukan'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        wakil = None
+        if wakil_id:
+            try:
+                wakil = User.objects.get(pk=wakil_id)
+            except User.DoesNotExist:
+                pass
+
+        kelompok = KelompokPengasuhan.objects.create(
+            nama=data.get('nama', ''),
+            kelas=data.get('kelas', ''),
+            pengasuh=pengasuh,
+            wakil_pengasuh=wakil,
+            tahun_ajaran=tahun_ajaran,
+        )
+        serializer = KelompokPengasuhSerializer(kelompok)
+        return Response({'success': True, 'message': 'Kelompok berhasil dibuat', 'data': serializer.data},
+                        status=status.HTTP_201_CREATED)
+
+    # GET
+    if user.role in ['superadmin', 'admin', 'pimpinan']:
+        queryset = KelompokPengasuhan.objects.select_related(
+            'pengasuh', 'wakil_pengasuh', 'tahun_ajaran').all()
+    elif user.role == 'guru':
+        queryset = KelompokPengasuhan.objects.select_related(
+            'pengasuh', 'wakil_pengasuh', 'tahun_ajaran').filter(
+            Q(pengasuh=user) | Q(wakil_pengasuh=user))
+    elif user.role == 'walisantri':
+        queryset = get_kelompok_for_walisantri(user).select_related(
+            'pengasuh', 'wakil_pengasuh', 'tahun_ajaran')
+    else:
+        queryset = KelompokPengasuhan.objects.none()
+
+    serializer = KelompokPengasuhSerializer(queryset, many=True)
+    return Response({'success': True, 'count': queryset.count(), 'data': serializer.data})
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def kelompok_detail(request, pk):
+    user = request.user
+    try:
+        kelompok = KelompokPengasuhan.objects.select_related(
+            'pengasuh', 'wakil_pengasuh', 'tahun_ajaran').get(pk=pk)
+    except KelompokPengasuhan.DoesNotExist:
+        return Response({'success': False, 'message': 'Kelompok tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = KelompokPengasuhSerializer(kelompok)
+        return Response({'success': True, 'data': serializer.data})
+
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'DELETE':
+        kelompok.delete()
+        return Response({'success': True, 'message': 'Kelompok dihapus'})
+
+    if request.method == 'PATCH':
+        data = request.data
+        for field in ['nama', 'kelas']:
+            if field in data:
+                setattr(kelompok, field, data[field])
+        if 'pengasuh_id' in data:
+            try:
+                from apps.accounts.models import User
+                kelompok.pengasuh = User.objects.get(pk=data['pengasuh_id'])
+            except User.DoesNotExist:
+                pass
+        if 'wakil_pengasuh_id' in data:
+            try:
+                from apps.accounts.models import User
+                kelompok.wakil_pengasuh = User.objects.get(pk=data['wakil_pengasuh_id'])
+            except User.DoesNotExist:
+                pass
+        kelompok.save()
+        serializer = KelompokPengasuhSerializer(kelompok)
+        return Response({'success': True, 'data': serializer.data})
+
+
+# ============================================================
+# PERTEMUAN
+# ============================================================
+
+@api_view(['GET', 'POST'])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
+@permission_classes([IsAuthenticated])
+def pertemuan_list_create(request):
+    user = request.user
+
+    if request.method == 'POST':
+        kelompok_id = request.data.get('kelompok_id')
+        try:
+            kelompok = KelompokPengasuhan.objects.get(pk=kelompok_id)
+        except KelompokPengasuhan.DoesNotExist:
+            return Response({'success': False, 'message': 'Kelompok tidak ditemukan'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        can_post = (user.role in ['superadmin', 'admin', 'pimpinan'] or
+                    is_pengasuh_of_kelompok(user, kelompok))
+        if not can_post:
+            return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        pertemuan = PertemuanPengasuhan.objects.create(
+            kelompok=kelompok,
+            judul=request.data.get('judul', ''),
+            tanggal=request.data.get('tanggal'),
+            lokasi=request.data.get('lokasi', ''),
+            deskripsi=request.data.get('deskripsi', ''),
+            foto=request.FILES.get('foto'),
+            dibuat_oleh=user,
+        )
+        serializer = PertemuanPengasuhSerializer(pertemuan, context={'request': request})
+        return Response({'success': True, 'message': 'Pertemuan berhasil dicatat',
+                         'data': serializer.data}, status=status.HTTP_201_CREATED)
+
+    # GET
+    if user.role in ['superadmin', 'admin', 'pimpinan']:
+        queryset = PertemuanPengasuhan.objects.select_related(
+            'kelompok', 'dibuat_oleh').prefetch_related('presensi').all()
+    elif user.role == 'guru':
+        kelompok_ids = KelompokPengasuhan.objects.filter(
+            Q(pengasuh=user) | Q(wakil_pengasuh=user)
+        ).values_list('id', flat=True)
+        queryset = PertemuanPengasuhan.objects.select_related(
+            'kelompok', 'dibuat_oleh').prefetch_related('presensi').filter(
+            kelompok_id__in=kelompok_ids)
+    elif user.role == 'walisantri':
+        kelompok_ids = get_kelompok_for_walisantri(user).values_list('id', flat=True)
+        queryset = PertemuanPengasuhan.objects.select_related(
+            'kelompok', 'dibuat_oleh').prefetch_related('presensi').filter(
+            kelompok_id__in=kelompok_ids)
+    else:
+        queryset = PertemuanPengasuhan.objects.none()
+
+    serializer = PertemuanPengasuhSerializer(queryset, many=True, context={'request': request})
+    return Response({'success': True, 'count': queryset.count(), 'data': serializer.data})
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
+@permission_classes([IsAuthenticated])
+def pertemuan_detail(request, pk):
+    user = request.user
+    try:
+        pertemuan = PertemuanPengasuhan.objects.select_related(
+            'kelompok', 'dibuat_oleh').prefetch_related('presensi').get(pk=pk)
+    except PertemuanPengasuhan.DoesNotExist:
+        return Response({'success': False, 'message': 'Pertemuan tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    can_edit = (user.role in ['superadmin', 'admin', 'pimpinan'] or
+                is_pengasuh_of_kelompok(user, pertemuan.kelompok))
+
+    if request.method == 'GET':
+        serializer = PertemuanPengasuhSerializer(pertemuan, context={'request': request})
+        return Response({'success': True, 'data': serializer.data})
+
+    if not can_edit:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'DELETE':
+        pertemuan.delete()
+        return Response({'success': True, 'message': 'Pertemuan dihapus'})
+
+    if request.method == 'PATCH':
+        for field in ['judul', 'tanggal', 'lokasi', 'deskripsi']:
+            if field in request.data:
+                setattr(pertemuan, field, request.data[field])
+        if 'foto' in request.FILES:
+            pertemuan.foto = request.FILES['foto']
+        pertemuan.save()
+        serializer = PertemuanPengasuhSerializer(pertemuan, context={'request': request})
+        return Response({'success': True, 'data': serializer.data})
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def pertemuan_presensi(request, pk):
+    user = request.user
+    try:
+        pertemuan = PertemuanPengasuhan.objects.select_related('kelompok').get(pk=pk)
+    except PertemuanPengasuhan.DoesNotExist:
+        return Response({'success': False, 'message': 'Pertemuan tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        presensi_qs = PresensiPertemuan.objects.select_related('santri').filter(
+            pertemuan=pertemuan)
+        # Walisantri hanya lihat presensi anak sendiri
+        if user.role == 'walisantri':
+            nisns = []
+            if user.linked_student_nisn:
+                nisns.append(user.linked_student_nisn)
+            if hasattr(user, 'linked_student_nisns') and user.linked_student_nisns:
+                nisns.extend(user.linked_student_nisns)
+            presensi_qs = presensi_qs.filter(santri__nisn__in=nisns)
+        serializer = PresensiPertemuanSerializer(presensi_qs, many=True)
+        return Response({'success': True, 'data': serializer.data})
+
+    # POST — bulk upsert presensi
+    can_input = (user.role in ['superadmin', 'admin', 'pimpinan'] or
+                 is_pengasuh_of_kelompok(user, pertemuan.kelompok))
+    if not can_input:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    from apps.students.models import Student
+    items = request.data.get('presensi', [])
+    for item in items:
+        nisn = item.get('nisn')
+        presensi_status = item.get('status', 'tidak_hadir')
+        catatan = item.get('catatan', '')
+        try:
+            santri = Student.objects.get(nisn=nisn)
+            PresensiPertemuan.objects.update_or_create(
+                pertemuan=pertemuan,
+                santri=santri,
+                defaults={'status': presensi_status, 'catatan': catatan}
+            )
+        except Student.DoesNotExist:
+            continue
+    return Response({'success': True, 'message': 'Presensi berhasil disimpan'})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def pengasuhan_belum_pertemuan(request):
+    """Kelompok yang bulan ini belum ada pertemuan — untuk pimpinan/admin."""
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    from django.utils import timezone
+    now = timezone.now()
+    kelompok_sudah = PertemuanPengasuhan.objects.filter(
+        tanggal__year=now.year,
+        tanggal__month=now.month
+    ).values_list('kelompok_id', flat=True).distinct()
+
+    belum = KelompokPengasuhan.objects.select_related(
+        'pengasuh', 'wakil_pengasuh', 'tahun_ajaran'
+    ).exclude(id__in=kelompok_sudah)
+
+    serializer = KelompokPengasuhSerializer(belum, many=True)
+    return Response({'success': True, 'count': belum.count(), 'data': serializer.data})
 
 
 @api_view(['GET', 'POST'])

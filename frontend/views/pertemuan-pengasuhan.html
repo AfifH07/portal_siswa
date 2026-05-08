@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pertemuan Pengasuhan - Portal Ponpes Baron</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link href="/static/css/baron-emerald.css?v=20260507" rel="stylesheet">
-    <link href="/static/css/students-baron.css?v=20260507" rel="stylesheet">
-    <link href="/static/css/jurnal-piket.css?v=20260507" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260508" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260508" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260508" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body data-role="">
@@ -48,48 +48,145 @@
 
     <div class="page-body">
 
-        <!-- Form Buat Pertemuan (admin only) -->
-        <section class="filter-section" id="form-section" style="display:none;">
+        <!-- Warning belum pertemuan bulan ini (guru) -->
+        <section id="warning-section" style="display:none;">
+            <div class="glass-card" style="border-left: 4px solid #f59e0b; padding: 16px 20px; margin-bottom: 0;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <i data-lucide="alert-triangle" style="color:#f59e0b; flex-shrink:0;"></i>
+                    <div>
+                        <strong>Pertemuan Bulan Ini Belum Dicatat</strong>
+                        <div style="font-size:13px; color:var(--text-secondary);">Harap catat pertemuan pengasuhan bulan ini setelah selesai dilaksanakan.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kelola Kelompok (admin/pimpinan) -->
+        <section id="kelompok-section" style="display:none;">
             <div class="glass-card filters-card">
                 <div class="card-head">
-                    <h3><span class="ch-icon">➕</span> Buat Pertemuan Baru</h3>
+                    <h3><span class="ch-icon">👥</span> Kelola Kelompok Pengasuhan</h3>
+                    <button class="btn btn-primary btn-sm" onclick="toggleFormKelompok()">
+                        <i data-lucide="plus"></i> Tambah Kelompok
+                    </button>
+                </div>
+
+                <!-- Form tambah kelompok -->
+                <div id="form-kelompok" style="display:none; border-top: 1px solid var(--border); padding-top:16px; margin-top:16px;">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="kel-nama">Nama Kelompok <span class="required">*</span></label>
+                            <input type="text" id="kel-nama" class="filter-input" placeholder="Contoh: Pengasuhan Kelas XII A">
+                        </div>
+                        <div class="filter-group">
+                            <label for="kel-kelas">Kelas <span class="required">*</span></label>
+                            <input type="text" id="kel-kelas" class="filter-input" placeholder="Contoh: XII A">
+                        </div>
+                    </div>
+                    <div class="filters-grid" style="margin-top:12px;">
+                        <div class="filter-group">
+                            <label for="kel-pengasuh">Pengasuh <span class="required">*</span></label>
+                            <select id="kel-pengasuh" class="filter-input">
+                                <option value="">-- Pilih Pengasuh --</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="kel-wakil">Wakil Pengasuh</label>
+                            <select id="kel-wakil" class="filter-input">
+                                <option value="">-- Tidak Ada --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="margin-top:16px;">
+                        <button onclick="submitKelompok()" class="btn btn-primary" id="btn-submit-kelompok">
+                            <i data-lucide="save"></i> Simpan Kelompok
+                        </button>
+                        <button onclick="toggleFormKelompok()" class="btn btn-secondary">Batal</button>
+                    </div>
+                </div>
+
+                <!-- Tabel kelompok -->
+                <div class="table-container" style="margin-top:16px;" id="kelompok-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nama Kelompok</th>
+                                <th>Kelas</th>
+                                <th>Pengasuh</th>
+                                <th>Wakil</th>
+                                <th>Santri</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-kelompok">
+                            <tr><td colspan="6" class="text-center">
+                                <div class="loading-spinner" style="margin:20px auto;"></div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Belum pertemuan bulan ini (pimpinan) -->
+        <section id="belum-pertemuan-section" style="display:none;">
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">⚠️</span> Kelompok Belum Pertemuan Bulan Ini</h3>
+                    <div class="card-badge" id="belum-badge">0</div>
+                </div>
+                <div id="belum-pertemuan-content">
+                    <div class="loading-spinner" style="margin:20px auto;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Catat Pertemuan (guru/admin) -->
+        <section class="filter-section" id="form-pertemuan-section" style="display:none;">
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📝</span> Catat Pertemuan</h3>
                 </div>
                 <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="pt-kelompok">Kelompok <span class="required">*</span></label>
+                        <select id="pt-kelompok" class="filter-input">
+                            <option value="">-- Pilih Kelompok --</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="pt-tanggal">Tanggal <span class="required">*</span></label>
+                        <input type="date" id="pt-tanggal" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="pt-lokasi">Lokasi <span class="required">*</span></label>
+                        <input type="text" id="pt-lokasi" class="filter-input" placeholder="Contoh: Masjid / Ruang Tamu">
+                    </div>
+                </div>
+                <div class="filters-grid" style="margin-top:12px;">
                     <div class="filter-group" style="grid-column: span 2;">
-                        <label for="input-judul">Judul <span class="required">*</span></label>
-                        <input type="text" id="input-judul" class="filter-input"
-                            placeholder="Contoh: Pertemuan Walisantri Semester Genap 2026">
+                        <label for="pt-deskripsi">Deskripsi / Agenda</label>
+                        <textarea id="pt-deskripsi" class="filter-input textarea-input"
+                            rows="3" placeholder="Isi pembahasan pertemuan..."></textarea>
                     </div>
                     <div class="filter-group">
-                        <label for="input-tanggal">Tanggal <span class="required">*</span></label>
-                        <input type="date" id="input-tanggal" class="filter-input">
-                    </div>
-                </div>
-                <div class="filters-grid" style="margin-top:12px;">
-                    <div class="filter-group">
-                        <label for="input-waktu-mulai">Waktu Mulai <span class="required">*</span></label>
-                        <input type="time" id="input-waktu-mulai" class="filter-input">
-                    </div>
-                    <div class="filter-group">
-                        <label for="input-waktu-selesai">Waktu Selesai <span class="required">*</span></label>
-                        <input type="time" id="input-waktu-selesai" class="filter-input">
-                    </div>
-                    <div class="filter-group">
-                        <label for="input-lokasi">Lokasi <span class="required">*</span></label>
-                        <input type="text" id="input-lokasi" class="filter-input"
-                            placeholder="Contoh: Aula Utama">
-                    </div>
-                </div>
-                <div class="filters-grid" style="margin-top:12px;">
-                    <div class="filter-group" style="grid-column: span 3;">
-                        <label for="input-deskripsi">Deskripsi</label>
-                        <textarea id="input-deskripsi" class="filter-input textarea-input"
-                            rows="3" placeholder="Agenda atau informasi tambahan..."></textarea>
+                        <label for="pt-foto">Foto Dokumentasi</label>
+                        <div class="upload-wrapper">
+                            <input type="file" id="pt-foto" accept="image/*" class="file-input">
+                            <label for="pt-foto" class="btn btn-secondary btn-upload">
+                                <i data-lucide="upload"></i> Pilih Foto
+                            </label>
+                            <span id="pt-foto-name" class="file-name-display">Belum ada foto</span>
+                        </div>
+                        <div id="pt-foto-preview" style="display:none; margin-top:8px;">
+                            <img id="pt-preview-img" src="" alt="Preview"
+                                style="max-width:200px; max-height:150px; border-radius:8px;">
+                        </div>
                     </div>
                 </div>
                 <div class="form-actions" style="margin-top:16px;">
-                    <button onclick="submitPertemuan()" class="btn btn-primary" id="btn-submit">
-                        <i data-lucide="calendar-plus"></i> Simpan Pertemuan
+                    <button onclick="submitPertemuan()" class="btn btn-primary" id="btn-submit-pertemuan">
+                        <i data-lucide="calendar-check"></i> Catat Pertemuan
                     </button>
                 </div>
             </div>
@@ -99,23 +196,24 @@
         <section class="table-section-wrap">
             <div class="glass-card table-section">
                 <div class="card-head">
-                    <h3><span class="ch-icon">📅</span> Jadwal Pertemuan</h3>
+                    <h3><span class="ch-icon">📅</span> <span id="pertemuan-title">Riwayat Pertemuan</span></h3>
                     <div class="card-badge" id="pertemuan-badge">0 data</div>
                 </div>
                 <div class="table-container" id="pertemuan-table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th>Kelompok</th>
                                 <th>Judul</th>
                                 <th>Tanggal</th>
-                                <th>Waktu</th>
                                 <th>Lokasi</th>
                                 <th>Hadir</th>
-                                <th id="th-aksi-pertemuan" style="display:none;">Aksi</th>
+                                <th>Foto</th>
+                                <th id="th-aksi-pt" style="display:none;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-pertemuan">
-                            <tr><td colspan="6" class="text-center">
+                            <tr><td colspan="7" class="text-center">
                                 <div class="loading-spinner" style="margin:30px auto;"></div>
                             </td></tr>
                         </tbody>
@@ -124,7 +222,7 @@
                 <div class="empty-state" id="pertemuan-empty" style="display:none;">
                     <div class="empty-icon">📭</div>
                     <div class="empty-title">Belum Ada Pertemuan</div>
-                    <div class="empty-desc">Belum ada jadwal pertemuan pengasuhan.</div>
+                    <div class="empty-desc">Belum ada riwayat pertemuan pengasuhan.</div>
                 </div>
             </div>
         </section>
@@ -140,19 +238,19 @@
             <h2 id="presensi-modal-title">Input Presensi</h2>
             <button class="btn-close" onclick="closePresensiModal()">&times;</button>
         </div>
-        <div class="modal-body" style="padding:20px;">
-            <div id="presensi-list"></div>
+        <div class="modal-body" style="padding:20px;" id="presensi-modal-body">
+            <div class="loading-spinner" style="margin:20px auto;"></div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closePresensiModal()">Tutup</button>
-            <button class="btn btn-primary" id="btn-save-presensi" onclick="savePresensi()">
+            <button class="btn btn-primary" id="btn-save-presensi">
                 <i data-lucide="save"></i> Simpan Presensi
             </button>
         </div>
     </div>
 </div>
 
-<!-- Modal Detail Pertemuan -->
+<!-- Modal Detail (walisantri) -->
 <div class="modal" id="detail-modal">
     <div class="modal-backdrop" onclick="closeDetailModal()"></div>
     <div class="modal-content modal-lg">
@@ -167,10 +265,28 @@
     </div>
 </div>
 
-<script src="/static/js/utils.js?v=20260507" defer></script>
-<script src="/static/js/apiConfig.js?v=20260507" defer></script>
-<script src="/static/js/apiFetch.js?v=20260507" defer></script>
-<script src="/static/js/auth-check.js?v=20260507" defer></script>
-<script src="/static/js/pertemuan-pengasuhan.js?v=20260507" defer></script>
+<!-- Modal Foto -->
+<div class="modal" id="foto-modal">
+    <div class="modal-backdrop" onclick="closeFotoModal()"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2>Foto Dokumentasi</h2>
+            <button class="btn-close" onclick="closeFotoModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding:20px;">
+            <img id="foto-modal-img" src="" alt="Foto"
+                style="max-width:100%; max-height:70vh; border-radius:8px;">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeFotoModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/utils.js?v=20260508" defer></script>
+<script src="/static/js/apiConfig.js?v=20260508" defer></script>
+<script src="/static/js/apiFetch.js?v=20260508" defer></script>
+<script src="/static/js/auth-check.js?v=20260508" defer></script>
+<script src="/static/js/pertemuan-pengasuhan.js?v=20260508" defer></script>
 </body>
 </html>

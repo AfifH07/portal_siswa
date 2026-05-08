@@ -2059,17 +2059,56 @@ class KritikSaran(models.Model):
         return f"{self.jenis} dari {pengirim_str}"
 
 
-class PertemuanPengasuhan(models.Model):
-    judul = models.CharField(max_length=200)
-    deskripsi = models.TextField(blank=True, default='')
-    tanggal = models.DateField()
-    waktu_mulai = models.TimeField()
-    waktu_selesai = models.TimeField()
-    lokasi = models.CharField(max_length=200)
+class KelompokPengasuhan(models.Model):
+    nama = models.CharField(max_length=200)
+    kelas = models.CharField(max_length=50)
+    pengasuh = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='kelompok_sebagai_pengasuh',
+        help_text="Ustadz pengasuh utama"
+    )
+    wakil_pengasuh = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='kelompok_sebagai_wakil',
+        help_text="Wakil pengasuh (opsional)"
+    )
     tahun_ajaran = models.ForeignKey(
         'core.TahunAjaran',
         on_delete=models.CASCADE,
-        related_name='pertemuan_pengasuhan'
+        related_name='kelompok_pengasuhan'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['kelas', 'nama']
+        verbose_name = 'Kelompok Pengasuhan'
+        verbose_name_plural = 'Kelompok Pengasuhan'
+
+    def __str__(self):
+        pengasuh_str = self.pengasuh.name or self.pengasuh.username if self.pengasuh else '-'
+        return f"{self.nama} ({self.kelas}) — {pengasuh_str}"
+
+
+class PertemuanPengasuhan(models.Model):
+    kelompok = models.ForeignKey(
+        KelompokPengasuhan,
+        on_delete=models.CASCADE,
+        related_name='pertemuan',
+        null=True,
+        blank=True
+    )
+    judul = models.CharField(max_length=200)
+    tanggal = models.DateField()
+    lokasi = models.CharField(max_length=200)
+    deskripsi = models.TextField(blank=True, default='')
+    foto = models.ImageField(
+        upload_to='pertemuan_pengasuhan/%Y/%m/',
+        null=True, blank=True,
+        help_text="Foto dokumentasi pertemuan"
     )
     dibuat_oleh = models.ForeignKey(
         'accounts.User',
@@ -2080,12 +2119,13 @@ class PertemuanPengasuhan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-tanggal', '-waktu_mulai']
+        ordering = ['-tanggal']
         verbose_name = 'Pertemuan Pengasuhan'
         verbose_name_plural = 'Pertemuan Pengasuhan'
 
     def __str__(self):
-        return f"{self.judul} - {self.tanggal}"
+        kelompok_nama = self.kelompok.nama if self.kelompok else '-'
+        return f"{self.judul} - {kelompok_nama} - {self.tanggal}"
 
 
 class PresensiPertemuan(models.Model):
@@ -2093,6 +2133,7 @@ class PresensiPertemuan(models.Model):
         ('hadir', 'Hadir'),
         ('tidak_hadir', 'Tidak Hadir'),
         ('izin', 'Izin'),
+        ('sakit', 'Sakit'),
     ]
 
     pertemuan = models.ForeignKey(
@@ -2100,10 +2141,12 @@ class PresensiPertemuan(models.Model):
         on_delete=models.CASCADE,
         related_name='presensi'
     )
-    walisantri = models.ForeignKey(
-        'accounts.User',
+    santri = models.ForeignKey(
+        'students.Student',
         on_delete=models.CASCADE,
-        related_name='presensi_pertemuan'
+        related_name='presensi_pertemuan',
+        null=True,
+        blank=True
     )
     status = models.CharField(
         max_length=20,
@@ -2114,9 +2157,9 @@ class PresensiPertemuan(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('pertemuan', 'walisantri')
+        unique_together = ('pertemuan', 'santri')
         verbose_name = 'Presensi Pertemuan'
         verbose_name_plural = 'Presensi Pertemuan'
 
     def __str__(self):
-        return f"{self.walisantri} - {self.pertemuan} - {self.status}"
+        return f"{self.santri} - {self.pertemuan} - {self.status}"

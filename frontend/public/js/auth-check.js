@@ -401,7 +401,7 @@ function createRoleBasedNav() {
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
-                { href: '/pertemuan-pengasuhan', icon: 'users', label: 'Pertemuan Pengasuhan' }
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'admin': {
@@ -424,7 +424,7 @@ function createRoleBasedNav() {
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
-                { href: '/pertemuan-pengasuhan', icon: 'users', label: 'Pertemuan Pengasuhan' }
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'pimpinan': {
@@ -446,7 +446,7 @@ function createRoleBasedNav() {
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
-                { href: '/pertemuan-pengasuhan', icon: 'users', label: 'Pertemuan Pengasuhan' }
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'guru': {
@@ -466,7 +466,8 @@ function createRoleBasedNav() {
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
                 { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' },
-                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'musyrif': {
@@ -530,7 +531,7 @@ function createRoleBasedNav() {
             ],
             other: [
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
-                { href: '/pertemuan-pengasuhan', icon: 'users', label: 'Pertemuan Pengasuhan' }
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'pendaftar': { main: [], other: [] }

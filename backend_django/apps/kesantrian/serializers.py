@@ -12,7 +12,7 @@ from .models import (
     BLPEntry, EmployeeEvaluation, InvalRecord, BLP_INDICATORS,
     Incident, IncidentComment, AsatidzEvaluation,
     IndikatorKinerja, PenilaianKinerjaAsatidz, DetailPenilaianKinerja,
-    IzinGuru, HafalanRecord, KritikSaran, PertemuanPengasuhan, PresensiPertemuan
+    IzinGuru, HafalanRecord, KritikSaran, KelompokPengasuhan, PertemuanPengasuhan, PresensiPertemuan
 )
 from apps.students.models import Student
 
@@ -1216,44 +1216,84 @@ class KritikSaranSerializer(serializers.ModelSerializer):
         return 'Unknown'
 
 
-class PertemuanPengasuhSerializer(serializers.ModelSerializer):
-    dibuat_oleh_name = serializers.SerializerMethodField()
+class KelompokPengasuhSerializer(serializers.ModelSerializer):
+    pengasuh_name = serializers.SerializerMethodField()
+    wakil_name = serializers.SerializerMethodField()
     tahun_ajaran_nama = serializers.SerializerMethodField()
-    jumlah_hadir = serializers.SerializerMethodField()
+    jumlah_santri = serializers.SerializerMethodField()
 
     class Meta:
-        model = PertemuanPengasuhan
+        model = KelompokPengasuhan
         fields = [
-            'id', 'judul', 'deskripsi', 'tanggal',
-            'waktu_mulai', 'waktu_selesai', 'lokasi',
+            'id', 'nama', 'kelas',
+            'pengasuh', 'pengasuh_name',
+            'wakil_pengasuh', 'wakil_name',
             'tahun_ajaran', 'tahun_ajaran_nama',
-            'dibuat_oleh', 'dibuat_oleh_name',
-            'jumlah_hadir', 'created_at'
+            'jumlah_santri', 'created_at'
         ]
 
-    def get_dibuat_oleh_name(self, obj):
-        if obj.dibuat_oleh:
-            return obj.dibuat_oleh.name or obj.dibuat_oleh.username
-        return ''
+    def get_pengasuh_name(self, obj):
+        return obj.pengasuh.name or obj.pengasuh.username if obj.pengasuh else ''
+
+    def get_wakil_name(self, obj):
+        return obj.wakil_pengasuh.name or obj.wakil_pengasuh.username if obj.wakil_pengasuh else ''
 
     def get_tahun_ajaran_nama(self, obj):
         return obj.tahun_ajaran.nama if obj.tahun_ajaran else ''
 
+    def get_jumlah_santri(self, obj):
+        from apps.students.models import Student
+        return Student.objects.filter(kelas=obj.kelas).count()
+
+
+class PertemuanPengasuhSerializer(serializers.ModelSerializer):
+    kelompok_nama = serializers.SerializerMethodField()
+    dibuat_oleh_name = serializers.SerializerMethodField()
+    jumlah_hadir = serializers.SerializerMethodField()
+    foto_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PertemuanPengasuhan
+        fields = [
+            'id', 'kelompok', 'kelompok_nama',
+            'judul', 'tanggal', 'lokasi', 'deskripsi',
+            'foto', 'foto_url',
+            'dibuat_oleh', 'dibuat_oleh_name',
+            'jumlah_hadir', 'created_at'
+        ]
+
+    def get_kelompok_nama(self, obj):
+        return obj.kelompok.nama if obj.kelompok else ''
+
+    def get_dibuat_oleh_name(self, obj):
+        return obj.dibuat_oleh.name or obj.dibuat_oleh.username if obj.dibuat_oleh else ''
+
     def get_jumlah_hadir(self, obj):
         return obj.presensi.filter(status='hadir').count()
 
+    def get_foto_url(self, obj):
+        if obj.foto:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.foto.url)
+            return obj.foto.url
+        return None
+
 
 class PresensiPertemuanSerializer(serializers.ModelSerializer):
-    walisantri_name = serializers.SerializerMethodField()
+    santri_nama = serializers.SerializerMethodField()
+    santri_nisn = serializers.SerializerMethodField()
 
     class Meta:
         model = PresensiPertemuan
         fields = [
-            'id', 'pertemuan', 'walisantri', 'walisantri_name',
+            'id', 'pertemuan', 'santri',
+            'santri_nama', 'santri_nisn',
             'status', 'catatan', 'updated_at'
         ]
 
-    def get_walisantri_name(self, obj):
-        if obj.walisantri:
-            return obj.walisantri.name or obj.walisantri.username
-        return ''
+    def get_santri_nama(self, obj):
+        return obj.santri.nama if obj.santri else ''
+
+    def get_santri_nisn(self, obj):
+        return obj.santri.nisn if obj.santri else ''
