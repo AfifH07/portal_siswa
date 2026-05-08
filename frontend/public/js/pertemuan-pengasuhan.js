@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('th-aksi-pt').style.display = '';
         document.getElementById('pertemuan-title').textContent = 'Semua Pertemuan';
         await loadGuruList();
+        await loadKelasList();
         await loadBelumPertemuan();
     }
 
@@ -86,6 +87,9 @@ async function loadKelompok() {
 
         kelompokData.forEach(k => {
             const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.title = 'Klik untuk lihat daftar santri';
+            tr.onclick = () => openSantriModal(k.id);
             tr.innerHTML = `
                 <td><strong>${escapeHtml(k.nama)}</strong></td>
                 <td>${escapeHtml(k.kelas)}</td>
@@ -125,6 +129,28 @@ async function loadGuruList() {
         });
     } catch (err) {
         console.error('[Pertemuan] Gagal load guru:', err);
+    }
+}
+
+async function loadKelasList() {
+    try {
+        const response = await window.apiFetch('/students/');
+        const result = await response.json();
+        const santriList = result.data || result.results || [];
+
+        const kelasList = [...new Set(
+            santriList.map(s => s.kelas).filter(Boolean)
+        )].sort();
+
+        const selKelas = document.getElementById('kel-kelas');
+        if (!selKelas) return;
+
+        selKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+        kelasList.forEach(k => {
+            selKelas.innerHTML += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`;
+        });
+    } catch (err) {
+        console.error('[Pertemuan] Gagal load kelas:', err);
     }
 }
 
@@ -183,6 +209,63 @@ async function hapusKelompok(id) {
         if (result.success) { await loadKelompok(); await loadPertemuan(); }
         else alert('❌ ' + (result.message || 'Gagal hapus'));
     } catch (err) { alert('❌ ' + err.message); }
+}
+
+async function openSantriModal(kelompokId) {
+    const modal = document.getElementById('santri-modal');
+    const title = document.getElementById('santri-modal-title');
+    const body = document.getElementById('santri-modal-body');
+
+    const kelompok = kelompokData.find(k => k.id === kelompokId);
+    if (title && kelompok) {
+        title.textContent = `Santri — ${kelompok.nama} (${kelompok.kelas})`;
+    }
+    if (body) body.innerHTML = '<div class="loading-spinner" style="margin:20px auto;"></div>';
+    if (modal) modal.classList.add('show');
+
+    try {
+        const kelas = kelompok?.kelas || '';
+        const response = await window.apiFetch(`/students/?kelas=${encodeURIComponent(kelas)}`);
+        const result = await response.json();
+        const santri = result.data || result.results || [];
+
+        if (santri.length === 0) {
+            body.innerHTML = '<p class="text-muted">Tidak ada santri di kelas ini.</p>';
+            return;
+        }
+
+        body.innerHTML = `
+            <p style="margin-bottom:12px; color:var(--text-secondary);">
+                Total: <strong>${santri.length} santri</strong>
+            </p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nama</th>
+                        <th>NISN</th>
+                        <th>Jenis Kelamin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${santri.map((s, i) => `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${escapeHtml(s.nama || s.name || '-')}</td>
+                            <td><code>${escapeHtml(s.nisn || '-')}</code></td>
+                            <td>${s.jenis_kelamin === 'L' ? '👦 Laki-laki' : s.jenis_kelamin === 'P' ? '👧 Perempuan' : '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (err) {
+        if (body) body.innerHTML = `<p class="text-muted">Gagal memuat: ${err.message}</p>`;
+    }
+}
+
+function closeSantriModal() {
+    document.getElementById('santri-modal')?.classList.remove('show');
 }
 
 // ============================================
@@ -609,6 +692,8 @@ function escapeHtml(text) {
 window.toggleFormKelompok = toggleFormKelompok;
 window.submitKelompok = submitKelompok;
 window.hapusKelompok = hapusKelompok;
+window.openSantriModal = openSantriModal;
+window.closeSantriModal = closeSantriModal;
 window.submitPertemuan = submitPertemuan;
 window.hapusPertemuan = hapusPertemuan;
 window.openPresensiModal = openPresensiModal;

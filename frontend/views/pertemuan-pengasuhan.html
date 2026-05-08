@@ -80,7 +80,9 @@
                         </div>
                         <div class="filter-group">
                             <label for="kel-kelas">Kelas <span class="required">*</span></label>
-                            <input type="text" id="kel-kelas" class="filter-input" placeholder="Contoh: XII A">
+                            <select id="kel-kelas" class="filter-input">
+                                <option value="">-- Pilih Kelas --</option>
+                            </select>
                         </div>
                     </div>
                     <div class="filters-grid" style="margin-top:12px;">
@@ -229,6 +231,23 @@
 
     </div>
 </main>
+
+<!-- Modal Santri Kelompok -->
+<div class="modal" id="santri-modal">
+    <div class="modal-backdrop" onclick="closeSantriModal()"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="santri-modal-title">Santri Kelompok</h2>
+            <button class="btn-close" onclick="closeSantriModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="santri-modal-body" style="padding:20px;">
+            <div class="loading-spinner" style="margin:20px auto;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeSantriModal()">Tutup</button>
+        </div>
+    </div>
+</div>
 
 <!-- Modal Presensi -->
 <div class="modal" id="presensi-modal">
