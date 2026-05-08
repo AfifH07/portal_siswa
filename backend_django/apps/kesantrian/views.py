@@ -3705,12 +3705,6 @@ def kritik_saran_baca(request, pk):
     return Response({'success': True, 'message': 'Ditandai sudah dibaca'})
 
 
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-# ============================================
-# IZIN GURU VIEWS
-# ============================================
-
 from .models import IzinGuru, KritikSaran
 from .serializers import IzinGuruSerializer, IzinGuruCreateSerializer, KritikSaranSerializer
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
