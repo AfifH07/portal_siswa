@@ -2057,3 +2057,66 @@ class KritikSaran(models.Model):
             self.pengirim.name or self.pengirim.username if self.pengirim else 'Unknown'
         )
         return f"{self.jenis} dari {pengirim_str}"
+
+
+class PertemuanPengasuhan(models.Model):
+    judul = models.CharField(max_length=200)
+    deskripsi = models.TextField(blank=True, default='')
+    tanggal = models.DateField()
+    waktu_mulai = models.TimeField()
+    waktu_selesai = models.TimeField()
+    lokasi = models.CharField(max_length=200)
+    tahun_ajaran = models.ForeignKey(
+        'core.TahunAjaran',
+        on_delete=models.CASCADE,
+        related_name='pertemuan_pengasuhan'
+    )
+    dibuat_oleh = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='pertemuan_dibuat'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-tanggal', '-waktu_mulai']
+        verbose_name = 'Pertemuan Pengasuhan'
+        verbose_name_plural = 'Pertemuan Pengasuhan'
+
+    def __str__(self):
+        return f"{self.judul} - {self.tanggal}"
+
+
+class PresensiPertemuan(models.Model):
+    STATUS_CHOICES = [
+        ('hadir', 'Hadir'),
+        ('tidak_hadir', 'Tidak Hadir'),
+        ('izin', 'Izin'),
+    ]
+
+    pertemuan = models.ForeignKey(
+        PertemuanPengasuhan,
+        on_delete=models.CASCADE,
+        related_name='presensi'
+    )
+    walisantri = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='presensi_pertemuan'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='tidak_hadir'
+    )
+    catatan = models.TextField(blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('pertemuan', 'walisantri')
+        verbose_name = 'Presensi Pertemuan'
+        verbose_name_plural = 'Presensi Pertemuan'
+
+    def __str__(self):
+        return f"{self.walisantri} - {self.pertemuan} - {self.status}"

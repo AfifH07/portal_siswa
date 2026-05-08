@@ -120,4 +120,7 @@ urlpatterns = [
     path('izin-guru/<int:pk>/approve/', views.izin_guru_approve, name='izin-guru-approve'),
     path('kritik-saran/', views.kritik_saran_list_create, name='kritik-saran-list'),
     path('kritik-saran/<int:pk>/baca/', views.kritik_saran_baca, name='kritik-saran-baca'),
+    path('pertemuan/', views.pertemuan_list_create, name='pertemuan-list'),
+    path('pertemuan/<int:pk>/', views.pertemuan_detail, name='pertemuan-detail'),
+    path('pertemuan/<int:pk>/presensi/', views.pertemuan_presensi, name='pertemuan-presensi'),
 ]

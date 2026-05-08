@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan Pengasuhan - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260507" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260507" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260507" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-role="">
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+    <a class="back-chip" href="/"><span class="arrow">←</span><span>Kembali ke Website</span></a>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Pertemuan Pengasuhan</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Pertemuan Pengasuhan</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Form Buat Pertemuan (admin only) -->
+        <section class="filter-section" id="form-section" style="display:none;">
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">➕</span> Buat Pertemuan Baru</h3>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group" style="grid-column: span 2;">
+                        <label for="input-judul">Judul <span class="required">*</span></label>
+                        <input type="text" id="input-judul" class="filter-input"
+                            placeholder="Contoh: Pertemuan Walisantri Semester Genap 2026">
+                    </div>
+                    <div class="filter-group">
+                        <label for="input-tanggal">Tanggal <span class="required">*</span></label>
+                        <input type="date" id="input-tanggal" class="filter-input">
+                    </div>
+                </div>
+                <div class="filters-grid" style="margin-top:12px;">
+                    <div class="filter-group">
+                        <label for="input-waktu-mulai">Waktu Mulai <span class="required">*</span></label>
+                        <input type="time" id="input-waktu-mulai" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="input-waktu-selesai">Waktu Selesai <span class="required">*</span></label>
+                        <input type="time" id="input-waktu-selesai" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="input-lokasi">Lokasi <span class="required">*</span></label>
+                        <input type="text" id="input-lokasi" class="filter-input"
+                            placeholder="Contoh: Aula Utama">
+                    </div>
+                </div>
+                <div class="filters-grid" style="margin-top:12px;">
+                    <div class="filter-group" style="grid-column: span 3;">
+                        <label for="input-deskripsi">Deskripsi</label>
+                        <textarea id="input-deskripsi" class="filter-input textarea-input"
+                            rows="3" placeholder="Agenda atau informasi tambahan..."></textarea>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top:16px;">
+                    <button onclick="submitPertemuan()" class="btn btn-primary" id="btn-submit">
+                        <i data-lucide="calendar-plus"></i> Simpan Pertemuan
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Daftar Pertemuan -->
+        <section class="table-section-wrap">
+            <div class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">📅</span> Jadwal Pertemuan</h3>
+                    <div class="card-badge" id="pertemuan-badge">0 data</div>
+                </div>
+                <div class="table-container" id="pertemuan-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Judul</th>
+                                <th>Tanggal</th>
+                                <th>Waktu</th>
+                                <th>Lokasi</th>
+                                <th>Hadir</th>
+                                <th id="th-aksi-pertemuan" style="display:none;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-pertemuan">
+                            <tr><td colspan="6" class="text-center">
+                                <div class="loading-spinner" style="margin:30px auto;"></div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="pertemuan-empty" style="display:none;">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-title">Belum Ada Pertemuan</div>
+                    <div class="empty-desc">Belum ada jadwal pertemuan pengasuhan.</div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<!-- Modal Presensi -->
+<div class="modal" id="presensi-modal">
+    <div class="modal-backdrop" onclick="closePresensiModal()"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="presensi-modal-title">Input Presensi</h2>
+            <button class="btn-close" onclick="closePresensiModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:20px;">
+            <div id="presensi-list"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePresensiModal()">Tutup</button>
+            <button class="btn btn-primary" id="btn-save-presensi" onclick="savePresensi()">
+                <i data-lucide="save"></i> Simpan Presensi
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detail Pertemuan -->
+<div class="modal" id="detail-modal">
+    <div class="modal-backdrop" onclick="closeDetailModal()"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="detail-modal-title">Detail Pertemuan</h2>
+            <button class="btn-close" onclick="closeDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="detail-modal-body" style="padding:20px;"></div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/utils.js?v=20260507" defer></script>
+<script src="/static/js/apiConfig.js?v=20260507" defer></script>
+<script src="/static/js/apiFetch.js?v=20260507" defer></script>
+<script src="/static/js/auth-check.js?v=20260507" defer></script>
+<script src="/static/js/pertemuan-pengasuhan.js?v=20260507" defer></script>
+</body>
+</html>

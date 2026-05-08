@@ -400,7 +400,8 @@ function createRoleBasedNav() {
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
-                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
+                { href: '/pertemuan-pengasuhan', icon: 'users', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'admin': {
@@ -422,7 +423,8 @@ function createRoleBasedNav() {
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
-                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
+                { href: '/pertemuan-pengasuhan', icon: 'users', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'pimpinan': {
@@ -443,7 +445,8 @@ function createRoleBasedNav() {
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
-                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
+                { href: '/pertemuan-pengasuhan', icon: 'users', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'guru': {
@@ -526,7 +529,8 @@ function createRoleBasedNav() {
                 { href: '/finance', icon: 'credit-card', label: 'Tagihan', id: 'nav-finance' }
             ],
             other: [
-                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
+                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
+                { href: '/pertemuan-pengasuhan', icon: 'users', label: 'Pertemuan Pengasuhan' }
             ]
         },
         'pendaftar': { main: [], other: [] }

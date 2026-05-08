@@ -12,7 +12,7 @@ from .models import (
     BLPEntry, EmployeeEvaluation, InvalRecord, BLP_INDICATORS,
     Incident, IncidentComment, AsatidzEvaluation,
     IndikatorKinerja, PenilaianKinerjaAsatidz, DetailPenilaianKinerja,
-    IzinGuru, HafalanRecord, KritikSaran
+    IzinGuru, HafalanRecord, KritikSaran, PertemuanPengasuhan, PresensiPertemuan
 )
 from apps.students.models import Student
 
@@ -1214,3 +1214,46 @@ class KritikSaranSerializer(serializers.ModelSerializer):
         if obj.pengirim:
             return obj.pengirim.name or obj.pengirim.username
         return 'Unknown'
+
+
+class PertemuanPengasuhSerializer(serializers.ModelSerializer):
+    dibuat_oleh_name = serializers.SerializerMethodField()
+    tahun_ajaran_nama = serializers.SerializerMethodField()
+    jumlah_hadir = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PertemuanPengasuhan
+        fields = [
+            'id', 'judul', 'deskripsi', 'tanggal',
+            'waktu_mulai', 'waktu_selesai', 'lokasi',
+            'tahun_ajaran', 'tahun_ajaran_nama',
+            'dibuat_oleh', 'dibuat_oleh_name',
+            'jumlah_hadir', 'created_at'
+        ]
+
+    def get_dibuat_oleh_name(self, obj):
+        if obj.dibuat_oleh:
+            return obj.dibuat_oleh.name or obj.dibuat_oleh.username
+        return ''
+
+    def get_tahun_ajaran_nama(self, obj):
+        return obj.tahun_ajaran.nama if obj.tahun_ajaran else ''
+
+    def get_jumlah_hadir(self, obj):
+        return obj.presensi.filter(status='hadir').count()
+
+
+class PresensiPertemuanSerializer(serializers.ModelSerializer):
+    walisantri_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PresensiPertemuan
+        fields = [
+            'id', 'pertemuan', 'walisantri', 'walisantri_name',
+            'status', 'catatan', 'updated_at'
+        ]
+
+    def get_walisantri_name(self, obj):
+        if obj.walisantri:
+            return obj.walisantri.name or obj.walisantri.username
+        return ''

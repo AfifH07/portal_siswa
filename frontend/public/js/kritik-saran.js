@@ -3,6 +3,7 @@
  */
 
 let isInbox = false;
+let inboxData = [];
 
 // ============================================
 // INIT
@@ -105,6 +106,7 @@ async function loadInbox() {
         if (!result.success) throw new Error(result.message || 'Gagal');
 
         const data = result.data || [];
+        inboxData = data;
         if (badge) badge.textContent = `${data.length} data`;
 
         if (data.length === 0) {
@@ -173,37 +175,36 @@ async function openDetail(id) {
 
     if (!modal) return;
 
-    if (body) body.innerHTML = '<div class="loading-spinner" style="margin:20px auto;"></div>';
+    const item = inboxData.find(d => d.id === id);
+    if (!item) {
+        if (body) body.innerHTML = '<p class="text-muted">Data tidak ditemukan.</p>';
+        modal.classList.add('show');
+        return;
+    }
+
+    if (title) title.textContent = item.jenis === 'kritik' ? '📝 Detail Kritik' : '💡 Detail Saran';
+
+    if (body) body.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <div><strong>Dari:</strong> ${escapeHtml(item.pengirim_name)}</div>
+            <div><strong>Unit:</strong> ${escapeHtml(item.unit)}</div>
+            <div><strong>Waktu:</strong> ${new Date(item.created_at).toLocaleString('id-ID')}</div>
+            <hr style="border:none;border-top:1px solid var(--border,#e2e8f0);margin:4px 0;">
+            <div style="line-height:1.7;white-space:pre-wrap;">${escapeHtml(item.isi)}</div>
+        </div>
+    `;
+
     modal.classList.add('show');
 
-    try {
-        const response = await window.apiFetch(`/kesantrian/kritik-saran/?status=`);
-        const result = await response.json();
-        const allData = result.data || [];
-        const item = allData.find(d => d.id === id);
-
-        if (!item) { if (body) body.innerHTML = '<p>Data tidak ditemukan.</p>'; return; }
-
-        if (title) title.textContent = item.jenis === 'kritik' ? '📝 Detail Kritik' : '💡 Detail Saran';
-
-        if (body) body.innerHTML = `
-            <div style="display:flex;flex-direction:column;gap:12px;">
-                <div><strong>Dari:</strong> ${escapeHtml(item.pengirim_name)}</div>
-                <div><strong>Unit:</strong> ${escapeHtml(item.unit)}</div>
-                <div><strong>Waktu:</strong> ${new Date(item.created_at).toLocaleString('id-ID')}</div>
-                <hr style="border:none;border-top:1px solid var(--border,#e2e8f0);">
-                <div style="line-height:1.7;white-space:pre-wrap;">${escapeHtml(item.isi)}</div>
-            </div>
-        `;
-
-        // Tandai dibaca jika masih baru
-        if (item.status === 'baru') {
+    // Tandai dibaca jika masih baru
+    if (item.status === 'baru') {
+        try {
             await window.apiFetch(`/kesantrian/kritik-saran/${id}/baca/`, { method: 'PATCH' });
+            item.status = 'dibaca';  // update lokal
             await loadInbox();
+        } catch (err) {
+            console.error('[KritikSaran] Gagal tandai dibaca:', err);
         }
-
-    } catch (err) {
-        if (body) body.innerHTML = `<p class="text-muted">Gagal memuat detail.</p>`;
     }
 }
 

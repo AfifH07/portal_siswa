@@ -15,12 +15,13 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import timedelta
 
-from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, HafalanRecord
+from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, HafalanRecord, PertemuanPengasuhan, PresensiPertemuan
 from .serializers import (
     IbadahSerializer, IbadahCreateSerializer,
     PembinaanSerializer, PembinaanCreateSerializer,
     TargetHafalanSerializer, HalaqohSerializer, HalaqohMemberSerializer,
-    HafalanRecordSerializer, HafalanRecordCreateSerializer, HafalanRecordUpdateSerializer
+    HafalanRecordSerializer, HafalanRecordCreateSerializer, HafalanRecordUpdateSerializer,
+    PertemuanPengasuhSerializer, PresensiPertemuanSerializer
 )
 from .utils import (
     get_student_behavior_summary,
@@ -3398,6 +3399,136 @@ def kritik_saran_baca(request, pk):
     ks.status = 'dibaca'
     ks.save()
     return Response({'success': True, 'message': 'Ditandai sudah dibaca'})
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def pertemuan_list_create(request):
+    user = request.user
+
+    if request.method == 'POST':
+        if user.role not in ['superadmin', 'admin', 'pimpinan']:
+            return Response(
+                {'success': False, 'message': 'Tidak memiliki akses'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        data = request.data
+        try:
+            from apps.core.models import TahunAjaran
+            tahun_ajaran = TahunAjaran.objects.get(is_active=True)
+        except TahunAjaran.DoesNotExist:
+            return Response(
+                {'success': False, 'message': 'Tahun ajaran aktif tidak ditemukan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        pertemuan = PertemuanPengasuhan.objects.create(
+            judul=data.get('judul', ''),
+            deskripsi=data.get('deskripsi', ''),
+            tanggal=data.get('tanggal'),
+            waktu_mulai=data.get('waktu_mulai'),
+            waktu_selesai=data.get('waktu_selesai'),
+            lokasi=data.get('lokasi', ''),
+            tahun_ajaran=tahun_ajaran,
+            dibuat_oleh=user,
+        )
+        serializer = PertemuanPengasuhSerializer(pertemuan)
+        return Response(
+            {'success': True, 'message': 'Pertemuan berhasil dibuat', 'data': serializer.data},
+            status=status.HTTP_201_CREATED
+        )
+
+    # GET — semua role bisa lihat
+    queryset = PertemuanPengasuhan.objects.select_related(
+        'tahun_ajaran', 'dibuat_oleh'
+    ).prefetch_related('presensi')
+    serializer = PertemuanPengasuhSerializer(queryset, many=True)
+    return Response({'success': True, 'count': queryset.count(), 'data': serializer.data})
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def pertemuan_detail(request, pk):
+    user = request.user
+    try:
+        pertemuan = PertemuanPengasuhan.objects.select_related(
+            'tahun_ajaran', 'dibuat_oleh'
+        ).prefetch_related('presensi').get(pk=pk)
+    except PertemuanPengasuhan.DoesNotExist:
+        return Response(
+            {'success': False, 'message': 'Pertemuan tidak ditemukan'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if request.method == 'GET':
+        serializer = PertemuanPengasuhSerializer(pertemuan)
+        return Response({'success': True, 'data': serializer.data})
+
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response(
+            {'success': False, 'message': 'Tidak memiliki akses'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    if request.method == 'DELETE':
+        pertemuan.delete()
+        return Response({'success': True, 'message': 'Pertemuan dihapus'})
+
+    if request.method == 'PATCH':
+        data = request.data
+        for field in ['judul', 'deskripsi', 'tanggal', 'waktu_mulai', 'waktu_selesai', 'lokasi']:
+            if field in data:
+                setattr(pertemuan, field, data[field])
+        pertemuan.save()
+        serializer = PertemuanPengasuhSerializer(pertemuan)
+        return Response({'success': True, 'data': serializer.data})
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def pertemuan_presensi(request, pk):
+    user = request.user
+    try:
+        pertemuan = PertemuanPengasuhan.objects.get(pk=pk)
+    except PertemuanPengasuhan.DoesNotExist:
+        return Response(
+            {'success': False, 'message': 'Pertemuan tidak ditemukan'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if request.method == 'GET':
+        if user.role not in ['superadmin', 'admin', 'pimpinan']:
+            return Response(
+                {'success': False, 'message': 'Tidak memiliki akses'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        presensi = PresensiPertemuan.objects.select_related('walisantri').filter(
+            pertemuan=pertemuan
+        )
+        serializer = PresensiPertemuanSerializer(presensi, many=True)
+        return Response({'success': True, 'data': serializer.data})
+
+    # POST — bulk upsert presensi
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response(
+            {'success': False, 'message': 'Tidak memiliki akses'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    items = request.data.get('presensi', [])
+    for item in items:
+        wali_id = item.get('walisantri_id')
+        presensi_status = item.get('status', 'tidak_hadir')
+        catatan = item.get('catatan', '')
+        try:
+            from apps.accounts.models import User
+            wali = User.objects.get(pk=wali_id, role='walisantri')
+            PresensiPertemuan.objects.update_or_create(
+                pertemuan=pertemuan,
+                walisantri=wali,
+                defaults={'status': presensi_status, 'catatan': catatan}
+            )
+        except User.DoesNotExist:
+            continue
+    return Response({'success': True, 'message': 'Presensi berhasil disimpan'})
 
 
 # ============================================
