@@ -467,7 +467,7 @@ function createRoleBasedNav() {
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
                 { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
-                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan', id: 'nav-pertemuan-pengasuhan' }
             ]
         },
         'musyrif': {
@@ -643,10 +643,39 @@ function createRoleBasedNav() {
     // Check for Wali Kelas status and add menu if applicable
     if (userRole === 'guru') {
         checkAndAddWaliKelasMenu(nav, createNavItem, isActive);
+        checkAndShowPengasuhanMenu();
     }
 
     // Also update user role display
     updateUserRoleDisplay();
+}
+
+async function checkAndShowPengasuhanMenu() {
+    const navItem = document.getElementById('nav-pertemuan-pengasuhan');
+    if (!navItem) return;
+
+    // Default: sembunyikan dulu
+    navItem.style.display = 'none';
+
+    try {
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) return;
+
+        const response = await fetch(
+            window.API_BASE_URL + '/kesantrian/kelompok-pengasuhan/',
+            { headers: { 'Authorization': 'Bearer ' + accessToken } }
+        );
+        if (!response.ok) return;
+
+        const result = await response.json();
+        const count = (result.data && result.data.length) || result.count || 0;
+
+        if (count > 0) {
+            navItem.style.display = '';
+        }
+    } catch (err) {
+        console.error('[Auth] Gagal cek kelompok pengasuhan:', err);
+    }
 }
 
 /**

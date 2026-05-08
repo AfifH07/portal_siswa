@@ -470,6 +470,17 @@ async function openPresensiModal(id) {
     if (body) body.innerHTML = '<div class="loading-spinner" style="margin:20px auto;"></div>';
     if (modal) modal.classList.add('show');
     if (btnSave) btnSave.onclick = savePresensi;
+    // Tambah tombol Hadir Semua ke footer modal
+    const footer = document.querySelector('#presensi-modal .modal-footer');
+    if (footer && !document.getElementById('btn-hadir-semua')) {
+        const btnHadir = document.createElement('button');
+        btnHadir.id = 'btn-hadir-semua';
+        btnHadir.className = 'btn btn-secondary';
+        btnHadir.innerHTML = '<i data-lucide="check-check"></i> Hadir Semua';
+        btnHadir.onclick = hadirSemua;
+        footer.insertBefore(btnHadir, footer.firstChild);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 
     try {
         // Load santri dari kelas kelompok
@@ -522,6 +533,12 @@ async function openPresensiModal(id) {
     } catch (err) {
         if (body) body.innerHTML = `<p class="text-muted">Gagal memuat: ${err.message}</p>`;
     }
+}
+
+function hadirSemua() {
+    document.querySelectorAll('.presensi-status').forEach(sel => {
+        sel.value = 'hadir';
+    });
 }
 
 async function savePresensi() {
@@ -694,6 +711,7 @@ window.submitKelompok = submitKelompok;
 window.hapusKelompok = hapusKelompok;
 window.openSantriModal = openSantriModal;
 window.closeSantriModal = closeSantriModal;
+window.hadirSemua = hadirSemua;
 window.submitPertemuan = submitPertemuan;
 window.hapusPertemuan = hapusPertemuan;
 window.openPresensiModal = openPresensiModal;
