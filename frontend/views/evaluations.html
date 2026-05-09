@@ -503,37 +503,32 @@
                 <div class="card-body">
                     <div class="form-grid" style="margin-bottom:16px;">
                         <div class="form-group fg-large">
-                            <label>Pilih Santri</label>
-                            <select id="integritas-santri-select" class="glass-input">
-                                <option value="">Pilih Santri</option>
-                            </select>
+                            <label>Cari Santri</label>
+                            <input type="text" id="search-integritas" class="glass-input" placeholder="Cari nama atau NISN santri...">
                         </div>
                         <div class="form-group" style="display:flex; align-items:end;">
-                            <button type="button" id="btn-open-integritas-modal" class="btn btn-primary">Beri Penilaian</button>
+                            <button type="button" id="btn-integritas-config" class="btn btn-secondary">Konfigurasi Poin</button>
                         </div>
                     </div>
                     <div id="integritas-empty-state" class="text-muted" style="margin-bottom:16px;">
-                        Pilih santri untuk melihat riwayat penilaian integritas.
+                        Memuat daftar santri...
                     </div>
-                    <div style="margin-top:24px;">
-                        <h4 style="margin-bottom:12px;">Riwayat Penilaian</h4>
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Poin</th>
-                                        <th>Skala</th>
-                                        <th>Catatan</th>
-                                        <th>Dinilai Oleh</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="integritas-history-body">
-                                    <tr><td colspan="6" class="text-center text-muted">Pilih santri untuk melihat riwayat.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama Santri</th>
+                                    <th>NISN</th>
+                                    <th>Kelas</th>
+                                    <th>Jumlah Penilaian</th>
+                                    <th>Terakhir Dinilai</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="integritas-santri-body">
+                                <tr><td colspan="6" class="text-center"><div class="loading-spinner" style="margin:20px auto;"></div></td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -541,6 +536,24 @@
 
     </div><!-- /page-body -->
 </main>
+
+<!-- ===================== MODAL: DETAIL INTEGRITAS ===================== -->
+<div id="integritas-detail-modal" class="modal">
+    <div class="modal-content glass-card modal-large">
+        <div class="modal-header">
+            <h2 id="integritas-detail-title">Penilaian Integritas</h2>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button type="button" id="btn-detail-score-integritas" class="btn btn-primary">Beri Penilaian</button>
+                <button type="button" id="btn-close-integritas-detail" class="btn-close">&times;</button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div id="integritas-detail-body">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ===================== MODAL: INTEGRITAS SANTRI ===================== -->
 <div id="integritas-modal" class="modal">

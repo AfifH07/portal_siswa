@@ -1,9 +1,11 @@
 let integritasSantriState = {
     currentUser: null,
     poin: [],
-    santri: [],
-    selectedSantriNisn: '',
-    history: [],
+    allSantri: [],
+    records: [],
+    summary: {},
+    filteredSantri: [],
+    currentSantriNisn: null,
     initialized: false,
     modalReady: false,
 };
@@ -29,7 +31,7 @@ function initIntegritasSantri(user) {
     integritasSantriState.currentUser = user;
 
     setupTabButtons();
-    setupTopControls();
+    setupMainControls();
     setupModalControls();
 
     const tabButton = document.querySelector('[data-tab="integritas"]');
@@ -40,17 +42,7 @@ function initIntegritasSantri(user) {
 
     if (tabButton) tabButton.style.display = '';
 
-    Promise.all([
-        loadPoinIntegritas(),
-        loadSantriList(),
-    ]).then(() => {
-        renderSantriSelect();
-        renderHistoryEmptyState();
-        if (integritasSantriState.santri.length > 0) {
-            const first = integritasSantriState.santri[0];
-            setSelectedSantri(first.nisn, true);
-        }
-    });
+    initTab();
 }
 
 function setupTabButtons() {
@@ -60,33 +52,47 @@ function setupTabButtons() {
     });
 }
 
-function setupTopControls() {
-    const select = document.getElementById('integritas-santri-select');
-    if (select) {
-        select.onchange = () => {
-            setSelectedSantri(select.value, true);
+function setupMainControls() {
+    const search = document.getElementById('search-integritas');
+    if (search) {
+        search.oninput = function () {
+            handleSearch(this.value);
         };
     }
 
-    const openBtn = document.getElementById('btn-open-integritas-modal');
-    if (openBtn) {
-        openBtn.onclick = openIntegritasModal;
-        openBtn.style.display = '';
+    const configBtn = document.getElementById('btn-integritas-config');
+    const user = integritasSantriState.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
+    if (configBtn) {
+        configBtn.onclick = () => {
+            window.location.href = '/evaluasi-guru';
+        };
+        configBtn.style.display = ['superadmin', 'admin', 'pimpinan'].includes(user.role) ? '' : 'none';
     }
 }
 
 function setupModalControls() {
     if (integritasSantriState.modalReady) return;
 
-    const closeBtn = document.getElementById('btn-close-integritas-modal');
-    const cancelBtn = document.getElementById('btn-cancel-integritas-modal');
-    const saveBtn = document.getElementById('btn-save-integritas-modal');
+    const closeDetail = document.getElementById('btn-close-integritas-detail');
+    const scoreBtn = document.getElementById('btn-detail-score-integritas');
+    const closeScore = document.getElementById('btn-close-integritas-modal');
+    const cancelScore = document.getElementById('btn-cancel-integritas-modal');
+    const saveScore = document.getElementById('btn-save-integritas-modal');
 
-    if (closeBtn) closeBtn.onclick = closeIntegritasModal;
-    if (cancelBtn) cancelBtn.onclick = closeIntegritasModal;
-    if (saveBtn) saveBtn.onclick = submitIntegritasSantri;
+    if (closeDetail) closeDetail.onclick = closeDetailModal;
+    if (scoreBtn) scoreBtn.onclick = openIntegritasModal;
+    if (closeScore) closeScore.onclick = closeIntegritasModal;
+    if (cancelScore) cancelScore.onclick = closeIntegritasModal;
+    if (saveScore) saveScore.onclick = submitIntegritasSantri;
 
     integritasSantriState.modalReady = true;
+}
+
+async function initTab() {
+    await loadPoinIntegritas();
+    await loadSantriList();
+    await loadIntegritasSummary();
+    handleSearch(document.getElementById('search-integritas')?.value || '');
 }
 
 function switchTab(tabName) {
@@ -104,15 +110,7 @@ function switchTab(tabName) {
     });
 
     if (tabName === 'integritas') {
-        const user = integritasSantriState.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
-        if (user.role !== 'walisantri') {
-            updateIntegritasActionVisibility();
-            if (!integritasSantriState.selectedSantriNisn && integritasSantriState.santri.length > 0) {
-                setSelectedSantri(integritasSantriState.santri[0].nisn, false);
-            } else if (integritasSantriState.selectedSantriNisn) {
-                loadHistoryIntegritasSantri(integritasSantriState.selectedSantriNisn);
-            }
-        }
+        handleSearch(document.getElementById('search-integritas')?.value || '');
     }
 }
 
@@ -137,7 +135,7 @@ async function loadSantriList() {
             const result = await response.json();
             santri = result.results || result.data || [];
         } else if (['guru', 'musyrif'].includes(user.role)) {
-            const response = await window.apiFetch(`/users/${user.id}/assignments/`);
+            const response = await window.apiFetch(`users/${user.id}/assignments/`);
             const assignments = await response.json();
             const classes = [...new Set(
                 (assignments || [])
@@ -155,68 +153,203 @@ async function loadSantriList() {
             santri = list;
         }
 
-        integritasSantriState.santri = santri
+        integritasSantriState.allSantri = santri
             .filter(s => s && s.nisn)
             .sort((a, b) => (a.nama || a.name || '').localeCompare(b.nama || b.name || ''));
-
-        renderSantriSelect();
-        updateIntegritasActionVisibility();
     } catch (err) {
         console.error('[Integritas] Gagal load santri:', err);
-        integritasSantriState.santri = [];
-        renderSantriSelect();
+        integritasSantriState.allSantri = [];
     }
 }
 
-function renderSantriSelect() {
-    const select = document.getElementById('integritas-santri-select');
-    if (!select) return;
+async function loadIntegritasSummary() {
+    try {
+        const response = await window.apiFetch('/evaluations/integritas-santri/');
+        const result = await response.json();
+        const records = result.data || [];
+        integritasSantriState.records = records;
+        integritasSantriState.summary = buildSummary(records);
+    } catch (err) {
+        console.error('[Integritas] Gagal load ringkasan:', err);
+        integritasSantriState.records = [];
+        integritasSantriState.summary = {};
+    }
+}
 
-    const previous = integritasSantriState.selectedSantriNisn || '';
-    select.innerHTML = '<option value="">Pilih Santri</option>';
-    integritasSantriState.santri.forEach(s => {
-        select.innerHTML += `<option value="${escapeHtml(s.nisn)}">${escapeHtml(s.nama || s.name || '-') } (${escapeHtml(s.nisn)})</option>`;
+function buildSummary(records) {
+    const summary = {};
+    records.forEach(record => {
+        const nisn = record.santri_nisn || record.santri;
+        if (!nisn) return;
+        if (!summary[nisn]) {
+            summary[nisn] = { count: 0, last_date: null };
+        }
+        summary[nisn].count += 1;
+        if (!summary[nisn].last_date || new Date(record.tanggal) > new Date(summary[nisn].last_date)) {
+            summary[nisn].last_date = record.tanggal;
+        }
+    });
+    return summary;
+}
+
+function handleSearch(query) {
+    const q = (query || '').trim().toLowerCase();
+    const filtered = !q
+        ? [...integritasSantriState.allSantri]
+        : integritasSantriState.allSantri.filter(s => {
+            const nama = (s.nama || s.name || '').toLowerCase();
+            const nisn = String(s.nisn || '').toLowerCase();
+            return nama.includes(q) || nisn.includes(q);
+        });
+
+    integritasSantriState.filteredSantri = filtered;
+    renderSantriTable(filtered);
+}
+
+function renderSantriTable(list) {
+    const tbody = document.getElementById('integritas-santri-body');
+    const badge = document.getElementById('integritas-count');
+    const empty = document.getElementById('integritas-empty-state');
+    if (!tbody) return;
+
+    const sorted = [...list].sort((a, b) => {
+        const aMeta = integritasSantriState.summary[a.nisn] || { count: 0, last_date: null };
+        const bMeta = integritasSantriState.summary[b.nisn] || { count: 0, last_date: null };
+        const aHas = aMeta.count > 0;
+        const bHas = bMeta.count > 0;
+
+        if (aHas && !bHas) return -1;
+        if (!aHas && bHas) return 1;
+        if (aHas && bHas) {
+            return new Date(bMeta.last_date) - new Date(aMeta.last_date);
+        }
+        return (a.nama || a.name || '').localeCompare(b.nama || b.name || '');
     });
 
-    if (previous && integritasSantriState.santri.some(s => s.nisn === previous)) {
-        select.value = previous;
-    }
-}
+    if (badge) badge.textContent = String(sorted.length);
 
-function setSelectedSantri(nisn, loadHistory = true) {
-    integritasSantriState.selectedSantriNisn = nisn || '';
-    const select = document.getElementById('integritas-santri-select');
-    if (select && select.value !== integritasSantriState.selectedSantriNisn) {
-        select.value = integritasSantriState.selectedSantriNisn;
-    }
-    updateIntegritasActionVisibility();
-
-    if (!nisn) {
-        renderHistoryEmptyState();
+    if (sorted.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Tidak ada santri yang cocok.</td></tr>';
+        if (empty) {
+            empty.textContent = 'Tidak ada santri yang cocok dengan pencarian.';
+            empty.style.display = '';
+        }
         return;
     }
 
-    if (loadHistory) {
-        loadHistoryIntegritasSantri(nisn);
+    if (empty) {
+        empty.textContent = 'Klik "Lihat Detail" untuk melihat riwayat penilaian integritas per santri.';
+        empty.style.display = '';
     }
+    tbody.innerHTML = sorted.map(s => {
+        const meta = integritasSantriState.summary[s.nisn] || { count: 0, last_date: null };
+        return `
+            <tr>
+                <td><strong>${escapeHtml(s.nama || s.name || '-')}</strong></td>
+                <td><code>${escapeHtml(s.nisn)}</code></td>
+                <td>${escapeHtml(s.kelas || '-')}</td>
+                <td><span class="status-badge badge-blue">${meta.count}</span></td>
+                <td>${meta.last_date ? escapeHtml(formatDate(meta.last_date)) : '—'}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline" data-action="lihat-detail" data-nisn="${escapeHtml(s.nisn)}">
+                        Lihat Detail
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    tbody.querySelectorAll('[data-action="lihat-detail"]').forEach(btn => {
+        btn.onclick = () => openDetailModal(btn.getAttribute('data-nisn'));
+    });
 }
 
-function updateIntegritasActionVisibility() {
-    const btn = document.getElementById('btn-open-integritas-modal');
-    const user = integritasSantriState.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
-    if (!btn) return;
-    btn.style.display = user.role === 'walisantri' ? 'none' : '';
-    btn.disabled = !integritasSantriState.selectedSantriNisn;
+function getStudentByNisn(nisn) {
+    return integritasSantriState.allSantri.find(s => String(s.nisn) === String(nisn));
+}
+
+function getRecordsByNisn(nisn) {
+    return integritasSantriState.records.filter(r => String(r.santri_nisn || r.santri) === String(nisn));
+}
+
+async function openDetailModal(nisn) {
+    const student = getStudentByNisn(nisn);
+    if (!student) return;
+
+    integritasSantriState.currentSantriNisn = nisn;
+
+    const title = document.getElementById('integritas-detail-title');
+    const body = document.getElementById('integritas-detail-body');
+    const scoreBtn = document.getElementById('btn-detail-score-integritas');
+
+    if (title) title.textContent = `Penilaian Integritas — ${student.nama || student.name || '-'} (${student.nisn})`;
+    if (scoreBtn) scoreBtn.style.display = canScore() ? '' : 'none';
+    if (body) body.innerHTML = '<div class="loading-spinner" style="margin:20px auto;"></div>';
+
+    document.getElementById('integritas-detail-modal')?.classList.add('show');
+    renderDetailContent();
+}
+
+function renderDetailContent() {
+    const body = document.getElementById('integritas-detail-body');
+    const nisn = integritasSantriState.currentSantriNisn;
+    if (!body || !nisn) return;
+
+    const records = getRecordsByNisn(nisn);
+    if (records.length === 0) {
+        body.innerHTML = '<p class="text-muted">Belum ada penilaian integritas untuk santri ini.</p>';
+        return;
+    }
+
+    body.innerHTML = `
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Poin</th>
+                        <th>Skala</th>
+                        <th>Catatan</th>
+                        <th>Dinilai Oleh</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${records.map(item => `
+                        <tr>
+                            <td>${escapeHtml(formatDate(item.tanggal))}</td>
+                            <td>${escapeHtml(item.poin_nama || '-')}</td>
+                            <td><span class="status-badge badge-blue">${escapeHtml(String(item.skala || '-'))}</span></td>
+                            <td>${escapeHtml(item.catatan || '-')}</td>
+                            <td>${escapeHtml(item.penilai_name || '—')}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline" data-delete-integritas="${item.id}">Hapus</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    body.querySelectorAll('[data-delete-integritas]').forEach(btn => {
+        btn.onclick = () => hapusIntegritasSantri(parseInt(btn.getAttribute('data-delete-integritas'), 10));
+    });
+}
+
+function closeDetailModal() {
+    document.getElementById('integritas-detail-modal')?.classList.remove('show');
+    integritasSantriState.currentSantriNisn = null;
 }
 
 async function openIntegritasModal() {
-    const nisn = integritasSantriState.selectedSantriNisn || document.getElementById('integritas-santri-select')?.value || '';
+    const nisn = integritasSantriState.currentSantriNisn;
     if (!nisn) {
         showMessage('Pilih santri terlebih dahulu.', 'warning');
         return;
     }
 
-    const student = integritasSantriState.santri.find(s => s.nisn === nisn);
+    const student = getStudentByNisn(nisn);
     const title = document.getElementById('integritas-modal-title');
     const body = document.getElementById('integritas-modal-body');
     if (title) title.textContent = `Penilaian Integritas — ${student?.nama || student?.name || nisn}`;
@@ -269,7 +402,7 @@ function closeIntegritasModal() {
 }
 
 async function submitIntegritasSantri() {
-    const nisn = integritasSantriState.selectedSantriNisn || document.getElementById('integritas-santri-select')?.value || '';
+    const nisn = integritasSantriState.currentSantriNisn;
     const catatanValue = document.getElementById('integritas-catatan')?.value || '';
     const selects = document.querySelectorAll('#integritas-modal .integritas-skala');
     const payload = [];
@@ -311,8 +444,10 @@ async function submitIntegritasSantri() {
         }
 
         closeIntegritasModal();
+        await refreshIntegritasData();
+        document.getElementById('integritas-detail-modal')?.classList.add('show');
+        renderDetailContent();
         showMessage('Penilaian berhasil disimpan.', 'success');
-        await loadHistoryIntegritasSantri(nisn);
     } catch (err) {
         showMessage(err.message, 'error');
     } finally {
@@ -320,72 +455,6 @@ async function submitIntegritasSantri() {
             btn.disabled = false;
             btn.textContent = 'Simpan';
         }
-    }
-}
-
-async function loadHistoryIntegritasSantri(nisn) {
-    const body = document.getElementById('integritas-history-body');
-    const empty = document.getElementById('integritas-empty-state');
-    const count = document.getElementById('integritas-count');
-
-    if (!body) return;
-
-    if (!nisn) {
-        renderHistoryEmptyState();
-        if (count) count.textContent = '0';
-        return;
-    }
-
-    body.innerHTML = '<tr><td colspan="6" class="text-center"><div class="loading-spinner" style="margin:20px auto;"></div></td></tr>';
-    if (empty) empty.style.display = 'none';
-
-    try {
-        const response = await window.apiFetch(`/evaluations/integritas-santri/?santri_nisn=${encodeURIComponent(nisn)}`);
-        const result = await response.json();
-        if (!response.ok || result.success === false) {
-            throw new Error(result.message || 'Gagal memuat riwayat');
-        }
-        const history = result.data || [];
-        integritasSantriState.history = history;
-
-        if (count) count.textContent = String(history.length);
-
-        if (history.length === 0) {
-            renderHistoryEmptyState('Belum ada penilaian integritas untuk santri ini.');
-            return;
-        }
-
-        if (empty) empty.style.display = 'none';
-        body.innerHTML = history.map(item => `
-            <tr data-id="${item.id}">
-                <td>${escapeHtml(formatDate(item.tanggal))}</td>
-                <td>${escapeHtml(item.poin_nama || '-')}</td>
-                <td><span class="status-badge badge-blue">${escapeHtml(String(item.skala || '-'))}</span></td>
-                <td>${escapeHtml(item.catatan || '-')}</td>
-                <td>${escapeHtml(item.penilai_name || '—')}</td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-outline" data-action="hapus-integritas-santri" data-id="${item.id}">Hapus</button>
-                </td>
-            </tr>
-        `).join('');
-
-        body.querySelectorAll('[data-action="hapus-integritas-santri"]').forEach(btn => {
-            btn.onclick = () => hapusIntegritasSantri(parseInt(btn.getAttribute('data-id'), 10));
-        });
-    } catch (err) {
-        body.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Gagal memuat: ${escapeHtml(err.message)}</td></tr>`;
-    }
-}
-
-function renderHistoryEmptyState(text = 'Pilih santri untuk melihat riwayat penilaian integritas.') {
-    const body = document.getElementById('integritas-history-body');
-    const empty = document.getElementById('integritas-empty-state');
-    if (body) {
-        body.innerHTML = '';
-    }
-    if (empty) {
-        empty.textContent = text;
-        empty.style.display = '';
     }
 }
 
@@ -399,14 +468,25 @@ async function hapusIntegritasSantri(id) {
         const result = await response.json();
         if (!result.success) throw new Error(result.message || 'Gagal menghapus');
 
-        showMessage('Penilaian dihapus.', 'success');
-        const nisn = integritasSantriState.selectedSantriNisn || document.getElementById('integritas-santri-select')?.value || '';
-        if (nisn) {
-            await loadHistoryIntegritasSantri(nisn);
+        await refreshIntegritasData();
+        if (integritasSantriState.currentSantriNisn) {
+            document.getElementById('integritas-detail-modal')?.classList.add('show');
+            renderDetailContent();
         }
+        showMessage('Penilaian dihapus.', 'success');
     } catch (err) {
         showMessage(err.message, 'error');
     }
+}
+
+async function refreshIntegritasData() {
+    await loadIntegritasSummary();
+    handleSearch(document.getElementById('search-integritas')?.value || '');
+}
+
+function canScore() {
+    const user = integritasSantriState.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
+    return ['superadmin', 'admin', 'pimpinan', 'guru', 'musyrif'].includes(user.role);
 }
 
 function formatDate(dateStr) {
@@ -436,8 +516,7 @@ function escapeHtml(text) {
 
 window.switchTab = switchTab;
 window.loadPoinIntegritas = loadPoinIntegritas;
-window.loadHistoryIntegritasSantri = loadHistoryIntegritasSantri;
 window.openIntegritasModal = openIntegritasModal;
 window.closeIntegritasModal = closeIntegritasModal;
-window.submitIntegritasSantri = submitIntegritasSantri;
 window.hapusIntegritasSantri = hapusIntegritasSantri;
+window.closeDetailModal = closeDetailModal;
