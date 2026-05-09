@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import Evaluation, EvaluationComment
+from .models import (
+    Evaluation, EvaluationComment, PoinIntegritas,
+    PenilaianIntegritasSantri, PenilaianIntegritasGuru
+)
 from apps.students.models import Student
 
 
@@ -198,3 +201,60 @@ class EvaluationCommentCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return EvaluationComment.objects.create(**validated_data)
+
+
+class PoinIntegritasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PoinIntegritas
+        fields = ['id', 'nama', 'urutan', 'is_active', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class PenilaianIntegritasSantriSerializer(serializers.ModelSerializer):
+    penilai_name = serializers.SerializerMethodField()
+    poin_nama = serializers.SerializerMethodField()
+    santri_nama = serializers.SerializerMethodField()
+    santri_nisn = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PenilaianIntegritasSantri
+        fields = [
+            'id', 'penilai', 'penilai_name', 'santri', 'santri_nisn', 'santri_nama',
+            'poin', 'poin_nama', 'skala', 'catatan', 'tanggal'
+        ]
+        read_only_fields = ['id', 'penilai_name', 'poin_nama', 'santri_nama', 'santri_nisn', 'tanggal']
+
+    def get_penilai_name(self, obj):
+        return obj.penilai.name or obj.penilai.username if obj.penilai else ''
+
+    def get_poin_nama(self, obj):
+        return obj.poin.nama if obj.poin else ''
+
+    def get_santri_nama(self, obj):
+        return obj.santri.nama if obj.santri else ''
+
+    def get_santri_nisn(self, obj):
+        return obj.santri.nisn if obj.santri else ''
+
+
+class PenilaianIntegritasGuruSerializer(serializers.ModelSerializer):
+    penilai_name = serializers.SerializerMethodField()
+    poin_nama = serializers.SerializerMethodField()
+    guru_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PenilaianIntegritasGuru
+        fields = [
+            'id', 'penilai', 'penilai_name', 'guru', 'guru_name',
+            'poin', 'poin_nama', 'skala', 'catatan', 'tanggal'
+        ]
+        read_only_fields = ['id', 'penilai_name', 'poin_nama', 'guru_name', 'tanggal']
+
+    def get_penilai_name(self, obj):
+        return obj.penilai.name or obj.penilai.username if obj.penilai else ''
+
+    def get_poin_nama(self, obj):
+        return obj.poin.nama if obj.poin else ''
+
+    def get_guru_name(self, obj):
+        return obj.guru.name or obj.guru.username if obj.guru else ''

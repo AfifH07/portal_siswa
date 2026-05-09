@@ -18,4 +18,10 @@ urlpatterns = [
     # PERUBAHAN 5: Comment/Tanggapan endpoints
     path('<int:evaluation_id>/comments/', views.evaluation_comments, name='evaluation_comments'),
     path('comments/<int:comment_id>/', views.delete_comment, name='delete_comment'),
+    path('poin-integritas/', views.poin_integritas_list),
+    path('poin-integritas/<int:pk>/', views.poin_integritas_list),
+    path('integritas-santri/', views.penilaian_integritas_santri),
+    path('integritas-santri/<int:pk>/', views.penilaian_integritas_santri_delete),
+    path('integritas-guru/', views.penilaian_integritas_guru),
+    path('integritas-guru/<int:pk>/', views.penilaian_integritas_guru_delete),
 ]

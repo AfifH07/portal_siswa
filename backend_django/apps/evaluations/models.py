@@ -161,3 +161,81 @@ class EvaluationComment(models.Model):
 
     def __str__(self):
         return f"{self.get_jenis_display()} oleh {self.user.name or self.user.username} ({self.created_at})"
+
+
+class PoinIntegritas(models.Model):
+    nama = models.CharField(max_length=100)
+    urutan = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['urutan', 'nama']
+
+    def __str__(self):
+        return self.nama
+
+
+class PenilaianIntegritasSantri(models.Model):
+    SKALA_CHOICES = [
+        (1, '1'),
+        (2, '2'),
+        (3, '3'),
+        (4, '4'),
+        (5, '5'),
+    ]
+
+    penilai = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='penilaian_integritas_santri_dibuat'
+    )
+    santri = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name='penilaian_integritas'
+    )
+    poin = models.ForeignKey(PoinIntegritas, on_delete=models.CASCADE)
+    skala = models.IntegerField(choices=SKALA_CHOICES)
+    catatan = models.TextField(blank=True, default='')
+    tanggal = models.DateField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-tanggal', '-id']
+
+    def __str__(self):
+        return f"{self.santri} - {self.poin} - {self.skala}"
+
+
+class PenilaianIntegritasGuru(models.Model):
+    SKALA_CHOICES = [
+        (1, '1'),
+        (2, '2'),
+        (3, '3'),
+        (4, '4'),
+        (5, '5'),
+    ]
+
+    penilai = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='penilaian_integritas_guru_dibuat'
+    )
+    guru = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='penilaian_integritas_diterima'
+    )
+    poin = models.ForeignKey(PoinIntegritas, on_delete=models.CASCADE)
+    skala = models.IntegerField(choices=SKALA_CHOICES)
+    catatan = models.TextField(blank=True, default='')
+    tanggal = models.DateField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-tanggal', '-id']
+
+    def __str__(self):
+        return f"{self.guru} - {self.poin} - {self.skala}"

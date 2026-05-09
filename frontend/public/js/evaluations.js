@@ -185,6 +185,9 @@ async function loadCurrentUser() {
         localStorage.setItem('user', JSON.stringify(currentUser));
 
         initializeViews();
+        window.dispatchEvent(new CustomEvent('evaluations:user-ready', {
+            detail: currentUser
+        }));
     } catch (error) {
         console.error('Error loading user:', error);
         showToast('Gagal memuat data pengguna', 'error');

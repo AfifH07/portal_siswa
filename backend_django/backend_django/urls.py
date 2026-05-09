@@ -26,6 +26,7 @@ urlpatterns = [
     path('grades/', TemplateView.as_view(template_name='grades.html')),          # Akademik
     path('hafalan/', TemplateView.as_view(template_name='hafalan.html'), name='hafalan'),
     path('evaluations/', TemplateView.as_view(template_name='evaluations.html')),
+    path('evaluasi-guru/', TemplateView.as_view(template_name='evaluasi-guru.html')),
     path('registration/', TemplateView.as_view(template_name='registration.html')),
     path('finance/', TemplateView.as_view(template_name='finance.html')),        # Tagihan
     path('users/', TemplateView.as_view(template_name='users.html')),

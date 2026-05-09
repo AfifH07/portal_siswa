@@ -8,13 +8,18 @@ from django.db.models import Q
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 
-from .models import Evaluation, EvaluationComment
+from .models import (
+    Evaluation, EvaluationComment, PoinIntegritas,
+    PenilaianIntegritasSantri, PenilaianIntegritasGuru
+)
 from .serializers import (
     EvaluationSerializer, EvaluationCreateSerializer,
-    EvaluationCommentSerializer, EvaluationCommentCreateSerializer
+    EvaluationCommentSerializer, EvaluationCommentCreateSerializer,
+    PoinIntegritasSerializer, PenilaianIntegritasSantriSerializer,
+    PenilaianIntegritasGuruSerializer
 )
 from apps.accounts.permissions import IsSuperAdmin, IsPimpinan, IsGuru, IsWalisantri
-from apps.accounts.models import Assignment
+from apps.accounts.models import Assignment, User
 from apps.students.models import Student
 
 
@@ -730,3 +735,229 @@ def close_evaluation(request, pk):
             'closed_at': evaluation.closed_at.isoformat()
         }
     })
+
+
+# =============================================================
+# INTEGRITAS
+# =============================================================
+
+def _is_point_manager(user):
+    return user.role in ['superadmin', 'admin', 'pimpinan']
+
+
+def _can_score_santri(user):
+    return user.role in ['superadmin', 'admin', 'pimpinan', 'guru', 'musyrif']
+
+
+def _get_assigned_classes(user):
+    return list(
+        Assignment.objects.filter(
+            user=user,
+            status='active'
+        ).exclude(
+            kelas__isnull=True
+        ).exclude(
+            kelas__exact=''
+        ).values_list('kelas', flat=True).distinct()
+    )
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def poin_integritas_list(request, pk=None):
+    if request.method == 'GET':
+        if pk is not None:
+            poin = get_object_or_404(PoinIntegritas, pk=pk)
+            return Response({'success': True, 'data': PoinIntegritasSerializer(poin).data})
+
+        queryset = PoinIntegritas.objects.filter(is_active=True).order_by('urutan', 'nama')
+        serializer = PoinIntegritasSerializer(queryset, many=True)
+        return Response({'success': True, 'count': queryset.count(), 'data': serializer.data})
+
+    if not _is_point_manager(request.user):
+        return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'POST':
+        nama = (request.data.get('nama') or '').strip()
+        urutan = request.data.get('urutan', 0)
+        if not nama:
+            return Response({'success': False, 'message': 'Nama wajib diisi'}, status=status.HTTP_400_BAD_REQUEST)
+
+        poin = PoinIntegritas.objects.create(
+            nama=nama,
+            urutan=int(urutan or 0),
+            is_active=True
+        )
+        return Response({'success': True, 'message': 'Poin berhasil ditambahkan', 'data': PoinIntegritasSerializer(poin).data}, status=status.HTTP_201_CREATED)
+
+    poin = get_object_or_404(PoinIntegritas, pk=pk)
+
+    if request.method == 'PUT':
+        nama = (request.data.get('nama') or poin.nama).strip()
+        urutan = request.data.get('urutan', poin.urutan)
+        poin.nama = nama
+        poin.urutan = int(urutan or 0)
+        poin.save()
+        return Response({'success': True, 'message': 'Poin berhasil diperbarui', 'data': PoinIntegritasSerializer(poin).data})
+
+    if request.method == 'DELETE':
+        poin.is_active = False
+        poin.save(update_fields=['is_active'])
+        return Response({'success': True, 'message': 'Poin berhasil dihapus'})
+
+    return Response({'success': False, 'message': 'Method tidak didukung'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def penilaian_integritas_santri(request):
+    user = request.user
+
+    if request.method == 'GET':
+        if user.role == 'walisantri':
+            return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = PenilaianIntegritasSantri.objects.select_related('penilai', 'poin', 'santri')
+        santri_nisn = request.query_params.get('santri_nisn')
+
+        if user.role in ['guru', 'musyrif']:
+            allowed_classes = _get_assigned_classes(user)
+            if not allowed_classes:
+                queryset = queryset.none()
+            else:
+                queryset = queryset.filter(santri__kelas__in=allowed_classes)
+                if santri_nisn:
+                    try:
+                        student = Student.objects.get(nisn=santri_nisn)
+                    except Student.DoesNotExist:
+                        return Response({'success': True, 'count': 0, 'data': []})
+                    if student.kelas not in allowed_classes:
+                        return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+                    queryset = queryset.filter(santri__nisn=santri_nisn)
+        else:
+            if santri_nisn:
+                queryset = queryset.filter(santri__nisn=santri_nisn)
+
+        serializer = PenilaianIntegritasSantriSerializer(queryset.order_by('-tanggal', '-id'), many=True)
+        return Response({'success': True, 'count': queryset.count(), 'data': serializer.data})
+
+    if not _can_score_santri(user):
+        return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+
+    santri_nisn = request.data.get('santri_nisn')
+    poin_id = request.data.get('poin_id')
+    skala = request.data.get('skala')
+    catatan = request.data.get('catatan', '')
+
+    if not santri_nisn or not poin_id or not skala:
+        return Response({'success': False, 'message': 'Data wajib belum lengkap'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        santri = Student.objects.get(nisn=santri_nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Santri tidak ditemukan'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if user.role in ['guru', 'musyrif']:
+        allowed_classes = _get_assigned_classes(user)
+        if santri.kelas not in allowed_classes:
+            return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        skala = int(skala)
+    except (TypeError, ValueError):
+        return Response({'success': False, 'message': 'Skala tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if skala < 1 or skala > 5:
+        return Response({'success': False, 'message': 'Skala harus 1 sampai 5'}, status=status.HTTP_400_BAD_REQUEST)
+
+    poin = get_object_or_404(PoinIntegritas, pk=poin_id, is_active=True)
+
+    penilaian = PenilaianIntegritasSantri.objects.create(
+        penilai=user,
+        santri=santri,
+        poin=poin,
+        skala=skala,
+        catatan=catatan or ''
+    )
+    return Response({
+        'success': True,
+        'message': 'Penilaian berhasil disimpan',
+        'data': PenilaianIntegritasSantriSerializer(penilaian).data
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def penilaian_integritas_santri_delete(request, pk):
+    user = request.user
+    penilaian = get_object_or_404(PenilaianIntegritasSantri, pk=pk)
+
+    if penilaian.penilai_id != user.id and user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+
+    penilaian.delete()
+    return Response({'success': True, 'message': 'Penilaian berhasil dihapus'})
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def penilaian_integritas_guru(request):
+    user = request.user
+
+    if request.method == 'GET':
+        if user.role == 'guru':
+            return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = PenilaianIntegritasGuru.objects.select_related('penilai', 'guru', 'poin')
+        guru_id = request.query_params.get('guru_id')
+        if guru_id:
+            queryset = queryset.filter(guru_id=guru_id)
+        serializer = PenilaianIntegritasGuruSerializer(queryset.order_by('-tanggal', '-id'), many=True)
+        return Response({'success': True, 'count': queryset.count(), 'data': serializer.data})
+
+    if user.role not in ['superadmin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+
+    guru_id = request.data.get('guru_id')
+    poin_id = request.data.get('poin_id')
+    skala = request.data.get('skala')
+    catatan = request.data.get('catatan', '')
+
+    if not guru_id or not poin_id or not skala:
+        return Response({'success': False, 'message': 'Data wajib belum lengkap'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        skala = int(skala)
+    except (TypeError, ValueError):
+        return Response({'success': False, 'message': 'Skala tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if skala < 1 or skala > 5:
+        return Response({'success': False, 'message': 'Skala harus 1 sampai 5'}, status=status.HTTP_400_BAD_REQUEST)
+
+    guru = get_object_or_404(User, pk=guru_id, role='guru')
+    poin = get_object_or_404(PoinIntegritas, pk=poin_id, is_active=True)
+
+    penilaian = PenilaianIntegritasGuru.objects.create(
+        penilai=user,
+        guru=guru,
+        poin=poin,
+        skala=skala,
+        catatan=catatan or ''
+    )
+    return Response({
+        'success': True,
+        'message': 'Penilaian berhasil disimpan',
+        'data': PenilaianIntegritasGuruSerializer(penilaian).data
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def penilaian_integritas_guru_delete(request, pk):
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+
+    penilaian = get_object_or_404(PenilaianIntegritasGuru, pk=pk)
+    penilaian.delete()
+    return Response({'success': True, 'message': 'Penilaian berhasil dihapus'})

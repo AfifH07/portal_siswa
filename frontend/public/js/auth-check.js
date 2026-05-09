@@ -241,9 +241,9 @@ function getAllowedPages(role) {
 
     // Fallback: hardcoded defaults (kept in sync with backend)
     const roleAccess = {
-        'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
-        'admin': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
-        'pimpinan': ['/','/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/timetable', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
+        'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/evaluasi-guru', '/registration', '/finance', '/users', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
+        'admin': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/evaluasi-guru', '/finance', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
+        'pimpinan': ['/','/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/evaluasi-guru', '/finance', '/timetable', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
         'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/timetable', '/inval', '/evaluasi-asatidz', '/case-management', '/kelas-saya'],
         'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/timetable', '/inval', '/evaluasi-asatidz', '/case-management'],
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/timetable', '/evaluasi-asatidz', '/case-management'],
@@ -401,7 +401,8 @@ function createRoleBasedNav() {
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
-                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' },
+                { href: '/evaluasi-guru', icon: 'shield-check', label: 'Evaluasi Guru' }
             ]
         },
         'admin': {
@@ -424,7 +425,8 @@ function createRoleBasedNav() {
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
-                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' },
+                { href: '/evaluasi-guru', icon: 'shield-check', label: 'Evaluasi Guru' }
             ]
         },
         'pimpinan': {
@@ -446,7 +448,8 @@ function createRoleBasedNav() {
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
-                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
+                { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' },
+                { href: '/evaluasi-guru', icon: 'shield-check', label: 'Evaluasi Guru' }
             ]
         },
         'guru': {

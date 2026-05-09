@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluasi Guru - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260509" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260509" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260509" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-role="">
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+    <a class="back-chip" href="/"><span class="arrow">←</span><span>Kembali ke Website</span></a>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Evaluasi Guru</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Evaluasi Guru</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">📅 Loading...</div>
+            <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <section class="table-section-wrap">
+            <div class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">👥</span> Daftar Guru</h3>
+                    <div class="card-badge" id="guru-count">0 data</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Username</th>
+                                <th>Kelas</th>
+                                <th>Assignment Aktif</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="guru-table-body">
+                            <tr><td colspan="5" class="text-center"><div class="loading-spinner" style="margin:20px auto;"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="guru-detail-section" style="display:none;">
+            <div class="glass-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🛡️</span> <span id="guru-detail-title">Detail Integritas</span></h3>
+                    <div class="card-badge" id="guru-integritas-count">0</div>
+                </div>
+                <div class="card-body">
+                    <div id="guru-integritas-form-container"></div>
+                    <div style="margin-top:24px;">
+                        <h4 style="margin-bottom:12px;">Riwayat Penilaian</h4>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Poin</th>
+                                        <th>Skala</th>
+                                        <th>Catatan</th>
+                                        <th>Dinilai oleh</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guru-integritas-history-body">
+                                    <tr><td colspan="6" class="text-center text-muted">Pilih guru untuk melihat riwayat.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="poin-config-section" style="display:none;">
+            <div class="glass-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">⚙️</span> Konfigurasi Poin Integritas</h3>
+                    <div class="card-badge" id="poin-count">0</div>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid" style="margin-bottom:16px;">
+                        <div class="form-group">
+                            <label>Nama Poin Baru</label>
+                            <input type="text" id="poin-baru-nama" class="glass-input" placeholder="Contoh: Jujur">
+                        </div>
+                        <div class="form-group">
+                            <label>Urutan</label>
+                            <input type="number" id="poin-baru-urutan" class="glass-input" value="0" min="0">
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:end;">
+                            <button type="button" id="btn-tambah-poin" class="btn btn-primary">Tambah Poin</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Urutan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="poin-table-body">
+                                <tr><td colspan="3" class="text-center text-muted">Memuat poin...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script src="/static/js/utils.js?v=20260509" defer></script>
+<script src="/static/js/apiConfig.js?v=20260509" defer></script>
+<script src="/static/js/apiFetch.js?v=20260509" defer></script>
+<script src="/static/js/auth-check.js?v=20260509" defer></script>
+<script src="/static/js/evaluasi-guru.js?v=20260509" defer></script>
+</body>
+</html>
