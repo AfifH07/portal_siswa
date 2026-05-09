@@ -509,10 +509,12 @@
                             </select>
                         </div>
                         <div class="form-group" style="display:flex; align-items:end;">
-                            <button type="button" id="btn-load-integritas-history" class="btn btn-secondary">Muat Riwayat</button>
+                            <button type="button" id="btn-open-integritas-modal" class="btn btn-primary">Beri Penilaian</button>
                         </div>
                     </div>
-                    <div id="integritas-form-container"></div>
+                    <div id="integritas-empty-state" class="text-muted" style="margin-bottom:16px;">
+                        Pilih santri untuk melihat riwayat penilaian integritas.
+                    </div>
                     <div style="margin-top:24px;">
                         <h4 style="margin-bottom:12px;">Riwayat Penilaian</h4>
                         <div class="table-container">
@@ -523,7 +525,7 @@
                                         <th>Poin</th>
                                         <th>Skala</th>
                                         <th>Catatan</th>
-                                        <th>Penilai</th>
+                                        <th>Dinilai Oleh</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
@@ -539,6 +541,25 @@
 
     </div><!-- /page-body -->
 </main>
+
+<!-- ===================== MODAL: INTEGRITAS SANTRI ===================== -->
+<div id="integritas-modal" class="modal">
+    <div class="modal-content glass-card modal-large">
+        <div class="modal-header">
+            <h2 id="integritas-modal-title">Penilaian Integritas</h2>
+            <button type="button" id="btn-close-integritas-modal" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="integritas-modal-body">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+        <div class="form-actions" style="padding: 0 24px 24px;">
+            <button type="button" id="btn-cancel-integritas-modal" class="btn btn-secondary">Batal</button>
+            <button type="button" id="btn-save-integritas-modal" class="btn btn-primary">Simpan</button>
+        </div>
+    </div>
+</div>
 
 <!-- ===================== MODAL: ADD/EDIT EVALUATION ===================== -->
 <div id="evaluation-modal" class="modal">

@@ -844,41 +844,25 @@ def penilaian_integritas_santri(request):
     if not _can_score_santri(user):
         return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
 
-    santri_nisn = request.data.get('santri_nisn')
-    poin_id = request.data.get('poin_id')
-    skala = request.data.get('skala')
-    catatan = request.data.get('catatan', '')
-
-    if not santri_nisn or not poin_id or not skala:
-        return Response({'success': False, 'message': 'Data wajib belum lengkap'}, status=status.HTTP_400_BAD_REQUEST)
-
     try:
-        santri = Student.objects.get(nisn=santri_nisn)
+        santri = Student.objects.get(nisn=request.data.get('santri_nisn'))
     except Student.DoesNotExist:
-        return Response({'success': False, 'message': 'Santri tidak ditemukan'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'success': False, 'message': 'Santri tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
 
     if user.role in ['guru', 'musyrif']:
         allowed_classes = _get_assigned_classes(user)
         if santri.kelas not in allowed_classes:
             return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
 
-    try:
-        skala = int(skala)
-    except (TypeError, ValueError):
-        return Response({'success': False, 'message': 'Skala tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
+    serializer = PenilaianIntegritasSantriSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response({
+            'success': False,
+            'message': 'Data tidak valid',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-    if skala < 1 or skala > 5:
-        return Response({'success': False, 'message': 'Skala harus 1 sampai 5'}, status=status.HTTP_400_BAD_REQUEST)
-
-    poin = get_object_or_404(PoinIntegritas, pk=poin_id, is_active=True)
-
-    penilaian = PenilaianIntegritasSantri.objects.create(
-        penilai=user,
-        santri=santri,
-        poin=poin,
-        skala=skala,
-        catatan=catatan or ''
-    )
+    penilaian = serializer.save(penilai=user)
     return Response({
         'success': True,
         'message': 'Penilaian berhasil disimpan',

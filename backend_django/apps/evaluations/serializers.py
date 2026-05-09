@@ -211,18 +211,50 @@ class PoinIntegritasSerializer(serializers.ModelSerializer):
 
 
 class PenilaianIntegritasSantriSerializer(serializers.ModelSerializer):
+    santri = serializers.CharField(source='santri.nisn', read_only=True)
+    poin = serializers.IntegerField(source='poin.id', read_only=True)
+    santri_nisn = serializers.CharField(write_only=True)
+    poin_id = serializers.IntegerField(write_only=True)
     penilai_name = serializers.SerializerMethodField()
     poin_nama = serializers.SerializerMethodField()
     santri_nama = serializers.SerializerMethodField()
-    santri_nisn = serializers.SerializerMethodField()
 
     class Meta:
         model = PenilaianIntegritasSantri
         fields = [
             'id', 'penilai', 'penilai_name', 'santri', 'santri_nisn', 'santri_nama',
-            'poin', 'poin_nama', 'skala', 'catatan', 'tanggal'
+            'poin', 'poin_id', 'poin_nama', 'skala', 'catatan', 'tanggal'
         ]
-        read_only_fields = ['id', 'penilai_name', 'poin_nama', 'santri_nama', 'santri_nisn', 'tanggal']
+        read_only_fields = ['id', 'penilai_name', 'poin_nama', 'santri_nama', 'tanggal']
+
+    def validate_santri_nisn(self, value):
+        value = (value or '').strip()
+        if not value:
+            raise serializers.ValidationError('NISN santri wajib diisi')
+        if not Student.objects.filter(nisn=value).exists():
+            raise serializers.ValidationError('Santri tidak ditemukan')
+        return value
+
+    def validate_poin_id(self, value):
+        if not PoinIntegritas.objects.filter(pk=value, is_active=True).exists():
+            raise serializers.ValidationError('Poin integritas tidak ditemukan')
+        return value
+
+    def validate_skala(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError('Skala harus 1 sampai 5')
+        return value
+
+    def create(self, validated_data):
+        santri_nisn = validated_data.pop('santri_nisn', '')
+        poin_id = validated_data.pop('poin_id', None)
+        santri = Student.objects.get(nisn=santri_nisn)
+        poin = PoinIntegritas.objects.get(pk=poin_id, is_active=True)
+        return PenilaianIntegritasSantri.objects.create(
+            santri=santri,
+            poin=poin,
+            **validated_data
+        )
 
     def get_penilai_name(self, obj):
         return obj.penilai.name or obj.penilai.username if obj.penilai else ''
@@ -232,9 +264,6 @@ class PenilaianIntegritasSantriSerializer(serializers.ModelSerializer):
 
     def get_santri_nama(self, obj):
         return obj.santri.nama if obj.santri else ''
-
-    def get_santri_nisn(self, obj):
-        return obj.santri.nisn if obj.santri else ''
 
 
 class PenilaianIntegritasGuruSerializer(serializers.ModelSerializer):
