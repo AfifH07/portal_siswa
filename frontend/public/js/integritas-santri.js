@@ -357,6 +357,10 @@ function renderLatestCards(latestPerPoin) {
 }
 
 function renderHistoryTable(records) {
+    const user = integritasSantriState.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
+    const userRole = window.userRole || user.role || '';
+    const canDelete = ['superadmin', 'admin', 'pimpinan'].includes(userRole);
+
     if (records.length === 0) {
         return '<p class="text-muted">Belum ada penilaian integritas untuk santri ini.</p>';
     }
@@ -389,7 +393,9 @@ function renderHistoryTable(records) {
                                 <td>${escapeHtml(item.catatan || '—')}</td>
                                 <td>${escapeHtml(item.penilai_name || '—')}</td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-outline" data-delete-integritas="${item.id}">Hapus</button>
+                                    ${canDelete
+                                        ? `<button type="button" class="btn btn-sm btn-outline" data-delete-integritas="${item.id}">Hapus</button>`
+                                        : '—'}
                                 </td>
                             </tr>
                         `).join('')}
@@ -437,7 +443,12 @@ async function openIntegritasModal() {
     const student = getStudentByNisn(nisn);
     const title = document.getElementById('integritas-modal-title');
     const body = document.getElementById('integritas-modal-body');
+    const modalContent = document.querySelector('#integritas-modal .modal-content');
     if (title) title.textContent = `Penilaian Integritas — ${student?.nama || student?.name || nisn}`;
+    if (modalContent) {
+        modalContent.style.overflowY = 'auto';
+        modalContent.style.maxHeight = '80vh';
+    }
 
     if (body) {
         if (integritasSantriState.poin.length === 0) {
