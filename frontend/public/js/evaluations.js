@@ -302,10 +302,7 @@ function updateActiveFiltersDisplay(search, jenis, kelas, kategori) {
 
 async function loadStatistics() {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/statistics/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch('/evaluations/statistics/');
 
         if (!response.ok) throw new Error('Failed to load statistics');
 
@@ -317,6 +314,12 @@ async function loadStatistics() {
             animateValue('total-prestasi', stats.total_prestasi);
             animateValue('total-pelanggaran', stats.total_pelanggaran);
             animateValue('evaluations-this-month', stats.evaluations_this_month);
+
+            if ((stats.total_evaluations || 0) === 0 &&
+                (stats.total_prestasi || 0) === 0 &&
+                (stats.total_pelanggaran || 0) === 0) {
+                await loadStatisticsFallback();
+            }
 
             // Update top kategori
             const topKategori = findTopCategory(stats.by_category || {});
@@ -332,6 +335,28 @@ async function loadStatistics() {
         }
     } catch (error) {
         console.error('Error loading statistics:', error);
+        await loadStatisticsFallback();
+    }
+}
+
+async function loadStatisticsFallback() {
+    try {
+        const response = await window.apiFetch('/evaluations/?page=1&page_size=1000');
+        if (!response || !response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+        const records = data.results || data.data || [];
+        const totalEvaluations = data.count || records.length || 0;
+        const totalPrestasi = records.filter(item => item.jenis === 'prestasi').length;
+        const totalPelanggaran = records.filter(item => item.jenis === 'pelanggaran').length;
+
+        animateValue('total-evaluations', totalEvaluations);
+        animateValue('total-prestasi', totalPrestasi);
+        animateValue('total-pelanggaran', totalPelanggaran);
+    } catch (fallbackError) {
+        console.error('Error loading statistics fallback:', fallbackError);
     }
 }
 

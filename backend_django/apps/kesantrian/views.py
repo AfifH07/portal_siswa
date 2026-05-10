@@ -1755,12 +1755,14 @@ def incident_summary(request):
     if siswa_nisn:
         queryset = queryset.filter(siswa__nisn=siswa_nisn)
 
-    # Monthly stats
+    # Stats aligned with incident list: totals should reflect the full accessible queryset
     monthly_incidents = queryset.filter(created_at__date__gte=month_start)
     total_bulan_ini = monthly_incidents.count()
-    total_resolved = monthly_incidents.filter(status='resolved').count()
-    total_open = monthly_incidents.filter(status='open').count()
-    total_in_discussion = monthly_incidents.filter(status='in_discussion').count()
+    total_resolved = queryset.filter(status='resolved').count()
+    total_open = queryset.filter(status='open').count()
+    total_in_discussion = queryset.filter(
+        Q(status='in_discussion') | Q(status='dalam_pembahasan')
+    ).count()
 
     # Count by kategori
     by_kategori = dict(
