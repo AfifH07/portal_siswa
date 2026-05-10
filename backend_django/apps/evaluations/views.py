@@ -49,32 +49,21 @@ def get_filtered_queryset_for_user(user, base_queryset=None):
     elif user.role == 'bk':
         queryset = queryset.filter(is_approved=True)
 
-    # musyrif: lihat is_approved=True untuk santri di halaqoh yang dia handle
-    # Note: Untuk implementasi penuh perlu model HalaqohAssignment
-    # Sementara: musyrif lihat semua yang approved
-    elif user.role == 'musyrif':
-        queryset = queryset.filter(is_approved=True)
-
-    # guru (wali kelas): is_approved=True AND nisn__kelas IN wali_classes OR created_by=user
-    # guru (bukan wali kelas): created_by=user SAJA
-    elif user.role == 'guru':
-        own_cases = Q(created_by=user)
-
-        wali_assignments = Assignment.objects.filter(
+    # guru/musyrif: lihat semua evaluasi untuk santri di kelas assignment aktif mereka
+    elif user.role in ['guru', 'musyrif']:
+        assigned_classes = Assignment.objects.filter(
             user=user,
-            assignment_type='wali_kelas',
             status='active'
-        ).values_list('kelas', flat=True)
+        ).exclude(
+            kelas__isnull=True
+        ).exclude(
+            kelas__exact=''
+        ).values_list('kelas', flat=True).distinct()
 
-        if wali_assignments.exists():
-            wali_cases = Q(
-                nisn__kelas__in=list(wali_assignments),
-                is_approved=True
-            )
-            queryset = queryset.filter(own_cases | wali_cases)
+        if assigned_classes.exists():
+            queryset = queryset.filter(nisn__kelas__in=list(assigned_classes))
         else:
-            # Guru biasa tanpa wali kelas: hanya lihat kasus yang dia buat
-            queryset = queryset.filter(own_cases)
+            queryset = queryset.none()
 
     # walisantri: nisn__nisn__in=linked_nisns AND is_approved=True
     elif user.role == 'walisantri':
