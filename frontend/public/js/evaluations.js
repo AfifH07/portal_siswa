@@ -19,6 +19,7 @@ let comparisonChart = null;
 let trendChart = null;
 let allStudents = [];
 let currentWizardStep = 1;
+let statisticsLoaded = false;
 
 // Category Icons
 const KATEGORI_ICONS = {
@@ -302,7 +303,10 @@ function updateActiveFiltersDisplay(search, jenis, kelas, kategori) {
 
 async function loadStatistics() {
     try {
-        const response = await window.apiFetch('/evaluations/statistics/');
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/evaluations/statistics/`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
         if (!response.ok) throw new Error('Failed to load statistics');
 
@@ -314,6 +318,7 @@ async function loadStatistics() {
             animateValue('total-prestasi', stats.total_prestasi);
             animateValue('total-pelanggaran', stats.total_pelanggaran);
             animateValue('evaluations-this-month', stats.evaluations_this_month);
+            statisticsLoaded = true;
 
             if ((stats.total_evaluations || 0) === 0 &&
                 (stats.total_prestasi || 0) === 0 &&
@@ -341,20 +346,35 @@ async function loadStatistics() {
 
 async function loadStatisticsFallback() {
     try {
-        const response = await window.apiFetch('/evaluations/?page=1&page_size=1000');
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/evaluations/?page=1&page_size=100`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         if (!response || !response.ok) {
             return;
         }
 
         const data = await response.json();
-        const records = data.results || data.data || [];
+        let records = data.results || data.data || [];
         const totalEvaluations = data.count || records.length || 0;
+        const totalPagesFallback = Math.max(1, Math.ceil(totalEvaluations / 100));
+
+        for (let page = 2; page <= totalPagesFallback; page++) {
+            const pageResponse = await fetch(`/api/evaluations/?page=${page}&page_size=100`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!pageResponse.ok) break;
+            const pageData = await pageResponse.json();
+            records = records.concat(pageData.results || pageData.data || []);
+        }
+
         const totalPrestasi = records.filter(item => item.jenis === 'prestasi').length;
         const totalPelanggaran = records.filter(item => item.jenis === 'pelanggaran').length;
 
         animateValue('total-evaluations', totalEvaluations);
         animateValue('total-prestasi', totalPrestasi);
         animateValue('total-pelanggaran', totalPelanggaran);
+        statisticsLoaded = true;
     } catch (fallbackError) {
         console.error('Error loading statistics fallback:', fallbackError);
     }
@@ -672,6 +692,11 @@ async function loadEvaluations(page = 1) {
             totalPages = Math.ceil(data.count / 25);
             renderEvaluationsTable();
             updatePagination();
+            if (!statisticsLoaded && currentEvaluations.length > 0) {
+                animateValue('total-evaluations', totalCount || currentEvaluations.length);
+                animateValue('total-prestasi', currentEvaluations.filter(item => item.jenis === 'prestasi').length);
+                animateValue('total-pelanggaran', currentEvaluations.filter(item => item.jenis === 'pelanggaran').length);
+            }
         } else {
             currentEvaluations = [];
             renderEvaluationsTable();
