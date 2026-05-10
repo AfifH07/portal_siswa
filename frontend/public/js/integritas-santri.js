@@ -238,7 +238,7 @@ function renderSantriTable(list) {
     }
 
     if (empty) {
-        empty.textContent = 'Klik "Lihat Detail" untuk melihat riwayat penilaian integritas per santri.';
+        empty.textContent = 'Klik "Detail" untuk melihat riwayat penilaian integritas per santri.';
         empty.style.display = '';
     }
     tbody.innerHTML = sorted.map(s => {
@@ -252,7 +252,7 @@ function renderSantriTable(list) {
                 <td>${meta.last_date ? escapeHtml(formatDate(meta.last_date)) : '—'}</td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline" data-action="lihat-detail" data-nisn="${escapeHtml(s.nisn)}">
-                        Lihat Detail
+                        Detail
                     </button>
                 </td>
             </tr>
@@ -287,54 +287,139 @@ async function openDetailModal(nisn) {
     if (body) body.innerHTML = '<div class="loading-spinner" style="margin:20px auto;"></div>';
 
     document.getElementById('integritas-detail-modal')?.classList.add('show');
-    renderDetailContent();
+    await renderDetailContent();
 }
 
-function renderDetailContent() {
+async function fetchHistoryByNisn(nisn) {
+    const response = await window.apiFetch(`/evaluations/integritas-santri/?santri_nisn=${encodeURIComponent(nisn)}`);
+    const result = await response.json();
+    if (!response.ok || result.success === false) {
+        throw new Error(result.message || 'Gagal memuat riwayat penilaian');
+    }
+    return result.data || [];
+}
+
+function getLatestPerPoin(riwayat, poinList) {
+    const result = {};
+    poinList.forEach(poin => {
+        const records = riwayat
+            .filter(r => r.poin === poin.id || r.poin_nama === poin.nama)
+            .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+        result[poin.id] = records.length > 0 ? records[0] : null;
+    });
+    return result;
+}
+
+function getScoreBadgeStyle(skala) {
+    if (skala === 5) {
+        return 'background:var(--color-background-success); color:var(--color-text-success);';
+    }
+    if (skala === 4) {
+        return 'background:var(--color-background-info); color:var(--color-text-info);';
+    }
+    if (skala === 3) {
+        return 'background:var(--color-background-warning); color:var(--color-text-warning);';
+    }
+    return 'background:var(--color-background-danger); color:var(--color-text-danger);';
+}
+
+function renderLatestCards(latestPerPoin) {
+    if (integritasSantriState.poin.length === 0) {
+        return '<p class="text-muted">Poin integritas belum tersedia.</p>';
+    }
+
+    return `
+        <p style="font-size:12px; color:var(--color-text-secondary); margin: 0 0 10px;">
+            Menampilkan nilai terbaru per poin dari seluruh penilai
+        </p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px;">
+            ${integritasSantriState.poin.map(poin => {
+                const record = latestPerPoin[poin.id];
+                const skala = record?.skala || 0;
+                const width = Math.max(0, Math.min(100, (skala / 5) * 100));
+                return `
+                    <div style="background:var(--color-background-secondary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); padding:12px;">
+                        <p style="font-size:11px; color:var(--color-text-secondary); margin:0 0 6px;">${escapeHtml(poin.nama)}</p>
+                        <p style="font-size:22px; font-weight:500; margin:0; color:${record ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'};">
+                            ${record ? escapeHtml(String(skala)) + '<span style="font-size:12px; color:var(--color-text-secondary);">/5</span>' : '—'}
+                        </p>
+                        <div style="height:4px; background:var(--color-border-tertiary); border-radius:2px; margin-top:8px;">
+                            <div style="height:4px; background:#1d9e75; border-radius:2px; width:${width}%;"></div>
+                        </div>
+                        <p style="font-size:10px; color:var(--color-text-secondary); margin:6px 0 0;">
+                            ${record ? `${escapeHtml(record.penilai_name || '—')} · ${escapeHtml(formatDate(record.tanggal))}` : 'belum dinilai'}
+                        </p>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function renderHistoryTable(records) {
+    if (records.length === 0) {
+        return '<p class="text-muted">Belum ada penilaian integritas untuk santri ini.</p>';
+    }
+
+    return `
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--color-border-tertiary);">
+            <div style="font-size:13px; font-weight:500; margin-bottom:10px;">Riwayat semua penilaian</div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Poin</th>
+                            <th>Skala</th>
+                            <th>Catatan</th>
+                            <th>Dinilai Oleh</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${records.map(item => `
+                            <tr>
+                                <td>${escapeHtml(formatDate(item.tanggal))}</td>
+                                <td>${escapeHtml(item.poin_nama || '-')}</td>
+                                <td>
+                                    <span style="${getScoreBadgeStyle(Number(item.skala))} padding:2px 10px; border-radius:var(--border-radius-md); font-size:12px; display:inline-block;">
+                                        ${escapeHtml(String(item.skala || '-'))}
+                                    </span>
+                                </td>
+                                <td>${escapeHtml(item.catatan || '—')}</td>
+                                <td>${escapeHtml(item.penilai_name || '—')}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline" data-delete-integritas="${item.id}">Hapus</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+async function renderDetailContent() {
     const body = document.getElementById('integritas-detail-body');
     const nisn = integritasSantriState.currentSantriNisn;
     if (!body || !nisn) return;
 
-    const records = getRecordsByNisn(nisn);
-    if (records.length === 0) {
-        body.innerHTML = '<p class="text-muted">Belum ada penilaian integritas untuk santri ini.</p>';
-        return;
+    try {
+        const records = await fetchHistoryByNisn(nisn);
+        const latestPerPoin = getLatestPerPoin(records, integritasSantriState.poin);
+
+        body.innerHTML = `
+            ${renderLatestCards(latestPerPoin)}
+            ${renderHistoryTable(records)}
+        `;
+
+        body.querySelectorAll('[data-delete-integritas]').forEach(btn => {
+            btn.onclick = () => hapusIntegritasSantri(parseInt(btn.getAttribute('data-delete-integritas'), 10));
+        });
+    } catch (err) {
+        body.innerHTML = `<p class="text-muted">${escapeHtml(err.message || 'Gagal memuat detail penilaian.')}</p>`;
     }
-
-    body.innerHTML = `
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Poin</th>
-                        <th>Skala</th>
-                        <th>Catatan</th>
-                        <th>Dinilai Oleh</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${records.map(item => `
-                        <tr>
-                            <td>${escapeHtml(formatDate(item.tanggal))}</td>
-                            <td>${escapeHtml(item.poin_nama || '-')}</td>
-                            <td><span class="status-badge badge-blue">${escapeHtml(String(item.skala || '-'))}</span></td>
-                            <td>${escapeHtml(item.catatan || '-')}</td>
-                            <td>${escapeHtml(item.penilai_name || '—')}</td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-outline" data-delete-integritas="${item.id}">Hapus</button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-
-    body.querySelectorAll('[data-delete-integritas]').forEach(btn => {
-        btn.onclick = () => hapusIntegritasSantri(parseInt(btn.getAttribute('data-delete-integritas'), 10));
-    });
 }
 
 function closeDetailModal() {
