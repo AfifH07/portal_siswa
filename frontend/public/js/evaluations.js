@@ -167,9 +167,7 @@ async function loadCurrentUser() {
             return;
         }
 
-        const response = await fetch(`/api/users/me/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch('/users/me/');
 
         if (!response.ok) throw new Error('Failed to load user');
 
@@ -226,11 +224,7 @@ function switchView(view) {
 
 async function loadFilters() {
     try {
-        const token = localStorage.getItem('access_token');
-
-        const classResponse = await fetch(`/api/students/classes/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const classResponse = await window.apiFetch('/students/classes/');
 
         if (classResponse.ok) {
             const data = await classResponse.json();
@@ -254,9 +248,7 @@ async function loadFilters() {
             }
         }
 
-        const studentsResponse = await fetch(`/api/students/?page_size=1000`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const studentsResponse = await window.apiFetch('/students/?page_size=1000');
 
         if (studentsResponse.ok) {
             const data = await studentsResponse.json();
@@ -303,10 +295,7 @@ function updateActiveFiltersDisplay(search, jenis, kelas, kategori) {
 
 async function loadStatistics() {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/statistics/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch('/evaluations/statistics/');
 
         if (!response.ok) throw new Error('Failed to load statistics');
 
@@ -346,10 +335,7 @@ async function loadStatistics() {
 
 async function loadStatisticsFallback() {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/?page=1&page_size=100`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch('/evaluations/?page=1&page_size=100');
         if (!response || !response.ok) {
             return;
         }
@@ -360,9 +346,7 @@ async function loadStatisticsFallback() {
         const totalPagesFallback = Math.max(1, Math.ceil(totalEvaluations / 100));
 
         for (let page = 2; page <= totalPagesFallback; page++) {
-            const pageResponse = await fetch(`/api/evaluations/?page=${page}&page_size=100`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const pageResponse = await window.apiFetch(`/evaluations/?page=${page}&page_size=100`);
             if (!pageResponse.ok) break;
             const pageData = await pageResponse.json();
             records = records.concat(pageData.results || pageData.data || []);
@@ -663,7 +647,7 @@ async function loadEvaluations(page = 1) {
     const kelas = document.getElementById('filter-class')?.value || '';
     const kategori = document.getElementById('filter-kategori')?.value || '';
 
-    let url = `/api/evaluations/?page=${page}`;
+    let url = `/evaluations/?page=${page}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (jenis) url += `&jenis=${encodeURIComponent(jenis)}`;
     if (kelas) url += `&kelas=${encodeURIComponent(kelas)}`;
@@ -677,10 +661,7 @@ async function loadEvaluations(page = 1) {
             tbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="loading-spinner"></div></td></tr>`;
         }
 
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch(url);
 
         if (!response.ok) throw new Error('Failed to load evaluations');
 
@@ -856,10 +837,7 @@ function goToWizardStep(step) {
 
 async function editEvaluation(id) {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/${id}/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch(`/evaluations/${id}/`);
 
         if (!response.ok) throw new Error('Failed to load evaluation');
 
@@ -1004,19 +982,16 @@ async function handleFormSubmit(e) {
     }
 
     try {
-        const token = localStorage.getItem('access_token');
         let response;
 
         if (editingEvaluation) {
-            response = await fetch(`/api/evaluations/${editingEvaluation.id}/`, {
+            response = await window.apiFetch(`/evaluations/${editingEvaluation.id}/`, {
                 method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
         } else {
-            response = await fetch(`/api/evaluations/`, {
+            response = await window.apiFetch('/evaluations/', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
         }
@@ -1123,10 +1098,7 @@ function resetWizardState() {
 
 async function viewEvaluation(id) {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/${id}/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch(`/evaluations/${id}/`);
 
         if (!response.ok) throw new Error('Failed to load evaluation');
 
@@ -1415,12 +1387,8 @@ async function submitEvaluationComment(event, evaluationId) {
     }
 
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/${evaluationId}/comments/`, {
+        const response = await window.apiFetch(`/evaluations/${evaluationId}/comments/`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
             body: formData
         });
 
@@ -1457,13 +1425,8 @@ async function closeEvaluationCase(evaluationId) {
     }
 
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/${evaluationId}/close/`, {
+        const response = await window.apiFetch(`/evaluations/${evaluationId}/close/`, {
             method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({ keputusan_final: keputusan })
         });
 
@@ -1497,10 +1460,8 @@ async function deleteEvaluation(id) {
     }
 
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/${id}/`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
+        const response = await window.apiFetch(`/evaluations/${id}/`, {
+            method: 'DELETE'
         });
 
         if (!response.ok) throw new Error('Failed to delete evaluation');
@@ -1609,12 +1570,8 @@ async function loadWalisantriView() {
 }
 
 async function loadBLPCoreData(nisn) {
-    const token = localStorage.getItem('access_token');
-
     try {
-        const response = await fetch(`/api/kesantrian/blp/student/${nisn}/?limit=1`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch(`/kesantrian/blp/student/${nisn}/?limit=1`);
 
         if (!response.ok) {
             setBLPPlaceholder();
@@ -1908,10 +1865,7 @@ function resetIndicatorScores() {
  */
 async function loadWalisantriEvaluations(nisn) {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/student/${nisn}/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch(`/evaluations/student/${nisn}/`);
 
         if (!response.ok) {
             console.warn('[Evaluations] Failed to load stats for nisn:', nisn);
@@ -1964,13 +1918,8 @@ async function approveEvaluation(id) {
     }
 
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/evaluations/${id}/approve/`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+        const response = await window.apiFetch(`/evaluations/${id}/approve/`, {
+            method: 'PATCH'
         });
 
         const data = await response.json();
