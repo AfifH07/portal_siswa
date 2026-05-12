@@ -574,6 +574,45 @@
     </div>
 </div>
 
+<!-- ===================== MODAL: KONFIGURASI POIN INTEGRITAS ===================== -->
+<div id="santri-integritas-konfig-modal" class="modal">
+    <div class="modal-content glass-card modal-large" style="max-width: 720px; max-height: 85vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h2>Konfigurasi Poin Integritas</h2>
+            <button type="button" id="btn-close-santri-integritas-konfig" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="table-container" style="margin-bottom: 16px;">
+                <table class="data-table" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Nama Poin</th>
+                            <th>Urutan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="santri-integritas-konfig-tbody">
+                        <tr><td colspan="3" class="text-center"><div class="loading-spinner" style="margin:20px auto;"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-grid">
+                <div class="form-group fg-large">
+                    <label for="santri-integritas-poin-baru-nama">Nama Poin Baru</label>
+                    <input type="text" id="santri-integritas-poin-baru-nama" class="glass-input" placeholder="Nama poin baru">
+                </div>
+                <div class="form-group">
+                    <label for="santri-integritas-poin-baru-urutan">Urutan</label>
+                    <input type="number" id="santri-integritas-poin-baru-urutan" class="glass-input" value="0" min="0">
+                </div>
+            </div>
+        </div>
+        <div class="form-actions" style="padding: 0 24px 24px;">
+            <button type="button" id="btn-santri-integritas-tambah-poin" class="btn btn-primary">Tambah</button>
+        </div>
+    </div>
+</div>
+
 <!-- ===================== MODAL: ADD/EDIT EVALUATION ===================== -->
 <div id="evaluation-modal" class="modal">
     <div class="modal-content glass-card modal-wizard">

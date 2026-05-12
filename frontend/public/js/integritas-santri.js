@@ -63,9 +63,7 @@ function setupMainControls() {
     const configBtn = document.getElementById('btn-integritas-config');
     const user = integritasSantriState.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
     if (configBtn) {
-        configBtn.onclick = () => {
-            window.location.href = '/evaluasi-asatidz#integritas';
-        };
+        configBtn.onclick = openKonfigModal;
         configBtn.style.display = ['superadmin', 'admin', 'pimpinan'].includes(user.role) ? '' : 'none';
     }
 }
@@ -78,12 +76,16 @@ function setupModalControls() {
     const closeScore = document.getElementById('btn-close-integritas-modal');
     const cancelScore = document.getElementById('btn-cancel-integritas-modal');
     const saveScore = document.getElementById('btn-save-integritas-modal');
+    const closeKonfig = document.getElementById('btn-close-santri-integritas-konfig');
+    const tambahPoinBtn = document.getElementById('btn-santri-integritas-tambah-poin');
 
     if (closeDetail) closeDetail.onclick = closeDetailModal;
     if (scoreBtn) scoreBtn.onclick = openIntegritasModal;
     if (closeScore) closeScore.onclick = closeIntegritasModal;
     if (cancelScore) cancelScore.onclick = closeIntegritasModal;
     if (saveScore) saveScore.onclick = submitIntegritasSantri;
+    if (closeKonfig) closeKonfig.onclick = closeKonfigModal;
+    if (tambahPoinBtn) tambahPoinBtn.onclick = tambahPoin;
 
     integritasSantriState.modalReady = true;
 }
@@ -497,6 +499,154 @@ function closeIntegritasModal() {
     document.getElementById('integritas-modal')?.classList.remove('show');
 }
 
+function openKonfigModal() {
+    loadKonfigPoin();
+    document.getElementById('santri-integritas-konfig-modal')?.classList.add('show');
+}
+
+function closeKonfigModal() {
+    document.getElementById('santri-integritas-konfig-modal')?.classList.remove('show');
+}
+
+async function loadKonfigPoin() {
+    const tbody = document.getElementById('santri-integritas-konfig-tbody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center"><div class="loading-spinner" style="margin:20px auto;"></div></td></tr>';
+    }
+
+    await loadPoinIntegritas();
+
+    if (!tbody) return;
+    if (integritasSantriState.poin.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Belum ada poin aktif.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = integritasSantriState.poin.map(poin => `
+        <tr>
+            <td>
+                <div data-santri-poin-label="${poin.id}" style="cursor:pointer; font-weight:600;">${escapeHtml(poin.nama)}</div>
+                <input type="text" class="glass-input" data-santri-poin-input="${poin.id}" value="${escapeAttr(poin.nama)}" style="display:none; margin-top:6px;">
+            </td>
+            <td>
+                <input type="number" class="glass-input" data-santri-poin-urutan="${poin.id}" value="${escapeAttr(String(poin.urutan || 0))}" min="0" style="max-width:90px;">
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline" data-santri-poin-edit="${poin.id}">Edit</button>
+                <button type="button" class="btn btn-sm btn-primary" data-santri-poin-save="${poin.id}" style="display:none;">Simpan</button>
+                <button type="button" class="btn btn-sm btn-outline" data-santri-poin-delete="${poin.id}" style="color:var(--danger,#ef4444);">Hapus</button>
+            </td>
+        </tr>
+    `).join('');
+
+    tbody.querySelectorAll('[data-santri-poin-label]').forEach(el => {
+        el.onclick = () => startEditPoin(parseInt(el.getAttribute('data-santri-poin-label'), 10));
+    });
+    tbody.querySelectorAll('[data-santri-poin-edit]').forEach(el => {
+        el.onclick = () => startEditPoin(parseInt(el.getAttribute('data-santri-poin-edit'), 10));
+    });
+    tbody.querySelectorAll('[data-santri-poin-save]').forEach(el => {
+        el.onclick = () => editPoin(parseInt(el.getAttribute('data-santri-poin-save'), 10));
+    });
+    tbody.querySelectorAll('[data-santri-poin-delete]').forEach(el => {
+        el.onclick = () => hapusPoin(parseInt(el.getAttribute('data-santri-poin-delete'), 10));
+    });
+}
+
+function startEditPoin(id) {
+    const label = document.querySelector(`[data-santri-poin-label="${id}"]`);
+    const input = document.querySelector(`[data-santri-poin-input="${id}"]`);
+    const editBtn = document.querySelector(`[data-santri-poin-edit="${id}"]`);
+    const saveBtn = document.querySelector(`[data-santri-poin-save="${id}"]`);
+
+    if (label) label.style.display = 'none';
+    if (input) {
+        input.style.display = '';
+        input.focus();
+    }
+    if (editBtn) editBtn.style.display = 'none';
+    if (saveBtn) saveBtn.style.display = '';
+}
+
+async function tambahPoin() {
+    const namaInput = document.getElementById('santri-integritas-poin-baru-nama');
+    const urutanInput = document.getElementById('santri-integritas-poin-baru-urutan');
+    const nama = namaInput?.value.trim() || '';
+    const urutan = parseInt(urutanInput?.value || '0', 10);
+
+    if (!nama) {
+        showMessage('Nama poin wajib diisi.', 'warning');
+        return;
+    }
+
+    try {
+        const response = await window.apiFetch('/evaluations/poin-integritas/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nama, urutan })
+        });
+        const result = await response.json();
+        if (!response.ok || result.success === false) {
+            throw new Error(result.message || 'Gagal menambah poin');
+        }
+
+        if (namaInput) namaInput.value = '';
+        if (urutanInput) urutanInput.value = '0';
+        await loadKonfigPoin();
+        showMessage('Poin berhasil ditambahkan.', 'success');
+    } catch (err) {
+        showMessage(err.message || 'Gagal menambah poin.', 'error');
+    }
+}
+
+async function editPoin(id) {
+    const input = document.querySelector(`[data-santri-poin-input="${id}"]`);
+    const urutanInput = document.querySelector(`[data-santri-poin-urutan="${id}"]`);
+    const nama = input?.value.trim() || '';
+    const urutan = parseInt(urutanInput?.value || '0', 10);
+
+    if (!nama) {
+        showMessage('Nama poin wajib diisi.', 'warning');
+        return;
+    }
+
+    try {
+        const response = await window.apiFetch(`/evaluations/poin-integritas/${id}/`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nama, urutan })
+        });
+        const result = await response.json();
+        if (!response.ok || result.success === false) {
+            throw new Error(result.message || 'Gagal memperbarui poin');
+        }
+
+        await loadKonfigPoin();
+        showMessage('Poin berhasil diperbarui.', 'success');
+    } catch (err) {
+        showMessage(err.message || 'Gagal memperbarui poin.', 'error');
+    }
+}
+
+async function hapusPoin(id) {
+    if (!confirm('Hapus poin ini?')) return;
+
+    try {
+        const response = await window.apiFetch(`/evaluations/poin-integritas/${id}/`, {
+            method: 'DELETE'
+        });
+        const result = await response.json();
+        if (!response.ok || result.success === false) {
+            throw new Error(result.message || 'Gagal menghapus poin');
+        }
+
+        await loadKonfigPoin();
+        showMessage('Poin dihapus.', 'success');
+    } catch (err) {
+        showMessage(err.message || 'Gagal menghapus poin.', 'error');
+    }
+}
+
 async function submitIntegritasSantri() {
     const nisn = integritasSantriState.currentSantriNisn;
     const catatanValue = document.getElementById('integritas-catatan')?.value || '';
@@ -610,9 +760,15 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function escapeAttr(text) {
+    return escapeHtml(text).replace(/"/g, '&quot;');
+}
+
 window.switchTab = switchTab;
 window.loadPoinIntegritas = loadPoinIntegritas;
 window.openIntegritasModal = openIntegritasModal;
 window.closeIntegritasModal = closeIntegritasModal;
+window.openKonfigModal = openKonfigModal;
+window.closeKonfigModal = closeKonfigModal;
 window.hapusIntegritasSantri = hapusIntegritasSantri;
 window.closeDetailModal = closeDetailModal;
