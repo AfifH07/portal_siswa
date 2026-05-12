@@ -294,43 +294,43 @@
                 const tanggal = formatDate(record.tanggal);
                 const penilai = escapeHtml(record.penilai_name || '—');
                 return `
-            <div style="background:#f0faf5;
-                        border:0.5px solid #d1e9df;
-                        border-radius:12px;
+            <div style="background:var(--color-background-secondary);
+                        border:0.5px solid var(--color-border-tertiary);
+                        border-radius:var(--border-radius-md);
                         padding:12px;">
-                <p style="font-size:11px;color:#6b7280;margin:0 0 6px;">
+                <p style="font-size:11px;color:var(--color-text-secondary);margin:0 0 6px;">
                     ${escapeHtml(poin.nama)}
                 </p>
-                <p style="font-size:22px;font-weight:500;margin:0;color:#111827;">
-                    ${record.skala}<span style="font-size:12px;color:#6b7280;">/5</span>
+                <p style="font-size:22px;font-weight:500;margin:0;color:var(--color-text-primary);">
+                    ${record.skala}<span style="font-size:12px;color:var(--color-text-secondary);">/5</span>
                 </p>
-                <div style="height:4px;background:#d1e9df;border-radius:2px;margin-top:8px;">
+                <div style="height:4px;background:var(--color-border-tertiary);border-radius:2px;margin-top:8px;">
                     <div style="width:${pct}%;height:4px;background:#1d9e75;border-radius:2px;"></div>
                 </div>
-                <p style="font-size:10px;color:#6b7280;margin:6px 0 0;">
+                <p style="font-size:10px;color:var(--color-text-secondary);margin:6px 0 0;">
                     ${penilai} · ${tanggal}
                 </p>
             </div>`;
             } else {
                 return `
-            <div style="background:#f0faf5;
-                        border:0.5px solid #d1e9df;
-                        border-radius:12px;
+            <div style="background:var(--color-background-secondary);
+                        border:0.5px solid var(--color-border-tertiary);
+                        border-radius:var(--border-radius-md);
                         padding:12px;">
-                <p style="font-size:11px;color:#6b7280;margin:0 0 6px;">
+                <p style="font-size:11px;color:var(--color-text-secondary);margin:0 0 6px;">
                     ${escapeHtml(poin.nama)}
                 </p>
-                <p style="font-size:22px;font-weight:500;margin:0;color:#6b7280;">—</p>
-                <div style="height:4px;background:#d1e9df;border-radius:2px;margin-top:8px;">
+                <p style="font-size:22px;font-weight:500;margin:0;color:var(--color-text-secondary);">—</p>
+                <div style="height:4px;background:var(--color-border-tertiary);border-radius:2px;margin-top:8px;">
                     <div style="width:0%;height:4px;background:#1d9e75;border-radius:2px;"></div>
                 </div>
-                <p style="font-size:10px;color:#6b7280;margin:6px 0 0;">belum dinilai</p>
+                <p style="font-size:10px;color:var(--color-text-secondary);margin:6px 0 0;">belum dinilai</p>
             </div>`;
             }
         }).join('');
 
         return `
-    <p style="font-size:12px;color:#6b7280;margin:0 0 10px;">
+    <p style="font-size:12px;color:var(--color-text-secondary);margin:0 0 10px;">
         Menampilkan nilai terbaru per poin dari seluruh penilai
     </p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));

@@ -1,3 +1,11 @@
+:root {
+    --color-background-secondary: #f0faf5;
+    --color-border-tertiary: #d1e9df;
+    --border-radius-md: 12px;
+    --color-text-secondary: #6b7280;
+    --color-text-primary: #111827;
+}
+
 /**
  * Evaluasi Asatidz CSS v1.6 - Filter & Search Bar
  * Portal Ponpes Baron - HR Module
