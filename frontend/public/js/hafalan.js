@@ -468,7 +468,42 @@ function renderProgressTrendChart(trendData = null) {
 // SECTION 5: RENDER - GURU VIEW (Editable)
 // ============================================
 
-function renderHafalanGuru() {
+async function renderHafalanGuru() {
+    const nisn = hafalanData.student.nisn;
+    if (nisn) {
+        try {
+            const rawRes = await window.apiFetch(`kesantrian/hafalan/siswa/${nisn}/`);
+            const res = await rawRes.json();
+            if (res.success && res.data) {
+                // Build juzProgress: array 30 juz (juz 1–30)
+                const juzSummary = res.data.juz_summary || [];
+                const juzMap = {};
+                juzSummary.forEach(j => { juzMap[j.juz] = j.halaman || 0; });
+
+                hafalanData.juzProgress = Array.from({ length: 30 }, (_, i) => {
+                    const juzNum = i + 1;
+                    const halaman = juzMap[juzNum] || 0;
+                    let status = 'belum';
+                    if (halaman >= 20) status = 'murojaah';
+                    else if (halaman > 0) status = 'proses';
+                    return {
+                        juz: juzNum,
+                        status: status,
+                        halaman: halaman
+                    };
+                });
+
+                // Populate student data if not already set
+                if (res.data.siswa) {
+                    hafalanData.student.nama = hafalanData.student.nama || res.data.siswa.nama;
+                    hafalanData.student.kelas = hafalanData.student.kelas || res.data.siswa.kelas;
+                }
+            }
+        } catch (err) {
+            console.warn('[hafalan] Gagal fetch data siswa:', err);
+        }
+    }
+
     renderPrediction();
     renderJuzProgressGrid();
     renderStudentProfile();
@@ -708,10 +743,13 @@ function getJuzTooltip(juz) {
     };
 
     let tooltip = `Juz ${juz.juz}: ${statusLabels[juz.status]}`;
+    if (typeof juz.halaman === 'number' && juz.halaman > 0) {
+        tooltip += ` | Halaman: ${juz.halaman}`;
+    }
     if (juz.tanggal) {
         tooltip += ` | ${formatDate(juz.tanggal)}`;
     }
-    if (juz.nilai > 0) {
+    if (typeof juz.nilai === 'number' && juz.nilai > 0) {
         tooltip += ` | Nilai: ${juz.nilai}`;
     }
     return tooltip;
