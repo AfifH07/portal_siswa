@@ -245,10 +245,8 @@
 
         try {
             const records = await loadHistoryIntegritasGuru(currentGuruId);
-            const latestPerPoin = getLatestPerPoin(records, poinList);
-
             body.innerHTML = `
-                ${renderSummaryCards(latestPerPoin)}
+                ${renderSummaryCards(records, poinList)}
                 ${renderRiwayatTable(records)}
             `;
 
@@ -280,39 +278,66 @@
         return result;
     }
 
-    function renderSummaryCards(latestPerPoin) {
-        if (poinList.length === 0) {
-            return '<p class="text-muted">Poin integritas belum tersedia.</p>';
-        }
+    function renderSummaryCards(riwayat, poinList) {
+        const latest = {};
+        poinList.forEach(poin => {
+            const records = riwayat
+                .filter(r => r.poin === poin.id || r.poin_nama === poin.nama)
+                .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+            latest[poin.id] = records.length > 0 ? records[0] : null;
+        });
+
+        const cards = poinList.map(poin => {
+            const record = latest[poin.id];
+            if (record) {
+                const pct = Math.round((record.skala / 5) * 100);
+                const tanggal = formatDate(record.tanggal);
+                const penilai = escapeHtml(record.penilai_name || '—');
+                return `
+            <div style="background:var(--color-background-secondary);
+                        border:0.5px solid var(--color-border-tertiary);
+                        border-radius:var(--border-radius-md);
+                        padding:12px;">
+                <p style="font-size:11px;color:var(--color-text-secondary);margin:0 0 6px;">
+                    ${escapeHtml(poin.nama)}
+                </p>
+                <p style="font-size:22px;font-weight:500;margin:0;color:var(--color-text-primary);">
+                    ${record.skala}<span style="font-size:12px;color:var(--color-text-secondary);">/5</span>
+                </p>
+                <div style="height:4px;background:var(--color-border-tertiary);border-radius:2px;margin-top:8px;">
+                    <div style="width:${pct}%;height:4px;background:#1d9e75;border-radius:2px;"></div>
+                </div>
+                <p style="font-size:10px;color:var(--color-text-secondary);margin:6px 0 0;">
+                    ${penilai} · ${tanggal}
+                </p>
+            </div>`;
+            } else {
+                return `
+            <div style="background:var(--color-background-secondary);
+                        border:0.5px solid var(--color-border-tertiary);
+                        border-radius:var(--border-radius-md);
+                        padding:12px;">
+                <p style="font-size:11px;color:var(--color-text-secondary);margin:0 0 6px;">
+                    ${escapeHtml(poin.nama)}
+                </p>
+                <p style="font-size:22px;font-weight:500;margin:0;color:var(--color-text-secondary);">—</p>
+                <div style="height:4px;background:var(--color-border-tertiary);border-radius:2px;margin-top:8px;">
+                    <div style="width:0%;height:4px;background:#1d9e75;border-radius:2px;"></div>
+                </div>
+                <p style="font-size:10px;color:var(--color-text-secondary);margin:6px 0 0;">belum dinilai</p>
+            </div>`;
+            }
+        }).join('');
 
         return `
-            <p style="font-size:12px; color:var(--color-text-secondary); margin: 0 0 10px;">
-                Menampilkan nilai terbaru per poin dari seluruh penilai
-            </p>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:10px; margin-bottom:24px;">
-                ${poinList.map(poin => {
-                    const record = latestPerPoin[poin.id];
-                    const skala = record?.skala || 0;
-                    const width = Math.max(0, Math.min(100, (skala / 5) * 100));
-                    return `
-                        <div style="background:var(--color-background-secondary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); padding:12px;">
-                            <p style="font-size:11px; color:var(--color-text-secondary); margin:0 0 6px;">${escapeHtml(poin.nama)}</p>
-                            <p style="font-size:22px; font-weight:500; margin:0; color:${record ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'};">
-                                ${record ? `${escapeHtml(String(skala))}<span style="font-size:12px; color:var(--color-text-secondary);">/5</span>` : '—'}
-                            </p>
-                            <div style="height:4px; background:var(--color-border-tertiary); border-radius:2px; margin-top:8px;">
-                                <div style="width:${width}%; height:4px; background:#1d9e75; border-radius:2px;"></div>
-                            </div>
-                            <p style="font-size:10px; color:var(--color-text-secondary); margin:6px 0 0;">
-                                ${record ? `${escapeHtml(record.penilai_name || '—')} · ${escapeHtml(formatDate(record.tanggal))}` : 'belum dinilai'}
-                            </p>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
+    <p style="font-size:12px;color:var(--color-text-secondary);margin:0 0 10px;">
+        Menampilkan nilai terbaru per poin dari seluruh penilai
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+                gap:10px;margin-bottom:24px;">
+        ${cards}
+    </div>`;
     }
-
     function renderRiwayatTable(records) {
         const canDelete = ['superadmin', 'admin', 'pimpinan'].includes(integritas_userRole);
 
@@ -719,3 +744,4 @@
 
     boot();
 })();
+
