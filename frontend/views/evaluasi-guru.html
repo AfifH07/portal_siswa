@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evaluasi Guru - Portal Ponpes Baron</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link href="/static/css/baron-emerald.css?v=20260509" rel="stylesheet">
-    <link href="/static/css/students-baron.css?v=20260509" rel="stylesheet">
-    <link href="/static/css/jurnal-piket.css?v=20260509" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260511" rel="stylesheet">
+    <link href="/static/css/students-baron.css?v=20260511" rel="stylesheet">
+    <link href="/static/css/jurnal-piket.css?v=20260511" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body data-role="">
@@ -30,7 +30,7 @@
                 <div class="user-role" id="user-role-display">-</div>
             </div>
         </div>
-        <button class="btn-logout" onclick="window.logout()">🚪 Keluar</button>
+        <button class="btn-logout" id="btn-logout">Keluar</button>
     </div>
 </aside>
 
@@ -38,7 +38,7 @@
     <div class="topbar">
         <div class="topbar-left">
             <h1 id="page-title">Evaluasi Guru</h1>
-            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Evaluasi Guru</span></div>
+            <div class="breadcrumb">Portal Baron &rsaquo; <span>Evaluasi Guru</span></div>
         </div>
         <div class="topbar-right">
             <div class="topbar-date" id="topbar-date">📅 Loading...</div>
@@ -47,20 +47,40 @@
     </div>
 
     <div class="page-body">
+        <section class="filter-section">
+            <div class="glass-card filters-card">
+                <div class="card-head">
+                    <h3><span class="ch-icon">🧭</span> Kontrol Evaluasi Guru</h3>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group" style="grid-column: span 2;">
+                        <label for="search-guru">Cari Guru</label>
+                        <input type="text" id="search-guru" class="filter-input" placeholder="Cari nama guru...">
+                    </div>
+                    <div class="filter-group" id="konfig-button-wrap" style="display:none;">
+                        <label>&nbsp;</label>
+                        <button type="button" id="btn-open-konfig" class="btn btn-secondary" style="width:100%;">
+                            <i data-lucide="settings-2"></i> Konfigurasi Poin Integritas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="table-section-wrap">
             <div class="glass-card table-section">
                 <div class="card-head">
-                    <h3><span class="ch-icon">👥</span> Daftar Guru</h3>
-                    <div class="card-badge" id="guru-count">0 data</div>
+                    <h3><span class="ch-icon">👨‍🏫</span> Daftar Guru</h3>
+                    <div class="card-badge" id="guru-count">0 guru</div>
                 </div>
-                <div class="table-container">
+                <div class="table-container" id="guru-table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Nama</th>
-                                <th>Username</th>
-                                <th>Kelas</th>
-                                <th>Assignment Aktif</th>
+                                <th>Nama Guru</th>
+                                <th>Role</th>
+                                <th>Jumlah Penilaian</th>
+                                <th>Terakhir Dinilai</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -69,85 +89,94 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </section>
-
-        <section id="guru-detail-section" style="display:none;">
-            <div class="glass-card">
-                <div class="card-head">
-                    <h3><span class="ch-icon">🛡️</span> <span id="guru-detail-title">Detail Integritas</span></h3>
-                    <div class="card-badge" id="guru-integritas-count">0</div>
-                </div>
-                <div class="card-body">
-                    <div id="guru-integritas-form-container"></div>
-                    <div style="margin-top:24px;">
-                        <h4 style="margin-bottom:12px;">Riwayat Penilaian</h4>
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Poin</th>
-                                        <th>Skala</th>
-                                        <th>Catatan</th>
-                                        <th>Dinilai oleh</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="guru-integritas-history-body">
-                                    <tr><td colspan="6" class="text-center text-muted">Pilih guru untuk melihat riwayat.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="poin-config-section" style="display:none;">
-            <div class="glass-card">
-                <div class="card-head">
-                    <h3><span class="ch-icon">⚙️</span> Konfigurasi Poin Integritas</h3>
-                    <div class="card-badge" id="poin-count">0</div>
-                </div>
-                <div class="card-body">
-                    <div class="form-grid" style="margin-bottom:16px;">
-                        <div class="form-group">
-                            <label>Nama Poin Baru</label>
-                            <input type="text" id="poin-baru-nama" class="glass-input" placeholder="Contoh: Jujur">
-                        </div>
-                        <div class="form-group">
-                            <label>Urutan</label>
-                            <input type="number" id="poin-baru-urutan" class="glass-input" value="0" min="0">
-                        </div>
-                        <div class="form-group" style="display:flex; align-items:end;">
-                            <button type="button" id="btn-tambah-poin" class="btn btn-primary">Tambah Poin</button>
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Nama</th>
-                                    <th>Urutan</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="poin-table-body">
-                                <tr><td colspan="3" class="text-center text-muted">Memuat poin...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="empty-state" id="guru-empty-state" style="display:none;">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-title">Guru Tidak Ditemukan</div>
+                    <div class="empty-desc">Coba ubah kata kunci pencarian Anda.</div>
                 </div>
             </div>
         </section>
     </div>
 </main>
 
-<script src="/static/js/utils.js?v=20260509" defer></script>
-<script src="/static/js/apiConfig.js?v=20260509" defer></script>
-<script src="/static/js/apiFetch.js?v=20260509" defer></script>
-<script src="/static/js/auth-check.js?v=20260509" defer></script>
-<script src="/static/js/evaluasi-guru.js?v=20260509" defer></script>
+<div class="modal" id="guru-detail-modal">
+    <div class="modal-backdrop" id="guru-detail-backdrop"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="guru-detail-title">Penilaian Integritas</h2>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-detail-score-guru" style="display:none;">
+                    <i data-lucide="plus"></i> Beri Penilaian
+                </button>
+                <button class="btn-close" id="btn-close-guru-detail">&times;</button>
+            </div>
+        </div>
+        <div class="modal-body" id="guru-detail-body" style="padding:20px;">
+            <div class="loading-spinner" style="margin:20px auto;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="guru-form-modal">
+    <div class="modal-backdrop" id="guru-form-backdrop"></div>
+    <div class="modal-content modal-lg" id="guru-form-content">
+        <div class="modal-header">
+            <h2 id="guru-form-title">Form Penilaian Integritas</h2>
+            <button class="btn-close" id="btn-close-guru-form">&times;</button>
+        </div>
+        <div class="modal-body" id="guru-form-body" style="padding:20px;"></div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-guru-form">Batal</button>
+            <button type="button" class="btn btn-primary" id="btn-save-guru-form">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="konfig-poin-modal">
+    <div class="modal-backdrop" id="konfig-poin-backdrop"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2>Konfigurasi Poin Integritas</h2>
+            <button class="btn-close" id="btn-close-konfig">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:20px;">
+            <div class="filters-grid" style="margin-bottom:16px;">
+                <div class="filter-group" style="grid-column: span 2;">
+                    <label for="poin-baru-nama">Nama Poin Baru</label>
+                    <input type="text" id="poin-baru-nama" class="filter-input" placeholder="Contoh: Jujur">
+                </div>
+                <div class="filter-group">
+                    <label for="poin-baru-urutan">Urutan</label>
+                    <input type="number" id="poin-baru-urutan" class="filter-input" value="0" min="0">
+                </div>
+            </div>
+            <div class="form-actions" style="margin-bottom:16px;">
+                <button type="button" id="btn-tambah-poin" class="btn btn-primary">
+                    <i data-lucide="plus"></i> Tambah
+                </button>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nama Poin</th>
+                            <th>Urutan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="poin-table-body">
+                        <tr><td colspan="3" class="text-center"><div class="loading-spinner" style="margin:20px auto;"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/utils.js?v=20260511" defer></script>
+<script src="/static/js/apiConfig.js?v=20260511" defer></script>
+<script src="/static/js/apiFetch.js?v=20260511" defer></script>
+<script src="/static/js/auth-check.js?v=20260511" defer></script>
+<script src="/static/js/evaluasi-guru.js?v=20260511" defer></script>
 </body>
 </html>
