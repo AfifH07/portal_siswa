@@ -15,6 +15,12 @@
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 0; }
+        .tab-btn { background: none; border: none; padding: 10px 18px; font-size: 14px; font-weight: 500; color: var(--color-text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 6px; border-radius: 0; }
+        .tab-btn:hover { color: var(--color-text-primary); }
+        .tab-btn-active { color: #1d9e75; border-bottom-color: #1d9e75; }
+    </style>
 </head>
 <body data-role="">
 
@@ -80,6 +86,19 @@
     </div>
 
     <div class="page-body">
+        <!-- TAB BAR -->
+        <div class="tab-bar" id="asatidz-tab-bar" style="margin-bottom: 20px;">
+            <button class="tab-btn tab-btn-active" data-tab="evaluasi-kinerja" id="tab-btn-evaluasi-kinerja">
+                <i data-lucide="clipboard-list" style="width:16px;height:16px;"></i>
+                Evaluasi Kinerja
+            </button>
+            <button class="tab-btn" data-tab="integritas" id="tab-btn-integritas">
+                <i data-lucide="shield-check" style="width:16px;height:16px;"></i>
+                Integritas
+            </button>
+        </div>
+
+        <div id="tab-content-evaluasi-kinerja" class="tab-content-panel">
 
         <!-- Summary Banner (Pimpinan Only) -->
         <div class="summary-banner pimpinan-only" id="summary-banner" style="display: none;">
@@ -179,6 +198,117 @@
             <div class="empty-icon">📭</div>
             <h3>Belum Ada Evaluasi</h3>
             <p id="empty-message">Belum ada catatan evaluasi yang tersedia.</p>
+        </div>
+
+        </div>
+
+        <div id="tab-content-integritas" class="tab-content-panel" style="display:none;">
+
+            <div class="glass-card" style="padding: 20px; margin-bottom: 16px;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                    <input type="text" id="search-guru-integritas"
+                           class="glass-input" style="flex:1; min-width:200px;"
+                           placeholder="Cari nama guru...">
+                    <button type="button" class="btn btn-outline" id="btn-open-konfig-integritas"
+                            style="display:none;">
+                        <i data-lucide="settings-2" style="width:14px;height:14px;"></i>
+                        Konfigurasi Poin
+                    </button>
+                </div>
+
+                <div id="integritas-guru-table-container">
+                    <table class="data-table" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>NAMA GURU</th>
+                                <th>ROLE</th>
+                                <th>JUMLAH PENILAIAN</th>
+                                <th>TERAKHIR DINILAI</th>
+                                <th>AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="integritas-guru-tbody">
+                            <tr><td colspan="5" class="text-center">
+                                <div class="loading-spinner" style="margin:20px auto;"></div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="integritas-guru-empty" style="display:none; text-align:center; padding:40px; color:var(--color-text-secondary);">
+                    Belum ada data guru.
+                </div>
+            </div>
+
+            <div id="integritas-guru-detail-modal" class="modal modal-centered">
+                <div class="modal-content glass-card modal-lg" style="max-height:85vh; display:flex; flex-direction:column;">
+                    <div class="modal-header" style="flex-shrink:0;">
+                        <h2 id="integritas-guru-detail-title">Penilaian Integritas</h2>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button type="button" class="btn btn-success btn-sm" id="btn-beri-penilaian-guru"
+                                    style="display:none;">+ Beri Penilaian</button>
+                            <button type="button" class="btn-close" id="btn-close-integritas-guru-detail">&times;</button>
+                        </div>
+                    </div>
+                    <div class="modal-body" id="integritas-guru-detail-body"
+                         style="overflow-y:auto; flex:1;">
+                        <div class="loading-spinner" style="margin:20px auto;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="integritas-guru-form-modal" class="modal modal-centered">
+                <div class="modal-content glass-card" style="max-height:85vh; overflow-y:auto; width:100%; max-width:520px;">
+                    <div class="modal-header">
+                        <h2 id="integritas-guru-form-title">Beri Penilaian Integritas</h2>
+                        <button type="button" class="btn-close" id="btn-close-integritas-guru-form">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="data-table" style="width:100%; margin-bottom:16px;">
+                            <thead>
+                                <tr><th>POIN</th><th>SKALA</th></tr>
+                            </thead>
+                            <tbody id="integritas-guru-form-tbody"></tbody>
+                        </table>
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:13px; color:var(--color-text-secondary); display:block; margin-bottom:6px;">
+                                Catatan (opsional)
+                            </label>
+                            <textarea id="integritas-guru-form-catatan" class="glass-input"
+                                      rows="3" placeholder="Catatan tambahan..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-integritas-guru-form">Batal</button>
+                        <button type="button" class="btn btn-success" id="btn-save-integritas-guru-form">Simpan Penilaian</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="integritas-konfig-modal" class="modal modal-centered">
+                <div class="modal-content glass-card" style="max-height:85vh; overflow-y:auto; width:100%; max-width:560px;">
+                    <div class="modal-header">
+                        <h2>Konfigurasi Poin Integritas</h2>
+                        <button type="button" class="btn-close" id="btn-close-integritas-konfig">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="data-table" style="width:100%; margin-bottom:16px;">
+                            <thead>
+                                <tr><th>NAMA POIN</th><th>URUTAN</th><th>AKSI</th></tr>
+                            </thead>
+                            <tbody id="integritas-konfig-tbody"></tbody>
+                        </table>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <input type="text" id="integritas-poin-baru-nama" class="glass-input"
+                                   style="flex:1; min-width:140px;" placeholder="Nama poin baru">
+                            <input type="number" id="integritas-poin-baru-urutan" class="glass-input"
+                                   style="width:80px;" placeholder="Urutan" value="0" min="0">
+                            <button type="button" class="btn btn-success btn-sm"
+                                    id="btn-integritas-tambah-poin">+ Tambah</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </div><!-- /page-body -->
@@ -415,6 +545,7 @@
 <script src="/static/js/apiFetch.js?v=20260327G" defer></script>
 <script src="/static/js/auth-check.js?v=20260420" defer></script>
 <script src="/static/js/evaluasi-asatidz.js?v=20260327G" defer></script>
+<script src="/static/js/integritas-guru.js?v=1" defer></script>
 
 </body>
 </html>

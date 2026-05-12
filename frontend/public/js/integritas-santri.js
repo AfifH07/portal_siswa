@@ -64,7 +64,7 @@ function setupMainControls() {
     const user = integritasSantriState.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
     if (configBtn) {
         configBtn.onclick = () => {
-            window.location.href = '/evaluasi-guru';
+            window.location.href = '/evaluasi-asatidz#integritas';
         };
         configBtn.style.display = ['superadmin', 'admin', 'pimpinan'].includes(user.role) ? '' : 'none';
     }
