@@ -289,7 +289,7 @@
             <p style="font-size:12px; color:var(--color-text-secondary); margin: 0 0 10px;">
                 Menampilkan nilai terbaru per poin dari seluruh penilai
             </p>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px;">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:10px; margin-bottom:24px;">
                 ${poinList.map(poin => {
                     const record = latestPerPoin[poin.id];
                     const skala = record?.skala || 0;
@@ -301,7 +301,7 @@
                                 ${record ? `${escapeHtml(String(skala))}<span style="font-size:12px; color:var(--color-text-secondary);">/5</span>` : '—'}
                             </p>
                             <div style="height:4px; background:var(--color-border-tertiary); border-radius:2px; margin-top:8px;">
-                                <div style="height:4px; background:#1d9e75; border-radius:2px; width:${width}%;"></div>
+                                <div style="width:${width}%; height:4px; background:#1d9e75; border-radius:2px;"></div>
                             </div>
                             <p style="font-size:10px; color:var(--color-text-secondary); margin:6px 0 0;">
                                 ${record ? `${escapeHtml(record.penilai_name || '—')} · ${escapeHtml(formatDate(record.tanggal))}` : 'belum dinilai'}
@@ -318,16 +318,20 @@
 
         if (records.length === 0) {
             return `
-                <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--color-border-tertiary);">
-                    <div style="font-size:13px; font-weight:500; margin-bottom:10px;">Riwayat semua penilaian</div>
+                <div style="border-top:0.5px solid var(--color-border-tertiary); padding-top:16px; margin-top:8px;">
+                    <p style="font-size:13px; font-weight:500; margin:0 0 12px; color:var(--color-text-primary);">
+                        Riwayat semua penilaian
+                    </p>
                     <p class="text-muted">Belum ada penilaian integritas untuk guru ini.</p>
                 </div>
             `;
         }
 
         return `
-            <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--color-border-tertiary);">
-                <div style="font-size:13px; font-weight:500; margin-bottom:10px;">Riwayat semua penilaian</div>
+            <div style="border-top:0.5px solid var(--color-border-tertiary); padding-top:16px; margin-top:8px;">
+                <p style="font-size:13px; font-weight:500; margin:0 0 12px; color:var(--color-text-primary);">
+                    Riwayat semua penilaian
+                </p>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
