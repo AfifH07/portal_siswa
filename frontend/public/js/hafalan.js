@@ -622,41 +622,159 @@ function renderStudentProfile() {
 
 async function initStudentSelector() {
     const bar = document.getElementById('student-selector-bar');
-    const select = document.getElementById('hafalan-student-select');
-    if (!bar || !select) return;
-
+    if (!bar) return;
     if (!['guru', 'musyrif', 'admin', 'superadmin'].includes(currentRole)) return;
     bar.style.display = 'block';
 
+    let allStudents = [];
+
+    // Render UI custom dropdown
+    bar.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;position:relative;">
+            <label style="font-size:13px;font-weight:500;white-space:nowrap;color:#374151;">
+                Pilih Santri:
+            </label>
+            <div id="student-selector-wrapper" style="position:relative;flex:1;max-width:420px;">
+                <div id="student-selector-display"
+                     style="display:flex;align-items:center;justify-content:space-between;
+                            padding:8px 12px;border:1px solid #d1e9df;border-radius:8px;
+                            background:#fff;cursor:pointer;font-size:13px;
+                            color:#111827;user-select:none;">
+                    <span id="student-selector-label" style="flex:1;overflow:hidden;
+                          text-overflow:ellipsis;white-space:nowrap;">-- Pilih santri --</span>
+                    <span style="margin-left:8px;color:#6b7280;font-size:11px;">▼</span>
+                </div>
+                <div id="student-selector-dropdown"
+                     style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
+                            background:#fff;border:1px solid #d1e9df;border-radius:10px;
+                            box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:999;
+                            max-height:360px;overflow:hidden;flex-direction:column;">
+                    <div style="padding:8px;">
+                        <input id="student-selector-search" type="text"
+                               placeholder="Cari nama atau NISN..."
+                               style="width:100%;padding:7px 10px;border:1px solid #e5e7eb;
+                                      border-radius:6px;font-size:13px;outline:none;
+                                      box-sizing:border-box;">
+                    </div>
+                    <div id="student-selector-list"
+                         style="overflow-y:auto;max-height:290px;padding:0 4px 6px;"></div>
+                </div>
+            </div>
+        </div>`;
+
     try {
-        const rawRes = await window.apiFetch('students/?limit=500');
+        const rawRes = await window.apiFetch('students/?limit=1000');
         const res = typeof rawRes?.json === 'function' ? await rawRes.json() : rawRes;
-        const students = res.data || res.results || [];
-        select.innerHTML = '<option value="">-- Pilih santri --</option>';
-        students.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.nisn;
-            opt.textContent = `${s.nama} (${s.nisn}) - ${s.kelas || ''}`;
-            if (s.nisn === hafalanData.student.nisn) opt.selected = true;
-            select.appendChild(opt);
-        });
-    } catch (err) {
-        console.warn('[hafalan] gagal load student selector:', err);
+        allStudents = res.data || res.results || [];
+    } catch (e) {
+        console.warn('[hafalan] gagal load students:', e);
+        return;
     }
 
-    select.onchange = async function() {
-        const nisn = this.value;
-        if (!nisn) return;
-        const selectedText = this.options[this.selectedIndex].textContent;
-        const namaMatch = selectedText.match(/^(.+?) \(/);
-        const kelasMatch = selectedText.match(/\) - (.+)$/);
-        hafalanData.student.nisn = nisn;
-        hafalanData.student.nama = namaMatch ? namaMatch[1] : nisn;
-        hafalanData.student.kelas = kelasMatch ? kelasMatch[1] : '';
-        await renderHafalanGuru();
-        const sel = document.getElementById('hafalan-student-select');
-        if (sel) sel.value = nisn;
-    };
+    function groupByKelas(students) {
+        const map = {};
+        students.forEach(s => {
+            const k = s.kelas || 'Lainnya';
+            if (!map[k]) map[k] = [];
+            map[k].push(s);
+        });
+        return map;
+    }
+
+    function renderList(students) {
+        const list = document.getElementById('student-selector-list');
+        if (!list) return;
+        if (students.length === 0) {
+            list.innerHTML = `<p style="text-align:center;color:#9ca3af;font-size:12px;
+                                        padding:16px;">Santri tidak ditemukan</p>`;
+            return;
+        }
+        const grouped = groupByKelas(students);
+        const kelasSorted = Object.keys(grouped).sort();
+        let html = '';
+        kelasSorted.forEach(kelas => {
+            html += `<div style="padding:6px 8px 2px;font-size:10px;font-weight:600;
+                                  color:#1d9e75;text-transform:uppercase;
+                                  letter-spacing:0.05em;">${kelas}</div>`;
+            grouped[kelas].forEach(s => {
+                const isActive = s.nisn === hafalanData.student.nisn;
+                html += `<div class="student-option" data-nisn="${s.nisn}"
+                              data-nama="${s.nama}" data-kelas="${s.kelas || ''}"
+                              style="padding:7px 10px;border-radius:6px;cursor:pointer;
+                                     font-size:13px;display:flex;justify-content:space-between;
+                                     align-items:center;background:${isActive ? '#f0faf5' : 'transparent'};
+                                     color:${isActive ? '#1d9e75' : '#111827'};">
+                             <span>${s.nama}</span>
+                             <span style="font-size:11px;color:#9ca3af;">${s.nisn}</span>
+                         </div>`;
+            });
+        });
+        list.innerHTML = html;
+
+        list.querySelectorAll('.student-option').forEach(el => {
+            el.onmouseenter = () => { if (el.dataset.nisn !== hafalanData.student.nisn) el.style.background = '#f9fafb'; };
+            el.onmouseleave = () => { if (el.dataset.nisn !== hafalanData.student.nisn) el.style.background = 'transparent'; };
+            el.onclick = async () => {
+                const nisn = el.dataset.nisn;
+                const nama = el.dataset.nama;
+                const kelas = el.dataset.kelas;
+                const labelEl = document.getElementById('student-selector-label');
+                if (labelEl) labelEl.textContent = `${nama} — ${kelas}`;
+                const dd = document.getElementById('student-selector-dropdown');
+                if (dd) dd.style.display = 'none';
+                hafalanData.student.nisn = nisn;
+                hafalanData.student.nama = nama;
+                hafalanData.student.kelas = kelas;
+                await renderHafalanGuru();
+                const labelEl2 = document.getElementById('student-selector-label');
+                if (labelEl2) labelEl2.textContent = `${nama} — ${kelas}`;
+            };
+        });
+    }
+
+    if (hafalanData.student.nisn && hafalanData.student.nama) {
+        const labelEl = document.getElementById('student-selector-label');
+        if (labelEl) labelEl.textContent =
+            `${hafalanData.student.nama} — ${hafalanData.student.kelas}`;
+    }
+
+    renderList(allStudents);
+
+    const display = document.getElementById('student-selector-display');
+    const dropdown = document.getElementById('student-selector-dropdown');
+    if (display && dropdown) {
+        display.onclick = () => {
+            const isOpen = dropdown.style.display === 'flex';
+            dropdown.style.display = isOpen ? 'none' : 'flex';
+            if (!isOpen) {
+                const search = document.getElementById('student-selector-search');
+                if (search) {
+                    search.value = '';
+                    search.focus();
+                }
+                renderList(allStudents);
+            }
+        };
+    }
+
+    const searchInput = document.getElementById('student-selector-search');
+    if (searchInput) {
+        searchInput.oninput = () => {
+            const q = searchInput.value.toLowerCase();
+            const filtered = allStudents.filter(s =>
+                s.nama.toLowerCase().includes(q) || s.nisn.includes(q)
+            );
+            renderList(filtered);
+        };
+    }
+
+    document.addEventListener('click', function closeSelector(e) {
+        const wrapper = document.getElementById('student-selector-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            const dd = document.getElementById('student-selector-dropdown');
+            if (dd) dd.style.display = 'none';
+        }
+    });
 }
 
 function renderTartilPanelGuru() {
