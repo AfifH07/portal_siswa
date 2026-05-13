@@ -6,6 +6,7 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('status/', views.auth_status_view, name='auth_status'),  # NEW: Role verification endpoint
+    path('users/', views.user_list, name='user-list'),
     path('change-password/', views.change_password_view, name='change_password'),
     path('request-reset/', views.request_reset_view, name='request_reset'),
     path('reset-password/', views.reset_password_view, name='reset_password'),

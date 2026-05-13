@@ -68,6 +68,19 @@ def get_redirect_url(role):
     return f'/dashboard/?role={role}'
 
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def user_list(request):
+    """Return list user, bisa difilter by role via ?role=guru"""
+    role = request.GET.get('role')
+    qs = User.objects.all()
+    if role:
+        qs = qs.filter(role=role)
+    data = [{'id': u.pk, 'name': u.name or u.username, 'role': u.role}
+            for u in qs.order_by('name')]
+    return Response({'success': True, 'data': data})
+
+
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def change_password_view(request):
