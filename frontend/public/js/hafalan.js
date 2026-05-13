@@ -2689,9 +2689,9 @@ async function openKelompokModal(kelompokId = null) {
     selectMusyrif.innerHTML = '<option value="">-- Pilih Musyrif --</option>';
 
     try {
-        const res = await window.apiFetch('accounts/users/?role=guru');
+        const res = await window.apiFetch('auth/users/?role=guru');
         const d = typeof res?.json === 'function' ? await res.json() : res;
-        const resM = await window.apiFetch('accounts/users/?role=musyrif');
+        const resM = await window.apiFetch('auth/users/?role=musyrif');
         const dM = typeof resM?.json === 'function' ? await resM.json() : resM;
         const users = [...(d.data || []), ...(dM.data || [])];
         users.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
