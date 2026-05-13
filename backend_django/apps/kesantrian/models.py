@@ -408,6 +408,67 @@ class TargetHafalan(models.Model):
         return round((self.tercapai_juz / self.target_juz) * 100, 1)
 
 
+class TartilSantri(models.Model):
+    JILID_CHOICES = [
+        ('Jilid 1', 'Jilid 1'), ('Jilid 2', 'Jilid 2'),
+        ('Jilid 3', 'Jilid 3'), ('Jilid 4', 'Jilid 4'),
+        ('Jilid 5', 'Jilid 5'), ('Jilid 6', 'Jilid 6'),
+    ]
+
+    siswa = models.ForeignKey(
+        'students.Student',
+        on_delete=models.CASCADE,
+        related_name='tartil_records'
+    )
+    jilid = models.CharField(max_length=20, choices=JILID_CHOICES)
+    nilai = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    capaian_persen = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    status_lulus = models.BooleanField(default=False)
+    tanggal_lulus = models.DateField(null=True, blank=True)
+    tahun_ajaran = models.ForeignKey(
+        'core.TahunAjaran',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'kesantrian_tartil_santri'
+        unique_together = ['siswa', 'jilid', 'tahun_ajaran']
+
+
+class TahfidzSantri(models.Model):
+    KATEGORI_CHOICES = [
+        ('Juz Hafal', 'Juz Hafal'), ('Juz Uji', 'Juz Uji'),
+        ("Tasmi'", "Tasmi'"), ('Munaqosyah', 'Munaqosyah'),
+    ]
+
+    siswa = models.ForeignKey(
+        'students.Student',
+        on_delete=models.CASCADE,
+        related_name='tahfidz_records'
+    )
+    kategori = models.CharField(max_length=20, choices=KATEGORI_CHOICES)
+    nilai = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    jumlah_juz = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+    total_juz_target = models.DecimalField(max_digits=4, decimal_places=1, default=30)
+    detail = models.TextField(blank=True, default='')
+    tahun_ajaran = models.ForeignKey(
+        'core.TahunAjaran',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'kesantrian_tahfidz_santri'
+        unique_together = ['siswa', 'kategori', 'tahun_ajaran']
+
+
 class HafalanRecord(models.Model):
     """
     Model untuk mencatat progress hafalan harian santri.

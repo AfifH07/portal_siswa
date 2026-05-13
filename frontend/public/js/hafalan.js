@@ -499,6 +499,48 @@ async function renderHafalanGuru() {
                     hafalanData.student.kelas = hafalanData.student.kelas || res.data.siswa.kelas;
                 }
             }
+
+            const tartilRawRes = await window.apiFetch(`kesantrian/hafalan/tartil/${nisn}/`);
+            const tartilRes = await tartilRawRes.json();
+            if (tartilRes.success && tartilRes.data.length > 0) {
+                hafalanData.tartil = tartilRes.data.map(t => ({
+                    id: t.id,
+                    jilid: t.jilid,
+                    nilai: parseFloat(t.nilai) || 0,
+                    capaian_persen: parseFloat(t.capaian_persen) || 0,
+                    status_lulus: t.status_lulus,
+                    tanggal_lulus: t.tanggal_lulus
+                }));
+            } else {
+                hafalanData.tartil = ['Jilid 1', 'Jilid 2', 'Jilid 3', 'Jilid 4', 'Jilid 5', 'Jilid 6'].map((j, i) => ({
+                    id: `tartil-${i + 1}`,
+                    jilid: j,
+                    nilai: 0,
+                    capaian_persen: 0,
+                    status_lulus: false,
+                    tanggal_lulus: null
+                }));
+            }
+
+            const tahfidzRawRes = await window.apiFetch(`kesantrian/hafalan/tahfidz/${nisn}/`);
+            const tahfidzRes = await tahfidzRawRes.json();
+            if (tahfidzRes.success && tahfidzRes.data.length > 0) {
+                hafalanData.tahfidz = tahfidzRes.data.map(t => ({
+                    id: t.id,
+                    kategori: t.kategori,
+                    nilai: parseFloat(t.nilai) || 0,
+                    jumlah_juz: parseFloat(t.jumlah_juz) || 0,
+                    total_juz_target: parseFloat(t.total_juz_target) || 30,
+                    detail: t.detail || ''
+                }));
+            } else {
+                hafalanData.tahfidz = [
+                    { id: 'tahfidz-1', kategori: 'Juz Hafal', nilai: 0, jumlah_juz: 0, total_juz_target: 30, detail: '' },
+                    { id: 'tahfidz-2', kategori: 'Juz Uji', nilai: 0, jumlah_juz: 0, total_juz_target: 30, detail: '' },
+                    { id: 'tahfidz-3', kategori: "Tasmi'", nilai: 0, jumlah_juz: 0, total_juz_target: 30, detail: '' },
+                    { id: 'tahfidz-4', kategori: 'Munaqosyah', nilai: 0, jumlah_juz: 0, total_juz_target: 30, detail: '' },
+                ];
+            }
         } catch (err) {
             console.warn('[hafalan] Gagal fetch data siswa:', err);
         }
@@ -595,7 +637,7 @@ function renderTartilPanelGuru() {
                             Lulus
                         </label>
                     </div>
-                    <button class="btn-save-item" onclick="saveItemChanges(${item.id}, 'tartil')">Simpan</button>
+                    <button class="btn-save-item" data-save-type="tartil" data-save-id="${item.id}">Simpan</button>
                 </div>
                 <div class="item-progress">
                     <div class="mini-progress">
@@ -644,7 +686,7 @@ function renderTahfidzPanelGuru() {
                         <label>Juz:</label>
                         <input type="number" class="input-juz glass-input-mini" value="${item.jumlah_juz}" min="0" max="30" step="0.5" data-field="jumlah_juz" data-id="${item.id}" data-type="tahfidz">
                     </div>
-                    <button class="btn-save-item" onclick="saveItemChanges(${item.id}, 'tahfidz')">Simpan</button>
+                    <button class="btn-save-item" data-save-type="tahfidz" data-save-id="${item.id}">Simpan</button>
                 </div>
                 <div class="item-detail">
                     <span class="detail-text">${item.detail}</span>
@@ -843,7 +885,7 @@ function renderCatatanSectionGuru() {
     catatanSection.innerHTML = `
         <div class="card-head">
             <h3><span class="ch-icon">📝</span> Catatan Guru</h3>
-            <button class="btn btn-save-item" onclick="saveCatatan()">Simpan Catatan</button>
+                    <button class="btn btn-save-item" id="btn-save-catatan">Simpan Catatan</button>
         </div>
         <div class="card-body">
             <div class="catatan-content">
@@ -1214,6 +1256,15 @@ function attachEventListeners() {
     if (btnExport) {
         btnExport.addEventListener('click', exportHafalanData);
     }
+
+    document.querySelectorAll('.btn-save-item[data-save-type]').forEach(btn => {
+        btn.onclick = () => saveItemChanges(btn.dataset.saveId, btn.dataset.saveType);
+    });
+
+    const btnSaveCatatan = document.getElementById('btn-save-catatan');
+    if (btnSaveCatatan) {
+        btnSaveCatatan.onclick = saveCatatan;
+    }
 }
 
 function trackChange(id, type, field, value) {
@@ -1225,46 +1276,91 @@ function trackChange(id, type, field, value) {
     isEditing = true;
 }
 
-function saveItemChanges(id, type) {
+async function saveItemChanges(id, type) {
     const container = document.querySelector(`[data-id="${id}"][data-type="${type}"]`);
     if (!container) return;
+    const lookupId = String(id);
+
+    const nisn = hafalanData.student.nisn;
+    if (!nisn) {
+        showToast('NISN siswa tidak diketahui', 'error');
+        return;
+    }
 
     const nilaiInput = container.querySelector('.input-nilai');
     const nilai = nilaiInput ? parseFloat(nilaiInput.value) : 0;
+    let payload = {};
+    let endpoint = '';
 
     if (type === 'tartil') {
-        const item = hafalanData.tartil.find(t => t.id === id);
-        if (item) {
-            const capaianInput = container.querySelector('.input-capaian');
-            const lulusInput = container.querySelector('.input-lulus');
-
-            item.nilai = nilai;
-            item.capaian_persen = capaianInput ? parseFloat(capaianInput.value) : item.capaian_persen;
-            item.status_lulus = lulusInput ? lulusInput.checked : item.status_lulus;
-
-            if (item.status_lulus && !item.tanggal_lulus) {
-                item.tanggal_lulus = new Date().toISOString().split('T')[0];
-            }
-        }
+        const item = hafalanData.tartil.find(t => String(t.id) === lookupId);
+        if (!item) return;
+        const capaianInput = container.querySelector('.input-capaian');
+        const lulusInput = container.querySelector('.input-lulus');
+        payload = {
+            jilid: item.jilid,
+            nilai: nilai,
+            capaian_persen: capaianInput ? parseFloat(capaianInput.value) : item.capaian_persen,
+            status_lulus: lulusInput ? lulusInput.checked : item.status_lulus,
+            tanggal_lulus: (lulusInput && lulusInput.checked && !item.tanggal_lulus)
+                ? new Date().toISOString().split('T')[0] : item.tanggal_lulus
+        };
+        endpoint = `kesantrian/hafalan/tartil/${nisn}/`;
     } else if (type === 'tahfidz') {
-        const item = hafalanData.tahfidz.find(t => t.id === id);
-        if (item) {
-            const juzInput = container.querySelector('.input-juz');
-            item.nilai = nilai;
-            item.jumlah_juz = juzInput ? parseFloat(juzInput.value) : item.jumlah_juz;
-        }
+        const item = hafalanData.tahfidz.find(t => String(t.id) === lookupId);
+        if (!item) return;
+        const juzInput = container.querySelector('.input-juz');
+        payload = {
+            kategori: item.kategori,
+            nilai: nilai,
+            jumlah_juz: juzInput ? parseFloat(juzInput.value) : item.jumlah_juz
+        };
+        endpoint = `kesantrian/hafalan/tahfidz/${nisn}/`;
     }
 
-    delete unsavedChanges[`${type}_${id}`];
-    container.querySelectorAll('.changed').forEach(el => el.classList.remove('changed'));
-
-    showToast(`Data ${type} berhasil disimpan!`);
-
-    if (type === 'tartil') renderTartilPanelGuru();
-    else renderTahfidzPanelGuru();
-
-    renderStudentProfile();
-    attachEventListeners();
+    try {
+        const rawRes = await window.apiFetch(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        const res = await rawRes.json();
+        if (res.success) {
+            if (type === 'tartil') {
+                const idx = hafalanData.tartil.findIndex(t => String(t.id) === lookupId);
+                if (idx !== -1) {
+                    Object.assign(hafalanData.tartil[idx], {
+                        ...res.data,
+                        nilai: parseFloat(res.data.nilai) || 0,
+                        capaian_persen: parseFloat(res.data.capaian_persen) || 0,
+                        id: res.data.id
+                    });
+                }
+            } else {
+                const idx = hafalanData.tahfidz.findIndex(t => String(t.id) === lookupId);
+                if (idx !== -1) {
+                    Object.assign(hafalanData.tahfidz[idx], {
+                        ...res.data,
+                        nilai: parseFloat(res.data.nilai) || 0,
+                        jumlah_juz: parseFloat(res.data.jumlah_juz) || 0,
+                        total_juz_target: parseFloat(res.data.total_juz_target) || 30,
+                        id: res.data.id
+                    });
+                }
+            }
+            delete unsavedChanges[`${type}_${id}`];
+            container.querySelectorAll('.changed').forEach(el => el.classList.remove('changed'));
+            showToast(`Data ${type} berhasil disimpan!`);
+            if (type === 'tartil') renderTartilPanelGuru();
+            else renderTahfidzPanelGuru();
+            renderStudentProfile();
+            attachEventListeners();
+        } else {
+            showToast('Gagal menyimpan: ' + (res.message || 'Error'), 'error');
+        }
+    } catch (err) {
+        showToast('Gagal menyimpan data', 'error');
+        console.error(err);
+    }
 }
 
 function saveCatatan() {
@@ -1297,16 +1393,16 @@ function exportHafalanData() {
     showToast('Data berhasil di-export!');
 }
 
-function saveAllChanges() {
+async function saveAllChanges() {
     if (Object.keys(unsavedChanges).length === 0) {
         showToast('Tidak ada perubahan untuk disimpan', 'info');
         return;
     }
 
-    Object.keys(unsavedChanges).forEach(key => {
+    for (const key of Object.keys(unsavedChanges)) {
         const { id, type } = unsavedChanges[key];
-        saveItemChanges(id, type);
-    });
+        await saveItemChanges(id, type);
+    }
 
     unsavedChanges = {};
     isEditing = false;

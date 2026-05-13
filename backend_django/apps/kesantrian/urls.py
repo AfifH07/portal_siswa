@@ -106,6 +106,8 @@ urlpatterns = [
     # ============================================
     # HAFALAN RECORD (CRUD + Import)
     # ============================================
+    path('hafalan/tartil/<str:nisn>/', views.tartil_santri_view),
+    path('hafalan/tahfidz/<str:nisn>/', views.tahfidz_santri_view),
     path('hafalan/records/', views.hafalan_record_list, name='hafalan-record-list'),
     path('hafalan/records/<int:pk>/', views.hafalan_record_detail, name='hafalan-record-detail'),
     path('hafalan/siswa/<str:nisn>/', views.hafalan_per_siswa, name='hafalan-per-siswa'),

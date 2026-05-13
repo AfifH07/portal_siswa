@@ -16,11 +16,12 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import timedelta
 
-from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, HafalanRecord, KelompokPengasuhan, PertemuanPengasuhan, PresensiPertemuan
+from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, TartilSantri, TahfidzSantri, HafalanRecord, KelompokPengasuhan, PertemuanPengasuhan, PresensiPertemuan
 from .serializers import (
     IbadahSerializer, IbadahCreateSerializer,
     PembinaanSerializer, PembinaanCreateSerializer,
     TargetHafalanSerializer, HalaqohSerializer, HalaqohMemberSerializer,
+    TartilSantriSerializer, TahfidzSantriSerializer,
     HafalanRecordSerializer, HafalanRecordCreateSerializer, HafalanRecordUpdateSerializer,
     KelompokPengasuhSerializer, PertemuanPengasuhSerializer, PresensiPertemuanSerializer
 )
@@ -4340,6 +4341,70 @@ def hafalan_per_siswa(request, nisn):
             'records': recent_records
         }
     })
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def tartil_santri_view(request, nisn):
+    try:
+        student = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Siswa tidak ditemukan'}, status=404)
+
+    tahun_ajaran_aktif = TahunAjaran.objects.filter(is_active=True).first()
+
+    if request.method == 'GET':
+        records = TartilSantri.objects.filter(
+            siswa__nisn=nisn
+        ).filter(
+            tahun_ajaran=tahun_ajaran_aktif
+        ).order_by('jilid')
+        return Response({
+            'success': True,
+            'data': TartilSantriSerializer(records, many=True).data
+        })
+
+    jilid = request.data.get('jilid')
+    obj, created = TartilSantri.objects.get_or_create(
+        siswa=student, jilid=jilid, tahun_ajaran=tahun_ajaran_aktif
+    )
+    serializer = TartilSantriSerializer(obj, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'success': True, 'data': serializer.data})
+    return Response({'success': False, 'errors': serializer.errors}, status=400)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def tahfidz_santri_view(request, nisn):
+    try:
+        student = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Siswa tidak ditemukan'}, status=404)
+
+    tahun_ajaran_aktif = TahunAjaran.objects.filter(is_active=True).first()
+
+    if request.method == 'GET':
+        records = TahfidzSantri.objects.filter(
+            siswa__nisn=nisn
+        ).filter(
+            tahun_ajaran=tahun_ajaran_aktif
+        ).order_by('id')
+        return Response({
+            'success': True,
+            'data': TahfidzSantriSerializer(records, many=True).data
+        })
+
+    kategori = request.data.get('kategori')
+    obj, created = TahfidzSantri.objects.get_or_create(
+        siswa=student, kategori=kategori, tahun_ajaran=tahun_ajaran_aktif
+    )
+    serializer = TahfidzSantriSerializer(obj, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'success': True, 'data': serializer.data})
+    return Response({'success': False, 'errors': serializer.errors}, status=400)
 
 
 @api_view(['POST'])

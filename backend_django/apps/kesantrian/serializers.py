@@ -9,6 +9,7 @@ from rest_framework import serializers
 from django.db.models import Count, Avg
 from .models import (
     Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan,
+    TartilSantri, TahfidzSantri,
     BLPEntry, EmployeeEvaluation, InvalRecord, BLP_INDICATORS,
     Incident, IncidentComment, AsatidzEvaluation,
     IndikatorKinerja, PenilaianKinerjaAsatidz, DetailPenilaianKinerja,
@@ -130,6 +131,24 @@ class TargetHafalanSerializer(serializers.ModelSerializer):
             'catatan', 'created_at'
         ]
         read_only_fields = ['id', 'created_at', 'persentase_tercapai']
+
+
+class TartilSantriSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TartilSantri
+        fields = [
+            'id', 'jilid', 'nilai', 'capaian_persen',
+            'status_lulus', 'tanggal_lulus', 'tahun_ajaran'
+        ]
+
+
+class TahfidzSantriSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TahfidzSantri
+        fields = [
+            'id', 'kategori', 'nilai', 'jumlah_juz',
+            'total_juz_target', 'detail', 'tahun_ajaran'
+        ]
 
 
 class HalaqohSerializer(serializers.ModelSerializer):
