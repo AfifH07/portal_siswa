@@ -2691,7 +2691,10 @@ async function openKelompokModal(kelompokId = null) {
     try {
         const res = await window.apiFetch('accounts/users/?role=guru');
         const d = typeof res?.json === 'function' ? await res.json() : res;
-        const users = d.data || [];
+        const resM = await window.apiFetch('accounts/users/?role=musyrif');
+        const dM = typeof resM?.json === 'function' ? await resM.json() : resM;
+        const users = [...(d.data || []), ...(dM.data || [])];
+        users.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         users.forEach(u => {
             const opt = document.createElement('option');
             opt.value = u.id;
