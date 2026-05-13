@@ -94,6 +94,20 @@
         <!-- ==================== TAB: OVERVIEW (Default - existing content) ==================== -->
         <div class="tab-content active" id="tab-overview">
 
+        <div id="student-selector-bar" style="display:none; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <label style="font-size:13px; font-weight:500; white-space:nowrap;">
+                    Pilih Santri:
+                </label>
+                <select id="hafalan-student-select"
+                        style="flex:1; max-width:400px; padding:8px 12px;
+                               border:1px solid #d1e9df; border-radius:8px;
+                               font-size:13px; background:#fff;">
+                    <option value="">-- Pilih santri --</option>
+                </select>
+            </div>
+        </div>
+
         <!-- ==================== STUDENT IDENTITY HEADER ==================== -->
         <section class="student-identity-header" id="student-identity-header">
             <div class="identity-main">
@@ -377,7 +391,7 @@
         <!-- Kehadiran Section -->
         <section class="glass-card kehadiran-section" id="kehadiran-section">
             <div class="card-head">
-                <h3><span class="ch-icon">📅</span> Kehadiran Halaqoh</h3>
+                    <h3><span class="ch-icon">📅</span> Kehadiran Kajian Mingguan</h3>
                 <select class="filter-select" id="filter-bulan">
                     <option value="">Bulan Ini</option>
                     <option value="1">Januari</option>
@@ -680,7 +694,7 @@
 <script src="/static/js/auth-check.js?v=20260504" defer></script>
 <script src="/static/js/auth.js?v=20260504" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/hafalan.js?v=20260516" defer></script>
+<script src="/static/js/hafalan.js?v=20260517" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init

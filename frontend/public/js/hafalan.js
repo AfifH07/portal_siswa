@@ -572,6 +572,7 @@ async function renderHafalanGuru() {
     renderKehadiranSection();
     renderCatatanSectionGuru();
     attachEventListeners();
+    await initStudentSelector();
 }
 
 function renderStudentProfile() {
@@ -617,6 +618,45 @@ function renderStudentProfile() {
             progressRing.style.setProperty('--progress', progressPct + '%');
         }
     }
+}
+
+async function initStudentSelector() {
+    const bar = document.getElementById('student-selector-bar');
+    const select = document.getElementById('hafalan-student-select');
+    if (!bar || !select) return;
+
+    if (!['guru', 'musyrif', 'admin', 'superadmin'].includes(currentRole)) return;
+    bar.style.display = 'block';
+
+    try {
+        const rawRes = await window.apiFetch('students/?limit=500');
+        const res = typeof rawRes?.json === 'function' ? await rawRes.json() : rawRes;
+        const students = res.data || res.results || [];
+        select.innerHTML = '<option value="">-- Pilih santri --</option>';
+        students.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.nisn;
+            opt.textContent = `${s.nama} (${s.nisn}) - ${s.kelas || ''}`;
+            if (s.nisn === hafalanData.student.nisn) opt.selected = true;
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.warn('[hafalan] gagal load student selector:', err);
+    }
+
+    select.onchange = async function() {
+        const nisn = this.value;
+        if (!nisn) return;
+        const selectedText = this.options[this.selectedIndex].textContent;
+        const namaMatch = selectedText.match(/^(.+?) \(/);
+        const kelasMatch = selectedText.match(/\) - (.+)$/);
+        hafalanData.student.nisn = nisn;
+        hafalanData.student.nama = namaMatch ? namaMatch[1] : nisn;
+        hafalanData.student.kelas = kelasMatch ? kelasMatch[1] : '';
+        await renderHafalanGuru();
+        const sel = document.getElementById('hafalan-student-select');
+        if (sel) sel.value = nisn;
+    };
 }
 
 function renderTartilPanelGuru() {
