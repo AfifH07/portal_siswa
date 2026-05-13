@@ -27,6 +27,15 @@ const EMPTY_STATE = {
     riwayat: []
 };
 
+const JUZ_HALAMAN_MAP = {
+    1: [1, 21], 2: [22, 41], 3: [42, 61], 4: [62, 81], 5: [82, 101],
+    6: [102, 121], 7: [122, 141], 8: [142, 161], 9: [162, 181], 10: [182, 201],
+    11: [202, 221], 12: [222, 241], 13: [242, 261], 14: [262, 281], 15: [282, 301],
+    16: [302, 321], 17: [322, 341], 18: [342, 361], 19: [362, 381], 20: [382, 401],
+    21: [402, 421], 22: [422, 441], 23: [442, 461], 24: [462, 481], 25: [482, 501],
+    26: [502, 521], 27: [522, 541], 28: [542, 561], 29: [562, 581], 30: [582, 604]
+};
+
 const EMPTY_SUMMARY = {
     kelasComparison: [],
     totals: { totalSantri: 0, totalLulusTartil: 0, rataJuzHafal: 0, rataKehadiran: 0, santriOnTrack: 0, santriNeedAttention: 0 },
@@ -1273,6 +1282,12 @@ function attachEventListeners() {
     if (btnSaveCatatan) {
         btnSaveCatatan.onclick = saveCatatan;
     }
+
+    const juzInput = document.getElementById('setoran-juz');
+    if (juzInput) {
+        juzInput.onchange = updateHalamanRange;
+        juzInput.oninput = updateHalamanRange;
+    }
 }
 
 function trackChange(id, type, field, value) {
@@ -1750,6 +1765,41 @@ function goToSetoranPage(page) {
     loadSetoranHafalan();
 }
 
+function updateHalamanRange() {
+    const juzInput = document.getElementById('setoran-juz');
+    const halamanDariInput = document.getElementById('setoran-halaman-dari');
+    const halamanSampaiInput = document.getElementById('setoran-halaman-sampai');
+    if (!juzInput) return;
+
+    const juz = parseInt(juzInput.value);
+    const range = JUZ_HALAMAN_MAP[juz];
+    if (!range) return;
+
+    const [minHal, maxHal] = range;
+
+    if (halamanDariInput) {
+        halamanDariInput.min = minHal;
+        halamanDariInput.max = maxHal;
+        halamanDariInput.placeholder = `${minHal}–${maxHal}`;
+        if (halamanDariInput.value) {
+            const v = parseInt(halamanDariInput.value);
+            if (v < minHal) halamanDariInput.value = minHal;
+            if (v > maxHal) halamanDariInput.value = maxHal;
+        }
+    }
+
+    if (halamanSampaiInput) {
+        halamanSampaiInput.min = minHal;
+        halamanSampaiInput.max = maxHal;
+        halamanSampaiInput.placeholder = `${minHal}–${maxHal}`;
+        if (halamanSampaiInput.value) {
+            const v = parseInt(halamanSampaiInput.value);
+            if (v < minHal) halamanSampaiInput.value = minHal;
+            if (v > maxHal) halamanSampaiInput.value = maxHal;
+        }
+    }
+}
+
 /**
  * Load siswa dropdown for setoran modal
  */
@@ -1820,6 +1870,7 @@ function openModalSetoranBaru() {
 
     // Show modal
     modal.style.display = 'flex';
+    updateHalamanRange();
 
     // Re-initialize Lucide icons
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -1852,6 +1903,7 @@ function editSetoran(id) {
 
     // Show modal
     modal.style.display = 'flex';
+    updateHalamanRange();
 }
 
 /**
@@ -1878,6 +1930,19 @@ async function submitSetoranHafalan() {
     // Validation
     if (!siswa || !tanggal || !jumlah) {
         showToast('Siswa, tanggal, dan jumlah halaman wajib diisi', 'error');
+        return;
+    }
+
+    const juzInt = parseInt(document.getElementById('setoran-juz')?.value);
+    const hDari = parseInt(document.getElementById('setoran-halaman-dari')?.value);
+    const hSampai = parseInt(document.getElementById('setoran-halaman-sampai')?.value);
+    const range = JUZ_HALAMAN_MAP[juzInt];
+    if (range && hDari && (hDari < range[0] || hDari > range[1])) {
+        showToast(`Halaman ${hDari} tidak valid untuk Juz ${juzInt} (${range[0]}–${range[1]})`, 'error');
+        return;
+    }
+    if (range && hSampai && (hSampai < range[0] || hSampai > range[1])) {
+        showToast(`Halaman ${hSampai} tidak valid untuk Juz ${juzInt} (${range[0]}–${range[1]})`, 'error');
         return;
     }
 
