@@ -13,7 +13,8 @@ from .models import (
     BLPEntry, EmployeeEvaluation, InvalRecord, BLP_INDICATORS,
     Incident, IncidentComment, AsatidzEvaluation,
     IndikatorKinerja, PenilaianKinerjaAsatidz, DetailPenilaianKinerja,
-    IzinGuru, HafalanRecord, KritikSaran, KelompokPengasuhan, PertemuanPengasuhan, PresensiPertemuan
+    IzinGuru, HafalanRecord, KritikSaran, KelompokPengasuhan, KelompokAnggota,
+    PertemuanPengasuhan, PresensiPertemuan
 )
 from apps.students.models import Student
 
@@ -1235,11 +1236,22 @@ class KritikSaranSerializer(serializers.ModelSerializer):
         return 'Unknown'
 
 
+class KelompokAnggotaSerializer(serializers.ModelSerializer):
+    nisn = serializers.CharField(source='santri.nisn')
+    nama = serializers.CharField(source='santri.nama')
+    kelas = serializers.CharField(source='santri.kelas')
+
+    class Meta:
+        model = KelompokAnggota
+        fields = ['id', 'nisn', 'nama', 'kelas', 'created_at']
+
+
 class KelompokPengasuhSerializer(serializers.ModelSerializer):
     pengasuh_name = serializers.SerializerMethodField()
     wakil_name = serializers.SerializerMethodField()
     tahun_ajaran_nama = serializers.SerializerMethodField()
     jumlah_santri = serializers.SerializerMethodField()
+    anggota_list = KelompokAnggotaSerializer(source='anggota', many=True, read_only=True)
 
     class Meta:
         model = KelompokPengasuhan
@@ -1248,7 +1260,7 @@ class KelompokPengasuhSerializer(serializers.ModelSerializer):
             'pengasuh', 'pengasuh_name',
             'wakil_pengasuh', 'wakil_name',
             'tahun_ajaran', 'tahun_ajaran_nama',
-            'jumlah_santri', 'created_at'
+            'jumlah_santri', 'anggota_list', 'created_at'
         ]
 
     def get_pengasuh_name(self, obj):
@@ -1261,8 +1273,7 @@ class KelompokPengasuhSerializer(serializers.ModelSerializer):
         return obj.tahun_ajaran.nama if obj.tahun_ajaran else ''
 
     def get_jumlah_santri(self, obj):
-        from apps.students.models import Student
-        return Student.objects.filter(kelas=obj.kelas).count()
+        return obj.anggota.count()
 
 
 class PertemuanPengasuhSerializer(serializers.ModelSerializer):

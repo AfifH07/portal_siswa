@@ -16,14 +16,15 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import timedelta
 
-from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, TartilSantri, TahfidzSantri, HafalanRecord, KelompokPengasuhan, PertemuanPengasuhan, PresensiPertemuan
+from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, TartilSantri, TahfidzSantri, HafalanRecord, KelompokPengasuhan, KelompokAnggota, PertemuanPengasuhan, PresensiPertemuan
 from .serializers import (
     IbadahSerializer, IbadahCreateSerializer,
     PembinaanSerializer, PembinaanCreateSerializer,
     TargetHafalanSerializer, HalaqohSerializer, HalaqohMemberSerializer,
     TartilSantriSerializer, TahfidzSantriSerializer,
     HafalanRecordSerializer, HafalanRecordCreateSerializer, HafalanRecordUpdateSerializer,
-    KelompokPengasuhSerializer, PertemuanPengasuhSerializer, PresensiPertemuanSerializer
+    KelompokPengasuhSerializer, KelompokAnggotaSerializer,
+    PertemuanPengasuhSerializer, PresensiPertemuanSerializer
 )
 from .utils import (
     get_student_behavior_summary,
@@ -3455,6 +3456,62 @@ def kelompok_detail(request, pk):
         kelompok.save()
         serializer = KelompokPengasuhSerializer(kelompok)
         return Response({'success': True, 'data': serializer.data})
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def kelompok_anggota(request, pk):
+    user = request.user
+    try:
+        kelompok = KelompokPengasuhan.objects.get(pk=pk)
+    except KelompokPengasuhan.DoesNotExist:
+        return Response({'success': False, 'message': 'Kelompok tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        anggota_qs = KelompokAnggota.objects.select_related('santri').filter(kelompok=kelompok)
+        serializer = KelompokAnggotaSerializer(anggota_qs, many=True)
+        return Response({'success': True, 'count': anggota_qs.count(), 'data': serializer.data})
+
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    nisn = request.data.get('nisn')
+    if not nisn:
+        return Response({'success': False, 'message': 'NISN wajib diisi'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        santri = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Santri tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    anggota, created = KelompokAnggota.objects.get_or_create(kelompok=kelompok, santri=santri)
+    if not created:
+        return Response({'success': False, 'message': 'Santri sudah ada di kelompok ini'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = KelompokAnggotaSerializer(anggota)
+    return Response({'success': True, 'message': 'Santri berhasil ditambahkan', 'data': serializer.data},
+                    status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def kelompok_anggota_delete(request, pk, nisn):
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=status.HTTP_403_FORBIDDEN)
+    try:
+        anggota = KelompokAnggota.objects.get(kelompok_id=pk, santri__nisn=nisn)
+    except KelompokAnggota.DoesNotExist:
+        return Response({'success': False, 'message': 'Anggota tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+    anggota.delete()
+    return Response({'success': True, 'message': 'Santri berhasil dihapus dari kelompok'})
 
 
 # ============================================================

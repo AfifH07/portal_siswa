@@ -2154,6 +2154,29 @@ class KelompokPengasuhan(models.Model):
         return f"{self.nama} ({self.kelas}) — {pengasuh_str}"
 
 
+class KelompokAnggota(models.Model):
+    kelompok = models.ForeignKey(
+        KelompokPengasuhan,
+        on_delete=models.CASCADE,
+        related_name='anggota'
+    )
+    santri = models.ForeignKey(
+        'students.Student',
+        on_delete=models.CASCADE,
+        related_name='kelompok_anggota'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('kelompok', 'santri')
+        ordering = ['santri__nama']
+        verbose_name = 'Anggota Kelompok'
+        verbose_name_plural = 'Anggota Kelompok'
+
+    def __str__(self):
+        return f"{self.santri.nama} → {self.kelompok.nama}"
+
+
 class PertemuanPengasuhan(models.Model):
     kelompok = models.ForeignKey(
         KelompokPengasuhan,

@@ -572,7 +572,6 @@ async function renderHafalanGuru() {
     renderKehadiranSection();
     renderCatatanSectionGuru();
     attachEventListeners();
-    await initStudentSelector();
 }
 
 function renderStudentProfile() {
@@ -1681,6 +1680,7 @@ function initHafalan() {
     } else {
         // Default: guru, superadmin - editable view
         renderHafalanGuru();
+        initStudentSelector();
     }
 
     // Listen for child switch events from other pages
