@@ -1672,6 +1672,12 @@ function initHafalan() {
             kelompokTabBtn.style.display = '';
         }
 
+        // Tampilkan tab Kajian Mingguan untuk guru dan musyrif
+        const kajianTabBtn = document.getElementById('tab-btn-kajian');
+        if (kajianTabBtn && ['guru', 'musyrif'].includes(currentRole)) {
+            kajianTabBtn.style.display = '';
+        }
+
         // Re-initialize Lucide icons for tab buttons
         if (typeof lucide !== 'undefined' && lucide.createIcons) {
             lucide.createIcons();
@@ -1740,6 +1746,11 @@ let setoranData = [];
 let setoranPage = 1;
 let setoranPageSize = 10;
 let selectedFileHafalan = null;
+let kajianState = {
+    kelompok: null,
+    pertemuanList: [],
+    anggotaList: [],
+};
 let kelompokState = {
     list: [],
     allStudents: [],
@@ -1779,6 +1790,10 @@ function switchHafalanTab(tabName) {
 
     if (tabName === 'kelompok') {
         loadKelompokTab();
+    }
+
+    if (tabName === 'kajian') {
+        loadKajianTab();
     }
 
     // Re-initialize Lucide icons
@@ -2809,6 +2824,254 @@ function setupKelompokSearch() {
             </div>
         `).join('');
     };
+}
+
+async function loadKajianTab() {
+    const container = document.getElementById('kajian-pertemuan-list');
+    const infoEl = document.getElementById('kajian-kelompok-info');
+
+    try {
+        const res = await window.apiFetch('kesantrian/kelompok-pengasuhan/');
+        const d = typeof res?.json === 'function' ? await res.json() : res;
+        const list = d.data || [];
+        kajianState.kelompok = list.length > 0 ? list[0] : null;
+    } catch (e) {
+        if (container) container.innerHTML =
+            '<p style="color:#ef4444;text-align:center;padding:32px;">Gagal memuat kelompok.</p>';
+        return;
+    }
+
+    if (!kajianState.kelompok) {
+        if (infoEl) infoEl.style.display = 'none';
+        if (container) container.innerHTML =
+            '<p style="color:#9ca3af;text-align:center;padding:32px 0;">Kamu belum memiliki kelompok kajian.</p>';
+        return;
+    }
+
+    if (infoEl) {
+        infoEl.style.display = 'block';
+        infoEl.innerHTML = `<strong>Kelompok:</strong> ${kajianState.kelompok.nama}
+            &nbsp;·&nbsp; <strong>Anggota:</strong> ${kajianState.kelompok.jumlah_santri} santri`;
+    }
+
+    try {
+        const res2 = await window.apiFetch(`kesantrian/kelompok-pengasuhan/${kajianState.kelompok.id}/anggota/`);
+        const d2 = typeof res2?.json === 'function' ? await res2.json() : res2;
+        kajianState.anggotaList = d2.data || [];
+    } catch (e) {
+        kajianState.anggotaList = [];
+    }
+
+    try {
+        const res3 = await window.apiFetch('kesantrian/pertemuan-pengasuhan/');
+        const d3 = typeof res3?.json === 'function' ? await res3.json() : res3;
+        kajianState.pertemuanList = d3.data || [];
+    } catch (e) {
+        if (container) container.innerHTML =
+            '<p style="color:#ef4444;text-align:center;padding:32px;">Gagal memuat pertemuan.</p>';
+        return;
+    }
+
+    renderPertemuanList();
+    wireKajianModal();
+}
+
+function renderPertemuanList() {
+    const container = document.getElementById('kajian-pertemuan-list');
+    if (!container) return;
+    const list = kajianState.pertemuanList;
+
+    if (list.length === 0) {
+        container.innerHTML =
+            '<p style="color:#9ca3af;text-align:center;padding:32px 0;">Belum ada pertemuan. Klik "+ Tambah Pertemuan" untuk mulai.</p>';
+        return;
+    }
+
+    container.innerHTML = list.map(p => `
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;
+                    margin-bottom:12px;overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;
+                        padding:16px 20px;cursor:pointer;"
+                 data-pertemuan-id="${p.id}">
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:#111827;">${p.judul}</div>
+                    <div style="font-size:12px;color:#6b7280;margin-top:2px;">
+                        ${p.tanggal} &nbsp;·&nbsp; ${p.lokasi}
+                        &nbsp;·&nbsp;
+                        <span style="color:#1d9e75;font-weight:500;">
+                            ${p.jumlah_hadir} hadir
+                        </span>
+                        dari ${kajianState.anggotaList.length} santri
+                    </div>
+                </div>
+                <span style="font-size:11px;color:#9ca3af;">▼ Presensi</span>
+            </div>
+            <div id="presensi-panel-${p.id}"
+                 style="display:none;border-top:1px solid #f3f4f6;
+                        padding:16px 20px;background:#fafafa;">
+                <div id="presensi-form-${p.id}">
+                    <p style="color:#9ca3af;font-size:12px;">Memuat presensi...</p>
+                </div>
+                <div style="margin-top:14px;text-align:right;">
+                    <button class="btn-simpan-presensi" data-id="${p.id}"
+                            style="background:#1d9e75;color:#fff;border:none;
+                                   border-radius:8px;padding:8px 18px;font-size:13px;
+                                   font-weight:500;cursor:pointer;">
+                        Simpan Presensi
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    container.querySelectorAll('[data-pertemuan-id]').forEach(el => {
+        el.onclick = () => togglePresensiPanel(el.dataset.pertemuanId);
+    });
+
+    container.querySelectorAll('.btn-simpan-presensi').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            simpanPresensi(btn.dataset.id);
+        };
+    });
+}
+
+async function togglePresensiPanel(pertemuanId) {
+    const panel = document.getElementById(`presensi-panel-${pertemuanId}`);
+    if (!panel) return;
+    const isOpen = panel.style.display === 'block';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+        await loadPresensiForm(pertemuanId);
+    }
+}
+
+async function loadPresensiForm(pertemuanId) {
+    const formEl = document.getElementById(`presensi-form-${pertemuanId}`);
+    if (!formEl) return;
+
+    const existing = {};
+    try {
+        const res = await window.apiFetch(`kesantrian/pertemuan-pengasuhan/${pertemuanId}/presensi/`);
+        const d = typeof res?.json === 'function' ? await res.json() : res;
+        (d.data || []).forEach(p => { existing[p.santri_nisn] = p.status; });
+    } catch (e) { /* pakai default */ }
+
+    const STATUS_OPTIONS = [
+        { value: 'hadir', label: 'Hadir', color: '#1d9e75' },
+        { value: 'izin', label: 'Izin', color: '#f59e0b' },
+        { value: 'sakit', label: 'Sakit', color: '#3b82f6' },
+        { value: 'tidak_hadir', label: 'Alpa', color: '#ef4444' },
+    ];
+
+    if (kajianState.anggotaList.length === 0) {
+        formEl.innerHTML =
+            '<p style="color:#9ca3af;font-size:12px;">Belum ada anggota di kelompok ini.</p>';
+        return;
+    }
+
+    formEl.innerHTML = kajianState.anggotaList.map(a => {
+        const currentStatus = existing[a.nisn] || 'hadir';
+        const opts = STATUS_OPTIONS.map(s =>
+            `<option value="${s.value}" ${currentStatus === s.value ? 'selected' : ''}>
+                ${s.label}
+             </option>`
+        ).join('');
+        return `
+            <div style="display:flex;align-items:center;justify-content:space-between;
+                        padding:8px 0;border-bottom:1px solid #f3f4f6;">
+                <div>
+                    <span style="font-size:13px;color:#111827;font-weight:500;">
+                        ${a.nama}
+                    </span>
+                    <span style="font-size:11px;color:#9ca3af;margin-left:8px;">
+                        ${a.kelas}
+                    </span>
+                </div>
+                <select data-nisn="${a.nisn}"
+                        style="padding:5px 10px;border:1px solid #d1d5db;
+                               border-radius:6px;font-size:12px;outline:none;
+                               background:#fff;cursor:pointer;">
+                    ${opts}
+                </select>
+            </div>`;
+    }).join('');
+}
+
+async function simpanPresensi(pertemuanId) {
+    const formEl = document.getElementById(`presensi-form-${pertemuanId}`);
+    if (!formEl) return;
+
+    const selects = formEl.querySelectorAll('select[data-nisn]');
+    const presensi = Array.from(selects).map(sel => ({
+        nisn: sel.dataset.nisn,
+        status: sel.value,
+        catatan: ''
+    }));
+
+    try {
+        await window.apiFetch(`kesantrian/pertemuan-pengasuhan/${pertemuanId}/presensi/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ presensi })
+        });
+        const hadir = presensi.filter(p => p.status === 'hadir').length;
+        const p = kajianState.pertemuanList.find(x => x.id == pertemuanId);
+        if (p) p.jumlah_hadir = hadir;
+        const panel = document.getElementById(`presensi-panel-${pertemuanId}`);
+        if (panel) {
+            const card = panel.closest('[style*="border-radius:12px"]');
+            if (card) {
+                const hadirSpan = card.querySelector('span[style*="1d9e75"]');
+                if (hadirSpan) hadirSpan.textContent = `${hadir} hadir`;
+            }
+        }
+        alert('Presensi berhasil disimpan.');
+    } catch (e) {
+        alert('Gagal menyimpan presensi.');
+    }
+}
+
+function wireKajianModal() {
+    const btnTambah = document.getElementById('btn-tambah-pertemuan');
+    const modal = document.getElementById('modal-pertemuan');
+    const btnSave = document.getElementById('btn-modal-pertemuan-save');
+    const btnCancel = document.getElementById('btn-modal-pertemuan-cancel');
+
+    if (btnTambah) {
+        btnTambah.onclick = () => {
+            document.getElementById('input-pertemuan-judul').value = '';
+            document.getElementById('input-pertemuan-tanggal').value = '';
+            document.getElementById('input-pertemuan-lokasi').value = '';
+            if (modal) modal.style.display = 'flex';
+        };
+    }
+    if (btnCancel && modal) {
+        btnCancel.onclick = () => { modal.style.display = 'none'; };
+    }
+    if (btnSave) {
+        btnSave.onclick = async () => {
+            const judul = document.getElementById('input-pertemuan-judul')?.value?.trim();
+            const tanggal = document.getElementById('input-pertemuan-tanggal')?.value;
+            const lokasi = document.getElementById('input-pertemuan-lokasi')?.value?.trim();
+            if (!judul || !tanggal) { alert('Judul dan tanggal wajib diisi.'); return; }
+            if (!kajianState.kelompok) return;
+            try {
+                await window.apiFetch('kesantrian/pertemuan-pengasuhan/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        kelompok_id: kajianState.kelompok.id,
+                        judul, tanggal, lokasi: lokasi || ''
+                    })
+                });
+                if (modal) modal.style.display = 'none';
+                await loadKajianTab();
+            } catch (e) {
+                alert('Gagal menyimpan pertemuan.');
+            }
+        };
+    }
 }
 
 // ============================================

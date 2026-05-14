@@ -10,7 +10,7 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
-<link href="/static/css/hafalan-baron.css?v=20260513" rel="stylesheet">
+<link href="/static/css/hafalan-baron.css?v=20260514" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -84,6 +84,11 @@
             <button class="tab-btn" data-tab="setoran" onclick="switchHafalanTab('setoran')">
                 <i data-lucide="file-plus" class="tab-icon"></i>
                 <span>Setoran Hafalan</span>
+            </button>
+            <button class="tab-btn" data-tab="kajian" id="tab-btn-kajian"
+                    style="display:none;" onclick="switchHafalanTab('kajian')">
+                <i data-lucide="calendar-check" class="tab-icon"></i>
+                <span>Kajian Mingguan</span>
             </button>
             <button class="tab-btn" data-tab="import" onclick="switchHafalanTab('import')">
                 <i data-lucide="upload" class="tab-icon"></i>
@@ -489,6 +494,82 @@
             </div>
         </div><!-- /tab-setoran -->
 
+        <!-- ==================== TAB: KAJIAN MINGGUAN ==================== -->
+        <div class="tab-content" id="tab-kajian" style="display:none;">
+
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                <h3 style="margin:0;font-size:16px;font-weight:600;color:#111827;">
+                    Kajian Mingguan
+                </h3>
+                <button id="btn-tambah-pertemuan"
+                        style="background:#1d9e75;color:#fff;border:none;
+                               border-radius:8px;padding:8px 16px;font-size:13px;
+                               font-weight:500;cursor:pointer;">
+                    + Tambah Pertemuan
+                </button>
+            </div>
+
+            <div id="kajian-kelompok-info"
+                 style="background:#f0faf5;border:1px solid #d1e9df;border-radius:10px;
+                        padding:14px 18px;margin-bottom:20px;font-size:13px;
+                        color:#374151;display:none;">
+            </div>
+
+            <div id="kajian-pertemuan-list">
+                <p style="color:#9ca3af;text-align:center;padding:32px 0;">
+                    Memuat data pertemuan...
+                </p>
+            </div>
+        </div>
+
+        <!-- Modal Tambah/Edit Pertemuan -->
+        <div id="modal-pertemuan" style="display:none;position:fixed;inset:0;
+             background:rgba(0,0,0,0.4);z-index:1000;
+             justify-content:center;align-items:center;">
+            <div style="background:#fff;border-radius:12px;padding:28px;
+                        width:100%;max-width:440px;
+                        box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+                <h3 style="margin:0 0 20px;font-size:16px;font-weight:600;color:#111827;">
+                    Tambah Pertemuan
+                </h3>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;
+                                   color:#374151;margin-bottom:6px;">Judul</label>
+                    <input id="input-pertemuan-judul" type="text"
+                           style="width:100%;padding:9px 12px;border:1px solid #d1d5db;
+                                  border-radius:8px;font-size:13px;outline:none;
+                                  box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;
+                                   color:#374151;margin-bottom:6px;">Tanggal</label>
+                    <input id="input-pertemuan-tanggal" type="date"
+                           style="width:100%;padding:9px 12px;border:1px solid #d1d5db;
+                                  border-radius:8px;font-size:13px;outline:none;
+                                  box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;font-size:12px;font-weight:500;
+                                   color:#374151;margin-bottom:6px;">Lokasi</label>
+                    <input id="input-pertemuan-lokasi" type="text"
+                           style="width:100%;padding:9px 12px;border:1px solid #d1d5db;
+                                  border-radius:8px;font-size:13px;outline:none;
+                                  box-sizing:border-box;">
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button id="btn-modal-pertemuan-cancel"
+                            style="padding:8px 18px;border:1px solid #d1d5db;
+                                   border-radius:8px;background:#fff;
+                                   font-size:13px;cursor:pointer;">Batal</button>
+                    <button id="btn-modal-pertemuan-save"
+                            style="padding:8px 18px;background:#1d9e75;color:#fff;
+                                   border:none;border-radius:8px;font-size:13px;
+                                   font-weight:500;cursor:pointer;">Simpan</button>
+                </div>
+            </div>
+        </div>
+
         <!-- ==================== TAB: IMPORT EXCEL (Admin/Superadmin) ==================== -->
         <div class="tab-content" id="tab-import" style="display: none;">
             <div class="glass-card">
@@ -761,7 +842,7 @@
 <script src="/static/js/auth-check.js?v=20260504" defer></script>
 <script src="/static/js/auth.js?v=20260504" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/hafalan.js?v=20260514b" defer></script>
+<script src="/static/js/hafalan.js?v=20260514c" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init

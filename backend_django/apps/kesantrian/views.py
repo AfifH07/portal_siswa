@@ -3555,7 +3555,7 @@ def pertemuan_list_create(request):
     if user.role in ['superadmin', 'admin', 'pimpinan']:
         queryset = PertemuanPengasuhan.objects.select_related(
             'kelompok', 'dibuat_oleh').prefetch_related('presensi').all()
-    elif user.role == 'guru':
+    elif user.role in ['guru', 'musyrif']:
         kelompok_ids = KelompokPengasuhan.objects.filter(
             Q(pengasuh=user) | Q(wakil_pengasuh=user)
         ).values_list('id', flat=True)
