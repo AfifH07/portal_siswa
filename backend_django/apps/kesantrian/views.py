@@ -16,7 +16,7 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import timedelta
 
-from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, TartilSantri, TahfidzSantri, HafalanRecord, KelompokPengasuhan, KelompokAnggota, PertemuanPengasuhan, PresensiPertemuan
+from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, TartilSantri, TahfidzSantri, KompetensiSantri, HafalanRecord, KelompokPengasuhan, KelompokAnggota, PertemuanPengasuhan, PresensiPertemuan
 from .serializers import (
     IbadahSerializer, IbadahCreateSerializer,
     PembinaanSerializer, PembinaanCreateSerializer,
@@ -4446,9 +4446,67 @@ def hafalan_per_siswa(request, nisn):
             'total_halaman': total_halaman,
             'total_records': total_records,
             'juz_summary': juz_summary,
-            'records': recent_records
+            'records': recent_records,
+            'catatan_guru': student.catatan,
         }
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def kompetensi_santri_get(request, nisn):
+    from apps.students.models import Student
+    try:
+        student = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Santri tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+    kompetensi, _ = KompetensiSantri.objects.get_or_create(santri=student)
+    data = {
+        'guru_tartil_id': kompetensi.guru_tartil_id,
+        'guru_tartil_nama': kompetensi.guru_tartil.name or kompetensi.guru_tartil.username
+                            if kompetensi.guru_tartil else '–',
+        'guru_tahfidz_id': kompetensi.guru_tahfidz_id,
+        'guru_tahfidz_nama': kompetensi.guru_tahfidz.name or kompetensi.guru_tahfidz.username
+                             if kompetensi.guru_tahfidz else '–',
+        'status_khidmat': kompetensi.status_khidmat,
+        'keterangan_khidmat': kompetensi.keterangan_khidmat,
+    }
+    return Response({'success': True, 'data': data})
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def kompetensi_santri_update(request, nisn):
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=status.HTTP_403_FORBIDDEN)
+    from apps.students.models import Student
+    from apps.accounts.models import User as UserModel
+    try:
+        student = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Santri tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+    kompetensi, _ = KompetensiSantri.objects.get_or_create(santri=student)
+    data = request.data
+    if 'guru_tartil_id' in data:
+        try:
+            kompetensi.guru_tartil = UserModel.objects.get(pk=data['guru_tartil_id']) if data['guru_tartil_id'] else None
+        except UserModel.DoesNotExist:
+            pass
+    if 'guru_tahfidz_id' in data:
+        try:
+            kompetensi.guru_tahfidz = UserModel.objects.get(pk=data['guru_tahfidz_id']) if data['guru_tahfidz_id'] else None
+        except UserModel.DoesNotExist:
+            pass
+    if 'status_khidmat' in data:
+        kompetensi.status_khidmat = data['status_khidmat']
+    if 'keterangan_khidmat' in data:
+        kompetensi.keterangan_khidmat = data['keterangan_khidmat']
+    kompetensi.save()
+    return Response({'success': True, 'message': 'Kompetensi berhasil diupdate'})
 
 
 @api_view(['GET', 'POST'])

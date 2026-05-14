@@ -469,6 +469,42 @@ class TahfidzSantri(models.Model):
         unique_together = ['siswa', 'kategori', 'tahun_ajaran']
 
 
+class KompetensiSantri(models.Model):
+    STATUS_KHIDMAT = [
+        ('aktif', 'Aktif'),
+        ('tidak_aktif', 'Tidak Aktif'),
+        ('mutakhirij', 'Mutakhirij'),
+    ]
+    santri = models.OneToOneField(
+        'students.Student',
+        on_delete=models.CASCADE,
+        related_name='kompetensi',
+        to_field='nisn'
+    )
+    guru_tartil = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='santri_tartil'
+    )
+    guru_tahfidz = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='santri_tahfidz'
+    )
+    status_khidmat = models.CharField(
+        max_length=20,
+        choices=STATUS_KHIDMAT,
+        default='aktif'
+    )
+    keterangan_khidmat = models.TextField(blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Kompetensi {self.santri.nama}"
+
+
 class HafalanRecord(models.Model):
     """
     Model untuk mencatat progress hafalan harian santri.

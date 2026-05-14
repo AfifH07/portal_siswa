@@ -485,7 +485,8 @@ async function renderHafalanGuru() {
             const res = await rawRes.json();
             if (res.success && res.data) {
                 // Build juzProgress: array 30 juz (juz 1–30)
-                const juzSummary = res.data.juz_summary || [];
+                const data = res.data;
+                const juzSummary = data.juz_summary || [];
                 const juzMap = {};
                 juzSummary.forEach(j => { juzMap[j.juz] = j.halaman || 0; });
 
@@ -503,10 +504,15 @@ async function renderHafalanGuru() {
                 });
 
                 // Populate student data if not already set
-                if (res.data.siswa) {
-                    hafalanData.student.nama = hafalanData.student.nama || res.data.siswa.nama;
-                    hafalanData.student.kelas = hafalanData.student.kelas || res.data.siswa.kelas;
+                if (data.siswa) {
+                    hafalanData.student.nama = hafalanData.student.nama || data.siswa.nama;
+                    hafalanData.student.kelas = hafalanData.student.kelas || data.siswa.kelas;
                 }
+                if (data.catatan_guru !== undefined) {
+                    hafalanData.catatan = data.catatan_guru;
+                }
+                const textarea = document.getElementById('catatan-guru');
+                if (textarea) textarea.value = hafalanData.catatan;
             }
 
             const tartilRawRes = await window.apiFetch(`kesantrian/hafalan/tartil/${nisn}/`);
@@ -563,6 +569,25 @@ async function renderHafalanGuru() {
         } catch (err) {
             console.warn('[hafalan] Gagal fetch data siswa:', err);
         }
+    }
+
+    if (nisn) {
+        try {
+            const resK = await window.apiFetch(`kesantrian/kompetensi/${nisn}/`);
+            const dK = typeof resK?.json === 'function' ? await resK.json() : resK;
+            if (dK.success) {
+                hafalanData.kompetensi = {
+                    guru_tartil: dK.data.guru_tartil_nama,
+                    guru_tahfidz: dK.data.guru_tahfidz_nama,
+                    guru_tartil_id: dK.data.guru_tartil_id,
+                    guru_tahfidz_id: dK.data.guru_tahfidz_id,
+                    status_khidmat: dK.data.status_khidmat === 'aktif' ? 'Aktif' :
+                                    dK.data.status_khidmat === 'tidak_aktif' ? 'Tidak Aktif' :
+                                    'Mutakhirij',
+                    keterangan_khidmat: dK.data.keterangan_khidmat,
+                };
+            }
+        } catch (e) { /* silent */ }
     }
 
     renderPrediction();
@@ -893,6 +918,108 @@ function renderKompetensiSection() {
         khidmatEl.textContent = kompetensi.status_khidmat;
         khidmatEl.className = 'kompetensi-value badge ' + (kompetensi.status_khidmat === 'Aktif' ? 'badge-success' : 'badge-warning');
     }
+
+    const kompetensiSection = document.getElementById('kompetensi-section');
+    if (kompetensiSection) {
+        const existingBtn = kompetensiSection.querySelector('.btn-edit-kompetensi');
+        if (!existingBtn && ['superadmin', 'admin', 'pimpinan'].includes(currentRole)) {
+            let cardHead = kompetensiSection.querySelector('.card-head');
+            if (!cardHead) {
+                const title = kompetensiSection.querySelector('.section-title');
+                if (title) {
+                    cardHead = document.createElement('div');
+                    cardHead.className = 'card-head';
+                    cardHead.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;';
+                    kompetensiSection.insertBefore(cardHead, title);
+                    cardHead.appendChild(title);
+                }
+            }
+            if (cardHead) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-edit-kompetensi';
+                btn.textContent = 'Edit';
+                btn.style.cssText = 'font-size:12px;padding:4px 12px;' +
+                    'border:1px solid #d1e9df;border-radius:6px;' +
+                    'background:#fff;cursor:pointer;color:#1d9e75;';
+                btn.onclick = openKompetensiEdit;
+                cardHead.appendChild(btn);
+            }
+        } else if (existingBtn && !['superadmin', 'admin', 'pimpinan'].includes(currentRole)) {
+            existingBtn.remove();
+        }
+    }
+}
+
+async function openKompetensiEdit() {
+    const nisn = hafalanData.student.nisn;
+    if (!nisn) return;
+    if (!['superadmin', 'admin', 'pimpinan'].includes(currentRole)) return;
+
+    const existing = hafalanData.kompetensi;
+
+    let users = [];
+    try {
+        const r1 = await window.apiFetch('auth/users/?role=guru');
+        const d1 = typeof r1?.json === 'function' ? await r1.json() : r1;
+        const r2 = await window.apiFetch('auth/users/?role=musyrif');
+        const d2 = typeof r2?.json === 'function' ? await r2.json() : r2;
+        users = [...(d1.data || []), ...(d2.data || [])];
+        users.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    } catch (e) {}
+
+    const userOpts = '<option value="">– Tidak ada –</option>' +
+        users.map(u => `<option value="${u.id}" ${u.id == existing.guru_tartil_id ? 'selected' : ''}>${u.name}</option>`).join('');
+    const userOpts2 = '<option value="">– Tidak ada –</option>' +
+        users.map(u => `<option value="${u.id}" ${u.id == existing.guru_tahfidz_id ? 'selected' : ''}>${u.name}</option>`).join('');
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;display:flex;justify-content:center;align-items:center;';
+    modal.innerHTML = `
+        <div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <h3 style="margin:0 0 20px;font-size:15px;font-weight:600;color:#111827;">
+                Edit Kompetensi & Pengajar
+            </h3>
+            <div style="margin-bottom:13px;">
+                <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:5px;">Guru Tartil</label>
+                <select id="ke-guru-tartil" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;outline:none;background:#fff;">${userOpts}</select>
+            </div>
+            <div style="margin-bottom:13px;">
+                <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:5px;">Guru Tahfidz</label>
+                <select id="ke-guru-tahfidz" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;outline:none;background:#fff;">${userOpts2}</select>
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:5px;">Status Khidmat</label>
+                <select id="ke-status-khidmat" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;outline:none;background:#fff;">
+                    <option value="aktif" ${existing.status_khidmat==='Aktif'?'selected':''}>Aktif</option>
+                    <option value="tidak_aktif" ${existing.status_khidmat==='Tidak Aktif'?'selected':''}>Tidak Aktif</option>
+                    <option value="mutakhirij" ${existing.status_khidmat==='Mutakhirij'?'selected':''}>Mutakhirij</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button id="ke-cancel" style="padding:8px 18px;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-size:13px;cursor:pointer;">Batal</button>
+                <button id="ke-save" style="padding:8px 18px;background:#1d9e75;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;">Simpan</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+
+    document.getElementById('ke-cancel').onclick = () => modal.remove();
+    document.getElementById('ke-save').onclick = async () => {
+        try {
+            await window.apiFetch(`kesantrian/kompetensi/${nisn}/update/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    guru_tartil_id: document.getElementById('ke-guru-tartil').value || null,
+                    guru_tahfidz_id: document.getElementById('ke-guru-tahfidz').value || null,
+                    status_khidmat: document.getElementById('ke-status-khidmat').value,
+                })
+            });
+            modal.remove();
+            await renderHafalanGuru();
+        } catch (e) {
+            alert('Gagal menyimpan.');
+        }
+    };
 }
 
 function renderKehadiranSection() {
@@ -1546,11 +1673,22 @@ async function saveItemChanges(id, type) {
     }
 }
 
-function saveCatatan() {
+async function saveCatatan() {
     const textarea = document.getElementById('catatan-guru');
     if (!textarea) return;
-    hafalanData.catatan = textarea.value;
-    showToast('Catatan berhasil disimpan!');
+    const nisn = hafalanData.student.nisn;
+    if (!nisn) { showToast('Pilih santri terlebih dahulu.'); return; }
+    try {
+        await window.apiFetch(`students/${nisn}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ catatan: textarea.value })
+        });
+        hafalanData.catatan = textarea.value;
+        showToast('Catatan berhasil disimpan!');
+    } catch (e) {
+        showToast('Gagal menyimpan catatan.');
+    }
 }
 
 function exportHafalanData() {
