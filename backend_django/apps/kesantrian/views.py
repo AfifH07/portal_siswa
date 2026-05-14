@@ -3663,6 +3663,57 @@ def pertemuan_presensi(request, pk):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def siswa_kehadiran_kajian(request, nisn):
+    user = request.user
+    if user.role == 'walisantri':
+        allowed = []
+        if getattr(user, 'linked_student_nisn', None):
+            allowed.append(user.linked_student_nisn)
+        if getattr(user, 'linked_student_nisns', None):
+            allowed.extend(user.linked_student_nisns)
+        if nisn not in allowed:
+            return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+    presensi_qs = PresensiPertemuan.objects.select_related(
+        'pertemuan', 'pertemuan__kelompok'
+    ).filter(santri__nisn=nisn)
+
+    bulan = request.GET.get('bulan')
+    if bulan:
+        try:
+            from django.utils import timezone
+            tahun = timezone.now().year
+            presensi_qs = presensi_qs.filter(
+                pertemuan__tanggal__year=tahun,
+                pertemuan__tanggal__month=int(bulan)
+            )
+        except (ValueError, TypeError):
+            pass
+
+    summary = {
+        'hadir': presensi_qs.filter(status='hadir').count(),
+        'izin': presensi_qs.filter(status='izin').count(),
+        'sakit': presensi_qs.filter(status='sakit').count(),
+        'alfa': presensi_qs.filter(status='tidak_hadir').count(),
+    }
+
+    history = []
+    for p in presensi_qs.select_related('pertemuan', 'pertemuan__kelompok').order_by('-pertemuan__tanggal'):
+        history.append({
+            'pertemuan_id': p.pertemuan.id,
+            'judul': p.pertemuan.judul,
+            'tanggal': str(p.pertemuan.tanggal),
+            'lokasi': p.pertemuan.lokasi,
+            'kelompok_nama': p.pertemuan.kelompok.nama if p.pertemuan.kelompok else '–',
+            'status': p.status,
+        })
+
+    return Response({'success': True, 'summary': summary, 'history': history})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def pengasuhan_belum_pertemuan(request):
     """Kelompok yang bulan ini belum ada pertemuan — untuk pimpinan/admin."""
     user = request.user

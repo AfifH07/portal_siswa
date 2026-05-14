@@ -111,6 +111,7 @@ urlpatterns = [
     path('hafalan/records/', views.hafalan_record_list, name='hafalan-record-list'),
     path('hafalan/records/<int:pk>/', views.hafalan_record_detail, name='hafalan-record-detail'),
     path('hafalan/siswa/<str:nisn>/', views.hafalan_per_siswa, name='hafalan-per-siswa'),
+    path('hafalan/siswa/<str:nisn>/kehadiran-kajian/', views.siswa_kehadiran_kajian, name='hafalan-kehadiran-kajian'),
     path('hafalan/import/', views.import_hafalan_excel, name='hafalan-import'),
 
     # ============================================

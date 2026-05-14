@@ -558,6 +558,8 @@ async function renderHafalanGuru() {
                     detail: def.detail
                 };
             });
+
+            await fetchKehadiranKajian(nisn);
         } catch (err) {
             console.warn('[hafalan] Gagal fetch data siswa:', err);
         }
@@ -1421,9 +1423,10 @@ function attachEventListeners() {
 
     const filterBulan = document.getElementById('filter-bulan');
     if (filterBulan) {
-        filterBulan.addEventListener('change', function() {
-            showToast('Data bulan diperbarui');
-        });
+        filterBulan.onchange = () => {
+            const nisn = hafalanData.student.nisn;
+            if (nisn) fetchKehadiranKajian(nisn, filterBulan.value);
+        };
     }
 
     const btnExport = document.getElementById('btn-export');
@@ -2824,6 +2827,67 @@ function setupKelompokSearch() {
             </div>
         `).join('');
     };
+}
+
+async function fetchKehadiranKajian(nisn, bulan = '') {
+    if (!nisn) return;
+    try {
+        const query = bulan ? `?bulan=${bulan}` : '';
+        const res = await window.apiFetch(`kesantrian/hafalan/siswa/${nisn}/kehadiran-kajian/${query}`);
+        const d = typeof res?.json === 'function' ? await res.json() : res;
+        if (!d.success) return;
+
+        hafalanData.kehadiran = {
+            hadir: d.summary.hadir,
+            izin: d.summary.izin,
+            sakit: d.summary.sakit,
+            alfa: d.summary.alfa,
+            total_hari: d.summary.hadir + d.summary.izin + d.summary.sakit + d.summary.alfa,
+        };
+        renderKehadiranSection();
+        renderKajianRiwayat(d.history || []);
+    } catch (e) {
+        console.warn('[hafalan] gagal fetch kehadiran kajian:', e);
+    }
+}
+
+const STATUS_LABEL = {
+    hadir: { text: 'Hadir', color: '#1d9e75' },
+    izin: { text: 'Izin', color: '#f59e0b' },
+    sakit: { text: 'Sakit', color: '#3b82f6' },
+    tidak_hadir: { text: 'Alpa', color: '#ef4444' },
+};
+
+function renderKajianRiwayat(history) {
+    const section = document.getElementById('kajian-riwayat-section');
+    const listEl = document.getElementById('kajian-riwayat-list');
+    if (!section || !listEl) return;
+
+    if (history.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = '';
+
+    listEl.innerHTML = history.map(h => {
+        const s = STATUS_LABEL[h.status] || { text: h.status, color: '#6b7280' };
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:9px 0;border-bottom:1px solid #f3f4f6;">
+            <div>
+                <div style="font-weight:500;color:#111827;">${h.judul}</div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:2px;">
+                    ${h.tanggal} &nbsp;·&nbsp; ${h.kelompok_nama}
+                    ${h.lokasi ? '&nbsp;·&nbsp; ' + h.lokasi : ''}
+                </div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:${s.color};
+                         background:${s.color}18;padding:3px 10px;
+                         border-radius:20px;white-space:nowrap;">
+                ${s.text}
+            </span>
+        </div>`;
+    }).join('');
 }
 
 async function loadKajianTab() {
