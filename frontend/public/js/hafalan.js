@@ -1214,7 +1214,7 @@ function renderCatatanSectionGuru() {
 // SECTION 6: RENDER - WALISANTRI VIEW (Read-Only)
 // ============================================
 
-function renderHafalanWalisantri() {
+async function renderHafalanWalisantri() {
     // Hide admin elements
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
     document.getElementById('page-title').textContent = 'Hafalan Ananda';
@@ -1227,6 +1227,8 @@ function renderHafalanWalisantri() {
     renderKompetensiSection();
     renderKehadiranSection();
     renderCatatanSectionWalisantri();
+    const nisn = hafalanData.student?.nisn;
+    if (nisn) fetchKehadiranKajian(nisn);
 }
 
 function renderTartilPanelWalisantri() {
