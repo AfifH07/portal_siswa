@@ -1368,9 +1368,8 @@ async function renderWalisantriDashboard() {
                     </div>
                 </div>
 
-                <div class="wd-card">
-                    <div class="wd-card-title">🌙 Ibadah harian</div>
-                    <div id="worship-tracker-container"></div>
+                <div class="wd-card" style="padding:0;overflow:hidden;">
+                    <div id="worship-tracker-container" style="padding:14px 16px;"></div>
                 </div>
 
                 <div class="wd-two-col">

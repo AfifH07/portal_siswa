@@ -47,7 +47,7 @@
     color: var(--text-primary, #111827);
 }
 
-.wd-content { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.wd-content { padding: 16px 30px; display: flex; flex-direction: column; gap: 14px; }
 
 .wd-hero {
   background: linear-gradient(135deg, #0a5c41 0%, #0f6e56 60%, #1d9e75 100%);
@@ -198,4 +198,37 @@
         padding-top: 12px; width: 100%;
     }
     .wd-menu-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.walisantri-section.active {
+    display: block;
+    margin: -28px -30px;
+}
+.wd-topbar {
+    padding: 14px 30px;
+    background: #fff;
+    border-bottom: 0.5px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.wd-greeting {
+    font-size: 13px;
+    color: #6b7280;
+}
+.wd-greeting strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+    margin-top: 1px;
+}
+.wd-child-selector select {
+    font-size: 12px;
+    border: 0.5px solid #d1d5db;
+    border-radius: 6px;
+    padding: 5px 10px;
+    background: #f9fafb;
+    color: #111827;
+    cursor: pointer;
 }
