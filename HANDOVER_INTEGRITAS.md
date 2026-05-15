@@ -43,6 +43,18 @@ Deploy: PythonAnywhere (staging) + VPS PostgreSQL (production)
 - `TartilSantri` — migration 0014 ✅
 - `TahfidzSantri` — migration 0014 ✅
 
+**Dashboard Walisantri (dashboard.html + dashboard.js + wali-dashboard.css):**
+- Redesign dashboard walisantri: hero card gradient hijau, topbar greeting,
+  4 stat card, aktivitas terkini, status tagihan, akses cepat 6 item ✅
+- Cleanup duplikat `renderWalisantriDashboard()` dan CSS conflict di
+  `wali-dashboard.css` ✅
+- Route dashboard walisantri dikonfirmasi: `unified_dashboard` → `dashboard.js`
+  → `renderWalisantriDashboard()` (`dashboard-parent.html` tidak dipakai) ✅
+
+**Fix Hafalan Walisantri:**
+- Fix `renderHafalanWalisantri()`: tambah `fetchKehadiranKajian()` agar
+  walisantri dapat data kehadiran kajian di tab Overview hafalan ✅
+
 ---
 
 ### ❌ BELUM DIKERJAKAN
@@ -77,8 +89,6 @@ Scope lengkap yang perlu dibangun:
 - List pertemuan milik kelompok yang diasuh guru login
 - Tombol "Tambah Pertemuan" → modal (judul, tanggal, lokasi)
 - Per pertemuan: input presensi per santri (hadir/izin/sakit/tidak_hadir)
-- Di tab Overview per santri: tampilkan ringkasan kehadiran kajian
-  (sudah ada UI-nya: Hadir/Izin/Alpa — tinggal disambungkan)
 
 *Model yang sudah ada dan siap dipakai:*
 - `KelompokPengasuhan` — nama, pengasuh, wakil_pengasuh, tahun_ajaran
@@ -95,6 +105,14 @@ Scope lengkap yang perlu dibangun:
 - UI sudah ada tapi semua tampil "–"
 - Rencananya dari assignment guru ke siswa
 - Belum ada model/endpoint yang sesuai
+
+**5. Dashboard Walisantri — follow-up UI/data**
+- Fix tabel ibadah harian di dashboard walisantri (`renderWorshipTrackerUI`
+  styling)
+- Fix icon warna Akses Cepat tidak muncul di dashboard walisantri
+- Fix data ibadah 0% dan kajian 0 — cek field mapping
+  `fetchWalisantriSummary()` vs response JSON
+  `kesantrian/my-children-summary/`
 
 ---
 
@@ -119,3 +137,18 @@ cd backend_django && python manage.py collectstatic --noinput
 # Reload di Web tab PythonAnywhere
 # Bump ?v= pada script/CSS yang diubah
 ```
+
+---
+
+## Brief history
+
+### Recent months
+
+**15 Mei 2026:**
+- Redesign penuh dashboard walisantri: hero card, stat grid, aktivitas,
+  tagihan, akses cepat
+- Fix route dashboard: dikonfirmasi pakai `dashboard.js`, bukan
+  `dashboard-parent.html`
+- Fix `fetchKehadiranKajian()` tidak dipanggil di `renderHafalanWalisantri()`
+- Cleanup: hapus duplikat fungsi `renderWalisantriDashboard()`, hapus CSS
+  conflict antara definisi lama dan Redesign 2026 di `wali-dashboard.css`

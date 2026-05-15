@@ -2036,16 +2036,8 @@ async function fetchAcademicGrades(nisn) {
  */
 async function fetchWorshipTracker(nisn) {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/kesantrian/worship-tracker/${nisn}/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
+        const response = await window.apiFetch(`kesantrian/worship-tracker/${nisn}/`);
+        const result = typeof response?.json === 'function' ? await response.json() : response;
         if (result.success) {
             // Render the tracker UI
             const container = document.getElementById('worship-tracker-container');
@@ -2234,16 +2226,8 @@ async function renderWorshipTracker(nisn) {
     `;
 
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/kesantrian/worship-tracker/${targetNisn}/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
+        const response = await window.apiFetch(`kesantrian/worship-tracker/${targetNisn}/`);
+        const result = typeof response?.json === 'function' ? await response.json() : response;
         debugLog('[WorshipTracker] API Response:', result);
 
         if (!result.success) {
