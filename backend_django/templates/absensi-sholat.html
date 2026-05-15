@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Sholat - Portal Ponpes Baron</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Baron Light Emerald Theme -->
+    <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
+    <link href="/static/css/absensi-sholat.css?v=20260515a" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-role="">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">🕌</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+
+    <!-- Back to main website chip -->
+    <a class="back-chip" href="/">
+        <span class="arrow">←</span>
+        <span>Kembali ke Website</span>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Sidebar will be dynamically rendered by auth-check.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout">🚪 Keluar</button>
+    </div>
+</aside>
+
+<main class="main-content" id="main-content">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-title">Absensi Sholat</h1>
+      <p class="page-subtitle">Input kehadiran sholat 5 waktu santri</p>
+    </div>
+  </div>
+
+  <div class="as-page">
+    <div id="as-alert" class="as-alert"></div>
+
+    <!-- Toolbar -->
+    <div class="as-toolbar">
+      <label for="as-kelas">Kelas:</label>
+      <select id="as-kelas">
+        <option value="">-- Pilih Kelas --</option>
+      </select>
+
+      <label for="as-tanggal">Tanggal:</label>
+      <input type="date" id="as-tanggal">
+
+      <button id="as-btn-load" class="as-btn-load">Muat Santri</button>
+    </div>
+
+    <!-- Tabel santri -->
+    <div class="as-card" id="as-card" style="display:none;">
+      <div class="as-card-header">
+        <span class="as-card-title" id="as-card-title">Daftar Santri</span>
+        <span class="as-student-count" id="as-student-count"></span>
+      </div>
+      <div class="as-table-wrap">
+        <table class="as-table">
+          <thead>
+            <tr>
+              <th>Santri</th>
+              <th>🌅 Subuh</th>
+              <th>☀️ Dzuhur</th>
+              <th>🌤️ Ashar</th>
+              <th>🌅 Maghrib</th>
+              <th>🌙 Isya</th>
+            </tr>
+          </thead>
+          <tbody id="as-tbody"></tbody>
+        </table>
+      </div>
+      <div class="as-footer">
+        <button id="as-btn-hadir-semua" class="as-btn-hadir-semua">
+          ✓ Semua Hadir
+        </button>
+        <button id="as-btn-submit" class="as-btn-submit">
+          💾 Simpan Absensi
+        </button>
+      </div>
+    </div>
+
+    <div id="as-empty" class="as-empty" style="display:none;">
+      Pilih kelas dan tanggal, lalu klik "Muat Santri".
+    </div>
+  </div>
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toast-message"></span></div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js?v=20260504" defer></script>
+<script src="/static/js/apiConfig.js?v=20260504" defer></script>
+<script src="/static/js/apiFetch.js?v=20260504" defer></script>
+<script src="/static/js/auth-check.js?v=20260515a" defer></script>
+<script src="/static/js/auth.js?v=20260504" defer></script>
+<script src="/static/js/page-events.js?v=20260504" defer></script>
+<script src="/static/js/absensi-sholat.js?v=20260515a" defer></script>
+
+<script>
+    window.addEventListener('load', function() {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = user.role || window.getUserRole?.() || 'guest';
+        document.body.setAttribute('data-role', role);
+
+        const avatarEl = document.getElementById('user-avatar-initials');
+        if (avatarEl && user.name) {
+            const words = user.name.trim().split(' ');
+            avatarEl.textContent = words.length >= 2
+                ? (words[0][0] + words[1][0]).toUpperCase()
+                : user.name.substring(0, 2).toUpperCase();
+        }
+
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+    });
+</script>
+</body>
+</html>

@@ -241,11 +241,11 @@ function getAllowedPages(role) {
 
     // Fallback: hardcoded defaults (kept in sync with backend)
     const roleAccess = {
-        'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
-        'admin': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
+        'superadmin': ['/', '/dashboard', '/dashboard/admin', '/dashboard/pimpinan', '/dashboard/guru', '/dashboard/walisantri', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/absensi-sholat', '/evaluations', '/registration', '/finance', '/users', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
+        'admin': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/absensi-sholat', '/evaluations', '/finance', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
         'pimpinan': ['/','/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/timetable', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
-        'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/timetable', '/inval', '/evaluasi-asatidz', '/case-management', '/kelas-saya'],
-        'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/timetable', '/inval', '/evaluasi-asatidz', '/case-management'],
+        'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/absensi-sholat', '/evaluations', '/timetable', '/inval', '/evaluasi-asatidz', '/case-management', '/kelas-saya'],
+        'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/absensi-sholat', '/evaluations', '/timetable', '/inval', '/evaluasi-asatidz', '/case-management'],
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/timetable', '/evaluasi-asatidz', '/case-management'],
         'bendahara': ['/', '/dashboard', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/timetable', '/finance'],
         'walisantri': ['/', '/dashboard', '/dashboard/walisantri', '/dashboard/parent', '/attendance', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/case-management'],
@@ -387,6 +387,7 @@ function createRoleBasedNav() {
                 { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
                 { href: '/grades', icon: 'file-text', label: 'Nilai' },
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' },
+                { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' },
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             admin: [
@@ -414,6 +415,7 @@ function createRoleBasedNav() {
                 { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
                 { href: '/grades', icon: 'file-text', label: 'Nilai' },
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' },
+                { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' },
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             admin: [
@@ -461,7 +463,8 @@ function createRoleBasedNav() {
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             kesantrian: [
-                { href: '/hafalan', icon: 'book-open', label: 'Program Al-Quran', id: 'nav-hafalan' }
+                { href: '/hafalan', icon: 'book-open', label: 'Program Al-Quran', id: 'nav-hafalan' },
+                { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' }
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
@@ -482,7 +485,8 @@ function createRoleBasedNav() {
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             kesantrian: [
-                { href: '/hafalan', icon: 'book-open', label: 'Program Al-Quran', id: 'nav-hafalan' }
+                { href: '/hafalan', icon: 'book-open', label: 'Program Al-Quran', id: 'nav-hafalan' },
+                { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' }
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },

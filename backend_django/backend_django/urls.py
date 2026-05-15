@@ -25,6 +25,9 @@ urlpatterns = [
     path('attendance/', TemplateView.as_view(template_name='attendance.html')),  # Presensi
     path('grades/', TemplateView.as_view(template_name='grades.html')),          # Akademik
     path('hafalan/', TemplateView.as_view(template_name='hafalan.html'), name='hafalan'),
+    path('absensi-sholat/', TemplateView.as_view(
+        template_name='absensi-sholat.html'
+    ), name='absensi-sholat'),
     path('evaluations/', TemplateView.as_view(template_name='evaluations.html')),
     path('registration/', TemplateView.as_view(template_name='registration.html')),
     path('finance/', TemplateView.as_view(template_name='finance.html')),        # Tagihan
