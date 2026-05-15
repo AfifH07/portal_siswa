@@ -1188,6 +1188,279 @@ window.loadGuruTodoList = loadGuruTodoList;
 // ============================================================
 
 async function renderWalisantriDashboard() {
+{
+    const adminDashboard = document.getElementById('dashboard-section');
+    const walisantriDashboard = document.getElementById('walisantri-dashboard');
+    const pageTitle = document.getElementById('page-title');
+
+    if (adminDashboard) adminDashboard.style.display = 'none';
+    if (walisantriDashboard) {
+        walisantriDashboard.style.display = 'block';
+        walisantriDashboard.classList.add('active');
+    }
+    if (pageTitle) pageTitle.textContent = 'Dashboard Ananda';
+
+    const profileContent = document.getElementById('walisantri-profile-content');
+    if (!profileContent) return;
+
+    const linkedStudents = currentUser?.linked_students || [];
+    const hasLinkedStudent = currentUser?.linked_student_nisn || linkedStudents.length > 0;
+
+    if (!currentUser || !hasLinkedStudent) {
+        profileContent.innerHTML = `
+            <div style="padding:40px;text-align:center;">
+                <div style="font-size:48px;margin-bottom:16px;">👨‍👩‍👧</div>
+                <p style="color:#6b7280;">Akun belum terhubung dengan data siswa. Hubungi admin.</p>
+            </div>`;
+        return;
+    }
+
+    if (linkedStudents.length > 1) {
+        selectedChildNisn = selectedChildNisn || linkedStudents[0].nisn;
+    } else if (linkedStudents.length === 1) {
+        selectedChildNisn = linkedStudents[0].nisn;
+    } else {
+        selectedChildNisn = currentUser.linked_student_nisn;
+    }
+
+    profileContent.innerHTML = `<div style="padding:32px;text-align:center;color:#6b7280;font-size:13px;">Memuat data ananda...</div>`;
+
+    try {
+        const nisn = selectedChildNisn || currentUser.linked_student_nisn;
+        const [student, attendanceStats, gradeStats, evaluationStats, tagihanList, summary] = await Promise.all([
+            window.apiFetch(`students/${nisn}/`).then(r => typeof r?.json === 'function' ? r.json() : r),
+            fetchWalisantriAttendanceStats(nisn).catch(() => null),
+            fetchWalisantriGradeStats(nisn).catch(() => null),
+            fetchWalisantriEvaluationStats(nisn).catch(() => null),
+            fetchWalisantriTagihan(nisn).catch(() => []),
+            fetchWalisantriSummary(nisn).catch(() => null),
+        ]);
+
+        const initials = getWalisantriInitials(student.nama);
+        const progressPct = student.progress_hafalan_percentage || 0;
+        const attendancePct = attendanceStats?.persentase_kehadiran || 0;
+        const avgGrade = gradeStats?.rata_rata || '-';
+        const kajianHadir = summary?.ibadah_summary?.total_hadir ?? '-';
+        const ibadahPct = summary?.ibadah_summary?.week_percentage ?? attendancePct;
+
+        const childSelectorHtml = linkedStudents.length > 1 ? `
+            <div style="display:flex;align-items:center;gap:8px;padding:14px 20px;background:#fff;border-bottom:0.5px solid #e5e7eb;">
+                <span style="font-size:12px;color:#6b7280;">Pilih anak:</span>
+                <select id="wd-child-select-new" style="font-size:12px;border:0.5px solid #d1d5db;border-radius:6px;padding:4px 8px;">
+                    ${linkedStudents.map(c => `<option value="${c.nisn}" ${c.nisn === nisn ? 'selected' : ''}>${c.nama} (${c.kelas || '-'})</option>`).join('')}
+                </select>
+            </div>` : '';
+
+        const kelompok = summary?.halaqoh ? `${summary.halaqoh.nama || ''} · ${summary.halaqoh.pengasuh || ''}`.trim() : '';
+        const aktivitasHtml = (() => {
+            const items = [];
+            if (summary?.recent_pembinaan?.length) {
+                summary.recent_pembinaan.slice(0, 2).forEach(p => {
+                    items.push(`<div class="wd-act-item">
+                        <div class="wd-act-dot" style="background:#E1F5EE;">📖</div>
+                        <div><div class="wd-act-text">${p.catatan || 'Pembinaan tercatat'}</div>
+                        <div class="wd-act-time">${p.tanggal || ''}</div></div></div>`);
+                });
+            }
+            if (attendancePct >= 90) {
+                items.push(`<div class="wd-act-item">
+                    <div class="wd-act-dot" style="background:#E1F5EE;">✅</div>
+                    <div><div class="wd-act-text">Kehadiran kelas sangat baik (${attendancePct}%)</div>
+                    <div class="wd-act-time">Bulan ini</div></div></div>`);
+            }
+            if (progressPct >= 60) {
+                items.push(`<div class="wd-act-item">
+                    <div class="wd-act-dot" style="background:#E6F1FB;">🏆</div>
+                    <div><div class="wd-act-text">Hafalan mencapai ${progressPct}% dari target</div>
+                    <div class="wd-act-time">Update terkini</div></div></div>`);
+            }
+            if (!items.length) {
+                items.push(`<div style="font-size:12px;color:#9ca3af;text-align:center;padding:12px 0;">Belum ada aktivitas tercatat</div>`);
+            }
+            return items.join('');
+        })();
+
+        const tagihanHtml = tagihanList.length ? tagihanList.map(t => {
+            const overdue = t.is_overdue;
+            const lunas = t.status === 'lunas';
+            const pillHtml = lunas
+                ? `<span class="wd-pill wd-pill-green">Lunas</span>`
+                : overdue ? `<span class="wd-pill wd-pill-red">Lewat jatuh tempo</span>`
+                : `<span class="wd-pill" style="background:#FFF7E6;color:#854F0B;">Belum lunas</span>`;
+            const amountStyle = lunas ? 'color:#9ca3af;text-decoration:line-through;' : overdue ? 'color:#854F0B;' : '';
+            return `<div class="wd-tag-item">
+                <div><div class="wd-tag-name">${t.tarif_nama || 'Tagihan'} ${t.bulan_display || ''}</div>
+                <div class="wd-tag-due">${lunas ? 'Lunas' : 'Jatuh tempo: ' + (t.jatuh_tempo || '-')}</div></div>
+                <div><div class="wd-tag-amount" style="${amountStyle}">Rp ${Number(t.sisa||0).toLocaleString('id-ID')}</div>${pillHtml}</div>
+            </div>`;
+        }).join('') : `<div style="font-size:12px;color:#9ca3af;text-align:center;padding:12px 0;">Tidak ada tagihan aktif</div>`;
+
+        profileContent.innerHTML = `
+        <div>
+            ${childSelectorHtml}
+            <div class="wd-content">
+                <div class="wd-hero">
+                    <div class="wd-avatar">${student.foto ? `<img src="${student.foto}" alt="${student.nama}">` : initials}</div>
+                    <div class="wd-hero-info">
+                        <div class="wd-name">${student.nama || '-'}</div>
+                        <div class="wd-sub">NISN: ${student.nisn || '-'} · ${student.kelas || '-'} · ${student.program || 'Reguler'}</div>
+                        <div class="wd-hero-badges">
+                            <span class="wd-badge wd-badge-green">● ${student.aktif ? 'Aktif' : 'Alumni'}</span>
+                            ${kelompok ? `<span class="wd-badge wd-badge-gray">${kelompok}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="wd-hero-stats">
+                        <div class="wd-hstat"><div class="val">${student.current_hafalan || 0}/${student.target_hafalan || 0}</div><div class="lbl">Juz hafal</div></div>
+                        <div class="wd-hstat"><div class="val">${ibadahPct}%</div><div class="lbl">Ibadah minggu ini</div></div>
+                        <div class="wd-hstat"><div class="val">${kajianHadir}</div><div class="lbl">Hadir kajian</div></div>
+                    </div>
+                </div>
+
+                <div class="wd-stats-grid">
+                    <div class="wd-stat">
+                        <div class="si">📖</div><div class="sl">Hafalan</div>
+                        <div class="sv color-green">${student.current_hafalan || 0} Juz</div>
+                        <div class="ss">Target: ${student.target_hafalan || 0} juz · ${progressPct}%</div>
+                        <div class="sbar"><div class="sbar-fill" style="background:#1d9e75;width:${progressPct}%"></div></div>
+                    </div>
+                    <div class="wd-stat">
+                        <div class="si">🌙</div><div class="sl">Ibadah minggu ini</div>
+                        <div class="sv color-blue">${ibadahPct}%</div>
+                        <div class="ss">${summary?.ibadah_summary?.total_sholat ?? '-'} sholat tercatat</div>
+                        <div class="sbar"><div class="sbar-fill" style="background:#378ADD;width:${ibadahPct}%"></div></div>
+                    </div>
+                    <div class="wd-stat">
+                        <div class="si">🕌</div><div class="sl">Kajian mingguan</div>
+                        <div class="sv color-green">${kajianHadir}</div>
+                        <div class="ss">Hadir bulan ini</div>
+                        <div class="sbar"><div class="sbar-fill" style="background:#1d9e75;width:${typeof kajianHadir === 'number' ? Math.min(kajianHadir*20,100) : 0}%"></div></div>
+                    </div>
+                    <div class="wd-stat" id="wd-tagihan-stat">
+                        <div class="si">🧾</div><div class="sl">Tagihan</div>
+                        <div class="sv color-amber">${tagihanList.filter(t=>!t.status||t.status!=='lunas').length ? tagihanList.filter(t=>t.status!=='lunas').length + ' belum lunas' : 'Semua lunas'}</div>
+                        <div class="ss">${tagihanList.filter(t=>t.is_overdue).length ? tagihanList.filter(t=>t.is_overdue).length + ' lewat jatuh tempo' : 'Tidak ada yang overdue'}</div>
+                        <div class="sbar"><div class="sbar-fill" style="background:#ba7517;width:${tagihanList.filter(t=>t.is_overdue).length ? 60 : 0}%"></div></div>
+                    </div>
+                </div>
+
+                <div class="wd-two-col">
+                    <div class="wd-card">
+                        <div class="wd-card-title">⚡ Aktivitas terkini</div>
+                        <div id="wd-aktivitas">${aktivitasHtml}</div>
+                    </div>
+                    <div class="wd-card">
+                        <div class="wd-card-title">🧾 Status tagihan</div>
+                        <div id="wd-tagihan-list">${tagihanHtml}</div>
+                    </div>
+                </div>
+
+                <div class="wd-card">
+                    <div class="wd-card-title">⚡ Akses cepat</div>
+                    <div class="wd-menu-grid">
+                        <a class="wd-menu-item" href="/hafalan">
+                            <div class="wd-menu-icon" style="background:#E1F5EE;">📖</div>
+                            <div class="wd-menu-label">Hafalan</div>
+                        </a>
+                        <a class="wd-menu-item" href="/grades">
+                            <div class="wd-menu-icon" style="background:#E6F1FB;">📊</div>
+                            <div class="wd-menu-label">Nilai</div>
+                        </a>
+                        <a class="wd-menu-item" href="/kehadiran">
+                            <div class="wd-menu-icon" style="background:#E1F5EE;">📅</div>
+                            <div class="wd-menu-label">Kehadiran</div>
+                        </a>
+                        <a class="wd-menu-item" href="/tagihan">
+                            <div class="wd-menu-icon" style="background:#FAEEDA;">🧾</div>
+                            <div class="wd-menu-label">Tagihan</div>
+                        </a>
+                        <a class="wd-menu-item" href="/pertemuan-pengasuhan">
+                            <div class="wd-menu-icon" style="background:#EAF3DE;">🕌</div>
+                            <div class="wd-menu-label">Kajian</div>
+                        </a>
+                        <a class="wd-menu-item" href="/karakter">
+                            <div class="wd-menu-icon" style="background:#F3F4F6;">⭐</div>
+                            <div class="wd-menu-label">Karakter</div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="quick-actions-section">
+                    <h3 class="section-title">Akses Cepat</h3>
+                    <div class="quick-actions-grid">
+                        <a href="/attendance" class="quick-action-btn glass-card">
+                            <span class="qa-icon">📅</span>
+                            <span class="qa-label">Lihat Absensi</span>
+                        </a>
+                        <a href="/grades" class="quick-action-btn glass-card">
+                            <span class="qa-icon">📝</span>
+                            <span class="qa-label">Lihat Nilai</span>
+                        </a>
+                        <a href="/evaluations" class="quick-action-btn glass-card">
+                            <span class="qa-icon">⭐</span>
+                            <span class="qa-label">Lihat Evaluasi</span>
+                        </a>
+                        <button id="wd-print-rapor" class="quick-action-btn glass-card print-btn" type="button">
+                            <span class="qa-icon">🖨️</span>
+                            <span class="qa-label">Cetak Rapor</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="wd-section-legacy">
+                    <div id="worship-tracker-container" class="wd-card">
+                        <div class="wd-card-title">🌙 Ibadah harian</div>
+                        <div id="worship-tracker-inner"><div style="font-size:13px;color:#9ca3af;text-align:center;padding:12px;">Memuat...</div></div>
+                    </div>
+                </div>
+
+                <div class="wd-two-col wd-section-legacy">
+                    <div class="wd-card">
+                        <div class="wd-card-title">📊 Nilai akademik</div>
+                        <div id="walisantri-grades-container"><div style="font-size:13px;color:#9ca3af;text-align:center;padding:12px;">Memuat...</div></div>
+                    </div>
+                    <div class="wd-card">
+                        <div class="wd-card-title">📖 Diniyah & tahfidz</div>
+                        <canvas id="diniyah-bar-chart" style="max-height:200px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="wd-footer">Portal Ponpes Baron · Dashboard Wali Santri</div>
+            </div>
+        </div>`;
+
+        if (linkedStudents.length > 1) {
+            const sel = document.getElementById('wd-child-select-new');
+            if (sel) {
+                sel.onchange = function() {
+                    selectedChildNisn = this.value;
+                    renderWalisantriDashboard();
+                };
+            }
+        }
+
+        const printBtn = profileContent.querySelector('#wd-print-rapor');
+        if (printBtn) {
+            printBtn.onclick = () => printRapor(nisn);
+        }
+
+        if (gradeStats?.grades) renderWalisantriGradesTable(gradeStats, 'walisantri-grades-container');
+        renderWorshipTracker(nisn);
+        if (typeof renderDualCharts === 'function') renderDualCharts(nisn);
+
+    } catch (err) {
+        console.error('[Dashboard Walisantri] Error:', err);
+        profileContent.innerHTML = `
+            <div style="padding:40px;text-align:center;">
+                <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+                <p style="color:#6b7280;">Gagal memuat data. <button id="wd-retry-render" style="color:#0f6e56;background:none;border:none;cursor:pointer;text-decoration:underline;">Coba lagi</button></p>
+            </div>`;
+        const retryBtn = profileContent.querySelector('#wd-retry-render');
+        if (retryBtn) retryBtn.onclick = () => renderWalisantriDashboard();
+    }
+
+    return;
+}
+
     // Hide admin dashboard, show walisantri dashboard
     const adminDashboard = document.getElementById('dashboard-section');
     const walisantriDashboard = document.getElementById('walisantri-dashboard');
@@ -1522,6 +1795,28 @@ async function renderWalisantriDashboard() {
                 <button onclick="renderWalisantriDashboard()" class="btn btn-primary" style="margin-top: 20px;">Coba Lagi</button>
             </div>
         `;
+    }
+}
+
+async function fetchWalisantriTagihan(nisn) {
+    try {
+        const res = await window.apiFetch('finance/tagihan/');
+        const d = typeof res?.json === 'function' ? await res.json() : res;
+        const list = Array.isArray(d) ? d : (d.results || []);
+        return list.slice(0, 3);
+    } catch (e) {
+        return [];
+    }
+}
+
+async function fetchWalisantriSummary(nisn) {
+    try {
+        const res = await window.apiFetch('kesantrian/my-children-summary/');
+        const d = typeof res?.json === 'function' ? await res.json() : res;
+        const children = Array.isArray(d) ? d : (d.children || d.results || d.data || []);
+        return children.find(c => c.nisn === nisn) || children[0] || null;
+    } catch (e) {
+        return null;
     }
 }
 
