@@ -128,19 +128,41 @@
 .wd-pill-red    { background: #FCEBEB; color: #A32D2D; }
 .wd-pill-green  { background: #E1F5EE; color: #0f6e56; }
 
-.wd-menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.wd-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
 .wd-menu-item {
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  padding: 10px 6px; border-radius: 8px; cursor: pointer;
-  background: #f9fafb; border: 0.5px solid #e5e7eb; text-decoration: none;
-  transition: background .15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #f9fafb;
+    border: 0.5px solid #e5e7eb;
+    text-decoration: none;
+    transition: background .15s;
 }
 .wd-menu-item:hover { background: #E1F5EE; }
 .wd-menu-icon {
-  width: 32px; height: 32px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center; font-size: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
 }
-.wd-menu-label { font-size: 10px; font-weight: 500; color: #111827; text-align: center; }
+.wd-menu-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #374151;
+    text-align: center;
+}
 .wd-menu-badge {
   position: absolute; top: -4px; right: -4px; background: #E24B4A;
   color: #fff; font-size: 9px; font-weight: 700; width: 14px; height: 14px;
