@@ -1242,14 +1242,6 @@ async function renderWalisantriDashboard() {
         const kajianHadir = summary?.ibadah_summary?.total_hadir ?? 0;
         const kelompok = summary?.halaqoh ? `${summary.halaqoh.nama || ''} · ${summary.halaqoh.pengasuh || ''}`.trim() : '';
 
-        const childSelectorHtml = linkedStudents.length > 1 ? `
-            <div style="display:flex;align-items:center;gap:8px;padding:14px 20px;background:#fff;border-bottom:0.5px solid #e5e7eb;">
-                <span style="font-size:12px;color:#6b7280;">Pilih anak:</span>
-                <select id="wd-child-select-new" style="font-size:12px;border:0.5px solid #d1d5db;border-radius:6px;padding:4px 8px;">
-                    ${linkedStudents.map(c => `<option value="${c.nisn}" ${c.nisn === nisn ? 'selected' : ''}>${c.nama} (${c.kelas || '-'})</option>`).join('')}
-                </select>
-            </div>` : '';
-
         const aktivitasHtml = (() => {
             const items = [];
             if (summary?.recent_pembinaan?.length) {
@@ -1293,9 +1285,21 @@ async function renderWalisantriDashboard() {
             </div>`;
         }).join('') : `<div style="font-size:12px;color:#9ca3af;text-align:center;padding:12px 0;">Tidak ada tagihan aktif</div>`;
 
+        const waliName = currentUser.name || currentUser.username || 'Wali Santri';
         profileContent.innerHTML = `
         <div>
-            ${childSelectorHtml}
+            <div class="wd-topbar">
+                <div class="wd-greeting">Assalamu'alaikum, <strong>${waliName}</strong></div>
+                ${linkedStudents.length > 1 ? `
+                <div class="wd-child-selector">
+                    <select id="wd-child-select-new" style="font-size:12px;border:0.5px solid #d1d5db;border-radius:6px;padding:4px 8px;">
+                        ${linkedStudents.map(c => `<option value="${c.nisn}" ${c.nisn === nisn ? 'selected' : ''}>${c.nama} (${c.kelas || '-'})</option>`).join('')}
+                    </select>
+                </div>` : `
+                <div class="wd-child-selector" style="font-size:12px;color:#374151;font-weight:500;">
+                    ${student.nama} · ${student.kelas || '-'}
+                </div>`}
+            </div>
             <div class="wd-content">
                 <div class="wd-hero">
                     <div class="wd-avatar">${student.foto ? `<img src="${student.foto}" alt="${student.nama}">` : initials}</div>
