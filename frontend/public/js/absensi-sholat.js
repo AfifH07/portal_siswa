@@ -41,7 +41,13 @@ function applySelectColor(sel) {
 async function loadKelas() {
     try {
         const res = await window.apiFetch('students/classes/');
-        const d = typeof res?.json === 'function' ? await res.json() : res;
+        if (!res || !res.ok) {
+            console.error('[absensi-sholat] loadKelas HTTP error:',
+                res?.status, await res?.text());
+            showAlert('Gagal memuat daftar kelas (HTTP ' + res?.status + ')', 'error');
+            return;
+        }
+        const d = await res.json();
         const kelasList = d.classes || d || [];
         const sel = document.getElementById('as-kelas');
         kelasList.forEach(k => {
@@ -51,7 +57,8 @@ async function loadKelas() {
             sel.appendChild(opt);
         });
     } catch (e) {
-        console.warn('[absensi-sholat] gagal load kelas:', e);
+        console.error('[absensi-sholat] gagal load kelas:', e);
+        showAlert('Gagal memuat daftar kelas: ' + e.message, 'error');
     }
 }
 
@@ -69,9 +76,15 @@ async function loadSantri() {
 
     try {
         const res = await window.apiFetch(
-            `students/?kelas=${encodeURIComponent(kelas)}&limit=200`
+            `students/?kelas=${encodeURIComponent(kelas)}&page_size=200`
         );
-        const d = typeof res?.json === 'function' ? await res.json() : res;
+        if (!res || !res.ok) {
+            console.error('[absensi-sholat] loadSantri HTTP error:',
+                res?.status, await res?.text());
+            showAlert('Gagal memuat santri (HTTP ' + res?.status + ')', 'error');
+            return;
+        }
+        const d = await res.json();
         studentList = d.results || d.data || d || [];
 
         if (studentList.length === 0) {
@@ -90,8 +103,8 @@ async function loadSantri() {
         document.getElementById('as-student-count').textContent =
             `${studentList.length} santri`;
     } catch (e) {
-        showAlert('Gagal memuat data santri.', 'error');
-        console.error(e);
+        showAlert('Gagal memuat data santri: ' + e.message, 'error');
+        console.error('[absensi-sholat] loadSantri error:', e);
     } finally {
         btn.disabled = false;
         btn.textContent = 'Muat Santri';
