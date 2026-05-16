@@ -1361,10 +1361,10 @@ async function renderWalisantriDashboard() {
                     <div class="wd-menu-grid">
                         <a class="wd-menu-item" href="/hafalan"><div class="wd-menu-icon" style="background:#C6F0DC;">📖</div><div class="wd-menu-label">Hafalan</div></a>
                         <a class="wd-menu-item" href="/grades"><div class="wd-menu-icon" style="background:#BFDBFE;">📊</div><div class="wd-menu-label">Nilai</div></a>
-                        <a class="wd-menu-item" href="/kehadiran"><div class="wd-menu-icon" style="background:#C6F0DC;">📅</div><div class="wd-menu-label">Kehadiran</div></a>
-                        <a class="wd-menu-item" href="/tagihan"><div class="wd-menu-icon" style="background:#FDE68A;">🧾</div><div class="wd-menu-label">Tagihan</div></a>
+                        <a class="wd-menu-item" href="/attendance/"><div class="wd-menu-icon" style="background:#C6F0DC;">📅</div><div class="wd-menu-label">Kehadiran</div></a>
+                        <a class="wd-menu-item" href="/finance/"><div class="wd-menu-icon" style="background:#FDE68A;">🧾</div><div class="wd-menu-label">Tagihan</div></a>
                         <a class="wd-menu-item" href="/pertemuan-pengasuhan"><div class="wd-menu-icon" style="background:#D9F99D;">🕌</div><div class="wd-menu-label">Kajian</div></a>
-                        <a class="wd-menu-item" href="/karakter"><div class="wd-menu-icon" style="background:#FEF08A;">⭐</div><div class="wd-menu-label">Karakter</div></a>
+                        <a class="wd-menu-item" href="/blp/"><div class="wd-menu-icon" style="background:#FEF08A;">⭐</div><div class="wd-menu-label">Karakter</div></a>
                     </div>
                 </div>
 
