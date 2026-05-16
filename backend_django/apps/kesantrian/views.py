@@ -16,7 +16,7 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from datetime import timedelta
 
-from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, TartilSantri, TahfidzSantri, KompetensiSantri, HafalanRecord, KelompokPengasuhan, KelompokAnggota, PertemuanPengasuhan, PresensiPertemuan
+from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, TartilSantri, TahfidzSantri, KompetensiSantri, HafalanRecord, KelompokHafalan, KelompokHafalanAnggota, KelompokPengasuhan, KelompokAnggota, PertemuanPengasuhan, PresensiPertemuan
 from .serializers import (
     IbadahSerializer, IbadahCreateSerializer,
     PembinaanSerializer, PembinaanCreateSerializer,
@@ -4532,6 +4532,263 @@ def hafalan_record_detail(request, pk):
             'success': True,
             'message': 'Record berhasil dihapus'
         })
+
+
+def _serialize_hafalan_kelompok(kelompok):
+    anggota_list = [
+        {
+            'nisn': anggota.siswa.nisn,
+            'nama': anggota.siswa.nama,
+            'nomor_urut': anggota.nomor_urut,
+            'is_ketua': anggota.is_ketua
+        }
+        for anggota in kelompok.anggota.all()
+    ]
+    return {
+        'id': kelompok.id,
+        'nama': kelompok.nama,
+        'kelas': kelompok.kelas,
+        'ustadz_id': kelompok.ustadz_id,
+        'ustadz_name': kelompok.ustadz.username if kelompok.ustadz else '-',
+        'tahun_ajaran_id': kelompok.tahun_ajaran_id,
+        'anggota_list': anggota_list
+    }
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def hafalan_kelompok_list_create(request):
+    user = request.user
+    if request.method == 'GET':
+        kelas = request.query_params.get('kelas')
+        qs = KelompokHafalan.objects.prefetch_related(
+            'anggota__siswa'
+        ).select_related('ustadz', 'tahun_ajaran').all()
+        if kelas:
+            qs = qs.filter(kelas=kelas)
+        data = [_serialize_hafalan_kelompok(kelompok) for kelompok in qs]
+        return Response({'success': True, 'data': data})
+
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=403)
+
+    nama = request.data.get('nama')
+    kelas = request.data.get('kelas')
+    ustadz_id = request.data.get('ustadz_id') or request.data.get('ustadz') or None
+    tahun_ajaran_id = request.data.get('tahun_ajaran_id') or request.data.get('tahun_ajaran') or None
+    if not nama or not kelas:
+        return Response({'success': False, 'message': 'nama dan kelas wajib diisi'},
+                        status=400)
+
+    if not tahun_ajaran_id:
+        tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+        tahun_ajaran_id = tahun_ajaran.id if tahun_ajaran else None
+
+    kelompok = KelompokHafalan.objects.create(
+        nama=nama,
+        kelas=kelas,
+        ustadz_id=ustadz_id,
+        tahun_ajaran_id=tahun_ajaran_id
+    )
+    return Response({'success': True, 'id': kelompok.id, 'nama': kelompok.nama},
+                    status=201)
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def hafalan_kelompok_detail(request, pk):
+    user = request.user
+    try:
+        kelompok = KelompokHafalan.objects.prefetch_related(
+            'anggota__siswa'
+        ).select_related('ustadz', 'tahun_ajaran').get(pk=pk)
+    except KelompokHafalan.DoesNotExist:
+        return Response({'success': False, 'message': 'Tidak ditemukan'},
+                        status=404)
+
+    if request.method == 'GET':
+        return Response({'success': True, 'data': _serialize_hafalan_kelompok(kelompok)})
+
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=403)
+
+    if request.method == 'PATCH':
+        kelompok.nama = request.data.get('nama', kelompok.nama)
+        kelompok.kelas = request.data.get('kelas', kelompok.kelas)
+        if 'ustadz_id' in request.data or 'ustadz' in request.data:
+            kelompok.ustadz_id = request.data.get('ustadz_id') or request.data.get('ustadz') or None
+        if 'tahun_ajaran_id' in request.data or 'tahun_ajaran' in request.data:
+            kelompok.tahun_ajaran_id = (
+                request.data.get('tahun_ajaran_id') or
+                request.data.get('tahun_ajaran') or
+                kelompok.tahun_ajaran_id
+            )
+        kelompok.save()
+        return Response({'success': True})
+
+    if request.method == 'DELETE':
+        kelompok.delete()
+        return Response({'success': True})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def hafalan_kelompok_generate(request):
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=403)
+
+    kelas = request.data.get('kelas')
+    tahun_ajaran_id = request.data.get('tahun_ajaran_id') or request.data.get('tahun_ajaran')
+    if not tahun_ajaran_id:
+        tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+        tahun_ajaran_id = tahun_ajaran.id if tahun_ajaran else None
+
+    if not kelas or not tahun_ajaran_id:
+        return Response({'success': False,
+                         'message': 'kelas dan tahun_ajaran_id wajib diisi'},
+                        status=400)
+
+    existing = KelompokHafalan.objects.filter(
+        kelas=kelas,
+        tahun_ajaran_id=tahun_ajaran_id
+    ).exists()
+    if existing:
+        return Response({'success': False,
+                         'message': 'Kelompok untuk kelas ini sudah ada. '
+                                    'Hapus dulu sebelum generate ulang.'},
+                        status=400)
+
+    students = Student.objects.filter(kelas=kelas).order_by('nama')
+    if not students.exists():
+        return Response({'success': False,
+                         'message': 'Tidak ada siswa di kelas ini'},
+                        status=400)
+
+    student_list = list(students)
+    ukuran = 10
+    created = []
+    for index in range(0, len(student_list), ukuran):
+        chunk = student_list[index:index + ukuran]
+        nomor = (index // ukuran) + 1
+        kelompok = KelompokHafalan.objects.create(
+            nama=f'Kelompok {nomor}',
+            kelas=kelas,
+            tahun_ajaran_id=tahun_ajaran_id
+        )
+        for urut, siswa in enumerate(chunk, start=1):
+            KelompokHafalanAnggota.objects.create(
+                kelompok=kelompok,
+                siswa=siswa,
+                nomor_urut=urut
+            )
+        created.append({
+            'id': kelompok.id,
+            'nama': kelompok.nama,
+            'jumlah_anggota': len(chunk)
+        })
+
+    return Response({'success': True,
+                     'message': f'{len(created)} kelompok berhasil dibuat',
+                     'data': created}, status=201)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def hafalan_kelompok_anggota(request, pk):
+    user = request.user
+    try:
+        kelompok = KelompokHafalan.objects.get(pk=pk)
+    except KelompokHafalan.DoesNotExist:
+        return Response({'success': False}, status=404)
+
+    if request.method == 'GET':
+        anggota = kelompok.anggota.select_related('siswa').all()
+        data = [
+            {
+                'nisn': item.siswa.nisn,
+                'nama': item.siswa.nama,
+                'nomor_urut': item.nomor_urut,
+                'is_ketua': item.is_ketua
+            }
+            for item in anggota
+        ]
+        return Response({'success': True, 'data': data})
+
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=403)
+
+    nisn = request.data.get('nisn')
+    try:
+        siswa = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Siswa tidak ditemukan'},
+                        status=404)
+
+    if kelompok.anggota.filter(siswa__nisn=nisn).exists():
+        return Response({'success': False,
+                         'message': 'Siswa sudah ada di kelompok ini'},
+                        status=400)
+
+    urut = kelompok.anggota.count() + 1
+    KelompokHafalanAnggota.objects.create(
+        kelompok=kelompok,
+        siswa=siswa,
+        nomor_urut=urut
+    )
+    return Response({'success': True}, status=201)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def hafalan_kelompok_anggota_delete(request, pk, nisn):
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=403)
+    try:
+        anggota = KelompokHafalanAnggota.objects.get(
+            kelompok_id=pk,
+            siswa__nisn=nisn
+        )
+    except KelompokHafalanAnggota.DoesNotExist:
+        return Response({'success': False}, status=404)
+    anggota.delete()
+    return Response({'success': True})
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def hafalan_kelompok_set_ketua(request, pk, nisn):
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=403)
+
+    try:
+        anggota = KelompokHafalanAnggota.objects.get(
+            kelompok_id=pk,
+            siswa__nisn=nisn
+        )
+    except KelompokHafalanAnggota.DoesNotExist:
+        return Response({'success': False}, status=404)
+
+    is_ketua = request.data.get('is_ketua', True)
+    if isinstance(is_ketua, str):
+        is_ketua = is_ketua.lower() in ['true', '1', 'yes', 'ya']
+
+    if is_ketua:
+        KelompokHafalanAnggota.objects.filter(
+            kelompok_id=pk
+        ).update(is_ketua=False)
+
+    anggota.is_ketua = is_ketua
+    anggota.save()
+    return Response({'success': True})
 
 
 @api_view(['GET'])

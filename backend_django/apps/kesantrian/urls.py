@@ -118,6 +118,25 @@ urlpatterns = [
     path('kompetensi/<str:nisn>/', views.kompetensi_santri_get, name='kompetensi-santri'),
     path('kompetensi/<str:nisn>/update/', views.kompetensi_santri_update, name='kompetensi-update'),
     path('hafalan/import/', views.import_hafalan_excel, name='hafalan-import'),
+    # URUTAN PENTING: statis sebelum dinamis
+    path('hafalan/kelompok/generate/',
+         views.hafalan_kelompok_generate,
+         name='hafalan-kelompok-generate'),
+    path('hafalan/kelompok/',
+         views.hafalan_kelompok_list_create,
+         name='hafalan-kelompok-list'),
+    path('hafalan/kelompok/<int:pk>/',
+         views.hafalan_kelompok_detail,
+         name='hafalan-kelompok-detail'),
+    path('hafalan/kelompok/<int:pk>/anggota/',
+         views.hafalan_kelompok_anggota,
+         name='hafalan-kelompok-anggota'),
+    path('hafalan/kelompok/<int:pk>/anggota/<str:nisn>/set-ketua/',
+         views.hafalan_kelompok_set_ketua,
+         name='hafalan-kelompok-set-ketua'),
+    path('hafalan/kelompok/<int:pk>/anggota/<str:nisn>/',
+         views.hafalan_kelompok_anggota_delete,
+         name='hafalan-kelompok-anggota-delete'),
 
     # ============================================
     # IZIN GURU

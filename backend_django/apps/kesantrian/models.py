@@ -515,6 +515,12 @@ class HafalanRecord(models.Model):
     Diinput oleh musyrif/guru yang punya assignment type='hafalan'.
     """
 
+    STATUS_CHOICES = [
+        ('lancar', 'Lancar'),
+        ('perlu_ulang', 'Perlu Ulang'),
+        ('belum_selesai', 'Belum Selesai'),
+    ]
+
     id = models.BigAutoField(primary_key=True)
     siswa = models.ForeignKey(
         Student,
@@ -547,6 +553,11 @@ class HafalanRecord(models.Model):
     catatan = models.TextField(
         blank=True,
         help_text="Catatan tambahan dari pembimbing"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='lancar'
     )
     input_by = models.ForeignKey(
         'accounts.User',
@@ -589,6 +600,53 @@ class HafalanRecord(models.Model):
                 raise ValidationError({
                     'halaman_sampai': 'Halaman akhir harus >= halaman awal'
                 })
+
+
+class KelompokHafalan(models.Model):
+    nama = models.CharField(max_length=100)
+    kelas = models.CharField(max_length=20)
+    ustadz = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='kelompok_hafalan_diampu'
+    )
+    tahun_ajaran = models.ForeignKey(
+        'core.TahunAjaran',
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['kelas', 'nama']
+
+    def __str__(self):
+        return f"{self.nama} - {self.kelas}"
+
+
+class KelompokHafalanAnggota(models.Model):
+    kelompok = models.ForeignKey(
+        KelompokHafalan,
+        on_delete=models.CASCADE,
+        related_name='anggota'
+    )
+    siswa = models.ForeignKey(
+        Student,
+        to_field='nisn',
+        on_delete=models.CASCADE,
+        related_name='kelompok_hafalan_anggota'
+    )
+    nomor_urut = models.PositiveIntegerField(default=0)
+    is_ketua = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('kelompok', 'siswa')
+        ordering = ['nomor_urut']
+
+    def __str__(self):
+        return f"{self.siswa.nama} -> {self.kelompok.nama}"
 
 
 # ============================================

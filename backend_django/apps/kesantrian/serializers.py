@@ -1122,7 +1122,7 @@ class HafalanRecordSerializer(serializers.ModelSerializer):
             'id', 'siswa', 'siswa_id', 'siswa_nama', 'siswa_kelas',
             'tanggal', 'jumlah_halaman', 'juz',
             'halaman_dari', 'halaman_sampai',
-            'catatan', 'input_by', 'input_by_nama',
+            'catatan', 'status', 'input_by', 'input_by_nama',
             'tahun_ajaran', 'tahun_ajaran_nama',
             'created_at', 'updated_at'
         ]
@@ -1153,7 +1153,7 @@ class HafalanRecordCreateSerializer(serializers.ModelSerializer):
         model = HafalanRecord
         fields = [
             'siswa_nisn', 'tanggal', 'jumlah_halaman', 'juz',
-            'halaman_dari', 'halaman_sampai', 'catatan'
+            'halaman_dari', 'halaman_sampai', 'catatan', 'status'
         ]
 
     def validate_siswa_nisn(self, value):
@@ -1190,7 +1190,7 @@ class HafalanRecordUpdateSerializer(serializers.ModelSerializer):
         model = HafalanRecord
         fields = [
             'tanggal', 'jumlah_halaman', 'juz',
-            'halaman_dari', 'halaman_sampai', 'catatan'
+            'halaman_dari', 'halaman_sampai', 'catatan', 'status'
         ]
 
     def validate(self, data):
