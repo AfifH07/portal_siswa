@@ -235,22 +235,39 @@ def get_my_child_grades(request):
             status=status.HTTP_403_FORBIDDEN
         )
 
-    # Get NISN from logged-in walisantri
-    nisn = getattr(user, 'linked_student_nisn', None)
-    if not nisn:
-        return Response(
-            {'success': False, 'message': 'Akun belum terhubung dengan data siswa'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    nisn_override = request.query_params.get('nisn')
+    if nisn_override:
+        linked_nisns = user.get_linked_students()
+        if nisn_override not in linked_nisns:
+            return Response(
+                {'success': False, 'message': 'Anda tidak memiliki akses ke data siswa ini'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        try:
+            student = Student.objects.get(nisn=nisn_override)
+        except Student.DoesNotExist:
+            return Response(
+                {'success': False, 'message': 'Santri tidak ditemukan'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        nisn = nisn_override
+    else:
+        # Get NISN from logged-in walisantri
+        nisn = getattr(user, 'linked_student_nisn', None)
+        if not nisn:
+            return Response(
+                {'success': False, 'message': 'Akun belum terhubung dengan data siswa'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-    # Verify student exists
-    try:
-        student = Student.objects.get(nisn=nisn)
-    except Student.DoesNotExist:
-        return Response(
-            {'success': False, 'message': 'Data siswa tidak ditemukan'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        # Verify student exists
+        try:
+            student = Student.objects.get(nisn=nisn)
+        except Student.DoesNotExist:
+            return Response(
+                {'success': False, 'message': 'Data siswa tidak ditemukan'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
     # Get filter params
     semester = request.query_params.get('semester')

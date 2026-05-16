@@ -389,3 +389,140 @@
     font-size: 11px;
     color: #6b7280;
 }
+
+/* =====================
+   Rekap Nilai Akademik
+   ===================== */
+.grades-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.grades-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+.grades-list-header h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 600;
+}
+.total-badge {
+    font-size: 0.78rem;
+    background: #e8f5ee;
+    color: #2d6a4f;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+.grades-list-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.grade-item-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    transition: background 0.15s;
+}
+.grade-item-card.status-excellent {
+    border-left: 3px solid #10b981;
+    background: #f0fdf4;
+}
+.grade-item-card.status-pass {
+    border-left: 3px solid #3b82f6;
+    background: #eff6ff;
+}
+.grade-item-card.status-fail {
+    border-left: 3px solid #f59e0b;
+    background: #fffbeb;
+}
+.grade-item-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+}
+.grade-item-info {
+    min-width: 0;
+    flex: 1;
+}
+.mapel-name {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.assessment-count {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+.grade-item-stats {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.stat-box {
+    text-align: center;
+    min-width: 38px;
+}
+.stat-box .stat-label {
+    display: block;
+    font-size: 0.68rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.stat-box .stat-value {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #374151;
+}
+.stat-box.stat-avg .stat-value {
+    color: #2d6a4f;
+    font-size: 0.95rem;
+}
+.grade-item-status {
+    flex-shrink: 0;
+}
+.status-badge {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+.status-badge.status-excellent {
+    background: #d1fae5;
+    color: #065f46;
+}
+.status-badge.status-pass {
+    background: #dbeafe;
+    color: #1e40af;
+}
+.status-badge.status-fail {
+    background: #fef3c7;
+    color: #92400e;
+}
+.empty-state-grades {
+    text-align: center;
+    padding: 1.5rem;
+    color: #9ca3af;
+}
+.empty-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}

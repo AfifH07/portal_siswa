@@ -1465,24 +1465,20 @@ async function fetchWalisantriAttendanceStats(nisn) {
  * ONLY uses /api/grades/my-child/ endpoint - no legacy fallbacks
  */
 async function fetchWalisantriGradeStats(nisn) {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        console.error('[fetchWalisantriGradeStats] No token found');
-        return { rata_rata: '-', grades: [] };
-    }
-
     try {
-        debugLog('[fetchWalisantriGradeStats] Fetching from /api/grades/my-child/');
+        debugLog('[fetchWalisantriGradeStats] Fetching from grades/my-child/');
 
-        const response = await fetch('/api/grades/my-child/', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch(
+            `grades/my-child/${nisn ? '?nisn=' + encodeURIComponent(nisn) : ''}`
+        );
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        if (!response || !response.ok) {
+            throw new Error(`HTTP ${response?.status || 'unknown'}`);
         }
 
-        const result = await response.json();
+        const result = typeof response?.json === 'function'
+            ? await response.json()
+            : response;
 
         // DEBUG: Log full API response
         debugLog('[fetchWalisantriGradeStats] API Response:', result);
@@ -1499,11 +1495,11 @@ async function fetchWalisantriGradeStats(nisn) {
         }
 
         console.warn('[fetchWalisantriGradeStats] API success=false:', result.message);
-        return { rata_rata: '-', grades: [] };
+        return { rata_rata: 0, jumlah_mata_pelajaran: 0, grades: [] };
 
     } catch (error) {
         console.error('[fetchWalisantriGradeStats] Error:', error);
-        return { rata_rata: '-', grades: [] };
+        return { rata_rata: 0, jumlah_mata_pelajaran: 0, grades: [] };
     }
 }
 
@@ -1521,12 +1517,13 @@ async function syncGradesUI() {
     }
 
     try {
-        const response = await fetch('/api/grades/my-child/', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const nisn = selectedChildNisn || currentUser?.linked_student_nisn || '';
+        const response = await window.apiFetch(
+            `grades/my-child/${nisn ? '?nisn=' + encodeURIComponent(nisn) : ''}`
+        );
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        if (!response || !response.ok) {
+            throw new Error(`HTTP ${response?.status || 'unknown'}`);
         }
 
         const result = await response.json();
@@ -2011,13 +2008,12 @@ async function fetchStudentProfile(nisn) {
  */
 async function fetchAcademicGrades(nisn) {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch('/api/grades/my-child/', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.apiFetch(
+            `grades/my-child/${nisn ? '?nisn=' + encodeURIComponent(nisn) : ''}`
+        );
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        if (!response || !response.ok) {
+            throw new Error(`HTTP ${response?.status || 'unknown'}`);
         }
 
         const result = await response.json();
