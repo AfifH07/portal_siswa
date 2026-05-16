@@ -456,6 +456,88 @@ def delete_ibadah(request, ibadah_id):
     return Response({'success': True, 'message': 'Record berhasil dihapus'})
 
 
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_ibadah(request, ibadah_id):
+    """Update status/catatan satu record ibadah by id."""
+    user = request.user
+
+    if user.role not in ['musyrif', 'guru', 'admin', 'superadmin']:
+        return Response(
+            {'success': False, 'message': 'Anda tidak memiliki izin'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        ibadah = Ibadah.objects.get(id=ibadah_id)
+    except Ibadah.DoesNotExist:
+        return Response(
+            {'success': False, 'message': 'Record tidak ditemukan'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    status_baru = request.data.get('status')
+    catatan_baru = request.data.get('catatan', ibadah.catatan)
+    if status_baru:
+        ibadah.status = status_baru
+    ibadah.catatan = catatan_baru
+    ibadah.pencatat = user.username
+    ibadah.save()
+    return Response({'success': True, 'message': 'Record berhasil diupdate'})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_ibadah_single(request):
+    """Tambah satu record ibadah untuk satu santri satu waktu."""
+    user = request.user
+
+    if user.role not in ['musyrif', 'guru', 'admin', 'superadmin']:
+        return Response(
+            {'success': False, 'message': 'Anda tidak memiliki izin'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    nisn = request.data.get('nisn')
+    tanggal = request.data.get('tanggal')
+    jenis = request.data.get('jenis', 'sholat_wajib')
+    waktu = request.data.get('waktu')
+    status_val = request.data.get('status')
+    catatan = request.data.get('catatan', '')
+
+    if not all([nisn, tanggal, waktu, status_val]):
+        return Response(
+            {'success': False, 'message': 'nisn, tanggal, waktu, status wajib diisi'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        siswa = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response(
+            {'success': False, 'message': 'Santri tidak ditemukan'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    obj, created = Ibadah.objects.update_or_create(
+        siswa=siswa,
+        tanggal=tanggal,
+        jenis=jenis,
+        waktu=waktu,
+        defaults={
+            'status': status_val,
+            'catatan': catatan,
+            'pencatat': user.username,
+        }
+    )
+    return Response({
+        'success': True,
+        'created': created,
+        'id': obj.id,
+        'message': 'Record berhasil disimpan'
+    })
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_worship_tracker(request, nisn):

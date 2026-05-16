@@ -9,9 +9,35 @@ const STATUS_OPTIONS = [
     { value: 'sakit',       label: 'Sakit' },
     { value: 'tidak_hadir', label: 'Tidak Hadir' },
 ];
+const WAKTU_LABEL = {
+    subuh: 'Subuh',
+    dzuhur: 'Dzuhur',
+    ashar: 'Ashar',
+    maghrib: 'Maghrib',
+    isya: 'Isya'
+};
+const EDIT_STATUS_OPTIONS = [
+    { value: '',            label: '-- Pilih --' },
+    { value: 'hadir',       label: 'Hadir' },
+    { value: 'terlambat',   label: 'Terlambat' },
+    { value: 'tidak_hadir', label: 'Tidak Hadir' },
+    { value: 'izin',        label: 'Izin' },
+    { value: 'sakit',       label: 'Sakit' },
+];
 
 let studentList = [];
 let kelasList = [];
+
+function escapeText(value) {
+    const text = value == null ? '' : String(value);
+    if (typeof window.escapeHtml === 'function') return window.escapeHtml(text);
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 function showAlert(msg, type = 'success') {
     const el = document.getElementById('as-alert');
@@ -68,7 +94,7 @@ async function loadKelas() {
         const d = await parseApiResponse(res, 'loadKelas');
         kelasList = d.classes || d || [];
         appendKelasOptions(document.getElementById('as-kelas'));
-        appendKelasOptions(document.getElementById('hapus-kelas-select'));
+        appendKelasOptions(document.getElementById('edit-kelas-select'));
     } catch (e) {
         console.error('[absensi-sholat] gagal load kelas:', e);
         showAlert('Gagal memuat daftar kelas: ' + e.message, 'error');
@@ -209,15 +235,23 @@ function initTabs() {
     });
 }
 
-function initHapusTab() {
-    const kelasSelect = document.getElementById('hapus-kelas-select');
-    const santriSelect = document.getElementById('hapus-santri-select');
-    const tanggalInput = document.getElementById('hapus-tanggal-input');
-    const cariBtn = document.getElementById('hapus-cari-btn');
+function initEditTab() {
+    const kelasSelect = document.getElementById('edit-kelas-select');
+    const santriSelect = document.getElementById('edit-santri-select');
+    const tanggalInput = document.getElementById('edit-tanggal-input');
+    const cariBtn = document.getElementById('edit-cari-btn');
 
     if (!kelasSelect || !santriSelect || !tanggalInput || !cariBtn) return;
 
     tanggalInput.value = new Date().toISOString().split('T')[0];
+
+    kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+    kelasList.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = k;
+        kelasSelect.appendChild(opt);
+    });
 
     kelasSelect.onchange = async function() {
         resetSelectOptions(santriSelect, '-- Pilih Santri --');
@@ -228,13 +262,13 @@ function initHapusTab() {
             const res = await window.apiFetch(
                 `students/?kelas=${encodeURIComponent(this.value)}&page_size=200`
             );
-            const data = await parseApiResponse(res, 'loadSantri hapus');
+            const data = await parseApiResponse(res, 'loadSantri edit');
             const students = data.results || data.data || data || [];
 
             students.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.nisn;
-                opt.textContent = `${s.nama} (${s.nisn})`;
+                opt.textContent = s.nama;
                 santriSelect.appendChild(opt);
             });
             santriSelect.disabled = false;
@@ -250,42 +284,36 @@ function initHapusTab() {
             showAlert('Pilih santri dan tanggal terlebih dahulu.', 'error');
             return;
         }
-        await fetchIbadahRecord(nisn, tanggal);
+        await fetchEditRecord(nisn, tanggal);
     };
 }
 
-async function fetchIbadahRecord(nisn, tanggal) {
-    const area = document.getElementById('hapus-result-area');
+async function fetchEditRecord(nisn, tanggal) {
+    const area = document.getElementById('edit-result-area');
     area.innerHTML = '<p>Memuat data...</p>';
 
     try {
         const res = await window.apiFetch(
             `kesantrian/ibadah/${nisn}/?start_date=${tanggal}&end_date=${tanggal}&jenis=sholat_wajib`
         );
-        const data = await parseApiResponse(res, 'fetchIbadahRecord');
-        if (!data?.success || !data.data?.length) {
-            area.innerHTML = '<p style="color:#888;">Tidak ada record absensi sholat untuk santri dan tanggal ini.</p>';
-            return;
+        const data = await parseApiResponse(res, 'fetchEditRecord');
+
+        const recordMap = {};
+        if (data?.success && data.data?.length) {
+            data.data.forEach(r => { recordMap[r.waktu] = r; });
         }
-        renderHapusResult(data.data, data.nama, tanggal, area);
+
+        const nama = data?.nama || nisn;
+        renderEditResult(nisn, tanggal, nama, recordMap, area);
     } catch (e) {
         area.innerHTML = '<p style="color:#b91c1c;">Gagal memuat record absensi.</p>';
     }
 }
 
-function renderHapusResult(records, nama, tanggal, area) {
-    const WAKTU_LABEL = {
-        subuh: 'Subuh', dzuhur: 'Dzuhur', ashar: 'Ashar',
-        maghrib: 'Maghrib', isya: 'Isya'
-    };
-    const STATUS_LABEL = {
-        hadir: 'Hadir', tidak_hadir: 'Tidak Hadir',
-        terlambat: 'Terlambat', izin: 'Izin', sakit: 'Sakit'
-    };
-
-    let html = `<div class="hapus-result-card">
-        <h4>${nama} - ${tanggal}</h4>
-        <table class="hapus-table">
+function renderEditResult(nisn, tanggal, nama, recordMap, area) {
+    let html = `<div class="edit-result-card">
+        <h4>${escapeText(nama)} - ${escapeText(tanggal)}</h4>
+        <table class="edit-table">
             <thead>
                 <tr>
                     <th>Waktu</th>
@@ -296,45 +324,161 @@ function renderHapusResult(records, nama, tanggal, area) {
             </thead>
             <tbody>`;
 
-    records.forEach(r => {
-        html += `<tr id="hapus-row-${r.id}">
-            <td>${WAKTU_LABEL[r.waktu] || r.waktu}</td>
-            <td>${STATUS_LABEL[r.status] || r.status}</td>
-            <td>${r.catatan || '-'}</td>
+    WAKTU_LIST.forEach(waktu => {
+        const r = recordMap[waktu] || null;
+        const recordId = r ? r.id : '';
+        const currentStatus = r ? r.status : '';
+        const currentCatatan = r ? (r.catatan || '') : '';
+        const optionsHtml = EDIT_STATUS_OPTIONS.map(o =>
+            `<option value="${o.value}"${currentStatus === o.value ? ' selected' : ''}>${o.label}</option>`
+        ).join('');
+        const hapusBtnHtml = r
+            ? `<button class="edit-btn-delete" data-id="${r.id}" data-waktu="${waktu}">Hapus</button>`
+            : '';
+
+        html += `<tr id="edit-row-${waktu}" data-waktu="${waktu}" data-record-id="${recordId}">
+            <td><strong>${WAKTU_LABEL[waktu]}</strong></td>
             <td>
-                <button class="hapus-btn-delete"
-                    data-id="${r.id}"
-                    data-waktu="${r.waktu}">
-                    Hapus
+                <select class="edit-status-select" id="edit-status-${waktu}">
+                    ${optionsHtml}
+                </select>
+            </td>
+            <td>
+                <input type="text" class="edit-catatan-input"
+                    id="edit-catatan-${waktu}"
+                    value="${escapeText(currentCatatan)}"
+                    placeholder="opsional"
+                    style="width:100%;padding:4px 6px;border:1px solid #d1e7d8;border-radius:5px;">
+            </td>
+            <td style="display:flex;gap:6px;align-items:center;">
+                <button class="edit-btn-save"
+                    data-waktu="${waktu}"
+                    data-nisn="${nisn}"
+                    data-tanggal="${tanggal}"
+                    data-record-id="${recordId}">
+                    Simpan
                 </button>
+                ${hapusBtnHtml}
             </td>
         </tr>`;
     });
 
-    html += '</tbody></table></div>';
+    html += `</tbody></table></div>`;
     area.innerHTML = html;
 
-    area.querySelectorAll('.hapus-btn-delete').forEach(btn => {
-        btn.onclick = function() {
-            const id = this.dataset.id;
+    area.querySelectorAll('.edit-btn-save').forEach(btn => {
+        btn.onclick = async function () {
             const waktu = this.dataset.waktu;
-            hapusRecord(id, waktu);
+            const nisnVal = this.dataset.nisn;
+            const tanggalVal = this.dataset.tanggal;
+            const recordId = this.dataset.recordId;
+            const statusVal = document.getElementById(`edit-status-${waktu}`).value;
+            const catatanVal = document.getElementById(`edit-catatan-${waktu}`).value;
+
+            if (!statusVal) {
+                showAlert(`Pilih status untuk waktu ${WAKTU_LABEL[waktu]}.`, 'error');
+                return;
+            }
+
+            try {
+                if (recordId) {
+                    const res = await window.apiFetch(
+                        `kesantrian/ibadah/update/${recordId}/`,
+                        {
+                            method: 'PATCH',
+                            body: JSON.stringify({ status: statusVal, catatan: catatanVal })
+                        }
+                    );
+                    const data = await parseApiResponse(res, 'updateEditRecord');
+                    if (data?.success) {
+                        showEditFeedback(waktu, 'Tersimpan!', 'success');
+                    } else {
+                        showEditFeedback(waktu, 'Gagal menyimpan.', 'error');
+                    }
+                } else {
+                    const res = await window.apiFetch(
+                        'kesantrian/ibadah/create-single/',
+                        {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                nisn: nisnVal,
+                                tanggal: tanggalVal,
+                                jenis: 'sholat_wajib',
+                                waktu: waktu,
+                                status: statusVal,
+                                catatan: catatanVal
+                            })
+                        }
+                    );
+                    const data = await parseApiResponse(res, 'createEditRecord');
+                    if (data?.success) {
+                        const row = document.getElementById(`edit-row-${waktu}`);
+                        if (row && data.id) {
+                            row.dataset.recordId = data.id;
+                            this.dataset.recordId = data.id;
+                            const td = this.parentElement;
+                            if (td && !td.querySelector('.edit-btn-delete')) {
+                                const hapusBtn = document.createElement('button');
+                                hapusBtn.className = 'edit-btn-delete';
+                                hapusBtn.dataset.id = data.id;
+                                hapusBtn.dataset.waktu = waktu;
+                                hapusBtn.textContent = 'Hapus';
+                                hapusBtn.onclick = function () {
+                                    hapusEditRecord(this.dataset.id, this.dataset.waktu);
+                                };
+                                td.appendChild(hapusBtn);
+                            }
+                        }
+                        showEditFeedback(waktu, 'Ditambahkan!', 'success');
+                    } else {
+                        showEditFeedback(waktu, 'Gagal menambahkan.', 'error');
+                    }
+                }
+            } catch (e) {
+                showEditFeedback(waktu, 'Gagal menyimpan.', 'error');
+            }
+        };
+    });
+
+    area.querySelectorAll('.edit-btn-delete').forEach(btn => {
+        btn.onclick = function () {
+            hapusEditRecord(this.dataset.id, this.dataset.waktu);
         };
     });
 }
 
-async function hapusRecord(id, waktu) {
-    if (!confirm(`Hapus record absensi waktu ${waktu}?`)) return;
+function showEditFeedback(waktu, pesan, type) {
+    const row = document.getElementById(`edit-row-${waktu}`);
+    if (!row) return;
+    const existing = row.querySelector('.edit-feedback');
+    if (existing) existing.remove();
+    const span = document.createElement('span');
+    span.className = 'edit-feedback';
+    span.textContent = pesan;
+    span.style.cssText = `font-size:0.8rem;margin-left:6px;color:${type === 'success' ? '#2d6a4f' : '#b91c1c'};`;
+    row.querySelector('td:last-child').appendChild(span);
+    setTimeout(() => span.remove(), 2500);
+}
 
+async function hapusEditRecord(id, waktu) {
+    if (!confirm(`Hapus record absensi waktu ${WAKTU_LABEL[waktu]}?`)) return;
     try {
         const res = await window.apiFetch(
             `kesantrian/ibadah/delete/${id}/`,
             { method: 'DELETE' }
         );
-        const data = await parseApiResponse(res, 'hapusRecord');
+        const data = await parseApiResponse(res, 'hapusEditRecord');
         if (data?.success) {
-            const row = document.getElementById(`hapus-row-${id}`);
-            if (row) row.remove();
+            const row = document.getElementById(`edit-row-${waktu}`);
+            if (row) {
+                row.dataset.recordId = '';
+                document.getElementById(`edit-status-${waktu}`).value = '';
+                document.getElementById(`edit-catatan-${waktu}`).value = '';
+                const hapusBtn = row.querySelector('.edit-btn-delete');
+                if (hapusBtn) hapusBtn.remove();
+                const simpanBtn = row.querySelector('.edit-btn-save');
+                if (simpanBtn) simpanBtn.dataset.recordId = '';
+            }
             showAlert('Record berhasil dihapus.', 'success');
         } else {
             showAlert('Gagal menghapus record. Coba lagi.', 'error');
@@ -349,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('as-tanggal').value = today;
 
     initTabs();
-    initHapusTab();
+    initEditTab();
     loadKelas();
 
     document.getElementById('as-btn-load').onclick = loadSantri;

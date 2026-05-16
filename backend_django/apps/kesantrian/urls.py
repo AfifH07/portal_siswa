@@ -17,6 +17,8 @@ urlpatterns = [
     path('ibadah/record/', views.record_ibadah, name='record-ibadah'),
     path('ibadah/record-bulk/', views.record_ibadah_bulk, name='record-ibadah-bulk'),
     path('ibadah/delete/<int:ibadah_id>/', views.delete_ibadah, name='delete-ibadah'),
+    path('ibadah/update/<int:ibadah_id>/', views.update_ibadah, name='update-ibadah'),
+    path('ibadah/create-single/', views.create_ibadah_single, name='create-ibadah-single'),
 
     # Student-specific endpoints
     path('ibadah/<str:nisn>/', views.get_child_ibadah_detail, name='child-ibadah-detail'),
