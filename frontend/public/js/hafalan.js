@@ -1869,10 +1869,8 @@ function initHafalan() {
 
     const btnBuatKelompok = document.getElementById('btn-buat-kelompok');
     if (btnBuatKelompok) {
-        btnBuatKelompok.onclick = () => openKelompokModal(null);
+        btnBuatKelompok.onclick = () => bukaModalKelompok(null);
     }
-    const btnSave = document.getElementById('btn-modal-kelompok-save');
-    if (btnSave) btnSave.onclick = saveKelompok;
     const btnCancel = document.getElementById('btn-modal-kelompok-cancel');
     if (btnCancel) {
         btnCancel.onclick = () => {
@@ -1896,7 +1894,9 @@ let kajianState = {
 };
 let kelompokState = {
     list: [],
+    guruList: [],
     allStudents: [],
+    expandedId: null,
     editingId: null,
 };
 
@@ -2576,7 +2576,7 @@ function resetImportHafalan() {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-async function loadKelompokTab() {
+async function legacyLoadKelompokTab() {
     const container = document.getElementById('kelompok-list-container');
 
     try {
@@ -2601,7 +2601,7 @@ async function loadKelompokTab() {
     setupKelompokSearch();
 }
 
-function renderKelompokList() {
+function legacyRenderKelompokList() {
     const container = document.getElementById('kelompok-list-container');
     if (!container) return;
     const list = kelompokState.list;
@@ -2682,7 +2682,7 @@ function renderKelompokList() {
     });
 }
 
-async function toggleAnggotaPanel(kelompokId) {
+async function legacyToggleAnggotaPanel(kelompokId) {
     const panel = document.getElementById(`anggota-panel-${kelompokId}`);
     if (!panel) return;
     const isOpen = panel.style.display === 'block';
@@ -2692,7 +2692,7 @@ async function toggleAnggotaPanel(kelompokId) {
     }
 }
 
-async function loadAnggotaPanel(kelompokId) {
+async function legacyLoadAnggotaPanel(kelompokId) {
     const listEl = document.getElementById(`anggota-list-${kelompokId}`);
     if (!listEl) return;
 
@@ -2738,7 +2738,7 @@ async function loadAnggotaPanel(kelompokId) {
     setupAddAnggotaSearch(kelompokId);
 }
 
-function setupAddAnggotaSearch(kelompokId) {
+function legacySetupAddAnggotaSearch(kelompokId) {
     const input = document.getElementById(`anggota-search-${kelompokId}`);
     const dropdown = document.getElementById(`anggota-dropdown-${kelompokId}`);
     if (!input || !dropdown) return;
@@ -2787,7 +2787,7 @@ function setupAddAnggotaSearch(kelompokId) {
     });
 }
 
-async function tambahAnggota(kelompokId, nisn) {
+async function legacyTambahAnggota(kelompokId, nisn) {
     try {
         await window.apiFetch(`kesantrian/kelompok-pengasuhan/${kelompokId}/anggota/`, {
             method: 'POST',
@@ -2801,7 +2801,7 @@ async function tambahAnggota(kelompokId, nisn) {
     }
 }
 
-async function hapusAnggota(kelompokId, nisn) {
+async function legacyHapusAnggota(kelompokId, nisn) {
     if (!confirm('Hapus santri ini dari kelompok?')) return;
     try {
         await window.apiFetch(`kesantrian/kelompok-pengasuhan/${kelompokId}/anggota/${nisn}/`, {
@@ -2814,7 +2814,7 @@ async function hapusAnggota(kelompokId, nisn) {
     }
 }
 
-async function refreshKelompokCard(kelompokId) {
+async function legacyRefreshKelompokCard(kelompokId) {
     try {
         const res = await window.apiFetch(`kesantrian/kelompok-pengasuhan/${kelompokId}/`);
         const d = typeof res?.json === 'function' ? await res.json() : res;
@@ -2834,7 +2834,7 @@ async function refreshKelompokCard(kelompokId) {
     } catch (e) { /* silent */ }
 }
 
-async function openKelompokModal(kelompokId = null) {
+async function legacyOpenKelompokModal(kelompokId = null) {
     const modal = document.getElementById('modal-kelompok');
     const title = document.getElementById('modal-kelompok-title');
     const inputNama = document.getElementById('input-kelompok-nama');
@@ -2872,10 +2872,11 @@ async function openKelompokModal(kelompokId = null) {
     modal.style.display = 'flex';
 }
 
-async function saveKelompok() {
+async function legacySaveKelompok() {
     const nama = document.getElementById('input-kelompok-nama')?.value?.trim();
     const pengasuhId = document.getElementById('input-kelompok-musyrif')?.value;
     if (!nama) { alert('Nama kelompok wajib diisi.'); return; }
+    if (!pengasuhId) { alert('Pengasuh wajib dipilih.'); return; }
 
     const isEdit = !!kelompokState.editingId;
     const url = isEdit
@@ -2896,7 +2897,7 @@ async function saveKelompok() {
     }
 }
 
-async function hapusKelompok(kelompokId) {
+async function legacyHapusKelompok(kelompokId) {
     if (!confirm('Hapus kelompok ini? Semua data anggota akan ikut terhapus.')) return;
     try {
         await window.apiFetch(`kesantrian/kelompok-pengasuhan/${kelompokId}/`, {
@@ -2908,7 +2909,7 @@ async function hapusKelompok(kelompokId) {
     }
 }
 
-function setupKelompokSearch() {
+function legacySetupKelompokSearch() {
     const input = document.getElementById('kelompok-santri-search');
     const result = document.getElementById('kelompok-santri-search-result');
     if (!input || !result) return;
@@ -2960,6 +2961,414 @@ function setupKelompokSearch() {
                            </span>
                            <span style="color:#9ca3af;font-size:11px;">
                                (${f.kelompok.pengasuh_name || '—'})
+                           </span>`
+                        : '<span style="color:#f59e0b;">Belum ada kelompok</span>'
+                    }
+                </div>
+            </div>
+        `).join('');
+    };
+}
+
+async function parseApiData(res) {
+    return typeof res?.json === 'function' ? await res.json() : res;
+}
+
+function extractList(data) {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.results)) return data.results;
+    return [];
+}
+
+async function loadKelompokTab() {
+    const container = document.getElementById('kelompok-list-container');
+
+    try {
+        const [kelompokRes, guruRes, siswaRes] = await Promise.all([
+            window.apiFetch('kesantrian/kelompok-pengasuhan/'),
+            window.apiFetch('users/?role=guru&page_size=200'),
+            window.apiFetch('students/?page_size=500')
+        ]);
+
+        kelompokState.list = extractList(await parseApiData(kelompokRes));
+        kelompokState.guruList = extractList(await parseApiData(guruRes));
+        kelompokState.allStudents = extractList(await parseApiData(siswaRes));
+    } catch (e) {
+        console.error('[hafalan] gagal memuat tab kelompok:', e);
+        if (container) {
+            container.innerHTML =
+                '<p style="color:#ef4444;text-align:center;padding:32px;">Gagal memuat kelompok.</p>';
+        }
+        return;
+    }
+
+    renderKelompokList();
+    setupKelompokSearch();
+}
+
+function renderKelompokList() {
+    const container = document.getElementById('kelompok-list-container');
+    if (!container) return;
+
+    if (!kelompokState.list.length) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:2rem;color:#9ca3af;">
+                <div style="font-size:2rem;">👥</div>
+                <p>Belum ada kelompok. Buat kelompok baru.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = kelompokState.list.map(k => {
+        const anggota = k.anggota_list || [];
+        const ketua = anggota.find(a => a.is_ketua);
+        const isExpanded = kelompokState.expandedId === k.id;
+
+        return `
+        <div class="kelompok-card" id="kelompok-card-${k.id}">
+            <div class="kelompok-card-header" id="kelompok-header-${k.id}">
+                <div class="kelompok-info">
+                    <span class="kelompok-nama">${k.nama}</span>
+                    <span class="kelompok-meta">
+                        👤 ${k.pengasuh_name || '-'} &nbsp;&middot;&nbsp;
+                        🎓 ${anggota.length} anggota
+                        ${ketua ? `&nbsp;&middot;&nbsp; ⭐ Ketua: ${ketua.nama}` : ''}
+                    </span>
+                </div>
+                <div class="kelompok-actions">
+                    <button class="kelompok-btn-edit" data-id="${k.id}">Edit</button>
+                    <button class="kelompok-btn-hapus" data-id="${k.id}">Hapus</button>
+                    <button class="kelompok-btn-expand" data-id="${k.id}">
+                        ${isExpanded ? '▲ Tutup' : '▼ Anggota'}
+                    </button>
+                </div>
+            </div>
+            ${isExpanded ? renderAnggotaPanel(k) : ''}
+        </div>`;
+    }).join('');
+
+    container.querySelectorAll('.kelompok-btn-expand').forEach(btn => {
+        btn.onclick = function() {
+            const id = parseInt(this.dataset.id);
+            kelompokState.expandedId = kelompokState.expandedId === id ? null : id;
+            renderKelompokList();
+        };
+    });
+    container.querySelectorAll('.kelompok-btn-edit').forEach(btn => {
+        btn.onclick = function() { bukaModalKelompok(parseInt(this.dataset.id)); };
+    });
+    container.querySelectorAll('.kelompok-btn-hapus').forEach(btn => {
+        btn.onclick = function() { hapusKelompok(parseInt(this.dataset.id)); };
+    });
+    attachAnggotaHandlers();
+}
+
+function renderAnggotaPanel(k) {
+    const anggota = k.anggota_list || [];
+
+    const anggotaRows = anggota.map(a => `
+        <tr id="anggota-row-${k.id}-${a.nisn}">
+            <td>
+                ${a.is_ketua ? '<span class="badge-ketua">⭐ Ketua</span>' : ''}
+                ${a.nama}
+            </td>
+            <td>${a.kelas}</td>
+            <td>${a.nisn}</td>
+            <td>
+                <button class="anggota-btn-ketua"
+                    data-kid="${k.id}"
+                    data-nisn="${a.nisn}"
+                    data-is-ketua="${a.is_ketua}">
+                    ${a.is_ketua ? 'Lepas Ketua' : 'Jadikan Ketua'}
+                </button>
+                <button class="anggota-btn-hapus"
+                    data-kid="${k.id}"
+                    data-nisn="${a.nisn}">
+                    Hapus
+                </button>
+            </td>
+        </tr>`).join('');
+
+    return `
+    <div class="kelompok-anggota-panel">
+        <table class="anggota-table">
+            <thead>
+                <tr>
+                    <th>Nama</th><th>Kelas</th>
+                    <th>NISN</th><th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>${anggotaRows || '<tr><td colspan="4" style="color:#9ca3af;text-align:center;">Belum ada anggota</td></tr>'}</tbody>
+        </table>
+        <div class="tambah-anggota-wrapper">
+            <input type="text"
+                id="search-anggota-${k.id}"
+                placeholder="🔍 Cari santri untuk ditambahkan..."
+                class="tambah-anggota-input">
+            <div id="search-anggota-result-${k.id}"
+                class="tambah-anggota-result"
+                style="display:none;"></div>
+        </div>
+    </div>`;
+}
+
+function attachAnggotaHandlers() {
+    const container = document.getElementById('kelompok-list-container');
+    if (!container) return;
+
+    container.querySelectorAll('.anggota-btn-ketua').forEach(btn => {
+        btn.onclick = async function() {
+            const kid = parseInt(this.dataset.kid);
+            const nisn = this.dataset.nisn;
+            const isKetua = this.dataset.isKetua === 'true';
+            await setKetuaKelompok(kid, nisn, !isKetua);
+        };
+    });
+
+    container.querySelectorAll('.anggota-btn-hapus').forEach(btn => {
+        btn.onclick = async function() {
+            const kid = parseInt(this.dataset.kid);
+            const nisn = this.dataset.nisn;
+            await hapusAnggotaKelompok(kid, nisn);
+        };
+    });
+
+    kelompokState.list.forEach(k => {
+        const input = document.getElementById(`search-anggota-${k.id}`);
+        const result = document.getElementById(`search-anggota-result-${k.id}`);
+        if (!input || !result) return;
+
+        input.oninput = function() {
+            const q = this.value.toLowerCase().trim();
+            result.style.display = 'none';
+            result.innerHTML = '';
+            if (!q) return;
+
+            const existingNisns = new Set((k.anggota_list || []).map(a => a.nisn));
+            const matches = kelompokState.allStudents
+                .filter(s => !existingNisns.has(s.nisn) &&
+                    ((s.nama || '').toLowerCase().includes(q) || String(s.nisn || '').includes(q)))
+                .slice(0, 6);
+
+            if (!matches.length) {
+                result.style.display = 'block';
+                result.innerHTML = '<div class="search-item-empty">Tidak ditemukan</div>';
+                return;
+            }
+
+            result.style.display = 'block';
+            result.innerHTML = matches.map(s => `
+                <div class="search-item"
+                     data-nisn="${s.nisn}"
+                     data-kid="${k.id}">
+                    <strong>${s.nama}</strong>
+                    <span>${s.kelas} &middot; ${s.nisn}</span>
+                </div>`).join('');
+
+            result.querySelectorAll('.search-item').forEach(item => {
+                item.onclick = async function() {
+                    await tambahAnggotaKelompok(
+                        parseInt(this.dataset.kid),
+                        this.dataset.nisn
+                    );
+                    input.value = '';
+                    result.style.display = 'none';
+                };
+            });
+        };
+    });
+}
+
+async function tambahAnggotaKelompok(kelompokId, nisn) {
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/kelompok-pengasuhan/${kelompokId}/anggota/`,
+        { method: 'POST', body: JSON.stringify({ nisn, is_ketua: false }) }
+    ));
+    if (res?.success) {
+        await refreshKelompokData(kelompokId);
+    } else {
+        alert(res?.message || 'Gagal menambah anggota.');
+    }
+}
+
+async function hapusAnggotaKelompok(kelompokId, nisn) {
+    if (!confirm('Hapus anggota ini dari kelompok?')) return;
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/kelompok-pengasuhan/${kelompokId}/anggota/${nisn}/`,
+        { method: 'DELETE' }
+    ));
+    if (res?.success) {
+        await refreshKelompokData(kelompokId);
+    } else {
+        alert('Gagal menghapus anggota.');
+    }
+}
+
+async function setKetuaKelompok(kelompokId, nisn, isKetua) {
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/kelompok-pengasuhan/${kelompokId}/anggota/${nisn}/set-ketua/`,
+        { method: 'PATCH', body: JSON.stringify({ is_ketua: isKetua }) }
+    ));
+    if (res?.success) {
+        await refreshKelompokData(kelompokId);
+    } else {
+        alert('Gagal mengupdate ketua.');
+    }
+}
+
+async function hapusKelompok(kelompokId) {
+    if (!confirm('Hapus kelompok ini beserta semua anggotanya?')) return;
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/kelompok-pengasuhan/${kelompokId}/`,
+        { method: 'DELETE' }
+    ));
+    if (res?.success || res === null) {
+        kelompokState.list = kelompokState.list.filter(k => k.id !== kelompokId);
+        if (kelompokState.expandedId === kelompokId) kelompokState.expandedId = null;
+        renderKelompokList();
+    } else {
+        alert('Gagal menghapus kelompok.');
+    }
+}
+
+async function refreshKelompokData(kelompokId) {
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/kelompok-pengasuhan/${kelompokId}/`
+    ));
+    if (res?.success && res.data) {
+        const idx = kelompokState.list.findIndex(k => k.id === kelompokId);
+        if (idx !== -1) kelompokState.list[idx] = res.data;
+    } else {
+        const all = await parseApiData(await window.apiFetch('kesantrian/kelompok-pengasuhan/'));
+        if (all?.data) kelompokState.list = all.data;
+    }
+    renderKelompokList();
+}
+
+function bukaModalKelompok(id = null) {
+    const modal = document.getElementById('modal-kelompok');
+    const title = document.getElementById('modal-kelompok-title');
+    const namaInput = document.getElementById('input-kelompok-nama');
+    const pengasuhSelect = document.getElementById('input-kelompok-musyrif');
+    if (!modal || !title || !namaInput || !pengasuhSelect) return;
+
+    kelompokState.editingId = id;
+    pengasuhSelect.innerHTML = '<option value="">-- Pilih Pengasuh --</option>';
+    kelompokState.guruList.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.name || g.username;
+        pengasuhSelect.appendChild(opt);
+    });
+
+    if (id) {
+        const k = kelompokState.list.find(x => x.id === id);
+        if (!k) return;
+        title.textContent = 'Edit Kelompok';
+        namaInput.value = k.nama;
+        pengasuhSelect.value = k.pengasuh || '';
+    } else {
+        title.textContent = 'Buat Kelompok';
+        namaInput.value = '';
+        pengasuhSelect.value = '';
+    }
+
+    modal.style.display = 'flex';
+
+    const cancelBtn = document.getElementById('btn-modal-kelompok-cancel');
+    if (cancelBtn) {
+        cancelBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+    }
+
+    const saveBtn = document.getElementById('btn-modal-kelompok-save');
+    if (saveBtn) {
+        saveBtn.onclick = saveKelompok;
+    }
+}
+
+async function saveKelompok() {
+    const modal = document.getElementById('modal-kelompok');
+    const nama = document.getElementById('input-kelompok-nama')?.value?.trim();
+    const pengasuhId = document.getElementById('input-kelompok-musyrif')?.value;
+    if (!nama) { alert('Nama kelompok wajib diisi.'); return; }
+
+    const kelompokId = kelompokState.editingId;
+    const url = kelompokId
+        ? `kesantrian/kelompok-pengasuhan/${kelompokId}/`
+        : 'kesantrian/kelompok-pengasuhan/';
+    const method = kelompokId ? 'PATCH' : 'POST';
+    const res = await parseApiData(await window.apiFetch(url, {
+        method,
+        body: JSON.stringify({
+            nama,
+            pengasuh_id: pengasuhId || null,
+            kelas: ''
+        })
+    }));
+
+    if (res?.success) {
+        if (modal) modal.style.display = 'none';
+        await loadKelompokTab();
+    } else {
+        alert(res?.message || 'Gagal menyimpan kelompok.');
+    }
+}
+
+function setupKelompokSearch() {
+    const input = document.getElementById('kelompok-santri-search');
+    const result = document.getElementById('kelompok-santri-search-result');
+    if (!input || !result) return;
+
+    input.oninput = () => {
+        const q = input.value.toLowerCase().trim();
+        if (!q) { result.style.display = 'none'; return; }
+
+        const found = [];
+        kelompokState.list.forEach(k => {
+            (k.anggota_list || []).forEach(a => {
+                if ((a.nama || '').toLowerCase().includes(q) || String(a.nisn || '').includes(q)) {
+                    found.push({ santri: a, kelompok: k });
+                }
+            });
+        });
+
+        const assignedNisns = new Set();
+        kelompokState.list.forEach(k => {
+            (k.anggota_list || []).forEach(a => assignedNisns.add(a.nisn));
+        });
+        kelompokState.allStudents
+            .filter(s => !assignedNisns.has(s.nisn) &&
+                ((s.nama || '').toLowerCase().includes(q) || String(s.nisn || '').includes(q)))
+            .forEach(s => found.push({ santri: s, kelompok: null }));
+
+        if (found.length === 0) {
+            result.style.display = 'block';
+            result.innerHTML = '<span style="color:#9ca3af;">Santri tidak ditemukan.</span>';
+            return;
+        }
+
+        result.style.display = 'block';
+        result.innerHTML = found.slice(0, 8).map(f => `
+            <div style="padding:6px 0;border-bottom:1px solid #f3f4f6;
+                        display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <span style="font-size:13px;font-weight:500;color:#111827;">
+                        ${f.santri.nama}
+                    </span>
+                    <span style="font-size:11px;color:#9ca3af;margin-left:6px;">
+                        ${f.santri.kelas} &middot; ${f.santri.nisn}
+                    </span>
+                </div>
+                <div style="font-size:12px;">
+                    ${f.kelompok
+                        ? `<span style="color:#1d9e75;font-weight:500;">
+                               ${f.kelompok.nama}
+                           </span>
+                           <span style="color:#9ca3af;font-size:11px;">
+                               (${f.kelompok.pengasuh_name || '-'})
                            </span>`
                         : '<span style="color:#f59e0b;">Belum ada kelompok</span>'
                     }

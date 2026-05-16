@@ -3594,7 +3594,18 @@ def kelompok_anggota(request, pk):
         return Response({'success': False, 'message': 'Santri tidak ditemukan'},
                         status=status.HTTP_404_NOT_FOUND)
 
-    anggota, created = KelompokAnggota.objects.get_or_create(kelompok=kelompok, santri=santri)
+    is_ketua = request.data.get('is_ketua', False)
+    if isinstance(is_ketua, str):
+        is_ketua = is_ketua.lower() in ['true', '1', 'yes', 'ya']
+
+    if is_ketua:
+        KelompokAnggota.objects.filter(kelompok=kelompok, is_ketua=True).update(is_ketua=False)
+
+    anggota, created = KelompokAnggota.objects.get_or_create(
+        kelompok=kelompok,
+        santri=santri,
+        defaults={'is_ketua': is_ketua}
+    )
     if not created:
         return Response({'success': False, 'message': 'Santri sudah ada di kelompok ini'},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -3620,6 +3631,38 @@ def kelompok_anggota_delete(request, pk, nisn):
     return Response({'success': True, 'message': 'Santri berhasil dihapus dari kelompok'})
 
 
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def set_ketua_kelompok(request, pk, nisn):
+    """Tunjuk atau lepas ketua kelompok."""
+    user = request.user
+    if user.role not in ['superadmin', 'admin', 'pimpinan']:
+        return Response({'success': False, 'message': 'Tidak memiliki akses'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        anggota = KelompokAnggota.objects.get(kelompok_id=pk, santri__nisn=nisn)
+    except KelompokAnggota.DoesNotExist:
+        return Response({'success': False, 'message': 'Anggota tidak ditemukan'},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    is_ketua = request.data.get('is_ketua', True)
+    if isinstance(is_ketua, str):
+        is_ketua = is_ketua.lower() in ['true', '1', 'yes', 'ya']
+
+    if is_ketua:
+        KelompokAnggota.objects.filter(kelompok_id=pk, is_ketua=True).update(is_ketua=False)
+
+    anggota.is_ketua = is_ketua
+    anggota.save()
+    return Response({
+        'success': True,
+        'message': 'Ketua kelompok diupdate',
+        'nisn': nisn,
+        'is_ketua': anggota.is_ketua
+    })
+
+
 # ============================================================
 # PERTEMUAN
 # ============================================================
@@ -3631,7 +3674,7 @@ def pertemuan_list_create(request):
     user = request.user
 
     if request.method == 'POST':
-        kelompok_id = request.data.get('kelompok_id')
+        kelompok_id = request.data.get('kelompok_id') or request.data.get('kelompok')
         try:
             kelompok = KelompokPengasuhan.objects.get(pk=kelompok_id)
         except KelompokPengasuhan.DoesNotExist:
@@ -3675,6 +3718,10 @@ def pertemuan_list_create(request):
             kelompok_id__in=kelompok_ids)
     else:
         queryset = PertemuanPengasuhan.objects.none()
+
+    kelompok_id = request.query_params.get('kelompok')
+    if kelompok_id:
+        queryset = queryset.filter(kelompok_id=kelompok_id)
 
     serializer = PertemuanPengasuhSerializer(queryset, many=True, context={'request': request})
     return Response({'success': True, 'count': queryset.count(), 'data': serializer.data})
@@ -3750,7 +3797,7 @@ def pertemuan_presensi(request, pk):
                         status=status.HTTP_403_FORBIDDEN)
 
     from apps.students.models import Student
-    items = request.data.get('presensi', [])
+    items = request.data.get('records', request.data.get('presensi', []))
     for item in items:
         nisn = item.get('nisn')
         presensi_status = item.get('status', 'tidak_hadir')

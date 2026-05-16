@@ -1243,7 +1243,7 @@ class KelompokAnggotaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = KelompokAnggota
-        fields = ['id', 'nisn', 'nama', 'kelas', 'created_at']
+        fields = ['id', 'nisn', 'nama', 'kelas', 'is_ketua', 'created_at']
 
 
 class KelompokPengasuhSerializer(serializers.ModelSerializer):

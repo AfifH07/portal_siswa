@@ -134,6 +134,7 @@ urlpatterns = [
     path('kelompok-pengasuhan/', views.kelompok_list_create, name='kelompok-list'),
     path('kelompok-pengasuhan/<int:pk>/', views.kelompok_detail, name='kelompok-detail'),
     path('kelompok-pengasuhan/<int:pk>/anggota/', views.kelompok_anggota, name='kelompok-anggota'),
+    path('kelompok-pengasuhan/<int:pk>/anggota/<str:nisn>/set-ketua/', views.set_ketua_kelompok, name='kelompok-set-ketua'),
     path('kelompok-pengasuhan/<int:pk>/anggota/<str:nisn>/', views.kelompok_anggota_delete, name='kelompok-anggota-delete'),
     path('pertemuan-pengasuhan/', views.pertemuan_list_create, name='pertemuan-list'),
     path('pertemuan-pengasuhan/<int:pk>/', views.pertemuan_detail, name='pertemuan-detail'),
