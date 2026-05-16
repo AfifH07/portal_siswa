@@ -13,14 +13,14 @@ urlpatterns = [
     # ============================================
     path('my-children-summary/', views.get_my_children_summary, name='my-children-summary'),
 
+    # Recording endpoints (musyrif/guru)
+    path('ibadah/record/', views.record_ibadah, name='record-ibadah'),
+    path('ibadah/record-bulk/', views.record_ibadah_bulk, name='record-ibadah-bulk'),
+
     # Student-specific endpoints
     path('ibadah/<str:nisn>/', views.get_child_ibadah_detail, name='child-ibadah-detail'),
     path('pembinaan/<str:nisn>/', views.get_child_pembinaan, name='child-pembinaan'),
     path('worship-tracker/<str:nisn>/', views.get_worship_tracker, name='worship-tracker'),
-
-    # Recording endpoints (musyrif/guru)
-    path('ibadah/record/', views.record_ibadah, name='record-ibadah'),
-    path('ibadah/record-bulk/', views.record_ibadah_bulk, name='record-ibadah-bulk'),
 
     # ============================================
     # DUAL-CHART & PRINT ENGINE
