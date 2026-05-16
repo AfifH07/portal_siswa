@@ -2837,3 +2837,207 @@
     padding: 7px 16px;
     font-size: 0.84rem;
 }
+
+/* =====================
+   Status Setoran & Kelompok Hafalan
+   ===================== */
+.kh-setoran-status {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.kh-status-lancar {
+    background: #d1fae5;
+    color: #065f46;
+}
+.kh-status-perlu-ulang {
+    background: #fef3c7;
+    color: #92400e;
+}
+.kh-status-belum-selesai {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.kh-empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #9ca3af;
+    background: #fff;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+}
+.kh-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 0.85rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.kh-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+}
+.kh-card-header:hover {
+    background: #f9fafb;
+}
+.kh-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.kh-card-title {
+    color: #123527;
+    font-size: 0.98rem;
+    font-weight: 800;
+}
+.kh-card-meta {
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+.kh-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.kh-btn-edit,
+.kh-btn-delete,
+.kh-btn-expand,
+.kh-btn-ketua,
+.kh-btn-anggota-delete,
+.kh-btn-add-focus {
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 5px 11px;
+}
+.kh-btn-edit {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+.kh-btn-delete,
+.kh-btn-anggota-delete {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+.kh-btn-expand,
+.kh-btn-add-focus {
+    background: #ecfdf5;
+    color: #047857;
+}
+.kh-btn-ketua {
+    background: #fef3c7;
+    color: #92400e;
+}
+.kh-anggota-panel {
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    padding: 1rem 1.15rem;
+}
+.kh-anggota-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+    margin-bottom: 1rem;
+    background: #fff;
+}
+.kh-anggota-table th,
+.kh-anggota-table td {
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid #edf2f7;
+    text-align: left;
+    vertical-align: middle;
+}
+.kh-anggota-table th {
+    background: #f0f7f3;
+    color: #2d6a4f;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+.kh-badge-ketua {
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    margin-right: 5px;
+}
+.kh-tambah-anggota {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    max-width: 520px;
+}
+.kh-search-anggota-input {
+    flex: 1;
+    min-width: 220px;
+    padding: 8px 12px;
+    border: 1px solid #d1e7d8;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    box-sizing: border-box;
+}
+.kh-search-result {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 118px;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    z-index: 150;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.kh-search-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 9px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.86rem;
+}
+.kh-search-item:hover {
+    background: #f0fdf4;
+}
+.kh-search-item strong {
+    color: #123527;
+}
+.kh-search-item span,
+.kh-search-empty {
+    color: #9ca3af;
+    font-size: 0.78rem;
+}
+.kh-search-empty {
+    padding: 9px 12px;
+}
+
+@media (max-width: 768px) {
+    .kh-card-header,
+    .kh-tambah-anggota {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .kh-card-actions {
+        justify-content: flex-start;
+    }
+    .kh-search-result {
+        left: 0;
+    }
+}

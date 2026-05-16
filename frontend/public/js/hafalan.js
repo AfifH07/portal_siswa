@@ -1815,6 +1815,12 @@ function initHafalan() {
             kelompokTabBtn.style.display = '';
         }
 
+        const kelompokHafalanTabBtn = document.getElementById('tab-btn-kelompok-hafalan');
+        if (kelompokHafalanTabBtn && ['superadmin', 'admin', 'pimpinan'].includes(currentRole)) {
+            kelompokHafalanTabBtn.style.display = '';
+            kelompokHafalanTabBtn.onclick = () => switchHafalanTab('kelompok-hafalan');
+        }
+
         // Tampilkan tab Kajian Mingguan untuk guru dan musyrif
         const kajianTabBtn = document.getElementById('tab-btn-kajian');
         if (kajianTabBtn && ['guru', 'musyrif'].includes(currentRole)) {
@@ -1877,6 +1883,18 @@ function initHafalan() {
             document.getElementById('modal-kelompok').style.display = 'none';
         };
     }
+    const btnBuatKelompokHafalan = document.getElementById('btn-buat-kelompok-hafalan');
+    if (btnBuatKelompokHafalan) {
+        btnBuatKelompokHafalan.onclick = () => bukaModalKelompokHafalan(null);
+    }
+    const btnGenerateKelompokHafalan = document.getElementById('btn-generate-kelompok-hafalan');
+    if (btnGenerateKelompokHafalan) {
+        btnGenerateKelompokHafalan.onclick = bukaModalGenerateKelompokHafalan;
+    }
+    const filterKelasHafalan = document.getElementById('kh-filter-kelas');
+    if (filterKelasHafalan) {
+        filterKelasHafalan.onchange = () => loadKelompokHafalanTab();
+    }
 }
 
 // ============================================
@@ -1902,6 +1920,14 @@ let kelompokState = {
     presensiByPertemuan: {},
     pertemuanModalKelompokId: null,
     editingId: null,
+};
+const kelompokHafalanState = {
+    list: [],
+    guruList: [],
+    allStudents: [],
+    kelasList: [],
+    expandedId: null,
+    editingId: null
 };
 
 /**
@@ -1939,6 +1965,10 @@ function switchHafalanTab(tabName) {
         loadKelompokTab();
     }
 
+    if (tabName === 'kelompok-hafalan') {
+        loadKelompokHafalanTab();
+    }
+
     if (tabName === 'kajian') {
         loadKajianTab();
     }
@@ -1961,7 +1991,7 @@ async function loadSetoranHafalan() {
     // Show loading
     tbody.innerHTML = `
         <tr>
-            <td colspan="8" class="text-center">
+            <td colspan="9" class="text-center">
                 <div class="loading-spinner"></div>
                 <p>Memuat data...</p>
             </td>
@@ -1993,7 +2023,7 @@ async function loadSetoranHafalan() {
             throw new Error(data.error || 'Gagal memuat data');
         }
 
-        const list = data.results ?? data;
+        const list = data.results ?? data.data ?? data;
         setoranData = Array.isArray(list) ? list : [];
         const totalCount = data.count || setoranData.length;
 
@@ -2002,9 +2032,9 @@ async function loadSetoranHafalan() {
         }
 
         if (setoranData.length === 0) {
-            tbody.innerHTML = `
+        tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center text-muted">
+                    <td colspan="9" class="text-center text-muted">
                         <div class="empty-state">
                             <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
                             <p>Belum ada data setoran hafalan</p>
@@ -2032,6 +2062,7 @@ async function loadSetoranHafalan() {
                 <td>${item.juz ? `Juz ${item.juz}` : '-'}</td>
                 <td>${item.halaman_dari && item.halaman_sampai ? `${item.halaman_dari} - ${item.halaman_sampai}` : '-'}</td>
                 <td><span class="badge badge-success">${item.jumlah_halaman} hal</span></td>
+                <td>${renderSetoranStatusBadge(item.status)}</td>
                 <td class="text-truncate" title="${item.catatan || ''}">${item.catatan || '-'}</td>
                 <td>
                     <div class="action-buttons">
@@ -2063,6 +2094,23 @@ async function loadSetoranHafalan() {
             </tr>
         `;
     }
+}
+
+function renderSetoranStatusBadge(status) {
+    const labelMap = {
+        lancar: 'Lancar',
+        perlu_ulang: 'Perlu Ulang',
+        belum_selesai: 'Belum Selesai'
+    };
+    const classMap = {
+        lancar: 'kh-status-lancar',
+        perlu_ulang: 'kh-status-perlu-ulang',
+        belum_selesai: 'kh-status-belum-selesai'
+    };
+    const normalized = status || 'lancar';
+    return `<span class="kh-setoran-status ${classMap[normalized] || classMap.lancar}">
+        ${labelMap[normalized] || labelMap.lancar}
+    </span>`;
 }
 
 /**
@@ -2212,6 +2260,8 @@ function openModalSetoranBaru() {
     // Set today's date
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('setoran-tanggal').value = today;
+    const statusSelect = document.getElementById('setoran-status');
+    if (statusSelect) statusSelect.value = 'lancar';
 
     // Update title
     if (title) title.textContent = 'Tambah Setoran Hafalan';
@@ -2245,6 +2295,8 @@ function editSetoran(id) {
     document.getElementById('setoran-halaman-dari').value = item.halaman_dari || '';
     document.getElementById('setoran-halaman-sampai').value = item.halaman_sampai || '';
     document.getElementById('setoran-catatan').value = item.catatan || '';
+    const statusSelect = document.getElementById('setoran-status');
+    if (statusSelect) statusSelect.value = item.status || 'lancar';
 
     // Update title
     if (title) title.textContent = 'Edit Setoran Hafalan';
@@ -2274,6 +2326,7 @@ async function submitSetoranHafalan() {
     const halamanDari = document.getElementById('setoran-halaman-dari').value;
     const halamanSampai = document.getElementById('setoran-halaman-sampai').value;
     const catatan = document.getElementById('setoran-catatan').value;
+    const status = document.getElementById('setoran-status')?.value || 'lancar';
 
     // Validation
     if (!siswa || !tanggal || !jumlah) {
@@ -2301,6 +2354,7 @@ async function submitSetoranHafalan() {
         juz: juz ? parseInt(juz) : null,
         halaman_dari: halamanDari ? parseInt(halamanDari) : null,
         halaman_sampai: halamanSampai ? parseInt(halamanSampai) : null,
+        status: status,
         catatan: catatan
     };
 
@@ -2975,13 +3029,20 @@ function legacySetupKelompokSearch() {
 }
 
 async function parseApiData(res) {
-    return typeof res?.json === 'function' ? await res.json() : res;
+    if (typeof res?.json !== 'function') return res;
+    try {
+        return await res.json();
+    } catch (e) {
+        return null;
+    }
 }
 
 function extractList(data) {
     if (Array.isArray(data)) return data;
     if (Array.isArray(data?.data)) return data.data;
     if (Array.isArray(data?.results)) return data.results;
+    if (Array.isArray(data?.students)) return data.students;
+    if (Array.isArray(data?.users)) return data.users;
     return [];
 }
 
@@ -2991,6 +3052,435 @@ function escapeAttr(value) {
         .replace(/"/g, '&quot;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
+}
+
+// ============================================
+// TAB KELOMPOK HAFALAN
+// ============================================
+
+function getKelompokHafalanAnggota(kelompok) {
+    const raw = kelompok?.anggota_list || kelompok?.anggota || kelompok?.members || [];
+    return Array.isArray(raw) ? raw : [];
+}
+
+function getKelompokHafalanUstadzName(kelompok) {
+    return kelompok?.ustadz_name || kelompok?.ustadz_nama || kelompok?.guru_name ||
+        kelompok?.pengasuh_name || kelompok?.ustadz?.name || kelompok?.ustadz?.username || '-';
+}
+
+function getKelompokHafalanUstadzId(kelompok) {
+    return kelompok?.ustadz || kelompok?.ustadz_id || kelompok?.guru || kelompok?.pengasuh || '';
+}
+
+function getAnggotaHafalanNisn(anggota) {
+    return anggota?.nisn || anggota?.santri_nisn || anggota?.santri || anggota?.siswa_nisn || '';
+}
+
+function getAnggotaHafalanNama(anggota) {
+    return anggota?.nama || anggota?.santri_nama || anggota?.siswa_nama || anggota?.santri?.nama || '-';
+}
+
+function getAnggotaHafalanNomor(anggota, index) {
+    return anggota?.nomor_urut_absen || anggota?.nomor_urut || anggota?.urutan || anggota?.no_absen || (index + 1);
+}
+
+function populateKelompokHafalanKelasSelect(select, includeEmptyLabel = 'Semua Kelas') {
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = `<option value="">${includeEmptyLabel}</option>`;
+    kelompokHafalanState.kelasList.forEach(kelas => {
+        const opt = document.createElement('option');
+        opt.value = kelas;
+        opt.textContent = kelas;
+        select.appendChild(opt);
+    });
+    select.value = current;
+}
+
+async function loadKelompokHafalanTab() {
+    const container = document.getElementById('kelompok-hafalan-list-container');
+    if (!container) return;
+
+    container.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:32px 0;">Memuat data kelompok hafalan...</p>';
+
+    try {
+        const kelasFilter = document.getElementById('kh-filter-kelas')?.value || '';
+        const endpoint = kelasFilter
+            ? `kesantrian/hafalan/kelompok/?kelas=${encodeURIComponent(kelasFilter)}`
+            : 'kesantrian/hafalan/kelompok/';
+
+        const [kelompokRes, guruRes, kelasRes, siswaRes] = await Promise.all([
+            window.apiFetch(endpoint),
+            window.apiFetch('users/?role=guru&page_size=200'),
+            window.apiFetch('students/classes/'),
+            window.apiFetch('students/?page_size=1000')
+        ]);
+
+        kelompokHafalanState.list = extractList(await parseApiData(kelompokRes));
+        kelompokHafalanState.guruList = extractList(await parseApiData(guruRes));
+        const kelasData = await parseApiData(kelasRes);
+        kelompokHafalanState.kelasList = Array.isArray(kelasData) ? kelasData : (kelasData?.classes || []);
+        kelompokHafalanState.allStudents = extractList(await parseApiData(siswaRes));
+
+        populateKelompokHafalanKelasSelect(document.getElementById('kh-filter-kelas'));
+        populateKelompokHafalanKelasSelect(document.getElementById('kh-generate-kelas'), 'Pilih Kelas...');
+        renderKelompokHafalanList();
+    } catch (e) {
+        console.error('[hafalan] gagal memuat kelompok hafalan:', e);
+        container.innerHTML = '<p style="color:#ef4444;text-align:center;padding:32px;">Gagal memuat kelompok hafalan.</p>';
+    }
+}
+
+function renderKelompokHafalanList() {
+    const container = document.getElementById('kelompok-hafalan-list-container');
+    if (!container) return;
+
+    if (!kelompokHafalanState.list.length) {
+        container.innerHTML = `
+            <div class="kh-empty-state">
+                <div style="font-size:2rem;">📖</div>
+                <p>Belum ada kelompok hafalan.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = kelompokHafalanState.list.map(k => {
+        const anggota = getKelompokHafalanAnggota(k);
+        const isExpanded = kelompokHafalanState.expandedId === k.id;
+        const ketua = anggota.find(a => a.is_ketua);
+
+        return `
+            <div class="kh-card" id="kh-card-${k.id}">
+                <div class="kh-card-header">
+                    <div class="kh-card-info">
+                        <span class="kh-card-title">${escapeAttr(k.nama || 'Kelompok Hafalan')}</span>
+                        <span class="kh-card-meta">
+                            Kelas ${escapeAttr(k.kelas || '-')} · Ustadz ${escapeAttr(getKelompokHafalanUstadzName(k))} ·
+                            ${anggota.length} anggota
+                            ${ketua ? ` · Ketua: ${escapeAttr(getAnggotaHafalanNama(ketua))}` : ''}
+                        </span>
+                    </div>
+                    <div class="kh-card-actions">
+                        <button class="kh-btn-edit" data-id="${k.id}">Edit</button>
+                        <button class="kh-btn-delete" data-id="${k.id}">Hapus</button>
+                        <button class="kh-btn-expand" data-id="${k.id}">
+                            ${isExpanded ? '▲ Tutup' : '▼ Anggota'}
+                        </button>
+                    </div>
+                </div>
+                ${isExpanded ? renderKelompokHafalanAnggotaPanel(k) : ''}
+            </div>`;
+    }).join('');
+
+    container.querySelectorAll('.kh-btn-expand').forEach(btn => {
+        btn.onclick = function() {
+            const id = parseInt(this.dataset.id);
+            kelompokHafalanState.expandedId = kelompokHafalanState.expandedId === id ? null : id;
+            renderKelompokHafalanList();
+        };
+    });
+    container.querySelectorAll('.kh-btn-edit').forEach(btn => {
+        btn.onclick = function() { bukaModalKelompokHafalan(parseInt(this.dataset.id)); };
+    });
+    container.querySelectorAll('.kh-btn-delete').forEach(btn => {
+        btn.onclick = function() { hapusKelompokHafalan(parseInt(this.dataset.id)); };
+    });
+    attachKelompokHafalanAnggotaHandlers();
+}
+
+function renderKelompokHafalanAnggotaPanel(kelompok) {
+    const anggota = getKelompokHafalanAnggota(kelompok);
+    const rows = anggota.map((a, index) => {
+        const nisn = getAnggotaHafalanNisn(a);
+        const nama = getAnggotaHafalanNama(a);
+        return `
+            <tr>
+                <td>${escapeAttr(getAnggotaHafalanNomor(a, index))}</td>
+                <td>
+                    ${a.is_ketua ? '<span class="kh-badge-ketua">Ketua</span>' : ''}
+                    ${escapeAttr(nama)}
+                </td>
+                <td>${escapeAttr(nisn)}</td>
+                <td>
+                    <button class="kh-btn-ketua"
+                            data-id="${kelompok.id}"
+                            data-nisn="${escapeAttr(nisn)}"
+                            data-is-ketua="${a.is_ketua ? 'true' : 'false'}">
+                        ${a.is_ketua ? 'Lepas Ketua' : 'Set Ketua'}
+                    </button>
+                    <button class="kh-btn-anggota-delete"
+                            data-id="${kelompok.id}"
+                            data-nisn="${escapeAttr(nisn)}">
+                        Hapus
+                    </button>
+                </td>
+            </tr>`;
+    }).join('');
+
+    return `
+        <div class="kh-anggota-panel">
+            <table class="kh-anggota-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Nama</th>
+                        <th>NISN</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows || '<tr><td colspan="4" style="text-align:center;color:#9ca3af;">Belum ada anggota</td></tr>'}
+                </tbody>
+            </table>
+            <div class="kh-tambah-anggota">
+                <button class="kh-btn-add-focus" data-id="${kelompok.id}">+ Tambah Anggota</button>
+                <input type="text"
+                       id="kh-search-anggota-${kelompok.id}"
+                       class="kh-search-anggota-input"
+                       placeholder="Cari santri nama/NISN...">
+                <div id="kh-search-anggota-result-${kelompok.id}" class="kh-search-result" style="display:none;"></div>
+            </div>
+        </div>`;
+}
+
+function attachKelompokHafalanAnggotaHandlers() {
+    const container = document.getElementById('kelompok-hafalan-list-container');
+    if (!container) return;
+
+    container.querySelectorAll('.kh-btn-ketua').forEach(btn => {
+        btn.onclick = async function() {
+            const isKetua = this.dataset.isKetua === 'true';
+            await setKetuaHafalan(parseInt(this.dataset.id), this.dataset.nisn, !isKetua);
+        };
+    });
+    container.querySelectorAll('.kh-btn-anggota-delete').forEach(btn => {
+        btn.onclick = async function() {
+            await hapusAnggotaHafalan(parseInt(this.dataset.id), this.dataset.nisn);
+        };
+    });
+    container.querySelectorAll('.kh-btn-add-focus').forEach(btn => {
+        btn.onclick = function() {
+            document.getElementById(`kh-search-anggota-${this.dataset.id}`)?.focus();
+        };
+    });
+
+    kelompokHafalanState.list.forEach(k => {
+        const input = document.getElementById(`kh-search-anggota-${k.id}`);
+        const result = document.getElementById(`kh-search-anggota-result-${k.id}`);
+        if (!input || !result) return;
+
+        input.oninput = function() {
+            const q = this.value.toLowerCase().trim();
+            result.style.display = 'none';
+            result.innerHTML = '';
+            if (!q) return;
+
+            const existing = new Set(getKelompokHafalanAnggota(k).map(getAnggotaHafalanNisn));
+            const matches = kelompokHafalanState.allStudents
+                .filter(s => !existing.has(s.nisn) &&
+                    ((s.nama || '').toLowerCase().includes(q) || String(s.nisn || '').includes(q)))
+                .slice(0, 8);
+
+            result.style.display = 'block';
+            if (!matches.length) {
+                result.innerHTML = '<div class="kh-search-empty">Santri tidak ditemukan</div>';
+                return;
+            }
+
+            result.innerHTML = matches.map(s => `
+                <div class="kh-search-item" data-id="${k.id}" data-nisn="${escapeAttr(s.nisn)}">
+                    <strong>${escapeAttr(s.nama)}</strong>
+                    <span>${escapeAttr(s.kelas || '-')} · ${escapeAttr(s.nisn)}</span>
+                </div>`).join('');
+
+            result.querySelectorAll('.kh-search-item').forEach(item => {
+                item.onclick = async function() {
+                    await tambahAnggotaHafalan(parseInt(this.dataset.id), this.dataset.nisn);
+                    input.value = '';
+                    result.style.display = 'none';
+                };
+            });
+        };
+    });
+}
+
+function bukaModalKelompokHafalan(id = null) {
+    const modal = document.getElementById('modal-kelompok-hafalan');
+    const title = document.getElementById('modal-kelompok-hafalan-title');
+    const idInput = document.getElementById('kh-modal-id');
+    const namaInput = document.getElementById('kh-modal-nama');
+    const kelasInput = document.getElementById('kh-modal-kelas');
+    const ustadzSelect = document.getElementById('kh-modal-ustadz');
+    const tahunAjaranInput = document.getElementById('kh-modal-tahun-ajaran');
+    if (!modal || !title || !idInput || !namaInput || !kelasInput || !ustadzSelect) return;
+
+    kelompokHafalanState.editingId = id;
+    ustadzSelect.innerHTML = '<option value="">-- Pilih Ustadz --</option>';
+    kelompokHafalanState.guruList.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.name || g.username;
+        ustadzSelect.appendChild(opt);
+    });
+
+    if (id) {
+        const k = kelompokHafalanState.list.find(item => item.id === id);
+        if (!k) return;
+        title.textContent = 'Edit Kelompok Hafalan';
+        idInput.value = id;
+        namaInput.value = k.nama || '';
+        kelasInput.value = k.kelas || '';
+        ustadzSelect.value = getKelompokHafalanUstadzId(k) || '';
+        if (tahunAjaranInput) tahunAjaranInput.value = k.tahun_ajaran || '';
+    } else {
+        title.textContent = 'Buat Kelompok Hafalan';
+        idInput.value = '';
+        namaInput.value = '';
+        kelasInput.value = document.getElementById('kh-filter-kelas')?.value || '';
+        ustadzSelect.value = '';
+        if (tahunAjaranInput) tahunAjaranInput.value = '';
+    }
+
+    modal.style.display = 'flex';
+    document.getElementById('btn-kh-modal-cancel').onclick = function() {
+        modal.style.display = 'none';
+    };
+    document.getElementById('btn-kh-modal-save').onclick = function() {
+        saveKelompokHafalan(idInput.value || null);
+    };
+}
+
+function bukaModalGenerateKelompokHafalan() {
+    const modal = document.getElementById('modal-generate-kelompok-hafalan');
+    const kelasSelect = document.getElementById('kh-generate-kelas');
+    if (!modal || !kelasSelect) return;
+    populateKelompokHafalanKelasSelect(kelasSelect, 'Pilih Kelas...');
+    kelasSelect.value = document.getElementById('kh-filter-kelas')?.value || '';
+    modal.style.display = 'flex';
+
+    document.getElementById('btn-kh-generate-cancel').onclick = function() {
+        modal.style.display = 'none';
+    };
+    document.getElementById('btn-kh-generate-confirm').onclick = async function() {
+        await generateKelompokHafalan(kelasSelect.value);
+    };
+}
+
+async function saveKelompokHafalan(id = null) {
+    const modal = document.getElementById('modal-kelompok-hafalan');
+    const nama = document.getElementById('kh-modal-nama')?.value?.trim();
+    const kelas = document.getElementById('kh-modal-kelas')?.value?.trim();
+    const ustadz = document.getElementById('kh-modal-ustadz')?.value;
+    const tahunAjaran = document.getElementById('kh-modal-tahun-ajaran')?.value;
+    if (!nama || !kelas) {
+        alert('Nama kelompok dan kelas wajib diisi.');
+        return;
+    }
+
+    const body = { nama, kelas, ustadz: ustadz || null };
+    if (tahunAjaran) body.tahun_ajaran = tahunAjaran;
+    const url = id ? `kesantrian/hafalan/kelompok/${id}/` : 'kesantrian/hafalan/kelompok/';
+    const method = id ? 'PATCH' : 'POST';
+    const res = await parseApiData(await window.apiFetch(url, {
+        method,
+        body: JSON.stringify(body)
+    }));
+
+    if (res?.success) {
+        if (modal) modal.style.display = 'none';
+        await loadKelompokHafalanTab();
+    } else {
+        alert(res?.message || 'Gagal menyimpan kelompok hafalan.');
+    }
+}
+
+async function generateKelompokHafalan(kelas) {
+    const modal = document.getElementById('modal-generate-kelompok-hafalan');
+    if (!kelas) {
+        alert('Pilih kelas terlebih dahulu.');
+        return;
+    }
+    if (!confirm(`Generate kelompok hafalan otomatis untuk kelas ${kelas}?`)) return;
+
+    const res = await parseApiData(await window.apiFetch(
+        'kesantrian/hafalan/kelompok/generate/',
+        { method: 'POST', body: JSON.stringify({ kelas }) }
+    ));
+
+    if (res?.success) {
+        if (modal) modal.style.display = 'none';
+        await loadKelompokHafalanTab();
+    } else {
+        const message = res?.message || res?.detail || 'Gagal generate kelompok hafalan.';
+        alert(message.toLowerCase().includes('sudah ada')
+            ? `Kelompok untuk kelas ini sudah ada. ${message}`
+            : message);
+    }
+}
+
+async function hapusKelompokHafalan(id) {
+    if (!confirm('Hapus kelompok hafalan ini beserta anggotanya?')) return;
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/hafalan/kelompok/${id}/`,
+        { method: 'DELETE' }
+    ));
+    if (res?.success || res === null) {
+        if (kelompokHafalanState.expandedId === id) kelompokHafalanState.expandedId = null;
+        await loadKelompokHafalanTab();
+    } else {
+        alert(res?.message || 'Gagal menghapus kelompok hafalan.');
+    }
+}
+
+async function tambahAnggotaHafalan(kelompokId, nisn) {
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/hafalan/kelompok/${kelompokId}/anggota/`,
+        { method: 'POST', body: JSON.stringify({ nisn, is_ketua: false }) }
+    ));
+    if (res?.success) {
+        await refreshKelompokHafalanData(kelompokId);
+    } else {
+        alert(res?.message || 'Gagal menambah anggota.');
+    }
+}
+
+async function hapusAnggotaHafalan(kelompokId, nisn) {
+    if (!confirm('Hapus santri ini dari kelompok hafalan?')) return;
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/hafalan/kelompok/${kelompokId}/anggota/${nisn}/`,
+        { method: 'DELETE' }
+    ));
+    if (res?.success || res === null) {
+        await refreshKelompokHafalanData(kelompokId);
+    } else {
+        alert(res?.message || 'Gagal menghapus anggota.');
+    }
+}
+
+async function setKetuaHafalan(kelompokId, nisn, isKetua = true) {
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/hafalan/kelompok/${kelompokId}/anggota/${nisn}/set-ketua/`,
+        { method: 'PATCH', body: JSON.stringify({ is_ketua: isKetua }) }
+    ));
+    if (res?.success) {
+        await refreshKelompokHafalanData(kelompokId);
+    } else {
+        alert(res?.message || 'Gagal mengupdate ketua.');
+    }
+}
+
+async function refreshKelompokHafalanData(kelompokId) {
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/hafalan/kelompok/${kelompokId}/`
+    ));
+    if (res?.success && res.data) {
+        const idx = kelompokHafalanState.list.findIndex(k => k.id === kelompokId);
+        if (idx !== -1) kelompokHafalanState.list[idx] = res.data;
+    } else {
+        await loadKelompokHafalanTab();
+        return;
+    }
+    renderKelompokHafalanList();
 }
 
 async function loadKelompokTab() {

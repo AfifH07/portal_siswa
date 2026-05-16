@@ -10,7 +10,7 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
-<link href="/static/css/hafalan-baron.css?v=20260516b" rel="stylesheet">
+<link href="/static/css/hafalan-baron.css?v=20260516c" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -98,6 +98,11 @@
                     style="display:none;" onclick="switchHafalanTab('kelompok')">
                 <i data-lucide="users" class="tab-icon"></i>
                 <span>Kelompok</span>
+            </button>
+            <button class="tab-btn" data-tab="kelompok-hafalan"
+                    id="tab-btn-kelompok-hafalan" style="display:none;">
+                <i data-lucide="book-open" class="tab-icon"></i>
+                <span>Kelompok Hafalan</span>
             </button>
         </div>
 
@@ -493,13 +498,14 @@
                                     <th>Juz</th>
                                     <th>Halaman</th>
                                     <th>Jumlah</th>
+                                    <th>Status</th>
                                     <th>Catatan</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="setoran-tbody">
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted">
+                                    <td colspan="9" class="text-center text-muted">
                                         <div class="empty-state">
                                             <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
                                             <p>Belum ada data setoran hafalan</p>
@@ -713,6 +719,122 @@
             </div>
         </div>
 
+        <!-- ==================== TAB: KELOMPOK HAFALAN ==================== -->
+        <div class="tab-content" id="tab-kelompok-hafalan" style="display:none;">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                <h3 style="margin:0;font-size:16px;font-weight:600;color:#111827;">
+                    Manajemen Kelompok Hafalan
+                </h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <select id="kh-filter-kelas"
+                            style="padding:8px 12px;border:1px solid #d1d5db;
+                                   border-radius:8px;font-size:13px;background:#fff;">
+                        <option value="">Semua Kelas</option>
+                    </select>
+                    <button id="btn-generate-kelompok-hafalan"
+                            style="background:#fef3c7;color:#92400e;border:none;
+                                   border-radius:8px;padding:8px 14px;font-size:13px;
+                                   font-weight:600;cursor:pointer;">
+                        ⚡ Generate Otomatis
+                    </button>
+                    <button id="btn-buat-kelompok-hafalan"
+                            style="background:#1d9e75;color:#fff;border:none;
+                                   border-radius:8px;padding:8px 16px;font-size:13px;
+                                   font-weight:500;cursor:pointer;">
+                        + Buat Kelompok
+                    </button>
+                </div>
+            </div>
+
+            <div id="kelompok-hafalan-list-container">
+                <p style="color:#9ca3af;text-align:center;padding:32px 0;">
+                    Memuat data kelompok hafalan...
+                </p>
+            </div>
+        </div>
+
+        <div id="modal-kelompok-hafalan" style="display:none;position:fixed;inset:0;
+             background:rgba(0,0,0,0.4);z-index:1000;
+             justify-content:center;align-items:center;">
+            <div style="background:#fff;border-radius:12px;padding:28px;
+                        width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+                <h3 id="modal-kelompok-hafalan-title"
+                    style="margin:0 0 20px;font-size:16px;font-weight:600;color:#111827;">
+                    Buat Kelompok Hafalan
+                </h3>
+                <input type="hidden" id="kh-modal-id" value="">
+                <input type="hidden" id="kh-modal-tahun-ajaran" value="">
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;
+                                   color:#374151;margin-bottom:6px;">Nama Kelompok</label>
+                    <input id="kh-modal-nama" type="text"
+                           style="width:100%;padding:9px 12px;border:1px solid #d1d5db;
+                                  border-radius:8px;font-size:13px;outline:none;
+                                  box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;
+                                   color:#374151;margin-bottom:6px;">Kelas</label>
+                    <input id="kh-modal-kelas" type="text"
+                           style="width:100%;padding:9px 12px;border:1px solid #d1d5db;
+                                  border-radius:8px;font-size:13px;outline:none;
+                                  box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;font-size:12px;font-weight:500;
+                                   color:#374151;margin-bottom:6px;">Ustadz</label>
+                    <select id="kh-modal-ustadz"
+                            style="width:100%;padding:9px 12px;border:1px solid #d1d5db;
+                                   border-radius:8px;font-size:13px;outline:none;
+                                   background:#fff;box-sizing:border-box;">
+                        <option value="">-- Pilih Ustadz --</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button id="btn-kh-modal-cancel"
+                            style="padding:8px 18px;border:1px solid #d1d5db;
+                                   border-radius:8px;background:#fff;font-size:13px;
+                                   cursor:pointer;">Batal</button>
+                    <button id="btn-kh-modal-save"
+                            style="padding:8px 18px;background:#1d9e75;color:#fff;
+                                   border:none;border-radius:8px;font-size:13px;
+                                   font-weight:500;cursor:pointer;">Simpan</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-generate-kelompok-hafalan" style="display:none;position:fixed;inset:0;
+             background:rgba(0,0,0,0.4);z-index:1000;
+             justify-content:center;align-items:center;">
+            <div style="background:#fff;border-radius:12px;padding:28px;
+                        width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+                <h3 style="margin:0 0 20px;font-size:16px;font-weight:600;color:#111827;">
+                    Generate Kelompok Hafalan
+                </h3>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;font-size:12px;font-weight:500;
+                                   color:#374151;margin-bottom:6px;">Kelas</label>
+                    <select id="kh-generate-kelas"
+                            style="width:100%;padding:9px 12px;border:1px solid #d1d5db;
+                                   border-radius:8px;font-size:13px;outline:none;
+                                   background:#fff;box-sizing:border-box;">
+                        <option value="">Pilih Kelas...</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button id="btn-kh-generate-cancel"
+                            style="padding:8px 18px;border:1px solid #d1d5db;
+                                   border-radius:8px;background:#fff;font-size:13px;
+                                   cursor:pointer;">Batal</button>
+                    <button id="btn-kh-generate-confirm"
+                            style="padding:8px 18px;background:#f59e0b;color:#fff;
+                                   border:none;border-radius:8px;font-size:13px;
+                                   font-weight:600;cursor:pointer;">Generate</button>
+                </div>
+            </div>
+        </div>
+
         <div id="modal-kelompok" style="display:none;position:fixed;inset:0;
              background:rgba(0,0,0,0.4);z-index:1000;
              justify-content:center;align-items:center;">
@@ -887,6 +1009,15 @@
                         <label for="setoran-catatan">Catatan</label>
                         <textarea id="setoran-catatan" class="form-textarea" rows="3" placeholder="Catatan tambahan..."></textarea>
                     </div>
+
+                    <div class="form-group">
+                        <label for="setoran-status">Status</label>
+                        <select id="setoran-status" class="form-select">
+                            <option value="lancar">Lancar</option>
+                            <option value="perlu_ulang">Perlu Ulang</option>
+                            <option value="belum_selesai">Belum Selesai</option>
+                        </select>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -909,7 +1040,7 @@
 <script src="/static/js/auth-check.js?v=20260515a" defer></script>
 <script src="/static/js/auth.js?v=20260504" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/hafalan.js?v=20260516d" defer></script>
+<script src="/static/js/hafalan.js?v=20260516e" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init
