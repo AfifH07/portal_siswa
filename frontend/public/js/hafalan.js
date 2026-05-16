@@ -2102,13 +2102,13 @@ function renderSetoranStatusBadge(status) {
         perlu_ulang: 'Perlu Ulang',
         belum_selesai: 'Belum Selesai'
     };
-    const classMap = {
-        lancar: 'kh-status-lancar',
-        perlu_ulang: 'kh-status-perlu-ulang',
-        belum_selesai: 'kh-status-belum-selesai'
+    const styleMap = {
+        lancar: 'background:#d1fae5;color:#065f46;',
+        perlu_ulang: 'background:#fef3c7;color:#92400e;',
+        belum_selesai: 'background:#fee2e2;color:#991b1b;'
     };
     const normalized = status || 'lancar';
-    return `<span class="kh-setoran-status ${classMap[normalized] || classMap.lancar}">
+    return `<span style="border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600;${styleMap[normalized] || styleMap.lancar}">
         ${labelMap[normalized] || labelMap.lancar}
     </span>`;
 }
@@ -2326,7 +2326,7 @@ async function submitSetoranHafalan() {
     const halamanDari = document.getElementById('setoran-halaman-dari').value;
     const halamanSampai = document.getElementById('setoran-halaman-sampai').value;
     const catatan = document.getElementById('setoran-catatan').value;
-    const status = document.getElementById('setoran-status')?.value || 'lancar';
+    const status = document.getElementById('setoran-status').value;
 
     // Validation
     if (!siswa || !tanggal || !jumlah) {
