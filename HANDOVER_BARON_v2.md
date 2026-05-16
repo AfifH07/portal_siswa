@@ -53,3 +53,33 @@
 2. Fix stat card Kajian Mingguan - field mapping salah di dashboard.js
 3. Selector santri Overview belum muncul untuk admin (hafalan.js)
 4. Test search kelompok di tab Kelompok hafalan
+
+## TAMBAHAN SESI 16 MEI 2026 (lanjutan)
+
+### Fitur tambahan yang selesai
+| Fitur | Detail | File Utama |
+|-------|--------|------------|
+| Fix URL conflict record-bulk | Pindah path statis sebelum dinamis di kesantrian/urls.py | urls.py |
+| Upgrade tab Edit Absensi | Hapus + edit status + tambah per-santri per-waktu sholat | absensi-sholat.js/css |
+| Fix rekap nilai dashboard walisantri | Tambah CSS grade cards + ganti raw fetch ke apiFetch | dashboard.js, wali-dashboard.css |
+| Fix fast menu walisantri | 3 href salah diperbaiki, label Kajian -> Pengasuhan | dashboard.js |
+| Backend kelompok hafalan | Migrasi is_ketua + serializer + endpoint set-ketua + bulk presensi | models.py, serializers.py, views.py, urls.py |
+| Frontend tab Kelompok | CRUD kelompok + kelola anggota + tunjuk ketua | hafalan.js, hafalan-baron.css |
+
+### Pending sesi berikutnya
+1. Prompt #12C — Frontend catat setoran pertemuan + lihat progres kelompok
+   (backend sudah siap, tinggal frontend)
+2. Fix stat card Kajian Mingguan — baca ibadah_summary.total_hadir (salah),
+   fix: fetchKajianSummaryForDashboard(nisn) dari kehadiran-kajian/
+3. Fix selector santri tab Overview untuk admin di hafalan.js
+4. Catatan guru per santri — saveCatatan() masih fake save
+5. Guru Tartil / Guru Tahfidz / Status Khidmat — belum ada model/endpoint
+
+### Versi file setelah sesi ini
+- dashboard.js -> ?v=20260516g
+- wali-dashboard.css -> ?v=20260516a
+- absensi-sholat.js -> ?v=20260516d
+- absensi-sholat.css -> ?v=20260516b
+- hafalan.js -> bump terbaru
+- hafalan-baron.css -> bump terbaru
+- auth-check.js -> ?v=20260515a

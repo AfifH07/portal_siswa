@@ -1834,8 +1834,8 @@ function initHafalan() {
         renderHafalanWalisantri();
     } else {
         // Default: guru, superadmin - editable view
-        renderHafalanGuru();
         initStudentSelector();
+        renderHafalanGuru();
     }
 
     // Listen for child switch events from other pages
@@ -1897,6 +1897,10 @@ let kelompokState = {
     guruList: [],
     allStudents: [],
     expandedId: null,
+    expandedPertemuanId: null,
+    pertemuanByKelompok: {},
+    presensiByPertemuan: {},
+    pertemuanModalKelompokId: null,
     editingId: null,
 };
 
@@ -2981,6 +2985,14 @@ function extractList(data) {
     return [];
 }
 
+function escapeAttr(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 async function loadKelompokTab() {
     const container = document.getElementById('kelompok-list-container');
 
@@ -3049,9 +3061,16 @@ function renderKelompokList() {
     }).join('');
 
     container.querySelectorAll('.kelompok-btn-expand').forEach(btn => {
-        btn.onclick = function() {
+        btn.onclick = async function() {
             const id = parseInt(this.dataset.id);
-            kelompokState.expandedId = kelompokState.expandedId === id ? null : id;
+            const willOpen = kelompokState.expandedId !== id;
+            kelompokState.expandedId = willOpen ? id : null;
+            if (!willOpen) {
+                kelompokState.expandedPertemuanId = null;
+            }
+            if (willOpen && !kelompokState.pertemuanByKelompok[id]) {
+                await loadKelompokPertemuanList(id);
+            }
             renderKelompokList();
         };
     });
@@ -3110,6 +3129,107 @@ function renderAnggotaPanel(k) {
                 class="tambah-anggota-result"
                 style="display:none;"></div>
         </div>
+        ${renderKelompokPertemuanSection(k)}
+    </div>`;
+}
+
+function renderKelompokPertemuanSection(k) {
+    const pertemuanList = kelompokState.pertemuanByKelompok[k.id] || [];
+
+    const itemsHtml = pertemuanList.length
+        ? pertemuanList.map(p => {
+            const isOpen = kelompokState.expandedPertemuanId === p.id;
+            const total = (k.anggota_list || []).length;
+            const hadir = p.jumlah_hadir ?? hitungHadirPertemuan(p.id);
+            return `
+            <div class="kelompok-pertemuan-item" id="kelompok-pertemuan-${p.id}">
+                <div class="kelompok-pertemuan-header" data-pertemuan-id="${p.id}" data-kid="${k.id}">
+                    <div>
+                        <div class="kelompok-pertemuan-title">${p.judul || 'Pertemuan'}</div>
+                        <div class="kelompok-pertemuan-meta">
+                            ${p.tanggal || '-'} &middot; ${p.lokasi || '-'}
+                        </div>
+                    </div>
+                    <div class="kelompok-pertemuan-summary">
+                        <span>${hadir}/${total} hadir</span>
+                        <button class="kelompok-btn-presensi"
+                            data-pertemuan-id="${p.id}"
+                            data-kid="${k.id}">
+                            ${isOpen ? 'Tutup Presensi' : 'Input Presensi'}
+                        </button>
+                    </div>
+                </div>
+                ${isOpen ? renderKelompokPresensiPanel(p.id, k) : ''}
+            </div>`;
+        }).join('')
+        : '<div class="kelompok-pertemuan-empty">Belum ada pertemuan untuk kelompok ini.</div>';
+
+    return `
+    <div class="kelompok-pertemuan-section">
+        <div class="kelompok-section-header">
+            <h4>Pertemuan</h4>
+            <button class="kelompok-btn-tambah-pertemuan" data-kid="${k.id}">
+                + Tambah Pertemuan
+            </button>
+        </div>
+        <div class="kelompok-pertemuan-list" id="kelompok-pertemuan-list-${k.id}">
+            ${itemsHtml}
+        </div>
+    </div>`;
+}
+
+function renderKelompokPresensiPanel(pertemuanId, k) {
+    const anggota = k.anggota_list || [];
+    const presensiMap = buildPresensiMap(pertemuanId);
+
+    if (!anggota.length) {
+        return '<div class="kelompok-presensi-panel"><p style="color:#9ca3af;">Belum ada anggota kelompok.</p></div>';
+    }
+
+    const rows = anggota.map(a => {
+        const existing = presensiMap[a.nisn] || {};
+        const statusVal = existing.status || 'tidak_hadir';
+        const catatanVal = escapeAttr(existing.catatan || '');
+        return `
+        <tr>
+            <td>${a.nama}</td>
+            <td>${a.nisn}</td>
+            <td>
+                <select class="kelompok-presensi-status" data-nisn="${a.nisn}">
+                    <option value="hadir" ${statusVal === 'hadir' ? 'selected' : ''}>Hadir</option>
+                    <option value="izin" ${statusVal === 'izin' ? 'selected' : ''}>Izin</option>
+                    <option value="sakit" ${statusVal === 'sakit' ? 'selected' : ''}>Sakit</option>
+                    <option value="tidak_hadir" ${statusVal === 'tidak_hadir' ? 'selected' : ''}>Tidak Hadir</option>
+                </select>
+            </td>
+            <td>
+                <input type="text"
+                    class="kelompok-presensi-catatan"
+                    data-nisn="${a.nisn}"
+                    value="${catatanVal}"
+                    placeholder="Catatan opsional">
+            </td>
+        </tr>`;
+    }).join('');
+
+    return `
+    <div class="kelompok-presensi-panel" id="kelompok-presensi-panel-${pertemuanId}">
+        <table class="kelompok-presensi-table">
+            <thead>
+                <tr>
+                    <th>Nama Santri</th>
+                    <th>NISN</th>
+                    <th>Status</th>
+                    <th>Catatan</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+        <button class="kelompok-btn-simpan-presensi"
+            data-pertemuan-id="${pertemuanId}"
+            data-kid="${k.id}">
+            Simpan Presensi
+        </button>
     </div>`;
 }
 
@@ -3178,6 +3298,170 @@ function attachAnggotaHandlers() {
             });
         };
     });
+
+    attachKelompokPertemuanHandlers();
+}
+
+function attachKelompokPertemuanHandlers() {
+    const container = document.getElementById('kelompok-list-container');
+    if (!container) return;
+
+    container.querySelectorAll('.kelompok-btn-tambah-pertemuan').forEach(btn => {
+        btn.onclick = function() {
+            openModalTambahPertemuan(parseInt(this.dataset.kid));
+        };
+    });
+
+    container.querySelectorAll('.kelompok-pertemuan-header').forEach(item => {
+        item.onclick = async function(e) {
+            if (e.target.closest('.kelompok-btn-presensi')) return;
+            await toggleKelompokPresensiPanel(
+                parseInt(this.dataset.pertemuanId),
+                parseInt(this.dataset.kid)
+            );
+        };
+    });
+
+    container.querySelectorAll('.kelompok-btn-presensi').forEach(btn => {
+        btn.onclick = async function() {
+            await toggleKelompokPresensiPanel(
+                parseInt(this.dataset.pertemuanId),
+                parseInt(this.dataset.kid)
+            );
+        };
+    });
+
+    container.querySelectorAll('.kelompok-btn-simpan-presensi').forEach(btn => {
+        btn.onclick = async function() {
+            await simpanPresensi(
+                parseInt(this.dataset.pertemuanId),
+                parseInt(this.dataset.kid)
+            );
+        };
+    });
+}
+
+async function loadKelompokPertemuanList(kelompokId) {
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/pertemuan-pengasuhan/?kelompok=${kelompokId}`
+    ));
+    kelompokState.pertemuanByKelompok[kelompokId] = extractList(res);
+}
+
+async function openModalTambahPertemuan(kelompokId) {
+    kelompokState.pertemuanModalKelompokId = kelompokId;
+
+    const modal = document.getElementById('modal-kelompok-pertemuan');
+    const judulInput = document.getElementById('input-kelompok-pertemuan-judul');
+    const tanggalInput = document.getElementById('input-kelompok-pertemuan-tanggal');
+    const lokasiInput = document.getElementById('input-kelompok-pertemuan-lokasi');
+    if (!modal || !judulInput || !tanggalInput || !lokasiInput) return;
+
+    judulInput.value = '';
+    tanggalInput.value = new Date().toISOString().split('T')[0];
+    lokasiInput.value = '';
+    modal.style.display = 'flex';
+
+    const cancelBtn = document.getElementById('btn-modal-kelompok-pertemuan-cancel');
+    if (cancelBtn) {
+        cancelBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+    }
+
+    const saveBtn = document.getElementById('btn-modal-kelompok-pertemuan-save');
+    if (saveBtn) {
+        saveBtn.onclick = simpanKelompokPertemuan;
+    }
+}
+
+async function simpanKelompokPertemuan() {
+    const kelompokId = kelompokState.pertemuanModalKelompokId;
+    const modal = document.getElementById('modal-kelompok-pertemuan');
+    const judul = document.getElementById('input-kelompok-pertemuan-judul')?.value?.trim();
+    const tanggal = document.getElementById('input-kelompok-pertemuan-tanggal')?.value;
+    const lokasi = document.getElementById('input-kelompok-pertemuan-lokasi')?.value?.trim();
+
+    if (!kelompokId) return;
+    if (!judul || !tanggal) {
+        alert('Judul dan tanggal wajib diisi.');
+        return;
+    }
+
+    const res = await parseApiData(await window.apiFetch(
+        'kesantrian/pertemuan-pengasuhan/',
+        {
+            method: 'POST',
+            body: JSON.stringify({ kelompok: kelompokId, judul, tanggal, lokasi })
+        }
+    ));
+
+    if (res?.success) {
+        if (modal) modal.style.display = 'none';
+        await loadKelompokPertemuanList(kelompokId);
+        renderKelompokList();
+    } else {
+        alert(res?.message || 'Gagal menyimpan pertemuan.');
+    }
+}
+
+async function toggleKelompokPresensiPanel(pertemuanId, kelompokId) {
+    const willOpen = kelompokState.expandedPertemuanId !== pertemuanId;
+    kelompokState.expandedPertemuanId = willOpen ? pertemuanId : null;
+
+    if (willOpen) {
+        await loadKelompokPresensi(pertemuanId);
+    }
+    renderKelompokList();
+}
+
+async function loadKelompokPresensi(pertemuanId) {
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/pertemuan-pengasuhan/${pertemuanId}/presensi/`
+    ));
+    kelompokState.presensiByPertemuan[pertemuanId] = extractList(res);
+}
+
+function buildPresensiMap(pertemuanId) {
+    const map = {};
+    (kelompokState.presensiByPertemuan[pertemuanId] || []).forEach(p => {
+        const nisn = p.santri_nisn || p.nisn || p.santri;
+        if (nisn) map[nisn] = p;
+    });
+    return map;
+}
+
+function hitungHadirPertemuan(pertemuanId) {
+    return (kelompokState.presensiByPertemuan[pertemuanId] || [])
+        .filter(p => p.status === 'hadir')
+        .length;
+}
+
+async function simpanPresensiKelompok(pertemuanId, kelompokId) {
+    const panel = document.getElementById(`kelompok-presensi-panel-${pertemuanId}`);
+    if (!panel) return;
+
+    const records = Array.from(panel.querySelectorAll('.kelompok-presensi-status')).map(sel => {
+        const nisn = sel.dataset.nisn;
+        const catatan = panel.querySelector(`.kelompok-presensi-catatan[data-nisn="${nisn}"]`)?.value || '';
+        return { nisn, status: sel.value, catatan };
+    });
+
+    const res = await parseApiData(await window.apiFetch(
+        `kesantrian/pertemuan-pengasuhan/${pertemuanId}/presensi/`,
+        {
+            method: 'POST',
+            body: JSON.stringify({ records })
+        }
+    ));
+
+    if (res?.success) {
+        await loadKelompokPresensi(pertemuanId);
+        await loadKelompokPertemuanList(kelompokId);
+        renderKelompokList();
+    } else {
+        alert(res?.message || 'Gagal menyimpan presensi.');
+    }
 }
 
 async function tambahAnggotaKelompok(kelompokId, nisn) {
@@ -3611,7 +3895,12 @@ async function loadPresensiForm(pertemuanId) {
     }).join('');
 }
 
-async function simpanPresensi(pertemuanId) {
+async function simpanPresensi(pertemuanId, kelompokId = null) {
+    if (kelompokId) {
+        await simpanPresensiKelompok(pertemuanId, kelompokId);
+        return;
+    }
+
     const formEl = document.getElementById(`presensi-form-${pertemuanId}`);
     if (!formEl) return;
 

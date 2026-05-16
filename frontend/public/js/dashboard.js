@@ -1227,19 +1227,19 @@ async function renderWalisantriDashboard() {
     try {
         const nisn = selectedChildNisn || currentUser.linked_student_nisn;
 
-        const [student, attendanceStats, gradeStats, tagihanList, summary] = await Promise.all([
+        const [student, attendanceStats, gradeStats, tagihanList, summary, kajianHadir] = await Promise.all([
             window.apiFetch(`students/${nisn}/`).then(r => typeof r?.json === 'function' ? r.json() : r),
             fetchWalisantriAttendanceStats(nisn).catch(() => null),
             fetchWalisantriGradeStats(nisn).catch(() => null),
             fetchWalisantriTagihan(nisn).catch(() => []),
             fetchWalisantriSummary(nisn).catch(() => null),
+            fetchKajianSummaryForDashboard(nisn).catch(() => 0),
         ]);
 
         const initials = getWalisantriInitials(student.nama);
         const progressPct = student.progress_hafalan_percentage || 0;
         const attendancePct = attendanceStats?.persentase_kehadiran || 0;
         const ibadahPct = summary?.ibadah_summary?.week_percentage ?? 0;
-        const kajianHadir = summary?.ibadah_summary?.total_hadir ?? 0;
         const kelompok = summary?.halaqoh ? `${summary.halaqoh.nama || ''} · ${summary.halaqoh.pengasuh || ''}`.trim() : '';
 
         const aktivitasHtml = (() => {
@@ -1432,6 +1432,18 @@ async function fetchWalisantriSummary(nisn) {
         return children.find(c => c.nisn === nisn) || children[0] || null;
     } catch (e) {
         return null;
+    }
+}
+
+async function fetchKajianSummaryForDashboard(nisn) {
+    if (!nisn) return 0;
+    try {
+        const res = await window.apiFetch(`kesantrian/hafalan/siswa/${nisn}/kehadiran-kajian/`);
+        const data = typeof res?.json === 'function' ? await res.json() : res;
+        return data?.summary?.hadir ?? 0;
+    } catch (e) {
+        console.warn('[fetchKajianSummaryForDashboard] Error:', e);
+        return 0;
     }
 }
 
