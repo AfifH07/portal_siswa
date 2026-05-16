@@ -10,7 +10,7 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
-    <link href="/static/css/absensi-sholat.css?v=20260515a" rel="stylesheet">
+    <link href="/static/css/absensi-sholat.css?v=20260516a" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -20,16 +20,15 @@
 <!-- ===================== SIDEBAR ===================== -->
 <aside class="sidebar">
     <div class="sidebar-brand">
-        <div class="brand-logo">🕌</div>
+        <div class="brand-logo">B</div>
         <div class="brand-text">
             <div class="brand-name">Baron Ponpes</div>
             <div class="brand-tagline">Portal Akademik</div>
         </div>
     </div>
 
-    <!-- Back to main website chip -->
     <a class="back-chip" href="/">
-        <span class="arrow">←</span>
+        <span class="arrow">&larr;</span>
         <span>Kembali ke Website</span>
     </a>
 
@@ -46,7 +45,7 @@
                 <div class="user-children" id="user-children"></div>
             </div>
         </div>
-        <button class="btn-logout">🚪 Keluar</button>
+        <button class="btn-logout">Keluar</button>
     </div>
 </aside>
 
@@ -60,8 +59,8 @@
       <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Absensi Sholat</span></div>
     </div>
     <div class="topbar-right">
-      <div class="topbar-date" id="topbar-date">📅 Loading...</div>
-      <div class="topbar-academic-year">📚 <strong>Memuat...</strong></div>
+      <div class="topbar-date" id="topbar-date">Loading...</div>
+      <div class="topbar-academic-year"><strong>Memuat...</strong></div>
     </div>
   </div>
 
@@ -69,52 +68,79 @@
     <div class="as-page">
       <div id="as-alert" class="as-alert"></div>
 
-    <!-- Toolbar -->
-    <div class="as-toolbar">
-      <label for="as-kelas">Kelas:</label>
-      <select id="as-kelas">
-        <option value="">-- Pilih Kelas --</option>
-      </select>
-
-      <label for="as-tanggal">Tanggal:</label>
-      <input type="date" id="as-tanggal">
-
-      <button id="as-btn-load" class="as-btn-load">Muat Santri</button>
-    </div>
-
-    <!-- Tabel santri -->
-    <div class="as-card" id="as-card" style="display:none;">
-      <div class="as-card-header">
-        <span class="as-card-title" id="as-card-title">Daftar Santri</span>
-        <span class="as-student-count" id="as-student-count"></span>
+      <div class="abs-tabs">
+        <button class="abs-tab-btn active" data-tab="input">Input Absensi</button>
+        <button class="abs-tab-btn" data-tab="hapus">Hapus Absensi</button>
       </div>
-      <div class="as-table-wrap">
-        <table class="as-table">
-          <thead>
-            <tr>
-              <th>Santri</th>
-              <th>🌅 Subuh</th>
-              <th>☀️ Dzuhur</th>
-              <th>🌤️ Ashar</th>
-              <th>🌅 Maghrib</th>
-              <th>🌙 Isya</th>
-            </tr>
-          </thead>
-          <tbody id="as-tbody"></tbody>
-        </table>
-      </div>
-      <div class="as-footer">
-        <button id="as-btn-hadir-semua" class="as-btn-hadir-semua">
-          ✓ Semua Hadir
-        </button>
-        <button id="as-btn-submit" class="as-btn-submit">
-          💾 Simpan Absensi
-        </button>
-      </div>
-    </div>
 
-      <div id="as-empty" class="as-empty" style="display:none;">
-        Pilih kelas dan tanggal, lalu klik "Muat Santri".
+      <div id="tab-input" class="abs-tab-panel">
+        <!-- Toolbar -->
+        <div class="as-toolbar">
+          <label for="as-kelas">Kelas:</label>
+          <select id="as-kelas">
+            <option value="">-- Pilih Kelas --</option>
+          </select>
+
+          <label for="as-tanggal">Tanggal:</label>
+          <input type="date" id="as-tanggal">
+
+          <button id="as-btn-load" class="as-btn-load">Muat Santri</button>
+        </div>
+
+        <!-- Tabel santri -->
+        <div class="as-card" id="as-card" style="display:none;">
+          <div class="as-card-header">
+            <span class="as-card-title" id="as-card-title">Daftar Santri</span>
+            <span class="as-student-count" id="as-student-count"></span>
+          </div>
+          <div class="as-table-wrap">
+            <table class="as-table">
+              <thead>
+                <tr>
+                  <th>Santri</th>
+                  <th>Subuh</th>
+                  <th>Dzuhur</th>
+                  <th>Ashar</th>
+                  <th>Maghrib</th>
+                  <th>Isya</th>
+                </tr>
+              </thead>
+              <tbody id="as-tbody"></tbody>
+            </table>
+          </div>
+          <div class="as-footer">
+            <button id="as-btn-hadir-semua" class="as-btn-hadir-semua">
+              Semua Hadir
+            </button>
+            <button id="as-btn-submit" class="as-btn-submit">
+              Simpan Absensi
+            </button>
+          </div>
+        </div>
+
+        <div id="as-empty" class="as-empty" style="display:none;">
+          Pilih kelas dan tanggal, lalu klik "Muat Santri".
+        </div>
+      </div>
+
+      <div id="tab-hapus" class="abs-tab-panel" style="display:none;">
+        <div class="abs-toolbar as-toolbar">
+          <div class="abs-field-group">
+            <label for="hapus-kelas-select">Santri</label>
+            <select id="hapus-kelas-select">
+              <option value="">-- Pilih Kelas --</option>
+            </select>
+            <select id="hapus-santri-select" disabled>
+              <option value="">-- Pilih Santri --</option>
+            </select>
+          </div>
+          <div class="abs-field-group">
+            <label for="hapus-tanggal-input">Tanggal</label>
+            <input type="date" id="hapus-tanggal-input">
+          </div>
+          <button id="hapus-cari-btn" class="abs-btn-primary as-btn-load">Cari Record</button>
+        </div>
+        <div id="hapus-result-area"></div>
       </div>
     </div>
   </div>
@@ -130,7 +156,7 @@
 <script src="/static/js/auth-check.js?v=20260515a" defer></script>
 <script src="/static/js/auth.js?v=20260504" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/absensi-sholat.js?v=20260516b" defer></script>
+<script src="/static/js/absensi-sholat.js?v=20260516c" defer></script>
 
 <script>
     window.addEventListener('load', function() {

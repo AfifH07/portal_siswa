@@ -16,6 +16,7 @@ urlpatterns = [
     # Recording endpoints (musyrif/guru)
     path('ibadah/record/', views.record_ibadah, name='record-ibadah'),
     path('ibadah/record-bulk/', views.record_ibadah_bulk, name='record-ibadah-bulk'),
+    path('ibadah/delete/<int:ibadah_id>/', views.delete_ibadah, name='delete-ibadah'),
 
     # Student-specific endpoints
     path('ibadah/<str:nisn>/', views.get_child_ibadah_detail, name='child-ibadah-detail'),

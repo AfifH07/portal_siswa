@@ -432,6 +432,30 @@ def record_ibadah_bulk(request):
     })
 
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_ibadah(request, ibadah_id):
+    """Hapus satu record ibadah by id. Hanya guru/admin."""
+    user = request.user
+
+    if user.role not in ['musyrif', 'guru', 'admin', 'superadmin']:
+        return Response(
+            {'success': False, 'message': 'Anda tidak memiliki izin'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        ibadah = Ibadah.objects.get(id=ibadah_id)
+    except Ibadah.DoesNotExist:
+        return Response(
+            {'success': False, 'message': 'Record tidak ditemukan'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    ibadah.delete()
+    return Response({'success': True, 'message': 'Record berhasil dihapus'})
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_worship_tracker(request, nisn):
