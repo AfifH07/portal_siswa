@@ -1779,7 +1779,7 @@ function switchRole(role) {
 
 function initHafalan() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    currentRole = user.role || 'guru';
+    currentRole = user.role || window.getUserRole?.() || localStorage.getItem('user_role') || 'guru';
 
     // Read persisted child selection from localStorage (for multi-child state consistency)
     const selectedChildNisn = localStorage.getItem('selected_child_nisn');
