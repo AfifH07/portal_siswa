@@ -164,7 +164,6 @@ async function submitAbsensi() {
                 'kesantrian/ibadah/record-bulk/',
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         tanggal,
                         jenis: 'sholat_wajib',
@@ -173,7 +172,13 @@ async function submitAbsensi() {
                     })
                 }
             );
-            const d = typeof res?.json === 'function' ? await res.json() : res;
+            if (!res || !res.ok) {
+                const errText = await res?.text();
+                console.error(`[absensi] ${waktu} error ${res?.status}:`, errText);
+                totalError += records.length;
+                continue;
+            }
+            const d = await res.json();
             totalSuccess += d.success_count || 0;
             totalError += d.error_count || 0;
         } catch (e) {
