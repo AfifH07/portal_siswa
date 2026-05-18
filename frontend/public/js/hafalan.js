@@ -4540,7 +4540,17 @@ function renderPertemuanList() {
                         dari ${kajianState.anggotaList.length} santri
                     </div>
                 </div>
-                <span style="font-size:11px;color:#9ca3af;">▼ Presensi</span>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:11px;color:#9ca3af;">▼ Presensi</span>
+                    <button class="btn-hapus-pertemuan"
+                        data-id="${p.id}"
+                        style="background:none;border:1px solid #fca5a5;color:#ef4444;
+                               border-radius:6px;padding:4px 8px;font-size:12px;
+                               cursor:pointer;line-height:1;"
+                        title="Hapus pertemuan">
+                        🗑
+                    </button>
+                </div>
             </div>
             <div id="presensi-panel-${p.id}"
                  style="display:none;border-top:1px solid #f3f4f6;
@@ -4568,6 +4578,25 @@ function renderPertemuanList() {
         btn.onclick = (e) => {
             e.stopPropagation();
             simpanPresensi(btn.dataset.id);
+        };
+    });
+
+    container.querySelectorAll('.btn-hapus-pertemuan').forEach(btn => {
+        btn.onclick = async function(e) {
+            e.stopPropagation();
+            const id = this.dataset.id;
+            if (!confirm('Hapus pertemuan ini?')) return;
+            this.disabled = true;
+            try {
+                await window.apiFetch(
+                    `kesantrian/pertemuan-pengasuhan/${id}/`,
+                    { method: 'DELETE' }
+                );
+                await loadKajianTab();
+            } catch (err) {
+                alert('Gagal menghapus pertemuan.');
+                this.disabled = false;
+            }
         };
     });
 }
@@ -4697,6 +4726,8 @@ function wireKajianModal() {
             const lokasi = document.getElementById('input-pertemuan-lokasi')?.value?.trim();
             if (!judul || !tanggal) { alert('Judul dan tanggal wajib diisi.'); return; }
             if (!kajianState.kelompok) return;
+            if (btnSave.disabled) return;
+            btnSave.disabled = true;
             try {
                 await window.apiFetch('kesantrian/pertemuan-pengasuhan/', {
                     method: 'POST',
@@ -4710,6 +4741,8 @@ function wireKajianModal() {
                 await loadKajianTab();
             } catch (e) {
                 alert('Gagal menyimpan pertemuan.');
+            } finally {
+                btnSave.disabled = false;
             }
         };
     }
