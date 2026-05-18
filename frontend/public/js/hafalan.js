@@ -3859,6 +3859,12 @@ function renderKelompokPertemuanSection(k) {
                             data-kid="${k.id}">
                             ${isOpen ? 'Tutup Presensi' : 'Input Presensi'}
                         </button>
+                        <button class="kelompok-btn-hapus-pertemuan"
+                            data-pertemuan-id="${p.id}"
+                            data-kid="${k.id}"
+                            title="Hapus pertemuan ini">
+                            🗑
+                        </button>
                     </div>
                 </div>
                 ${isOpen ? renderKelompokPresensiPanel(p.id, k) : ''}
@@ -4014,9 +4020,29 @@ function attachKelompokPertemuanHandlers() {
         };
     });
 
+    container.querySelectorAll('.kelompok-btn-hapus-pertemuan').forEach(btn => {
+        btn.onclick = async function() {
+            const pertemuanId = parseInt(this.dataset.pertemuanId);
+            const kid = parseInt(this.dataset.kid);
+            if (!confirm('Hapus pertemuan ini?')) return;
+            this.disabled = true;
+            const res = await parseApiData(await window.apiFetch(
+                `kesantrian/pertemuan-pengasuhan/${pertemuanId}/`,
+                { method: 'DELETE' }
+            ));
+            if (res?.success) {
+                await loadKelompokPertemuanList(kid);
+                renderKelompokList();
+            } else {
+                alert(res?.message || 'Gagal menghapus pertemuan.');
+                this.disabled = false;
+            }
+        };
+    });
+
     container.querySelectorAll('.kelompok-pertemuan-header').forEach(item => {
         item.onclick = async function(e) {
-            if (e.target.closest('.kelompok-btn-presensi')) return;
+            if (e.target.closest('.kelompok-btn-presensi, .kelompok-btn-hapus-pertemuan')) return;
             await toggleKelompokPresensiPanel(
                 parseInt(this.dataset.pertemuanId),
                 parseInt(this.dataset.kid)
@@ -4079,31 +4105,42 @@ async function openModalTambahPertemuan(kelompokId) {
 
 async function simpanKelompokPertemuan() {
     const kelompokId = kelompokState.pertemuanModalKelompokId;
-    const modal = document.getElementById('modal-kelompok-pertemuan');
-    const judul = document.getElementById('input-kelompok-pertemuan-judul')?.value?.trim();
-    const tanggal = document.getElementById('input-kelompok-pertemuan-tanggal')?.value;
-    const lokasi = document.getElementById('input-kelompok-pertemuan-lokasi')?.value?.trim();
-
     if (!kelompokId) return;
-    if (!judul || !tanggal) {
-        alert('Judul dan tanggal wajib diisi.');
-        return;
+
+    const saveBtn = document.getElementById('btn-modal-kelompok-pertemuan-save');
+    if (saveBtn) {
+        if (saveBtn.disabled) return;
+        saveBtn.disabled = true;
     }
 
-    const res = await parseApiData(await window.apiFetch(
-        'kesantrian/pertemuan-pengasuhan/',
-        {
-            method: 'POST',
-            body: JSON.stringify({ kelompok: kelompokId, judul, tanggal, lokasi })
-        }
-    ));
+    try {
+        const modal = document.getElementById('modal-kelompok-pertemuan');
+        const judul = document.getElementById('input-kelompok-pertemuan-judul')?.value?.trim();
+        const tanggal = document.getElementById('input-kelompok-pertemuan-tanggal')?.value;
+        const lokasi = document.getElementById('input-kelompok-pertemuan-lokasi')?.value?.trim();
 
-    if (res?.success) {
-        if (modal) modal.style.display = 'none';
-        await loadKelompokPertemuanList(kelompokId);
-        renderKelompokList();
-    } else {
-        alert(res?.message || 'Gagal menyimpan pertemuan.');
+        if (!judul || !tanggal) {
+            alert('Judul dan tanggal wajib diisi.');
+            return;
+        }
+
+        const res = await parseApiData(await window.apiFetch(
+            'kesantrian/pertemuan-pengasuhan/',
+            {
+                method: 'POST',
+                body: JSON.stringify({ kelompok: kelompokId, judul, tanggal, lokasi })
+            }
+        ));
+
+        if (res?.success) {
+            if (modal) modal.style.display = 'none';
+            await loadKelompokPertemuanList(kelompokId);
+            renderKelompokList();
+        } else {
+            alert(res?.message || 'Gagal menyimpan pertemuan.');
+        }
+    } finally {
+        if (saveBtn) saveBtn.disabled = false;
     }
 }
 
