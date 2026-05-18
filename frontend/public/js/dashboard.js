@@ -1242,6 +1242,21 @@ async function renderWalisantriDashboard() {
         const ibadahPct = summary?.ibadah_summary?.week_percentage ?? 0;
         const kelompok = summary?.halaqoh ? `${summary.halaqoh.nama || ''} · ${summary.halaqoh.pengasuh || ''}`.trim() : '';
 
+        // Simpan default child ke localStorage jika belum ada
+        if (!localStorage.getItem('selected_child_nisn') && nisn) {
+            localStorage.setItem('selected_child_nisn', nisn);
+            const defaultChild = linkedStudents.find(c => c.nisn === nisn)
+                || { nisn, nama: student.nama, kelas: student.kelas };
+            localStorage.setItem(
+                'selected_child_data',
+                JSON.stringify({
+                    nisn: defaultChild.nisn,
+                    nama: defaultChild.nama,
+                    kelas: defaultChild.kelas || ''
+                })
+            );
+        }
+
         const aktivitasHtml = (() => {
             const items = [];
             if (summary?.recent_pembinaan?.length) {
@@ -1392,6 +1407,24 @@ async function renderWalisantriDashboard() {
             if (sel) {
                 sel.onchange = function() {
                     selectedChildNisn = this.value;
+
+                    // Simpan ke localStorage agar terbaca di halaman lain
+                    localStorage.setItem('selected_child_nisn', this.value);
+
+                    const selectedChild = linkedStudents.find(
+                        c => c.nisn === this.value
+                    );
+                    if (selectedChild) {
+                        localStorage.setItem(
+                            'selected_child_data',
+                            JSON.stringify({
+                                nisn: selectedChild.nisn,
+                                nama: selectedChild.nama,
+                                kelas: selectedChild.kelas || ''
+                            })
+                        );
+                    }
+
                     renderWalisantriDashboard();
                 };
             }
