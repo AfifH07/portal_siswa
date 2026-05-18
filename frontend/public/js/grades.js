@@ -2224,16 +2224,18 @@ async function loadSubjectRadarChart(nisn) {
             }
         }
 
-        // Use demo data if no real data
         if (labels.length === 0) {
-            labels = ['Matematika', 'B. Indonesia', 'B. Inggris', 'Fiqih', 'Quran', 'Sejarah'];
-            data = [85, 78, 72, 90, 88, 75];
+            const wrap = ctx.parentElement;
+            wrap.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:2rem 1rem;font-size:0.875rem;">Belum ada data nilai untuk ditampilkan.</p>';
+            return;
         }
 
         if (typeof Chart === 'undefined') return;
 
+        const chartType = labels.length < 3 ? 'bar' : 'radar';
+
         subjectRadarChart = new Chart(ctx, {
-            type: 'radar',
+            type: chartType,
             data: {
                 labels: labels,
                 datasets: [{
@@ -2249,7 +2251,42 @@ async function loadSubjectRadarChart(nisn) {
                     pointHoverRadius: 7
                 }]
             },
-            options: {
+            options: chartType === 'bar' ? {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#ffffff',
+                        borderColor: EMERALD_COLORS.teal,
+                        borderWidth: 1,
+                        titleColor: EMERALD_COLORS.textPrimary,
+                        bodyColor: EMERALD_COLORS.textMuted,
+                        padding: 10,
+                        cornerRadius: 6
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            stepSize: 25,
+                            color: EMERALD_COLORS.textMuted,
+                            font: { size: 10 }
+                        },
+                        grid: { color: EMERALD_COLORS.gridLine }
+                    },
+                    x: {
+                        ticks: {
+                            color: EMERALD_COLORS.textPrimary,
+                            font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" }
+                        },
+                        grid: { display: false }
+                    }
+                }
+            } : {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
@@ -2275,12 +2312,8 @@ async function loadSubjectRadarChart(nisn) {
                             font: { size: 10 },
                             backdropColor: 'transparent'
                         },
-                        grid: {
-                            color: EMERALD_COLORS.gridLine
-                        },
-                        angleLines: {
-                            color: EMERALD_COLORS.gridLine
-                        },
+                        grid: { color: EMERALD_COLORS.gridLine },
+                        angleLines: { color: EMERALD_COLORS.gridLine },
                         pointLabels: {
                             color: EMERALD_COLORS.textPrimary,
                             font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" }
