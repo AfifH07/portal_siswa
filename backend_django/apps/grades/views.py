@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Avg, Max, Min, Count, Q, Sum
+from django.db.models import Avg, Max, Min, Count, Q, Sum, Case, When, FloatField
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 import openpyxl
@@ -309,7 +309,16 @@ def get_my_child_grades(request):
         rata_rata=Avg('nilai'),
         nilai_tertinggi=Max('nilai'),
         nilai_terendah=Min('nilai'),
-        jumlah_nilai=Count('id')
+        jumlah_nilai=Count('id'),
+        nilai_uh=Avg(
+            Case(When(jenis__iexact='uh', then='nilai'), output_field=FloatField())
+        ),
+        nilai_uts=Avg(
+            Case(When(jenis__iexact='uts', then='nilai'), output_field=FloatField())
+        ),
+        nilai_uas=Avg(
+            Case(When(jenis__iexact='uas', then='nilai'), output_field=FloatField())
+        ),
     ).order_by('mata_pelajaran')
 
     # Calculate total average (single query)
@@ -323,7 +332,10 @@ def get_my_child_grades(request):
             'rata_rata': round(item['rata_rata'], 2) if item['rata_rata'] else 0,
             'nilai_tertinggi': item['nilai_tertinggi'] or 0,
             'nilai_terendah': item['nilai_terendah'] or 0,
-            'jumlah_nilai': item['jumlah_nilai'] or 0
+            'jumlah_nilai': item['jumlah_nilai'] or 0,
+            'nilai_uh': round(item['nilai_uh'], 2) if item['nilai_uh'] else None,
+            'nilai_uts': round(item['nilai_uts'], 2) if item['nilai_uts'] else None,
+            'nilai_uas': round(item['nilai_uas'], 2) if item['nilai_uas'] else None,
         })
 
     return Response({

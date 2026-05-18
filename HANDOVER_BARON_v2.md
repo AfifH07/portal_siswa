@@ -1,5 +1,68 @@
 # HANDOVER BARON v2
 
+## UPDATE SESI 16-18 MEI 2026
+
+### Fitur yang selesai
+| Fitur | Detail | File Utama |
+|-------|--------|------------|
+| Fix tab Kelompok tidak muncul | Fix guard currentRole di initHafalan() | hafalan.js |
+| Ganti label tab Kelompok | "Kelompok" -> "Kelompok Kajian Mingguan" | hafalan.html |
+| Backend Kelompok Hafalan | Model KelompokHafalan + KelompokHafalanAnggota + 6 endpoint + migration 0018 (status HafalanRecord) + 0019 (model baru) | models.py, views.py, urls.py |
+| Frontend tab Kelompok Hafalan | Tab baru, list kelompok, generate otomatis per kelas, CRUD kelompok, kelola anggota, set ketua | hafalan.js, hafalan.html |
+| Field status setoran hafalan | Dropdown lancar/perlu_ulang/belum_selesai di modal + badge di tabel | hafalan.js, hafalan.html |
+| Fix stat card Kajian Mingguan | fetchKajianSummaryForDashboard(nisn) dari kehadiran-kajian/ | dashboard.js |
+| Fix selector santri Overview admin | Hapus guard NISN di initStudentSelector() | hafalan.js |
+| Fix fetch data hafalan walisantri | Tambah fetch tartil/tahfidz/kompetensi/siswa di renderHafalanWalisantri() | hafalan.js |
+| Child selector hafalan walisantri | Adopt pola ibadah.js - tab per anak, cross-page sync via localStorage | hafalan.js, hafalan.html |
+| Fix flow pilih anak dashboard | Simpan selected_child_nisn + selected_child_data ke localStorage saat ganti anak | dashboard.js |
+
+### Versi file setelah sesi ini
+| File | Versi |
+|------|-------|
+| dashboard.js | bump terbaru |
+| wali-dashboard.css | ?v=20260516a |
+| hafalan.js | bump terbaru |
+| hafalan.html | bump terbaru |
+| hafalan-baron.css | bump terbaru |
+| absensi-sholat.js | ?v=20260516d |
+| absensi-sholat.css | ?v=20260516b |
+| auth-check.js | ?v=20260515a |
+| grades.js | bump terbaru |
+
+### Migration terakhir
+- 0018: tambah field status ke HafalanRecord
+- 0019: model KelompokHafalan + KelompokHafalanAnggota
+
+### Endpoint aktif Kelompok Hafalan
+GET/POST         kesantrian/hafalan/kelompok/
+POST             kesantrian/hafalan/kelompok/generate/
+GET/PATCH/DELETE kesantrian/hafalan/kelompok/<id>/
+GET/POST         kesantrian/hafalan/kelompok/<id>/anggota/
+DELETE           kesantrian/hafalan/kelompok/<id>/anggota/<nisn>/
+PATCH            kesantrian/hafalan/kelompok/<id>/anggota/<nisn>/set-ketua/
+
+### Pending sesi berikutnya
+| # | Item | File | Catatan |
+|---|------|------|---------|
+| 1 | Catatan guru per santri belum tersambung backend | hafalan.js | saveCatatan() masih fake save |
+| 2 | Guru Tartil / Guru Tahfidz / Status Khidmat | hafalan.js | UI sudah ada, model/endpoint belum ada |
+| 3 | Bug halaman Nilai walisantri - UH/UTS/UAS kosong | grades.js, grades/views.py | Backend tidak return nilai_uh/uts/uas, perlu tambah breakdown di get_average_grade() |
+| 4 | Bug Nilai walisantri - Terbaik = Perlu Perhatian | grades.js | Terjadi jika hanya 1 mapel, perlu guard |
+| 5 | Rapor section unstyled di halaman Nilai walisantri | grades.js | Legacy render di loadWalisantriView() tanpa CSS |
+| 6 | grades.js masih pakai raw fetch() | grades.js | Technical debt, migrasi ke apiFetch() di sesi tersendiri |
+| 7 | Test child selector hafalan walisantri multi-anak | hafalan.js | Belum dikonfirmasi screenshot |
+
+### Catatan arsitektur penting
+- KelompokHafalan BERBEDA dari KelompokPengasuhan
+  KelompokPengasuhan = kelompok kajian mingguan (sudah lama)
+  KelompokHafalan = kelompok hafalan baru (dibuat sesi ini)
+- Child selector hafalan pakai ID #hafalan-child-selector
+  (bukan #child-selector milik ibadah.html)
+- grades.js tidak pakai apiFetch() - semua masih raw fetch()
+  dengan Authorization header manual
+- ibadah-module.css berisi style .child-tab dan .child-selector
+  yang dipakai bersama hafalan.html
+
 ## UPDATE SESI 15 MEI 2026
 
 ### Fitur yang selesai di sesi ini
