@@ -1219,6 +1219,110 @@ async function renderHafalanWalisantri() {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
     document.getElementById('page-title').textContent = 'Hafalan Ananda';
 
+    const nisn = hafalanData.student?.nisn;
+
+    if (nisn) {
+        try {
+            const rawRes = await window.apiFetch(`kesantrian/hafalan/siswa/${nisn}/`);
+            const res = typeof rawRes?.json === 'function' ? await rawRes.json() : rawRes;
+            if (res?.data) {
+                const data = res.data;
+                const juzSummary = data.juz_summary || [];
+                const juzMap = {};
+                juzSummary.forEach(j => { juzMap[j.juz] = j.halaman || 0; });
+
+                hafalanData.juzProgress = Array.from({ length: 30 }, (_, i) => {
+                    const juzNum = i + 1;
+                    const halaman = juzMap[juzNum] || 0;
+                    let status = 'belum';
+                    if (halaman >= 20) status = 'murojaah';
+                    else if (halaman > 0) status = 'proses';
+                    return {
+                        juz: juzNum,
+                        status: status,
+                        halaman: halaman
+                    };
+                });
+
+                if (data.siswa) {
+                    hafalanData.student.nama = hafalanData.student.nama || data.siswa.nama;
+                    hafalanData.student.kelas = hafalanData.student.kelas || data.siswa.kelas;
+                }
+                if (data.catatan_guru !== undefined) {
+                    hafalanData.catatan = data.catatan_guru;
+                }
+            }
+
+            const tartilRaw = await window.apiFetch(`kesantrian/hafalan/tartil/${nisn}/`);
+            const tartilRes = typeof tartilRaw?.json === 'function' ? await tartilRaw.json() : tartilRaw;
+            const DEFAULT_JILID = ['Jilid 1', 'Jilid 2', 'Jilid 3', 'Jilid 4', 'Jilid 5', 'Jilid 6'];
+            const tartilMap = {};
+            if (tartilRes?.data) {
+                tartilRes.data.forEach(t => { tartilMap[t.jilid] = t; });
+            }
+            hafalanData.tartil = DEFAULT_JILID.map((j, i) => {
+                const db = tartilMap[j];
+                return db ? {
+                    id: db.id, jilid: db.jilid,
+                    nilai: parseFloat(db.nilai) || 0,
+                    capaian_persen: parseFloat(db.capaian_persen) || 0,
+                    status_lulus: db.status_lulus,
+                    tanggal_lulus: db.tanggal_lulus
+                } : {
+                    id: `tmp_tartil_${i}`, jilid: j,
+                    nilai: 0, capaian_persen: 0,
+                    status_lulus: false, tanggal_lulus: null
+                };
+            });
+
+            const tahfidzRaw = await window.apiFetch(`kesantrian/hafalan/tahfidz/${nisn}/`);
+            const tahfidzRes = typeof tahfidzRaw?.json === 'function' ? await tahfidzRaw.json() : tahfidzRaw;
+            const DEFAULT_TAHFIDZ = [
+                { kategori: 'Juz Hafal', total_juz_target: 30, detail: '' },
+                { kategori: 'Juz Uji', total_juz_target: 30, detail: '' },
+                { kategori: "Tasmi'", total_juz_target: 30, detail: '' },
+                { kategori: 'Munaqosyah', total_juz_target: 30, detail: '' },
+            ];
+            const tahfidzMap = {};
+            if (tahfidzRes?.data) {
+                tahfidzRes.data.forEach(t => { tahfidzMap[t.kategori] = t; });
+            }
+            hafalanData.tahfidz = DEFAULT_TAHFIDZ.map((def, i) => {
+                const db = tahfidzMap[def.kategori];
+                return db ? {
+                    id: db.id, kategori: db.kategori,
+                    nilai: parseFloat(db.nilai) || 0,
+                    jumlah_juz: parseFloat(db.jumlah_juz) || 0,
+                    total_juz_target: parseFloat(db.total_juz_target) || 30,
+                    detail: db.detail || ''
+                } : {
+                    id: `tmp_tahfidz_${i}`, kategori: def.kategori,
+                    nilai: 0, jumlah_juz: 0,
+                    total_juz_target: def.total_juz_target,
+                    detail: def.detail
+                };
+            });
+
+            const resK = await window.apiFetch(`kesantrian/kompetensi/${nisn}/`);
+            const dK = typeof resK?.json === 'function' ? await resK.json() : resK;
+            if (dK?.data) {
+                hafalanData.kompetensi = {
+                    guru_tartil: dK.data.guru_tartil_nama || dK.data.guru_tartil || '-',
+                    guru_tahfidz: dK.data.guru_tahfidz_nama || dK.data.guru_tahfidz || '-',
+                    guru_tartil_id: dK.data.guru_tartil_id,
+                    guru_tahfidz_id: dK.data.guru_tahfidz_id,
+                    status_khidmat: dK.data.status_khidmat === 'aktif' ? 'Aktif' :
+                                    dK.data.status_khidmat === 'tidak_aktif' ? 'Tidak Aktif' :
+                                    dK.data.status_khidmat === 'mutakhirij' ? 'Mutakhirij' :
+                                    (dK.data.status_khidmat || '-'),
+                    keterangan_khidmat: dK.data.keterangan_khidmat || '-'
+                };
+            }
+        } catch (e) {
+            console.error('[hafalan] gagal fetch data walisantri:', e);
+        }
+    }
+
     renderPrediction();
     renderJuzProgressGrid();
     renderStudentProfile();
@@ -1227,7 +1331,6 @@ async function renderHafalanWalisantri() {
     renderKompetensiSection();
     renderKehadiranSection();
     renderCatatanSectionWalisantri();
-    const nisn = hafalanData.student?.nisn;
     if (nisn) fetchKehadiranKajian(nisn);
 }
 
