@@ -57,6 +57,8 @@ let hafalanData = JSON.parse(JSON.stringify(EMPTY_STATE));
 // Initialize summaryData for pimpinan view
 let summaryData = JSON.parse(JSON.stringify(EMPTY_SUMMARY));
 
+let hafalanChildrenData = [];
+
 // ============================================
 // SECTION 3: UTILITY FUNCTIONS
 // ============================================
@@ -1880,7 +1882,87 @@ function switchRole(role) {
 // SECTION 10: INITIALIZATION
 // ============================================
 
-function initHafalan() {
+async function loadHafalanChildrenData() {
+    try {
+        const res = await window.apiFetch('kesantrian/my-children-summary/');
+        const data = typeof res?.json === 'function' ? await res.json() : res;
+        if (data?.success && data?.children) {
+            hafalanChildrenData = data.children;
+            renderHafalanChildSelector();
+        }
+    } catch (e) {
+        console.error('[hafalan] gagal load children:', e);
+    }
+}
+
+function renderHafalanChildSelector() {
+    const container = document.getElementById('hafalan-child-selector');
+    if (!container) return;
+
+    if (!hafalanChildrenData.length || hafalanChildrenData.length === 1) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const savedNisn = localStorage.getItem('selected_child_nisn');
+    container.style.display = 'flex';
+    container.innerHTML = hafalanChildrenData.map((child, idx) => {
+        const isActive = savedNisn ? child.nisn === savedNisn : idx === 0;
+        const initials = (child.nama || '')
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(w => w[0])
+            .join('')
+            .toUpperCase() || 'SN';
+
+        return `
+            <div class="child-tab ${isActive ? 'active' : ''}"
+                 data-nisn="${child.nisn}"
+                 id="hafalan-child-tab-${child.nisn}">
+                <div class="child-avatar">${initials}</div>
+                <div class="child-info">
+                    <h4>${child.nama}</h4>
+                    <span>Kelas ${child.kelas || '-'} | NISN: ${child.nisn}</span>
+                </div>
+            </div>`;
+    }).join('');
+
+    container.querySelectorAll('.child-tab').forEach(tab => {
+        tab.onclick = function() {
+            selectHafalanChild(this.dataset.nisn);
+        };
+    });
+}
+
+async function selectHafalanChild(nisn) {
+    const child = hafalanChildrenData.find(c => c.nisn === nisn);
+    if (!child) return;
+
+    localStorage.setItem('selected_child_nisn', nisn);
+    localStorage.setItem('selected_child_data', JSON.stringify({
+        nisn: child.nisn,
+        nama: child.nama,
+        kelas: child.kelas || ''
+    }));
+
+    document.querySelectorAll('#hafalan-child-selector .child-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.nisn === nisn);
+    });
+
+    destroyAllChartsCompletely();
+    hafalanData.student.nisn = child.nisn;
+    hafalanData.student.nama = child.nama;
+    hafalanData.student.kelas = child.kelas || '';
+
+    window.dispatchEvent(new CustomEvent('childSwitched', {
+        detail: { nisn, child }
+    }));
+
+    await renderHafalanWalisantri();
+}
+
+async function initHafalan() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     currentRole = user.role || window.getUserRole?.() || localStorage.getItem('user_role') || 'guru';
 
@@ -1940,7 +2022,30 @@ function initHafalan() {
     if (currentRole === 'pimpinan') {
         renderHafalanPimpinan();
     } else if (currentRole === 'walisantri') {
-        renderHafalanWalisantri();
+        await loadHafalanChildrenData();
+
+        if (hafalanChildrenData.length > 0) {
+            const childExists = selectedChildNisn &&
+                hafalanChildrenData.some(c => c.nisn === selectedChildNisn);
+            const initialNisn = childExists ? selectedChildNisn : hafalanChildrenData[0].nisn;
+            const initialChild = hafalanChildrenData.find(c => c.nisn === initialNisn);
+
+            if (initialChild) {
+                hafalanData.student.nisn = initialChild.nisn;
+                hafalanData.student.nama = initialChild.nama;
+                hafalanData.student.kelas = initialChild.kelas || '';
+
+                localStorage.setItem('selected_child_nisn', initialChild.nisn);
+                localStorage.setItem('selected_child_data', JSON.stringify({
+                    nisn: initialChild.nisn,
+                    nama: initialChild.nama,
+                    kelas: initialChild.kelas || ''
+                }));
+                renderHafalanChildSelector();
+            }
+        }
+
+        await renderHafalanWalisantri();
     } else {
         // Default: guru, superadmin - editable view
         initStudentSelector();
@@ -1952,6 +2057,14 @@ function initHafalan() {
         if (e.detail && e.detail.child) {
             const child = e.detail.child;
 
+            if (currentRole === 'walisantri') {
+                const targetNisn = e.detail.nisn || child.nisn;
+                if (targetNisn && targetNisn !== hafalanData.student.nisn) {
+                    selectHafalanChild(targetNisn);
+                }
+                return;
+            }
+
             // IMPORTANT: Destroy all charts BEFORE updating data
             // This prevents "Chart Ghosting" where old child's data shadows new child
             destroyAllChartsCompletely();
@@ -1961,10 +2074,6 @@ function initHafalan() {
             hafalanData.student.nisn = child.nisn || hafalanData.student.nisn;
             hafalanData.student.kelas = child.kelas || hafalanData.student.kelas;
 
-            // Re-render if walisantri
-            if (currentRole === 'walisantri') {
-                renderHafalanWalisantri();
-            }
         }
     });
 
@@ -4602,11 +4711,11 @@ window.resetImportHafalan = resetImportHafalan;
 // SECTION 14: DOM READY
 // ============================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Skip initialization on admin pages
     if (window.isAdminPage && window.isAdminPage()) {
         console.log('[Hafalan] Admin page detected, skipping init');
         return;
     }
-    initHafalan();
+    await initHafalan();
 });
