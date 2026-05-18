@@ -1673,29 +1673,36 @@ async function loadWalisantriView(nisn) {
         }
 
         let html = `
-            <div class="glass-card">
-                <h3>Rapor: ${data.nama}</h3>
-                <p>NISN: ${data.nisn}</p>
-                <div class="stats-grid">
-                    <div class="stat-item">Rata-rata: <strong>${data.rata_rata}</strong></div>
-                    <div class="stat-item">Total Mapel: <strong>${data.jumlah_mata_pelajaran}</strong></div>
+            <div style="background:#fff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-top:16px;box-shadow:0 4px 12px rgba(16,185,129,0.08);">
+                <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">Rapor</div>
+                <div style="font-size:16px;font-weight:600;color:#111827;">${data.nama}</div>
+                <div style="font-size:13px;color:#6b7280;margin-top:4px;">NISN: ${data.nisn}</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+                    <div style="background:#ecfdf5;border:1px solid #d1fae5;border-radius:10px;padding:10px 14px;min-width:120px;">
+                        <div style="font-size:12px;color:#6b7280;">Rata-rata</div>
+                        <strong style="font-size:20px;color:#047857;">${data.rata_rata}</strong>
+                    </div>
+                    <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:10px;padding:10px 14px;min-width:120px;">
+                        <div style="font-size:12px;color:#6b7280;">Total Mapel</div>
+                        <strong style="font-size:20px;color:#1d4ed8;">${data.jumlah_mata_pelajaran}</strong>
+                    </div>
                 </div>
             </div>
-            <div class="glass-card">
-                <h4>Detail Mata Pelajaran</h4>
-                <div class="mapel-list">
+            <div style="background:#fff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-top:16px;">
+                <h4 style="margin:0 0 12px;color:#111827;font-size:15px;">Detail Mata Pelajaran</h4>
+                <div>
         `;
         
         // Render list mata pelajaran jika ada di data
         if (data.mata_pelajaran && Array.isArray(data.mata_pelajaran)) {
-             data.mata_pelajaran.forEach(mp => {
-                 html += `
-                    <div class="mapel-item" style="border-bottom:1px solid #444; padding:10px 0;">
-                        <div style="font-weight:bold; color:#fbbf24;">${mp.nama}</div>
-                        <div>Nilai Rata-rata: ${mp.rata_rata}</div>
+              data.mata_pelajaran.forEach(mp => {
+                  html += `
+                    <div style="border-bottom:1px solid #e5e7eb;padding:10px 0;">
+                        <div style="font-weight:600;color:#065f46;">${mp.nama}</div>
+                        <div style="font-size:13px;color:#6b7280;margin-top:2px;">Nilai Rata-rata: ${mp.rata_rata}</div>
                     </div>
-                 `;
-             });
+                  `;
+              });
         }
         
         html += `</div></div>`;
@@ -2308,7 +2315,7 @@ async function loadSubjectSummary(nisn) {
             // Sort to find best and worst
             const sorted = [...subjects].sort((a, b) => (b.rata_rata || 0) - (a.rata_rata || 0));
             const best = sorted[0];
-            const worst = sorted[sorted.length - 1];
+            const worst = sorted.length > 1 ? sorted[sorted.length - 1] : null;
             const overall = data.rata_rata || 0;
 
             // Update Best Subject
@@ -2324,15 +2331,24 @@ async function loadSubjectSummary(nisn) {
             const attNameEl = document.getElementById('attention-subject-name');
             const attScoreEl = document.getElementById('attention-subject-score');
             const attDescEl = document.getElementById('attention-subject-desc');
+            const attentionCard = attNameEl?.closest('.needs-attention');
 
-            if (attNameEl) attNameEl.textContent = worst.nama || '-';
-            if (attScoreEl) attScoreEl.textContent = worst.rata_rata || 0;
-            if (attDescEl) {
-                if (worst.rata_rata < 75) {
-                    attDescEl.textContent = `Perlu peningkatan agar mencapai KKM.`;
-                } else {
-                    attDescEl.textContent = `Nilai sudah baik, tapi bisa ditingkatkan lagi.`;
+            if (worst && worst.nama !== best.nama) {
+                if (attentionCard) attentionCard.style.display = '';
+                if (attNameEl) attNameEl.textContent = worst.nama || '-';
+                if (attScoreEl) attScoreEl.textContent = worst.rata_rata || 0;
+                if (attDescEl) {
+                    if (worst.rata_rata < 75) {
+                        attDescEl.textContent = `Perlu peningkatan agar mencapai KKM.`;
+                    } else {
+                        attDescEl.textContent = `Nilai sudah baik, tapi bisa ditingkatkan lagi.`;
+                    }
                 }
+            } else {
+                if (attentionCard) attentionCard.style.display = '';
+                if (attNameEl) attNameEl.textContent = 'Belum cukup data';
+                if (attScoreEl) attScoreEl.textContent = '-';
+                if (attDescEl) attDescEl.textContent = 'Belum cukup data untuk perbandingan antar mapel.';
             }
 
             // Update Overall

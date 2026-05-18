@@ -178,9 +178,20 @@ def get_average_grade(request, nisn):
 
     for mp, data in mata_pelajaran_data.items():
         rata_rata_mp = sum(d['nilai'] for d in data['detail']) / len(data['detail'])
+
+        def avg_by_jenis(*jenis_values):
+            nilai_list = [
+                d['nilai'] for d in data['detail']
+                if (d.get('jenis') or '').lower() in [j.lower() for j in jenis_values]
+            ]
+            return round(sum(nilai_list) / len(nilai_list), 2) if nilai_list else None
+
         mata_pelajaran_list.append({
             'nama': mp,
             'rata_rata': round(rata_rata_mp, 2),
+            'nilai_uh': avg_by_jenis('UH'),
+            'nilai_uts': avg_by_jenis('UTS', 'uts'),
+            'nilai_uas': avg_by_jenis('UAS', 'uas'),
             'detail': data['detail']
         })
         total_nilai += sum(d['nilai'] for d in data['detail'])
