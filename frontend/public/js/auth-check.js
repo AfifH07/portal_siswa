@@ -546,6 +546,24 @@ function createRoleBasedNav() {
 
     nav.innerHTML = '';
 
+    {
+        // === Patch tombol back-chip ===
+        const backChip = document.querySelector('a.back-chip');
+        if (backChip) {
+            const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+            const isDashboard = currentPath === '/dashboard' || currentPath === '/dashboard/';
+            if (isDashboard) {
+                backChip.style.display = 'none';
+            } else {
+                backChip.style.display = '';
+                backChip.href = '/dashboard/';
+                const label = backChip.querySelector('span:last-child');
+                if (label) label.textContent = 'Kembali ke Dashboard';
+            }
+        }
+        // === End patch ===
+    }
+
     // Helper to check if path is active
     function isActive(itemHref) {
         const normalizedHref = itemHref.replace(/\/$/, '') || '/';
