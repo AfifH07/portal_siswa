@@ -1987,8 +1987,7 @@ window.selectChildGrades = function(nisn) {
         window.dispatchEvent(new CustomEvent('childSwitched', { detail: { nisn, child } }));
     }
 
-    // Load analytics
-    loadWalisantriAnalytics(nisn);
+    // Analytics di-load via listener childSwitched di bawah
 };
 
 /**
@@ -1996,6 +1995,26 @@ window.selectChildGrades = function(nisn) {
  */
 async function loadWalisantriAnalytics(nisn) {
     if (!nisn) return;
+
+    // Reset chart containers saat mulai load
+    if (academicTrendChart) {
+        academicTrendChart.destroy();
+        academicTrendChart = null;
+    }
+    if (subjectRadarChart) {
+        subjectRadarChart.destroy();
+        subjectRadarChart = null;
+    }
+    const trendCtx = document.getElementById('academicTrendChart');
+    if (trendCtx) {
+        const wrap = trendCtx.parentElement;
+        if (wrap) wrap.innerHTML = '<canvas id="academicTrendChart"></canvas>';
+    }
+    const radarCtx = document.getElementById('subjectRadarChart');
+    if (radarCtx) {
+        const wrap = radarCtx.parentElement;
+        if (wrap) wrap.innerHTML = '<canvas id="subjectRadarChart"></canvas>';
+    }
 
     // Show loading states
     setAnalyticsLoading(true);
