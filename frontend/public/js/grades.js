@@ -1900,12 +1900,15 @@ async function initWalisantriAnalytics() {
     }
 
     // Listen for child switch events
-    window.addEventListener('childSwitched', (e) => {
-        if (e.detail && e.detail.nisn) {
-            selectedChildNisn = e.detail.nisn;
-            loadWalisantriAnalytics(selectedChildNisn);
-        }
-    });
+    if (!window._gradesChildSwitchedListenerActive) {
+        window._gradesChildSwitchedListenerActive = true;
+        window.addEventListener('childSwitched', (e) => {
+            if (e.detail && e.detail.nisn) {
+                selectedChildNisn = e.detail.nisn;
+                loadWalisantriAnalytics(selectedChildNisn);
+            }
+        });
+    }
 
     // Attach filter listeners
     const trendFilter = document.getElementById('trend-period-filter');
@@ -2101,6 +2104,14 @@ async function loadAcademicTrendChart(nisn) {
     const ctx = document.getElementById('academicTrendChart');
     if (!ctx) return;
 
+    // Restore canvas jika sebelumnya disembunyikan
+    const trendEl = document.getElementById('academicTrendChart');
+    if (trendEl) {
+        trendEl.style.display = '';
+        const existingMsg = trendEl.parentElement?.querySelector('.chart-empty-msg');
+        if (existingMsg) existingMsg.style.display = 'none';
+    }
+
     if (academicTrendChart) academicTrendChart.destroy();
 
     const period = document.getElementById('trend-period-filter')?.value || '6';
@@ -2120,18 +2131,22 @@ async function loadAcademicTrendChart(nisn) {
             labels = result.labels || [];
             data = result.data || [];
         } else {
-            // Generate demo data if API not available
-            const months = parseInt(period);
-            const now = new Date();
-            labels = [];
-            data = [];
-
-            for (let i = months - 1; i >= 0; i--) {
-                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                labels.push(date.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }));
-                // Generate realistic looking data
-                data.push(Math.round(70 + Math.random() * 20));
+            // Endpoint belum tersedia — tampilkan pesan kosong
+            const trendCtx = document.getElementById('academicTrendChart');
+            if (trendCtx) {
+                trendCtx.style.display = 'none';
+                const wrap = trendCtx.parentElement;
+                let emptyMsg = wrap.querySelector('.chart-empty-msg');
+                if (!emptyMsg) {
+                    emptyMsg = document.createElement('p');
+                    emptyMsg.className = 'chart-empty-msg';
+                    emptyMsg.style.cssText = 'text-align:center;color:var(--text-muted);padding:2rem 1rem;font-size:0.875rem;';
+                    wrap.appendChild(emptyMsg);
+                }
+                emptyMsg.textContent = 'Data tren belum tersedia.';
+                emptyMsg.style.display = '';
             }
+            return;
         }
 
         if (typeof Chart === 'undefined') return;
