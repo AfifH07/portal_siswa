@@ -2448,7 +2448,7 @@ async function loadSubjectDetailList(nisn) {
                 const comparisonResult = getComparisonIndicator(score, classAvg);
 
                 return `
-                    <div class="subject-item">
+                    <div class="subject-item" data-mapel="${subject.nama}" data-nisn="${nisn}">
                         <div class="subject-item-left">
                             <div class="subject-icon">${icon}</div>
                             <div class="subject-info">
@@ -2468,11 +2468,99 @@ async function loadSubjectDetailList(nisn) {
                         </div>
                         <div class="subject-item-right">
                             <span class="subject-score ${scoreClass}">${score}</span>
-                            <span class="subject-trend ${trendClass}">${trendIcon}</span>
+                            <button class="btn-subject-detail"
+                                data-mapel="${subject.nama}"
+                                data-nisn="${nisn}"
+                                style="background:none;border:none;cursor:pointer;
+                                       font-size:18px;color:#6b7280;padding:0 4px;
+                                       line-height:1;"
+                                title="Lihat detail nilai">→</button>
                         </div>
+                    </div>
+                    <div class="subject-detail-panel" id="detail-panel-${subject.nama.replace(/\s+/g,'-')}"
+                         style="display:none;padding:12px 16px;background:#f9fafb;
+                                border-top:1px solid #e5e7eb;">
+                        <p style="font-size:12px;color:#9ca3af;">Memuat detail...</p>
                     </div>
                 `;
             }).join('');
+
+            container.querySelectorAll('.btn-subject-detail').forEach(btn => {
+                btn.onclick = async function(e) {
+                    e.stopPropagation();
+                    const mapel = this.dataset.mapel;
+                    const nisnVal = this.dataset.nisn;
+                    const panelId = 'detail-panel-' + mapel.replace(/\s+/g, '-');
+                    const panel = document.getElementById(panelId);
+                    if (!panel) return;
+
+                    if (panel.style.display !== 'none') {
+                        panel.style.display = 'none';
+                        this.textContent = '→';
+                        return;
+                    }
+
+                    panel.style.display = 'block';
+                    this.textContent = '↓';
+                    panel.innerHTML = '<p style="font-size:12px;color:#9ca3af;padding:4px 0;">Memuat detail...</p>';
+
+                    const semesterFilter = document.getElementById('subject-semester-filter')?.value || '';
+                    const token = localStorage.getItem('access_token');
+                    let url = `/api/grades/?mata_pelajaran=${encodeURIComponent(mapel)}`;
+                    if (semesterFilter) url += `&semester=${semesterFilter}`;
+
+                    try {
+                        const res = await fetch(url, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await res.json();
+                        const list = data.results || [];
+
+                        if (list.length === 0) {
+                            panel.innerHTML = '<p style="font-size:12px;color:#9ca3af;padding:4px 0;">Belum ada nilai detail.</p>';
+                            return;
+                        }
+
+                        panel.innerHTML = `
+                            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                                <thead>
+                                    <tr style="color:#6b7280;border-bottom:1px solid #e5e7eb;">
+                                        <th style="text-align:left;padding:6px 8px;font-weight:500;">Jenis</th>
+                                        <th style="text-align:left;padding:6px 8px;font-weight:500;">Materi</th>
+                                        <th style="text-align:left;padding:6px 8px;font-weight:500;">Tanggal</th>
+                                        <th style="text-align:right;padding:6px 8px;font-weight:500;">Nilai</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${list.map(g => `
+                                        <tr style="border-bottom:1px solid #f3f4f6;">
+                                            <td style="padding:6px 8px;">
+                                                <span style="background:#ecfdf5;color:#065f46;
+                                                             border-radius:4px;padding:2px 6px;
+                                                             font-size:11px;font-weight:600;">
+                                                    ${g.jenis || '-'}
+                                                </span>
+                                            </td>
+                                            <td style="padding:6px 8px;color:#374151;">
+                                                ${g.materi || '-'}
+                                            </td>
+                                            <td style="padding:6px 8px;color:#6b7280;">
+                                                ${g.created_at_formatted || '-'}
+                                            </td>
+                                            <td style="padding:6px 8px;text-align:right;
+                                                       font-weight:600;color:#111827;">
+                                                ${g.nilai}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    } catch (err) {
+                        panel.innerHTML = '<p style="font-size:12px;color:#ef4444;padding:4px 0;">Gagal memuat detail.</p>';
+                    }
+                };
+            });
         } else {
             container.innerHTML = '<div class="loading-placeholder">Belum ada data nilai untuk semester ini</div>';
         }
