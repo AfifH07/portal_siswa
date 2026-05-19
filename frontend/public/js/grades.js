@@ -2101,9 +2101,6 @@ async function loadAcademicInsight(nisn) {
  * Load and render Academic Trend Line Chart
  */
 async function loadAcademicTrendChart(nisn) {
-    const ctx = document.getElementById('academicTrendChart');
-    if (!ctx) return;
-
     // Restore canvas jika sebelumnya disembunyikan
     const trendEl = document.getElementById('academicTrendChart');
     if (trendEl) {
@@ -2112,114 +2109,173 @@ async function loadAcademicTrendChart(nisn) {
         if (existingMsg) existingMsg.style.display = 'none';
     }
 
-    if (academicTrendChart) academicTrendChart.destroy();
+    if (academicTrendChart) {
+        academicTrendChart.destroy();
+        academicTrendChart = null;
+    }
 
-    const period = document.getElementById('trend-period-filter')?.value || '6';
+    const period = document.getElementById('trendPeriod')?.value || '6';
+    const token = localStorage.getItem('access_token');
+    const ctx = document.getElementById('academicTrendChart');
+    if (!ctx) return;
+
+    let labels = [];
+    let mapelList = [];
 
     try {
-        const token = localStorage.getItem('access_token');
-
-        // Try to get trend data from API
         const response = await fetch(`/api/grades/trend/${nisn}/?months=${period}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        let labels, data;
-
         if (response.ok) {
-            const result = await response.json();
-            labels = result.labels || [];
-            data = result.data || [];
+            const json = await response.json();
+            labels = json.labels || [];
+            mapelList = json.mapel || [];
+        }
+    } catch (e) {
+        console.error('Trend fetch error:', e);
+    }
+
+    if (!labels.length || !mapelList.length) {
+        ctx.style.display = 'none';
+        const wrap = ctx.parentElement;
+        let emptyMsg = wrap.querySelector('.chart-empty-msg');
+        if (!emptyMsg) {
+            emptyMsg = document.createElement('p');
+            emptyMsg.className = 'chart-empty-msg';
+            emptyMsg.style.cssText = 'text-align:center;color:var(--text-muted);padding:2rem 1rem;font-size:0.875rem;';
+            wrap.appendChild(emptyMsg);
+        }
+        emptyMsg.textContent = 'Data tren belum tersedia.';
+        emptyMsg.style.display = '';
+        return;
+    }
+
+    // Tentukan mapel highlight otomatis:
+    // - terbaik (avg tertinggi)
+    // - terburuk (avg terendah)
+    // - paling fluktuatif (sudah diurutkan pertama dari backend)
+    const sorted_avg = [...mapelList].sort((a, b) => b.avg - a.avg);
+    const highlightNames = new Set();
+    if (sorted_avg.length > 0) highlightNames.add(sorted_avg[0].nama);
+    if (sorted_avg.length > 1) highlightNames.add(sorted_avg[sorted_avg.length - 1].nama);
+    if (mapelList.length > 0) highlightNames.add(mapelList[0].nama); // paling fluktuatif
+
+    // Palet warna untuk highlighted mapel
+    const highlightColors = [
+        '#10b981', // emerald
+        '#ef4444', // red
+        '#f59e0b', // amber
+        '#6366f1', // indigo
+        '#ec4899', // pink
+    ];
+    let colorIdx = 0;
+    const mapelColor = {};
+
+    const datasets = mapelList.map((mapel) => {
+        const isHighlight = highlightNames.has(mapel.nama);
+        let color;
+        if (isHighlight) {
+            color = highlightColors[colorIdx % highlightColors.length];
+            mapelColor[mapel.nama] = color;
+            colorIdx++;
         } else {
-            // Endpoint belum tersedia — tampilkan pesan kosong
-            const trendCtx = document.getElementById('academicTrendChart');
-            if (trendCtx) {
-                trendCtx.style.display = 'none';
-                const wrap = trendCtx.parentElement;
-                let emptyMsg = wrap.querySelector('.chart-empty-msg');
-                if (!emptyMsg) {
-                    emptyMsg = document.createElement('p');
-                    emptyMsg.className = 'chart-empty-msg';
-                    emptyMsg.style.cssText = 'text-align:center;color:var(--text-muted);padding:2rem 1rem;font-size:0.875rem;';
-                    wrap.appendChild(emptyMsg);
-                }
-                emptyMsg.textContent = 'Data tren belum tersedia.';
-                emptyMsg.style.display = '';
-            }
-            return;
+            color = 'rgba(156,163,175,0.35)'; // abu-abu tipis
         }
 
-        if (typeof Chart === 'undefined') return;
+        return {
+            label: mapel.nama,
+            data: mapel.data,
+            borderColor: color,
+            backgroundColor: 'transparent',
+            borderWidth: isHighlight ? 2.5 : 1,
+            pointRadius: isHighlight ? 4 : 0,
+            pointHoverRadius: isHighlight ? 6 : 4,
+            tension: 0.3,
+            spanGaps: true,
+            _isHighlight: isHighlight,
+            _avg: mapel.avg,
+        };
+    });
 
-        academicTrendChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Rata-rata Nilai',
-                    data: data,
-                    borderColor: EMERALD_COLORS.teal,
-                    backgroundColor: (context) => {
-                        const chart = context.chart;
-                        const { ctx: chartCtx, chartArea } = chart;
-                        if (!chartArea) return 'rgba(31, 168, 122, 0.1)';
-                        const gradient = chartCtx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                        gradient.addColorStop(0, 'rgba(31, 168, 122, 0.3)');
-                        gradient.addColorStop(1, 'rgba(31, 168, 122, 0.02)');
-                        return gradient;
-                    },
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: EMERALD_COLORS.teal,
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#ffffff',
-                        borderColor: EMERALD_COLORS.teal,
-                        borderWidth: 1,
-                        titleColor: EMERALD_COLORS.textPrimary,
-                        bodyColor: EMERALD_COLORS.textMuted,
+    academicTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyleWidth: 10,
                         padding: 12,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: (context) => `Rata-rata: ${context.raw}`
+                        font: { size: 11 },
+                        filter: (item, chart) => {
+                            // Di legend, tampilkan semua tapi dim yang bukan highlight
+                            return true;
+                        },
+                        color: (ctx) => {
+                            const ds = datasets[ctx.datasetIndex];
+                            return ds?._isHighlight
+                                ? 'var(--text-primary, #111)'
+                                : 'var(--text-muted, #9ca3af)';
                         }
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const idx = legendItem.datasetIndex;
+                        const chart = legend.chart;
+                        const ds = chart.data.datasets[idx];
+                        const clickedName = ds.label;
+
+                        // Toggle: jika sudah highlight, kembalikan ke abu-abu
+                        // Jika abu-abu, jadikan highlight
+                        const wasHighlight = ds._isHighlight;
+
+                        if (wasHighlight) {
+                            // Kembalikan ke abu-abu
+                            ds._isHighlight = false;
+                            ds.borderColor = 'rgba(156,163,175,0.35)';
+                            ds.borderWidth = 1;
+                            ds.pointRadius = 0;
+                        } else {
+                            // Highlight mapel ini
+                            const newColor = highlightColors[colorIdx % highlightColors.length];
+                            colorIdx++;
+                            ds._isHighlight = true;
+                            ds.borderColor = newColor;
+                            ds.borderWidth = 2.5;
+                            ds.pointRadius = 4;
+                        }
+                        chart.update();
                     }
                 },
-                scales: {
-                    y: {
-                        min: 0,
-                        max: 100,
-                        grid: { color: EMERALD_COLORS.gridLine },
-                        ticks: {
-                            color: EMERALD_COLORS.textMuted,
-                            font: { family: "'DM Mono', monospace", size: 11 }
-                        }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: {
-                            color: EMERALD_COLORS.textMuted,
-                            font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            const val = ctx.raw;
+                            if (val === null || val === undefined) return null;
+                            return ` ${ctx.dataset.label}: ${val}`;
                         }
                     }
                 }
             }
-        });
-
-    } catch (e) {
-        console.error('Error loading trend chart:', e);
-    }
+        },
+        scales: {
+            y: {
+                min: 0,
+                max: 100,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { font: { size: 11 } }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { font: { size: 11 } }
+            }
+        }
+    });
 }
 
 /**

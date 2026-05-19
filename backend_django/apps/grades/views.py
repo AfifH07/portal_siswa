@@ -1742,13 +1742,12 @@ def get_mapel_list(request):
 @permission_classes([IsAuthenticated])
 def get_grade_trend(request, nisn):
     """
-    Tren nilai rata-rata per bulan untuk satu siswa.
+    Tren nilai rata-rata per bulan, dikelompokkan per mapel.
     Query param: months (default 6, max 12)
-    Access: walisantri (anak sendiri), guru, musyrif, admin, superadmin
+    Response: { labels, mapel: [{nama, data, avg, min, max}], months }
     """
     user = request.user
 
-    # Validasi akses walisantri
     if user.role == 'walisantri':
         linked_nisns = getattr(user, 'linked_student_nisns', None) or []
         if isinstance(linked_nisns, str):
@@ -1776,31 +1775,62 @@ def get_grade_trend(request, nisn):
 
     end_date = timezone.now().date()
     start_date = end_date.replace(day=1)
-    # Mundur (months-1) bulan dari bulan ini
     for _ in range(months - 1):
         start_date = (start_date - datetime.timedelta(days=1)).replace(day=1)
 
+    # Ambil semua bulan dalam range sebagai label
+    all_months = []
+    cursor = start_date
+    while cursor <= end_date:
+        all_months.append(cursor)
+        next_month = (cursor.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
+        cursor = next_month
+
+    labels = [m.strftime('%b %y') for m in all_months]
+
+    # Query rata-rata per bulan per mapel
     qs = Grade.objects.filter(
-        nisn__nisn=nisn,
+        nisn_id=nisn,
         created_at__date__gte=start_date,
     ).exclude(
         jenis__in=['uts', 'uas']
     ).annotate(
         bulan=TruncMonth('created_at')
-    ).values('bulan').annotate(
+    ).values('bulan', 'mata_pelajaran').annotate(
         rata=Avg('nilai')
-    ).order_by('bulan')
+    ).order_by('mata_pelajaran', 'bulan')
 
-    labels = []
-    data = []
+    # Susun per mapel
+    from collections import defaultdict
+    mapel_dict = defaultdict(dict)
     for row in qs:
-        bulan_dt = row['bulan']
-        labels.append(bulan_dt.strftime('%b %y'))
-        data.append(round(float(row['rata']), 1) if row['rata'] else 0)
+        nama = row.get('mata_pelajaran') or 'Unknown'
+        bulan_key = row['bulan'].strftime('%b %y')
+        mapel_dict[nama][bulan_key] = round(float(row['rata']), 1) if row['rata'] else None
+
+    # Build array per mapel dengan None untuk bulan kosong
+    mapel_list = []
+    for nama, bulan_data in mapel_dict.items():
+        data = [bulan_data.get(label) for label in labels]
+        filled = [v for v in data if v is not None]
+        if not filled:
+            continue
+        avg = round(sum(filled) / len(filled), 1)
+        mapel_list.append({
+            'nama': nama,
+            'data': data,
+            'avg': avg,
+            'min': min(filled),
+            'max': max(filled),
+            'fluktuasi': round(max(filled) - min(filled), 1),
+        })
+
+    # Sort: fluktuasi tertinggi dulu (paling menarik untuk ditampilkan)
+    mapel_list.sort(key=lambda x: x['fluktuasi'], reverse=True)
 
     return Response({
         'nisn': nisn,
         'months': months,
         'labels': labels,
-        'data': data,
+        'mapel': mapel_list,
     })
