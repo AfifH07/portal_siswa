@@ -1636,7 +1636,10 @@ window.switchView = function(view) {
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) pageTitle.textContent = 'Nilai Ananda';
 
-        loadWalisantriView(user.linked_student_nisn);
+        // loadWalisantriView() dinonaktifkan - data sudah dirender
+        // oleh loadWalisantriAnalytics() via initWalisantriAnalytics()
+        const legacyDiv = document.getElementById('walisantri-content');
+        if (legacyDiv) legacyDiv.style.display = 'none';
     } else {
         // Mode Admin/Guru/Pimpinan
         document.querySelectorAll('.admin-view').forEach(el => el.style.display = 'block');
