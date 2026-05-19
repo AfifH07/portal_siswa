@@ -2005,16 +2005,6 @@ async function loadWalisantriAnalytics(nisn) {
         subjectRadarChart.destroy();
         subjectRadarChart = null;
     }
-    const trendCtx = document.getElementById('academicTrendChart');
-    if (trendCtx) {
-        const wrap = trendCtx.parentElement;
-        if (wrap) wrap.innerHTML = '<canvas id="academicTrendChart"></canvas>';
-    }
-    const radarCtx = document.getElementById('subjectRadarChart');
-    if (radarCtx) {
-        const wrap = radarCtx.parentElement;
-        if (wrap) wrap.innerHTML = '<canvas id="subjectRadarChart"></canvas>';
-    }
 
     // Show loading states
     setAnalyticsLoading(true);
@@ -2224,6 +2214,14 @@ async function loadSubjectRadarChart(nisn) {
     const ctx = document.getElementById('subjectRadarChart');
     if (!ctx) return;
 
+    // Restore canvas jika sebelumnya disembunyikan oleh empty state
+    const ctxEl = document.getElementById('subjectRadarChart');
+    if (ctxEl) {
+        ctxEl.style.display = '';
+        const existingMsg = ctxEl.parentElement?.querySelector('.chart-empty-msg');
+        if (existingMsg) existingMsg.style.display = 'none';
+    }
+
     if (subjectRadarChart) subjectRadarChart.destroy();
 
     try {
@@ -2247,8 +2245,17 @@ async function loadSubjectRadarChart(nisn) {
         }
 
         if (labels.length === 0) {
+            ctx.style.display = 'none';
             const wrap = ctx.parentElement;
-            wrap.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:2rem 1rem;font-size:0.875rem;">Belum ada data nilai untuk ditampilkan.</p>';
+            let emptyMsg = wrap.querySelector('.chart-empty-msg');
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('p');
+                emptyMsg.className = 'chart-empty-msg';
+                emptyMsg.style.cssText = 'text-align:center;color:var(--text-muted);padding:2rem 1rem;font-size:0.875rem;';
+                wrap.appendChild(emptyMsg);
+            }
+            emptyMsg.textContent = 'Belum ada data nilai untuk ditampilkan.';
+            emptyMsg.style.display = '';
             return;
         }
 
