@@ -1736,3 +1736,71 @@ def get_mapel_list(request):
             'mapel_list': [],
             'message': 'Role tidak memiliki akses ke daftar mata pelajaran'
         })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_grade_trend(request, nisn):
+    """
+    Tren nilai rata-rata per bulan untuk satu siswa.
+    Query param: months (default 6, max 12)
+    Access: walisantri (anak sendiri), guru, musyrif, admin, superadmin
+    """
+    user = request.user
+
+    # Validasi akses walisantri
+    if user.role == 'walisantri':
+        linked_nisns = getattr(user, 'linked_student_nisns', None) or []
+        if isinstance(linked_nisns, str):
+            import json
+            try:
+                linked_nisns = json.loads(linked_nisns)
+            except Exception:
+                linked_nisns = []
+        first_nisn = getattr(user, 'linked_student_nisn', None)
+        if first_nisn and first_nisn not in linked_nisns:
+            linked_nisns.append(first_nisn)
+        if nisn not in linked_nisns:
+            return Response({'error': 'Akses ditolak'}, status=403)
+
+    try:
+        months = int(request.query_params.get('months', 6))
+        months = min(max(months, 1), 12)
+    except (ValueError, TypeError):
+        months = 6
+
+    from django.utils import timezone
+    from django.db.models import Avg
+    from django.db.models.functions import TruncMonth
+    import datetime
+
+    end_date = timezone.now().date()
+    start_date = end_date.replace(day=1)
+    # Mundur (months-1) bulan dari bulan ini
+    for _ in range(months - 1):
+        start_date = (start_date - datetime.timedelta(days=1)).replace(day=1)
+
+    qs = Grade.objects.filter(
+        nisn__nisn=nisn,
+        created_at__date__gte=start_date,
+    ).exclude(
+        jenis__in=['uts', 'uas']
+    ).annotate(
+        bulan=TruncMonth('created_at')
+    ).values('bulan').annotate(
+        rata=Avg('nilai')
+    ).order_by('bulan')
+
+    labels = []
+    data = []
+    for row in qs:
+        bulan_dt = row['bulan']
+        labels.append(bulan_dt.strftime('%b %y'))
+        data.append(round(float(row['rata']), 1) if row['rata'] else 0)
+
+    return Response({
+        'nisn': nisn,
+        'months': months,
+        'labels': labels,
+        'data': data,
+    })

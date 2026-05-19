@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('trend/<str:nisn>/', views.get_grade_trend, name='grade-trend'),
     path('', views.GradeViewSet.as_view({'get': 'list', 'post': 'create'}), name='grade-list'),
     path('statistics/', views.get_statistics, name='grade-statistics'),
     path('<int:pk>/', views.GradeViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='grade-detail'),
