@@ -1790,7 +1790,7 @@ def get_grade_trend(request, nisn):
 
     # Query rata-rata per bulan per mapel
     qs = Grade.objects.filter(
-        nisn_id=nisn,
+        nisn__nisn=nisn,
         created_at__date__gte=start_date,
     ).exclude(
         jenis__in=['uts', 'uas']

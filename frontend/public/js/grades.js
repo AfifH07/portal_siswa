@@ -1996,8 +1996,16 @@ window.selectChildGrades = function(nisn) {
 /**
  * Main function to load all walisantri analytics
  */
+let _analyticsLoading = false;
+
 async function loadWalisantriAnalytics(nisn) {
     if (!nisn) return;
+    if (_analyticsLoading) {
+        // Ada request in-flight, batalkan yang lama dengan flag nisn
+        _analyticsLoading = false;
+    }
+    _analyticsLoading = true;
+    const _thisNisn = nisn;
 
     // Reset chart containers saat mulai load
     if (academicTrendChart) {
@@ -2007,6 +2015,20 @@ async function loadWalisantriAnalytics(nisn) {
     if (subjectRadarChart) {
         subjectRadarChart.destroy();
         subjectRadarChart = null;
+    }
+
+    // Reset hero card agar tidak nyangkut dari anak sebelumnya
+    const insightTitle = document.getElementById('academic-insight-title');
+    const insightDesc = document.getElementById('academic-insight-desc');
+    if (insightTitle) insightTitle.textContent = 'Memuat data...';
+    if (insightDesc) insightDesc.textContent = '';
+
+    // Reset radar canvas jika sebelumnya diganti empty state
+    const radarEl = document.getElementById('subjectRadarChart');
+    if (radarEl) {
+        radarEl.style.display = '';
+        const existingMsg = radarEl.parentElement?.querySelector('.chart-empty-msg');
+        if (existingMsg) existingMsg.style.display = 'none';
     }
 
     // Show loading states
@@ -2024,6 +2046,7 @@ async function loadWalisantriAnalytics(nisn) {
     } catch (e) {
         console.error('Error loading walisantri analytics:', e);
     } finally {
+        if (_thisNisn === nisn) _analyticsLoading = false;
         setAnalyticsLoading(false);
     }
 }
