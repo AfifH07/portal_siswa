@@ -27,7 +27,7 @@ from apps.students.models import Student
 # HELPER: Reusable queryset filter by role
 # =============================================================
 
-def get_filtered_queryset_for_user(user, base_queryset=None):
+def get_filtered_queryset_for_user(user, base_queryset=None, include_pending_for_review=False):
     """
     Get filtered queryset based on user role.
     Reusable for both EvaluationViewSet.get_queryset() and evaluation_statistics().
@@ -41,15 +41,16 @@ def get_filtered_queryset_for_user(user, base_queryset=None):
     if user.role in ['superadmin', 'admin']:
         pass  # No filter, see all
 
-    # pimpinan: lihat semua yang is_approved=True
+    # pimpinan: bisa review pending di halaman list/detail, statistik tetap approved-only
     elif user.role == 'pimpinan':
-        queryset = queryset.filter(is_approved=True)
+        if not include_pending_for_review:
+            queryset = queryset.filter(is_approved=True)
 
     # bk: lihat semua evaluasi yang is_approved=True (semua santri)
     elif user.role == 'bk':
         queryset = queryset.filter(is_approved=True)
 
-    # guru/musyrif: lihat semua evaluasi untuk santri di kelas assignment aktif mereka
+    # guru/musyrif: lihat approved untuk kelas assignment aktif + semua kasus yang dibuat sendiri
     elif user.role in ['guru', 'musyrif']:
         assigned_classes = Assignment.objects.filter(
             user=user,
@@ -60,10 +61,12 @@ def get_filtered_queryset_for_user(user, base_queryset=None):
             kelas__exact=''
         ).values_list('kelas', flat=True).distinct()
 
+        own_q = Q(created_by=user)
         if assigned_classes.exists():
-            queryset = queryset.filter(nisn__kelas__in=list(assigned_classes))
+            assigned_approved_q = Q(nisn__kelas__in=list(assigned_classes), is_approved=True)
+            queryset = queryset.filter(assigned_approved_q | own_q)
         else:
-            queryset = queryset.none()
+            queryset = queryset.filter(own_q)
 
     # walisantri: nisn__nisn__in=linked_nisns AND is_approved=True
     elif user.role == 'walisantri':
@@ -115,7 +118,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Use helper function for role-based filtering
-        queryset = get_filtered_queryset_for_user(user)
+        queryset = get_filtered_queryset_for_user(user, include_pending_for_review=True)
 
         # Filter by kelas (dari query parameter)
         kelas = self.request.query_params.get('kelas')

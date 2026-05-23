@@ -8,6 +8,7 @@
 
 // State Management
 let currentEvaluations = [];
+let pendingEvaluations = [];
 let currentPage = 1;
 let totalPages = 1;
 let totalCount = 0;
@@ -61,6 +62,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function setupEventListeners() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.onclick = function() {
+            const tabName = this.dataset.tab;
+            if (typeof window.switchTab === 'function') {
+                window.switchTab(tabName);
+            }
+            if (tabName === 'pending-approval') {
+                loadPendingEvaluations();
+            } else if (tabName === 'evaluasi' && currentUser?.role !== 'walisantri') {
+                loadEvaluations(1);
+            }
+        };
+    });
+
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
@@ -183,6 +198,7 @@ async function loadCurrentUser() {
         // Store user in localStorage for sidebar consistency
         localStorage.setItem('user', JSON.stringify(currentUser));
 
+        setupApprovalTabVisibility();
         initializeViews();
         window.dispatchEvent(new CustomEvent('evaluations:user-ready', {
             detail: currentUser
@@ -190,6 +206,17 @@ async function loadCurrentUser() {
     } catch (error) {
         console.error('Error loading user:', error);
         showToast('Gagal memuat data pengguna', 'error');
+    }
+}
+
+function canManageEvaluationApprovals() {
+    return ['superadmin', 'admin', 'pimpinan'].includes(currentUser?.role);
+}
+
+function setupApprovalTabVisibility() {
+    const pendingTabBtn = document.getElementById('tab-btn-pending-approval');
+    if (pendingTabBtn) {
+        pendingTabBtn.style.display = canManageEvaluationApprovals() ? '' : 'none';
     }
 }
 
@@ -647,7 +674,10 @@ async function loadEvaluations(page = 1) {
     const kelas = document.getElementById('filter-class')?.value || '';
     const kategori = document.getElementById('filter-kategori')?.value || '';
 
-    let url = `/evaluations/?page=${page}`;
+    let url = `evaluations/?page=${page}`;
+    const role = currentUser?.role || '';
+    const shouldShowApprovedOnly = ['superadmin', 'admin', 'pimpinan', 'bk', 'walisantri'].includes(role);
+    if (shouldShowApprovedOnly) url += '&is_approved=true';
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (jenis) url += `&jenis=${encodeURIComponent(jenis)}`;
     if (kelas) url += `&kelas=${encodeURIComponent(kelas)}`;
@@ -746,6 +776,82 @@ function renderEvaluationsTable() {
             </tr>
         `;
     }).join('');
+}
+
+async function loadPendingEvaluations() {
+    const tbody = document.getElementById('pending-evaluations-table-body');
+    if (!tbody || !canManageEvaluationApprovals()) return;
+
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="loading-spinner"></div></td></tr>`;
+
+    try {
+        const response = await window.apiFetch('evaluations/?is_approved=false&page_size=100');
+        if (!response.ok) throw new Error('Failed to load pending evaluations');
+
+        const data = await response.json();
+        pendingEvaluations = data.results || [];
+        renderPendingEvaluationsTable();
+    } catch (error) {
+        console.error('Error loading pending evaluations:', error);
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center">Gagal memuat evaluasi pending</td></tr>`;
+        showToast('Gagal memuat evaluasi pending', 'error');
+    }
+}
+
+function renderPendingEvaluationsTable() {
+    const tbody = document.getElementById('pending-evaluations-table-body');
+    const countEl = document.getElementById('pending-evaluations-count');
+    if (!tbody) return;
+
+    if (countEl) countEl.textContent = pendingEvaluations.length;
+
+    if (!pendingEvaluations.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="loading">Tidak ada evaluasi yang menunggu persetujuan</div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = pendingEvaluations.map((eval, index) => {
+        const jenisBadge = eval.jenis === 'prestasi'
+            ? '<span class="badge badge-pass">Prestasi</span>'
+            : '<span class="badge badge-fail">Pelanggaran</span>';
+
+        const kategoriIcon = KATEGORI_ICONS[eval.kategori] || '';
+        const kategoriBadge = `<span class="badge badge-kategori">${kategoriIcon} ${escapeHtml(eval.kategori || '-')}</span>`;
+
+        const date = eval.tanggal ? new Date(eval.tanggal).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        }) : '-';
+
+        const safeId = escapeAttr(eval.id);
+
+        return `
+            <tr data-id="${safeId}">
+                <td>${index + 1}</td>
+                <td><span style="font-family: var(--font-mono);">${escapeHtml(date)}</span></td>
+                <td>${kategoriBadge}</td>
+                <td><strong>${escapeHtml(eval.nisn_nama || '-')}</strong></td>
+                <td>${escapeHtml(eval.nisn_kelas || '-')}</td>
+                <td style="max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(eval.name || '')}">${escapeHtml(eval.name) || '-'}</td>
+                <td>${jenisBadge}</td>
+                <td>
+                    <button type="button" class="action-btn action-view btn-view-pending" data-id="${safeId}" title="Lihat">Lihat</button>
+                    <button type="button" class="btn btn-primary btn-sm btn-approve-pending" data-id="${safeId}">Setujui</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-view-pending').forEach(btn => {
+        btn.onclick = function() {
+            viewEvaluation(this.dataset.id);
+        };
+    });
+
+    tbody.querySelectorAll('.btn-approve-pending').forEach(btn => {
+        btn.onclick = function() {
+            approveEvaluation(this.dataset.id);
+        };
+    });
 }
 
 function updatePagination() {
@@ -1116,7 +1222,7 @@ async function viewEvaluation(id) {
 
         // PERUBAHAN 4: Status Approval
         const userRole = currentUser?.role || '';
-        const canApprove = ['superadmin', 'pimpinan'].includes(userRole);
+        const canApprove = ['superadmin', 'admin', 'pimpinan'].includes(userRole);
         const canClose = ['pimpinan', 'superadmin'].includes(userRole);
         const canComment = ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin', 'admin'].includes(userRole);
 
@@ -1134,7 +1240,7 @@ async function viewEvaluation(id) {
                 <div style="margin-top: 16px; padding: 12px 16px; background: var(--gold-50); border-radius: var(--radius-sm); border-left: 4px solid var(--gold-500);">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span style="color: var(--gold-700);">⏳ Menunggu persetujuan</span>
-                        <button onclick="window.approveEvaluation(${evaluation.id})" class="btn btn-primary btn-sm">
+                        <button type="button" id="btn-approve-evaluation-detail" class="btn btn-primary btn-sm" data-id="${escapeAttr(evaluation.id)}">
                             ✅ Setujui Kasus
                         </button>
                     </div>
@@ -1292,6 +1398,13 @@ async function viewEvaluation(id) {
             ${closeCaseSection}
         `;
 
+        const approveDetailBtn = document.getElementById('btn-approve-evaluation-detail');
+        if (approveDetailBtn) {
+            approveDetailBtn.onclick = function() {
+                approveEvaluation(this.dataset.id);
+            };
+        }
+
         document.getElementById('view-modal').classList.add('active');
     } catch (error) {
         console.error('Error viewing evaluation:', error);
@@ -1387,7 +1500,7 @@ async function submitEvaluationComment(event, evaluationId) {
     }
 
     try {
-        const response = await window.apiFetch(`/evaluations/${evaluationId}/comments/`, {
+        const response = await window.apiFetch(`evaluations/${evaluationId}/comments/`, {
             method: 'POST',
             body: formData
         });
@@ -1918,7 +2031,7 @@ async function approveEvaluation(id) {
     }
 
     try {
-        const response = await window.apiFetch(`/evaluations/${id}/approve/`, {
+        const response = await window.apiFetch(`evaluations/${id}/approve/`, {
             method: 'PATCH'
         });
 
@@ -1930,6 +2043,7 @@ async function approveEvaluation(id) {
             viewEvaluation(id);
             // Refresh the table
             loadEvaluations(currentPage);
+            loadPendingEvaluations();
         } else {
             throw new Error(data.message || 'Gagal menyetujui evaluasi');
         }
@@ -2027,6 +2141,7 @@ window.closeViewModal = closeViewModal;
 window.editEvaluation = editEvaluation;
 window.deleteEvaluation = deleteEvaluation;
 window.loadEvaluations = loadEvaluations;
+window.loadPendingEvaluations = loadPendingEvaluations;
 window.loadStatistics = loadStatistics;
 window.loadPreviousPage = loadPreviousPage;
 window.loadNextPage = loadNextPage;

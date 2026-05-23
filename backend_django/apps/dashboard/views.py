@@ -122,7 +122,9 @@ def attendance_chart_data(request):
     
     try:
         end_date = timezone.now().date()
-        start_date = end_date - timedelta(days=180)
+        start_date = end_date.replace(day=1)
+        for _ in range(5):
+            start_date = (start_date - timedelta(days=1)).replace(day=1)
         
         queryset = Attendance.objects.filter(
             tanggal__range=[start_date, end_date]
@@ -141,21 +143,35 @@ def attendance_chart_data(request):
                 'hadir': 0,
                 'izin': 0,
                 'sakit': 0,
-                'alpha': 0
+                'alpha': 0,
+                'total': 0
             }
             current_date = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
         
         for item in queryset:
             month_label = f"{month_name[item['month'].month]} {item['month'].year}"
-            status = item['status'].lower()
-            if status in months_data.get(month_label, {}):
-                months_data[month_label][status] = item['count']
+            status = (item['status'] or '').strip().lower().replace('_', ' ')
+            status_key = {
+                'hadir': 'hadir',
+                'izin': 'izin',
+                'sakit': 'sakit',
+                'alpha': 'alpha',
+                'alpa': 'alpha',
+                'tidak hadir': 'alpha',
+            }.get(status)
+
+            if month_label in months_data and status_key:
+                months_data[month_label][status_key] += item['count']
+                months_data[month_label]['total'] += item['count']
+
+        def pct(count, total):
+            return min(round((count / total) * 100, 1), 100) if total > 0 else 0
         
         labels = list(months_data.keys())
-        hadir_data = [months_data[m]['hadir'] for m in labels]
-        izin_data = [months_data[m]['izin'] for m in labels]
-        sakit_data = [months_data[m]['sakit'] for m in labels]
-        alpha_data = [months_data[m]['alpha'] for m in labels]
+        hadir_data = [pct(months_data[m]['hadir'], months_data[m]['total']) for m in labels]
+        izin_data = [pct(months_data[m]['izin'], months_data[m]['total']) for m in labels]
+        sakit_data = [pct(months_data[m]['sakit'], months_data[m]['total']) for m in labels]
+        alpha_data = [pct(months_data[m]['alpha'], months_data[m]['total']) for m in labels]
         
         return Response({
             'success': True,

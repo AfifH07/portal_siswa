@@ -235,8 +235,8 @@
         'observation': 'Observasi',
         'suggestion': 'Saran',
         'decision': 'Keputusan',
-        'follow_up': 'Follow Up',
-        'note': 'Catatan'
+        'follow_up': 'Pembinaan',
+        'note': 'Diskusi'
     };
 
     // ======================== TAB SWITCHING ========================
@@ -1959,10 +1959,20 @@
                     return;
                 }
 
+                const rawCommentType = document.getElementById('comment-type')?.value || 'note';
+                const rawVisibility = document.getElementById('comment-visibility')?.value || 'internal';
+                const commentTypeMap = {
+                    diskusi: 'note',
+                    pembinaan: 'follow_up'
+                };
+                const visibilityMap = {
+                    semua: 'public'
+                };
+
                 const data = {
                     content: contentEl.value.trim(),
-                    comment_type: document.getElementById('comment-type')?.value || 'note',
-                    visibility: document.getElementById('comment-visibility')?.value || 'internal'
+                    comment_type: commentTypeMap[rawCommentType] || rawCommentType,
+                    visibility: visibilityMap[rawVisibility] || rawVisibility
                 };
 
                 const parentId = document.getElementById('comment-parent-id')?.value;
@@ -1979,7 +1989,7 @@
                 }
 
                 try {
-                    const rawResp = await window.apiFetch(`/kesantrian/incidents/${incidentId}/comments/`, {
+                    const rawResp = await window.apiFetch(`kesantrian/incidents/${incidentId}/comments/`, {
                         method: 'POST',
                         body: JSON.stringify(data)
                     });

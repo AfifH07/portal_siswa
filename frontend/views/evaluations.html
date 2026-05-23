@@ -85,6 +85,10 @@
                 <span class="tab-icon">📊</span>
                 <span class="tab-label">Evaluasi Perilaku</span>
             </button>
+            <button class="tab-btn" id="tab-btn-pending-approval" data-tab="pending-approval" style="display: none;">
+                <span class="tab-icon">!</span>
+                <span class="tab-label">Menunggu Persetujuan</span>
+            </button>
             <button class="tab-btn" data-tab="catatan">
                 <span class="tab-icon">📝</span>
                 <span class="tab-label">Catatan & Bimbingan</span>
@@ -414,6 +418,37 @@
         </div><!-- /walisantri-view -->
 
         </div><!-- /tab-evaluasi -->
+
+        <!-- =========== TAB: MENUNGGU PERSETUJUAN =========== -->
+        <div class="tab-content" id="tab-pending-approval" style="display: none;">
+            <div class="glass-card table-section">
+                <div class="card-head">
+                    <h3><span class="ch-icon">!</span> Evaluasi Menunggu Persetujuan</h3>
+                    <div class="table-info">
+                        <span id="pending-evaluations-count">0</span> kasus pending
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="pending-evaluations-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Tanggal</th>
+                                <th>Kategori</th>
+                                <th>Nama Siswa</th>
+                                <th>Kelas</th>
+                                <th>Deskripsi</th>
+                                <th>Jenis</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pending-evaluations-table-body">
+                            <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /tab-pending-approval -->
 
         <!-- =========== TAB: CATATAN & BIMBINGAN (CASE MANAGEMENT) =========== -->
         <div class="tab-content" id="tab-catatan" style="display: none;">
@@ -849,7 +884,7 @@
                     <label for="incident-visibility">Visibilitas</label>
                     <select id="incident-visibility" name="visibility" class="glass-input">
                         <option value="internal">🔒 Internal (Guru & Admin)</option>
-                        <option value="semua">🌐 Semua Pihak</option>
+                        <option value="public">🌐 Semua Pihak</option>
                     </select>
                 </div>
 
@@ -900,15 +935,15 @@
                         <div class="form-group">
                             <label for="comment-type">Jenis Pembinaan</label>
                             <select id="comment-type" class="glass-input">
-                                <option value="diskusi">💬 Diskusi</option>
-                                <option value="pembinaan">📋 Pembinaan</option>
+                                <option value="note">💬 Diskusi</option>
+                                <option value="follow_up">📋 Pembinaan</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="comment-visibility">Visibilitas</label>
                             <select id="comment-visibility" class="glass-input">
                                 <option value="internal">🔒 Internal (Guru & Admin)</option>
-                                <option value="semua">🌐 Semua Pihak</option>
+                                <option value="public">🌐 Semua Pihak</option>
                             </select>
                         </div>
                     </div>
@@ -951,8 +986,8 @@
 <script src="/static/js/auth-check.js?v=20260523b" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/evaluations.js?v=20260504" defer></script>
-<script src="/static/js/case-management.js?v=20260319O" defer></script>
+<script src="/static/js/evaluations.js?v=20260523b" defer></script>
+<script src="/static/js/case-management.js?v=20260523a" defer></script>
 <script src="/static/js/integritas-santri.js?v=20260511" defer></script>
 
 <script>
