@@ -21,6 +21,7 @@ urlpatterns = [
     path('ibadah/create-single/', views.create_ibadah_single, name='create-ibadah-single'),
 
     # Student-specific endpoints
+    path('ibadah/rekap/', views.IbadahRekapView.as_view(), name='ibadah-rekap'),
     path('ibadah/<str:nisn>/', views.get_child_ibadah_detail, name='child-ibadah-detail'),
     path('pembinaan/<str:nisn>/', views.get_child_pembinaan, name='child-pembinaan'),
     path('worship-tracker/<str:nisn>/', views.get_worship_tracker, name='worship-tracker'),
@@ -113,6 +114,7 @@ urlpatterns = [
     path('hafalan/tahfidz/<str:nisn>/', views.tahfidz_santri_view),
     path('hafalan/records/', views.hafalan_record_list, name='hafalan-record-list'),
     path('hafalan/records/<int:pk>/', views.hafalan_record_detail, name='hafalan-record-detail'),
+    path('hafalan/template/', views.download_hafalan_template, name='hafalan-template'),
     path('hafalan/siswa/<str:nisn>/', views.hafalan_per_siswa, name='hafalan-per-siswa'),
     path('hafalan/siswa/<str:nisn>/kehadiran-kajian/', views.siswa_kehadiran_kajian, name='hafalan-kehadiran-kajian'),
     path('kompetensi/<str:nisn>/', views.kompetensi_santri_get, name='kompetensi-santri'),

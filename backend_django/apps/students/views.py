@@ -177,6 +177,38 @@ class StudentViewSet(viewsets.ModelViewSet):
             return StudentUpdateSerializer
         return StudentSerializer
 
+    def create(self, request, *args, **kwargs):
+        nisn = str(request.data.get('nisn') or '').strip()
+        if nisn and Student.objects.filter(nisn=nisn).exists():
+            return Response({
+                'success': False,
+                'message': 'NISN sudah terdaftar',
+                'errors': {
+                    'nisn': ['NISN sudah terdaftar']
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            first_message = 'Gagal menyimpan data siswa'
+            for messages in serializer.errors.values():
+                if isinstance(messages, list) and messages:
+                    first_message = str(messages[0])
+                    break
+                if messages:
+                    first_message = str(messages)
+                    break
+
+            return Response({
+                'success': False,
+                'message': first_message,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_update(self, serializer):
         user = self.request.user
         student = serializer.instance

@@ -2006,9 +2006,9 @@ async function initHafalan() {
             kelompokHafalanTabBtn.onclick = () => switchHafalanTab('kelompok-hafalan');
         }
 
-        // Tampilkan tab Kajian Mingguan untuk guru dan musyrif
+        // Tampilkan tab Kajian Mingguan untuk pengasuh dan admin roles
         const kajianTabBtn = document.getElementById('tab-btn-kajian');
-        if (kajianTabBtn && ['guru', 'musyrif'].includes(currentRole)) {
+        if (kajianTabBtn && ['superadmin', 'admin', 'pimpinan', 'guru', 'musyrif'].includes(currentRole)) {
             kajianTabBtn.style.display = '';
         }
 
@@ -4680,11 +4680,15 @@ async function simpanPresensi(pertemuanId, kelompokId = null) {
     }));
 
     try {
-        await window.apiFetch(`kesantrian/pertemuan-pengasuhan/${pertemuanId}/presensi/`, {
+        const response = await window.apiFetch(`kesantrian/pertemuan-pengasuhan/${pertemuanId}/presensi/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ presensi })
         });
+        const data = typeof response?.json === 'function' ? await response.json() : response;
+        if (!response?.ok || data?.success === false) {
+            throw new Error(data?.message || data?.detail || 'Gagal menyimpan presensi.');
+        }
         const hadir = presensi.filter(p => p.status === 'hadir').length;
         const p = kajianState.pertemuanList.find(x => x.id == pertemuanId);
         if (p) p.jumlah_hadir = hadir;
@@ -4698,7 +4702,7 @@ async function simpanPresensi(pertemuanId, kelompokId = null) {
         }
         alert('Presensi berhasil disimpan.');
     } catch (e) {
-        alert('Gagal menyimpan presensi.');
+        alert(e.message || 'Gagal menyimpan presensi.');
     }
 }
 

@@ -1167,11 +1167,17 @@ class HafalanRecordCreateSerializer(serializers.ModelSerializer):
         # Validasi halaman range
         halaman_dari = data.get('halaman_dari')
         halaman_sampai = data.get('halaman_sampai')
+        jumlah_halaman = data.get('jumlah_halaman')
 
         if halaman_dari and halaman_sampai:
             if halaman_sampai < halaman_dari:
                 raise serializers.ValidationError({
                     'halaman_sampai': 'Halaman akhir harus >= halaman awal'
+                })
+            expected_jumlah = halaman_sampai - halaman_dari + 1
+            if jumlah_halaman != expected_jumlah:
+                raise serializers.ValidationError({
+                    'jumlah_halaman': 'Jumlah halaman tidak sesuai rentang halaman'
                 })
 
         return data
@@ -1196,11 +1202,17 @@ class HafalanRecordUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         halaman_dari = data.get('halaman_dari', self.instance.halaman_dari if self.instance else None)
         halaman_sampai = data.get('halaman_sampai', self.instance.halaman_sampai if self.instance else None)
+        jumlah_halaman = data.get('jumlah_halaman', self.instance.jumlah_halaman if self.instance else None)
 
         if halaman_dari and halaman_sampai:
             if halaman_sampai < halaman_dari:
                 raise serializers.ValidationError({
                     'halaman_sampai': 'Halaman akhir harus >= halaman awal'
+                })
+            expected_jumlah = halaman_sampai - halaman_dari + 1
+            if jumlah_halaman != expected_jumlah:
+                raise serializers.ValidationError({
+                    'jumlah_halaman': 'Jumlah halaman tidak sesuai rentang halaman'
                 })
 
         return data

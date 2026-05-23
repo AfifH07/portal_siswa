@@ -67,6 +67,73 @@
     </div>
 
     <div class="page-body">
+        <!-- Admin/Guru Rekap Ibadah -->
+        <section class="glass-card" id="section-rekap-admin" style="display:none;margin-bottom:24px;">
+            <div class="card-head">
+                <div>
+                    <h3 style="margin-bottom:4px;">Rekap Kehadiran Ibadah Santri</h3>
+                    <p style="margin:0;color:var(--text-muted);font-size:13px;">
+                        Pantau kehadiran sholat wajib per kelas dalam rentang tanggal tertentu.
+                    </p>
+                </div>
+                <span class="card-badge">Sholat Wajib</span>
+            </div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px;">
+                    <div>
+                        <label for="rekap-kelas" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Kelas</label>
+                        <select class="filter-select" id="rekap-kelas" style="width:100%;">
+                            <option value="">Memuat kelas...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="rekap-start-date" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Dari</label>
+                        <input type="date" class="filter-select" id="rekap-start-date" style="width:100%;">
+                    </div>
+                    <div>
+                        <label for="rekap-end-date" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Sampai</label>
+                        <input type="date" class="filter-select" id="rekap-end-date" style="width:100%;">
+                    </div>
+                    <div style="display:flex;align-items:flex-end;">
+                        <button id="btn-tampilkan-rekap"
+                                style="width:100%;border:none;border-radius:10px;padding:11px 16px;
+                                       background:#178560;color:#fff;font-weight:700;cursor:pointer;">
+                            Tampilkan
+                        </button>
+                    </div>
+                </div>
+
+                <div id="rekap-ibadah-summary"
+                     style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:10px;
+                            background:#f0fdf4;color:#065f46;font-size:13px;font-weight:600;">
+                </div>
+
+                <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:12px;">
+                    <table style="width:100%;border-collapse:collapse;min-width:760px;">
+                        <thead style="background:#f9fafb;">
+                            <tr>
+                                <th style="text-align:left;padding:12px 14px;font-size:12px;color:#6b7280;">No</th>
+                                <th style="text-align:left;padding:12px 14px;font-size:12px;color:#6b7280;">Nama Santri</th>
+                                <th style="text-align:left;padding:12px 14px;font-size:12px;color:#6b7280;">Kelas</th>
+                                <th style="text-align:center;padding:12px 14px;font-size:12px;color:#6b7280;">Subuh</th>
+                                <th style="text-align:center;padding:12px 14px;font-size:12px;color:#6b7280;">Dzuhur</th>
+                                <th style="text-align:center;padding:12px 14px;font-size:12px;color:#6b7280;">Ashar</th>
+                                <th style="text-align:center;padding:12px 14px;font-size:12px;color:#6b7280;">Maghrib</th>
+                                <th style="text-align:center;padding:12px 14px;font-size:12px;color:#6b7280;">Isya</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rekap-ibadah-body">
+                            <tr>
+                                <td colspan="8" style="padding:28px;text-align:center;color:#9ca3af;">
+                                    Pilih kelas dan rentang tanggal untuk melihat rekap.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- Child Selector (for walisantri with multiple children) -->
         <div class="child-selector" id="child-selector">
             <div class="child-tab active" data-loading="true">
@@ -280,8 +347,8 @@
 <script src="/static/js/utils.js?v=20260313c" defer></script>
 <script src="/static/js/apiConfig.js?v=20260313c" defer></script>
 <script src="/static/js/apiFetch.js?v=20260313c" defer></script>
-<script src="/static/js/auth-check.js?v=20260518a" defer></script>
+<script src="/static/js/auth-check.js?v=20260523b" defer></script>
 <script src="/static/js/auth.js?v=20260313c" defer></script>
-<script src="/static/js/ibadah.js?v=20260314" defer></script>
+<script src="/static/js/ibadah.js?v=20260523a" defer></script>
 </body>
 </html>

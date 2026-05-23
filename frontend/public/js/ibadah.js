@@ -13,6 +13,7 @@ let ibadahCharts = {};
 
 const API_BASE = '/api';
 const WAKTU_SHOLAT = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+const REKAP_ADMIN_ROLES = ['superadmin', 'admin', 'guru', 'musyrif'];
 const HARI_NAMES = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 const BULAN_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -60,6 +61,7 @@ async function initPage() {
 
         // Load children data for walisantri
         if (currentUser.role === 'walisantri') {
+            initRekapIbadahAdmin(currentUser.role);
             await loadChildrenData();
             if (childrenData.length > 0) {
                 // Check localStorage for persisted child selection
@@ -80,12 +82,204 @@ async function initPage() {
         } else {
             // For non-walisantri, hide child selector
             document.getElementById('child-selector').style.display = 'none';
+            initRekapIbadahAdmin(currentUser.role);
         }
 
     } catch (error) {
         console.error('Init error:', error);
         showToast('Gagal memuat data', 'error');
     }
+}
+
+// ============================================
+// REKAP IBADAH ADMIN/GURU
+// ============================================
+function initRekapIbadahAdmin(role) {
+    const section = document.getElementById('section-rekap-admin');
+    if (!section) return;
+
+    const isAdminRole = REKAP_ADMIN_ROLES.includes(role);
+    section.style.display = isAdminRole ? '' : 'none';
+
+    const walisantriSections = [
+        'child-selector',
+        'analytics-insight',
+        'heatmap-section',
+        'ibadah-summary',
+        'weekly-sholat',
+        'history-section'
+    ];
+
+    if (isAdminRole) {
+        walisantriSections.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        setupRekapIbadahFilters();
+    }
+}
+
+function setupRekapIbadahFilters() {
+    setDefaultRekapDates();
+    loadRekapKelasOptions();
+
+    const btn = document.getElementById('btn-tampilkan-rekap');
+    if (btn) {
+        btn.onclick = loadRekapIbadah;
+    }
+}
+
+function setDefaultRekapDates() {
+    const endInput = document.getElementById('rekap-end-date');
+    const startInput = document.getElementById('rekap-start-date');
+    if (!endInput || !startInput) return;
+
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 29);
+
+    endInput.value = formatDateInput(today);
+    startInput.value = formatDateInput(start);
+}
+
+async function loadRekapKelasOptions() {
+    const select = document.getElementById('rekap-kelas');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Memuat kelas...</option>';
+
+    try {
+        const response = await window.apiFetch('students/classes/');
+        const data = typeof response?.json === 'function' ? await response.json() : response;
+
+        if (!response?.ok || data?.success === false || !Array.isArray(data.classes)) {
+            throw new Error(data?.message || 'Gagal memuat daftar kelas');
+        }
+
+        select.innerHTML = '<option value="">Pilih Kelas</option>';
+        data.classes.forEach(kelas => {
+            const option = document.createElement('option');
+            option.value = kelas;
+            option.textContent = kelas;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Load rekap kelas error:', error);
+        select.innerHTML = '<option value="">Gagal memuat kelas</option>';
+        showToast(error.message || 'Gagal memuat kelas', 'error');
+    }
+}
+
+async function loadRekapIbadah() {
+    const kelas = document.getElementById('rekap-kelas')?.value || '';
+    const startDate = document.getElementById('rekap-start-date')?.value || '';
+    const endDate = document.getElementById('rekap-end-date')?.value || '';
+    const tbody = document.getElementById('rekap-ibadah-body');
+    const summary = document.getElementById('rekap-ibadah-summary');
+
+    if (!tbody) return;
+
+    if (!kelas) {
+        showToast('Pilih kelas terlebih dahulu', 'error');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="padding:28px;text-align:center;color:#9ca3af;">
+                    Pilih kelas dan rentang tanggal untuk melihat rekap.
+                </td>
+            </tr>
+        `;
+        if (summary) summary.style.display = 'none';
+        return;
+    }
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" style="padding:28px;text-align:center;color:#9ca3af;">
+                Memuat data...
+            </td>
+        </tr>
+    `;
+    if (summary) summary.style.display = 'none';
+
+    const params = new URLSearchParams({ kelas });
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    try {
+        const response = await window.apiFetch(`kesantrian/ibadah/rekap/?${params.toString()}`);
+        const data = typeof response?.json === 'function' ? await response.json() : response;
+
+        if (!response?.ok || data?.success === false) {
+            throw new Error(data?.message || 'Gagal memuat rekap ibadah');
+        }
+
+        renderRekapIbadahTable(data);
+    } catch (error) {
+        console.error('Load rekap ibadah error:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="padding:28px;text-align:center;color:#ef4444;">
+                    ${escapeHtml(error.message || 'Gagal memuat rekap ibadah')}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function renderRekapIbadahTable(data) {
+    const tbody = document.getElementById('rekap-ibadah-body');
+    const summary = document.getElementById('rekap-ibadah-summary');
+    if (!tbody) return;
+
+    const rows = data.data || [];
+    const columns = data.columns || WAKTU_SHOLAT;
+
+    if (rows.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="padding:28px;text-align:center;color:#9ca3af;">
+                    Tidak ada santri aktif di kelas ini.
+                </td>
+            </tr>
+        `;
+        if (summary) summary.style.display = 'none';
+        return;
+    }
+
+    let hadirCount = 0;
+    rows.forEach(row => {
+        columns.forEach(waktu => {
+            if (row.ibadah && row.ibadah[waktu]) hadirCount++;
+        });
+    });
+
+    const totalSlots = rows.length * columns.length;
+    const avg = totalSlots > 0 ? Math.round((hadirCount / totalSlots) * 100) : 0;
+
+    if (summary) {
+        summary.style.display = '';
+        summary.textContent = `Total santri: ${rows.length} | Rata-rata kehadiran: ${avg}% | Periode: ${data.start_date} s/d ${data.end_date}`;
+    }
+
+    tbody.innerHTML = rows.map((row, index) => `
+        <tr style="border-top:1px solid #f3f4f6;">
+            <td style="padding:12px 14px;color:#6b7280;">${index + 1}</td>
+            <td style="padding:12px 14px;font-weight:600;color:#111827;">${escapeHtml(row.nama)}</td>
+            <td style="padding:12px 14px;color:#374151;">${escapeHtml(row.kelas || '-')}</td>
+            ${columns.map(waktu => `
+                <td style="padding:12px 14px;text-align:center;">
+                    ${renderRekapStatus(row.ibadah && row.ibadah[waktu])}
+                </td>
+            `).join('')}
+        </tr>
+    `).join('');
+}
+
+function renderRekapStatus(isHadir) {
+    if (isHadir) {
+        return '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:#dcfce7;color:#15803d;font-weight:800;">&#10003;</span>';
+    }
+    return '<span style="color:#9ca3af;font-weight:700;">&ndash;</span>';
 }
 
 // ============================================
@@ -868,6 +1062,23 @@ document.addEventListener('DOMContentLoaded', () => {
 function getInitials(name) {
     if (!name) return '?';
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+}
+
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return text.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function formatDateInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 function formatDate(dateStr) {

@@ -399,7 +399,7 @@ function createRoleBasedNav() {
                 { href: '/evaluasi-asatidz', icon: 'user-check', label: 'Evaluasi Asatidz' }
             ],
             other: [
-                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
                 { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
@@ -423,7 +423,7 @@ function createRoleBasedNav() {
                 { href: '/master-mapel', icon: 'book-open', label: 'Master Mapel' }
             ],
             other: [
-                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
                 { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
@@ -445,7 +445,7 @@ function createRoleBasedNav() {
                 { href: '/evaluasi-asatidz', icon: 'user-check', label: 'Evaluasi Asatidz' }
             ],
             other: [
-                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
                 { href: '/finance', icon: 'wallet', label: 'Keuangan', id: 'nav-finance' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
                 { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
@@ -505,7 +505,7 @@ function createRoleBasedNav() {
                 { href: '/case-management', icon: 'folder-open', label: 'Pembinaan' }
             ],
             other: [
-                { href: '/evaluations', icon: 'star', label: 'Evaluasi' },
+                { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
                 { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' },
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
             ]

@@ -764,6 +764,25 @@ function closeModal() {
     editingStudent = null;
 }
 
+function getStudentSaveErrorMessage(data) {
+    if (!data) return 'Gagal menyimpan data siswa';
+    if (data.message) return data.message;
+    if (data.detail) return data.detail;
+
+    const errors = data.errors || data;
+    if (errors.nisn) {
+        const nisnError = Array.isArray(errors.nisn) ? errors.nisn[0] : errors.nisn;
+        return String(nisnError || 'NISN sudah terdaftar');
+    }
+
+    for (const value of Object.values(errors)) {
+        if (Array.isArray(value) && value.length) return String(value[0]);
+        if (value) return String(value);
+    }
+
+    return 'Gagal menyimpan data siswa';
+}
+
 async function handleFormSubmit(e) {
     e.preventDefault();
 
@@ -774,18 +793,19 @@ async function handleFormSubmit(e) {
         return;
     }
 
+    const tanggalMasuk = document.getElementById('tanggal-masuk').value;
     const formData = {
-        nisn: document.getElementById('student-nisn').value,
+        nisn: document.getElementById('student-nisn').value.trim(),
         nis: nisValue || null,
-        nama: document.getElementById('student-nama').value,
+        nama: document.getElementById('student-nama').value.trim(),
         jenis_kelamin: document.getElementById('student-jenis-kelamin').value || null,
         kelas: document.getElementById('student-kelas').value,
         program: document.getElementById('student-program').value,
-        email: document.getElementById('student-email').value,
-        phone: document.getElementById('student-phone').value,
-        wali_nama: document.getElementById('wali-nama').value,
-        wali_phone: document.getElementById('wali-phone').value,
-        tanggal_masuk: document.getElementById('tanggal-masuk').value,
+        email: document.getElementById('student-email').value.trim(),
+        phone: document.getElementById('student-phone').value.trim(),
+        wali_nama: document.getElementById('wali-nama').value.trim(),
+        wali_phone: document.getElementById('wali-phone').value.trim(),
+        tanggal_masuk: tanggalMasuk || null,
         aktif: document.getElementById('student-aktif').value === 'true',
         target_hafalan: parseInt(document.getElementById('target-hafalan').value) || 0,
         current_hafalan: parseInt(document.getElementById('current-hafalan').value) || 0,
@@ -794,19 +814,26 @@ async function handleFormSubmit(e) {
     };
     
     try {
+        let response;
         if (editingStudent) {
-            await apiCall(`students/${editingStudent.nisn}/`, {
+            response = await window.apiFetch(`students/${editingStudent.nisn}/`, {
                 method: 'PUT',
                 body: JSON.stringify(formData)
             });
-            showSuccess('Siswa berhasil diperbarui');
         } else {
-            await apiCall('students/', {
+            response = await window.apiFetch('students/', {
                 method: 'POST',
                 body: JSON.stringify(formData)
             });
-            showSuccess('Siswa berhasil ditambahkan');
         }
+
+        const data = response ? await response.json() : null;
+        if (!response || !response.ok) {
+            showError(getStudentSaveErrorMessage(data));
+            return;
+        }
+
+        showSuccess(editingStudent ? 'Siswa berhasil diperbarui' : 'Siswa berhasil ditambahkan');
         
         closeModal();
         document.getElementById('filter-status').value = '';
@@ -1514,4 +1541,3 @@ window.openKenaikanKelasModal = openKenaikanKelasModal;
 window.closeKenaikanKelasModal = closeKenaikanKelasModal;
 window.previewKenaikanKelas = previewKenaikanKelas;
 window.prosesKenaikanKelas = prosesKenaikanKelas;
-

@@ -149,6 +149,53 @@ async function loadImportClasses() {
 }
 
 /**
+ * Load class filter options from the same active-student source as Data Siswa.
+ */
+async function loadGradeFilterClasses() {
+    const kelasSelect = document.getElementById('filter-kelas');
+    if (!kelasSelect) return;
+
+    kelasSelect.innerHTML = '<option value="">Memuat kelas...</option>';
+    kelasSelect.disabled = true;
+
+    try {
+        if (cachedClasses && cachedClasses.length > 0) {
+            populateClassDropdown(kelasSelect, cachedClasses);
+        } else if (window.apiFetch) {
+            const data = await window.apiFetch('students/classes/');
+            if (!data?.success || !Array.isArray(data.classes)) {
+                throw new Error(data?.message || 'Gagal memuat kelas');
+            }
+            cachedClasses = data.classes;
+            populateClassDropdown(kelasSelect, cachedClasses);
+        } else {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch('/api/students/classes/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success || !Array.isArray(data.classes)) {
+                throw new Error(data.message || 'Gagal memuat kelas');
+            }
+            cachedClasses = data.classes;
+            populateClassDropdown(kelasSelect, cachedClasses);
+        }
+
+        if (kelasSelect.options.length > 0) {
+            kelasSelect.options[0].textContent = 'Semua Kelas';
+        }
+    } catch (error) {
+        console.error('Error loading grade class filter:', error);
+        useFallbackClasses(kelasSelect);
+        if (kelasSelect.options.length > 0) {
+            kelasSelect.options[0].textContent = 'Semua Kelas';
+        }
+    } finally {
+        kelasSelect.disabled = false;
+    }
+}
+
+/**
  * Use fallback static class options when API fails
  */
 function useFallbackClasses(selectElement) {
@@ -2784,6 +2831,7 @@ window.addEventListener('load', function() {
         initWalisantriAnalytics();
     } else {
         window.switchView('admin');
+        loadGradeFilterClasses();
 
         // Attach Change Listeners to Select Filters
         ['filter-kelas', 'filter-semester'].forEach(id => {

@@ -9,11 +9,13 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
 from django.db.models import Count, Q, Avg
 from django.utils import timezone
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.utils.dateparse import parse_date
 from datetime import timedelta
 
 from .models import Ibadah, Halaqoh, HalaqohMember, Pembinaan, TargetHafalan, TartilSantri, TahfidzSantri, KompetensiSantri, HafalanRecord, KelompokHafalan, KelompokHafalanAnggota, KelompokPengasuhan, KelompokAnggota, PertemuanPengasuhan, PresensiPertemuan
@@ -220,6 +222,81 @@ def get_my_children_summary(request):
         'total_children': len(children_data),
         'children': children_data
     })
+
+
+class IbadahRekapView(APIView):
+    """
+    Rekap kehadiran sholat wajib per kelas dalam rentang tanggal.
+    """
+    permission_classes = [IsAuthenticated]
+
+    WAKTU_SHOLAT = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya']
+    ALLOWED_ROLES = ['superadmin', 'admin', 'guru', 'musyrif']
+
+    def get(self, request):
+        user = request.user
+        if user.role not in self.ALLOWED_ROLES:
+            return Response({
+                'success': False,
+                'message': 'Anda tidak memiliki izin mengakses rekap ibadah'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        kelas = (request.query_params.get('kelas') or '').strip()
+        if not kelas:
+            return Response({
+                'success': False,
+                'message': 'Parameter kelas wajib diisi'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        today = timezone.localdate()
+        start_date = parse_date(request.query_params.get('start_date') or '')
+        end_date = parse_date(request.query_params.get('end_date') or '')
+
+        if not end_date:
+            end_date = today
+        if not start_date:
+            start_date = end_date - timedelta(days=29)
+
+        if start_date > end_date:
+            return Response({
+                'success': False,
+                'message': 'start_date tidak boleh lebih besar dari end_date'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        students = Student.objects.filter(
+            kelas=kelas,
+            aktif=True
+        ).order_by('nama')
+
+        records = Ibadah.objects.filter(
+            siswa__in=students,
+            jenis='sholat_wajib',
+            waktu__in=self.WAKTU_SHOLAT,
+            tanggal__range=(start_date, end_date),
+            status='hadir'
+        ).values_list('siswa__nisn', 'waktu').distinct()
+
+        hadir_set = set(records)
+        rows = []
+        for student in students:
+            rows.append({
+                'nisn': student.nisn,
+                'nama': student.nama,
+                'kelas': student.kelas,
+                'ibadah': {
+                    waktu: (student.nisn, waktu) in hadir_set
+                    for waktu in self.WAKTU_SHOLAT
+                }
+            })
+
+        return Response({
+            'success': True,
+            'kelas': kelas,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'columns': self.WAKTU_SHOLAT,
+            'data': rows
+        })
 
 
 @api_view(['GET'])
@@ -4789,6 +4866,80 @@ def hafalan_kelompok_set_ketua(request, pk, nisn):
     anggota.is_ketua = is_ketua
     anggota.save()
     return Response({'success': True})
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def download_hafalan_template(request):
+    """
+    Generate template import target/capaian hafalan.
+    """
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment
+        from openpyxl.worksheet.datavalidation import DataValidation
+    except ImportError:
+        return Response({
+            'success': False,
+            'message': 'openpyxl tidak terinstall. Jalankan: pip install openpyxl'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Import Hafalan'
+
+    headers = ['nisn', 'nama', 'kelas', 'target_halaman', 'capaian_halaman']
+    examples = ['1234567890', 'Contoh Santri', 'X A', 120, 80]
+    notes = [
+        'Wajib. Jangan ubah format NISN.',
+        'Opsional, hanya untuk referensi.',
+        'Opsional, hanya untuk referensi.',
+        'Opsional. Target total halaman hafalan.',
+        'Opsional. Capaian total halaman hafalan saat ini.'
+    ]
+
+    header_fill = PatternFill(start_color='D1FAE5', end_color='D1FAE5', fill_type='solid')
+    note_fill = PatternFill(start_color='FEF3C7', end_color='FEF3C7', fill_type='solid')
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.font = Font(bold=True, color='065F46')
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+        ws.cell(row=2, column=col_idx, value=examples[col_idx - 1])
+        note_cell = ws.cell(row=3, column=col_idx, value=notes[col_idx - 1])
+        note_cell.fill = note_fill
+        note_cell.alignment = Alignment(wrap_text=True)
+
+    ws.freeze_panes = 'A4'
+    ws.column_dimensions['A'].width = 18
+    ws.column_dimensions['B'].width = 28
+    ws.column_dimensions['C'].width = 12
+    ws.column_dimensions['D'].width = 18
+    ws.column_dimensions['E'].width = 18
+
+    number_validation = DataValidation(
+        type='whole',
+        operator='between',
+        formula1='0',
+        formula2='604',
+        allow_blank=True
+    )
+    number_validation.error = 'Isi angka halaman antara 0 sampai 604.'
+    ws.add_data_validation(number_validation)
+    number_validation.add('D2:E500')
+
+    from io import BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="template_import_hafalan.xlsx"'
+    return response
 
 
 @api_view(['GET'])

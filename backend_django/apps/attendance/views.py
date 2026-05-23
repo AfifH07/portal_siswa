@@ -842,7 +842,10 @@ def get_attendance_history(request):
 
     # First, get all data grouped by tanggal, kelas, jam_ke, mata_pelajaran
     raw_data = queryset.values(
-        'tanggal', 'nisn__kelas', 'jam_ke', 'mata_pelajaran'
+        'tanggal', 'nisn__kelas', 'jam_ke', 'mata_pelajaran',
+        'materi', 'tujuan_pembelajaran', 'capaian_pembelajaran', 'catatan',
+        'tipe_pengajar', 'guru_pengganti__name',
+        'ada_penilaian', 'ketuntasan_materi'
     ).annotate(
         total_students=Count('nisn', distinct=True),
         hadir=Count('id', filter=Q(status='Hadir')),
@@ -866,21 +869,36 @@ def get_attendance_history(request):
                 'hadir': 0,
                 'sakit': 0,
                 'izin': 0,
-                'alpha': 0
+                'alpha': 0,
+                'materi': '',
+                'tujuan_pembelajaran': '',
+                'capaian_pembelajaran': '',
+                'catatan': '',
+                'tipe_pengajar': item['tipe_pengajar'] or 'guru_pengampu',
+                'guru_pengganti_nama': item['guru_pengganti__name'],
+                'ada_penilaian': item['ada_penilaian'],
+                'ketuntasan_materi': item['ketuntasan_materi'] or 0
             }
 
         # Append jam_ke to list
         merged_data[key]['jam_ke_list'].append(item['jam_ke'])
-        # Use max for total_students (same students across JPs)
-        merged_data[key]['total_students'] = max(
-            merged_data[key]['total_students'],
-            item['total_students']
-        )
+        # Total seharusnya = jumlah siswa per JP yang digabung.
+        # Jika 25 siswa mengikuti 6 JP, pembagi yang benar adalah 150,
+        # bukan 25; ini mencegah persentase hadir melebihi 100%.
+        merged_data[key]['total_students'] += item['total_students']
         # Sum attendance counts
         merged_data[key]['hadir'] += item['hadir']
         merged_data[key]['sakit'] += item['sakit']
         merged_data[key]['izin'] += item['izin']
         merged_data[key]['alpha'] += item['alpha']
+        if item['materi'] and not merged_data[key]['materi']:
+            merged_data[key]['materi'] = item['materi']
+        if item['tujuan_pembelajaran'] and not merged_data[key]['tujuan_pembelajaran']:
+            merged_data[key]['tujuan_pembelajaran'] = item['tujuan_pembelajaran']
+        if item['capaian_pembelajaran'] and not merged_data[key]['capaian_pembelajaran']:
+            merged_data[key]['capaian_pembelajaran'] = item['capaian_pembelajaran']
+        if item['catatan'] and not merged_data[key]['catatan']:
+            merged_data[key]['catatan'] = item['catatan']
 
     # Convert to list and sort
     merged_list = list(merged_data.values())
@@ -897,6 +915,11 @@ def get_attendance_history(request):
     for item in paginated_data:
         jam_ke_list = sorted(item['jam_ke_list'])
         jam_labels = [f"JP {j}" for j in jam_ke_list]
+        total_students = item['total_students'] or 0
+        persentase_hadir = min(
+            round((item['hadir'] / total_students) * 100, 2),
+            100
+        ) if total_students > 0 else 0
 
         results.append({
             'id': f"{item['tanggal']}_{item['kelas']}_{'-'.join(map(str, jam_ke_list))}",
@@ -906,11 +929,20 @@ def get_attendance_history(request):
             'jam_ke_display': ', '.join(map(str, jam_ke_list)),  # "2, 3, 4"
             'jam_labels': jam_labels,  # ["JP 2", "JP 3", "JP 4"]
             'mata_pelajaran': item['mata_pelajaran'],
-            'total_students': item['total_students'],
+            'total_students': total_students,
             'hadir': item['hadir'],
             'sakit': item['sakit'],
             'izin': item['izin'],
-            'alpha': item['alpha']
+            'alpha': item['alpha'],
+            'persentase_hadir': persentase_hadir,
+            'materi': item['materi'],
+            'tujuan_pembelajaran': item['tujuan_pembelajaran'],
+            'capaian_pembelajaran': item['capaian_pembelajaran'],
+            'catatan': item['catatan'],
+            'tipe_pengajar': item['tipe_pengajar'],
+            'guru_pengganti_nama': item['guru_pengganti_nama'],
+            'ada_penilaian': item['ada_penilaian'],
+            'ketuntasan_materi': item['ketuntasan_materi']
         })
 
     return Response({

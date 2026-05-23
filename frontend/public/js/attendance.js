@@ -1270,7 +1270,7 @@ function renderTable() {
         return;
     }
 
-    tbody.innerHTML = attendanceData.map(item => {
+    tbody.innerHTML = attendanceData.map((item, index) => {
         const total = item.total_students || 0;
         const date = new Date(item.tanggal);
         const dateFormatted = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -1278,7 +1278,6 @@ function renderTable() {
 
         let jamKeArray = Array.isArray(item.jam_ke) ? item.jam_ke : [item.jam_ke || 1];
         const jpChips = jamKeArray.map(jp => `<span class="jp-chip">${jp}</span>`).join('');
-        const jamKeParam = JSON.stringify(jamKeArray);
 
         return `
             <tr>
@@ -1297,13 +1296,20 @@ function renderTable() {
                 <td class="num-cell num-izin">${item.izin || 0}</td>
                 <td class="num-cell num-alpha">${item.alpha || 0}</td>
                 <td>
-                    <button class="btn-lihat" onclick='viewDetail("${item.kelas}", "${item.tanggal}", ${jamKeParam})'>
+                    <button class="btn-lihat btn-jurnal-detail" data-index="${index}">
                         👁 Lihat
                     </button>
                 </td>
             </tr>
         `;
     }).join('');
+
+    tbody.querySelectorAll('.btn-jurnal-detail').forEach(btn => {
+        btn.onclick = function() {
+            const index = parseInt(this.dataset.index, 10);
+            openJurnalDetailModal(attendanceData[index]);
+        };
+    });
 }
 
 function updateStats(data) {
@@ -2058,7 +2064,7 @@ function openJurnalDetailModal(jurnalData) {
     setField('jurnal-detail-jam', jamKe);
 
     setField('jurnal-detail-kelas', jurnalData.kelas);
-    setField('jurnal-detail-mapel', jurnalData.mata_pelajaran);
+    setField('jurnal-detail-mapel', jurnalData.mata_pelajaran || jurnalData.mapel);
 
     // Tipe pengajar
     const tipePengajarDisplay = jurnalData.tipe_pengajar === 'guru_piket'
@@ -2069,8 +2075,9 @@ function openJurnalDetailModal(jurnalData) {
     // Guru piket (only show if guru_piket)
     const piketEl = document.getElementById('jurnal-detail-piket');
     if (piketEl) {
-        if (jurnalData.tipe_pengajar === 'guru_piket' && jurnalData.guru_piket_nama) {
-            piketEl.textContent = jurnalData.guru_piket_nama;
+        const guruPiketNama = jurnalData.guru_piket_nama || jurnalData.guru_pengganti_nama;
+        if (jurnalData.tipe_pengajar === 'guru_piket' && guruPiketNama) {
+            piketEl.textContent = guruPiketNama;
             piketEl.closest('.jurnal-detail-item').style.display = '';
         } else {
             piketEl.closest('.jurnal-detail-item').style.display = 'none';
@@ -2082,7 +2089,7 @@ function openJurnalDetailModal(jurnalData) {
     setField('jurnal-detail-catatan', jurnalData.catatan);
 
     // Ketuntasan materi with progress bar
-    const ketuntasan = jurnalData.ketuntasan_materi || 0;
+    const ketuntasan = Math.min(Math.max(parseInt(jurnalData.ketuntasan_materi, 10) || 0, 0), 100);
     const ketuntasanPct = document.getElementById('jurnal-detail-ketuntasan');
     const ketuntasanFill = document.getElementById('jurnal-detail-ketuntasan-fill');
     if (ketuntasanPct) ketuntasanPct.textContent = ketuntasan + '%';

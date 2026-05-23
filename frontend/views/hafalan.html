@@ -614,13 +614,13 @@
                         <ol>
                             <li>Download template Excel terlebih dahulu</li>
                             <li>Isi data sesuai format yang ditentukan</li>
-                            <li>Kolom wajib: <code>nisn</code>, <code>tanggal</code>, <code>jumlah_halaman</code></li>
-                            <li>Kolom opsional: <code>juz</code>, <code>halaman_dari</code>, <code>halaman_sampai</code>, <code>catatan</code></li>
-                            <li>Format tanggal: <code>YYYY-MM-DD</code> (contoh: 2026-05-04)</li>
+                            <li>Kolom wajib: <code>nisn</code></li>
+                            <li>Kolom opsional: <code>nama</code>, <code>kelas</code>, <code>target_halaman</code>, <code>capaian_halaman</code></li>
+                            <li>Isi target/capaian halaman dengan angka 0-604</li>
                             <li>Upload file Excel (.xlsx atau .xls)</li>
                         </ol>
                         <div class="import-actions">
-                            <a href="/static/templates/template_import_hafalan.xlsx" class="btn btn-outline" download>
+                            <a href="/api/kesantrian/hafalan/template/" class="btn btn-outline" download>
                                 <i data-lucide="download"></i> Download Template
                             </a>
                         </div>
@@ -1046,10 +1046,10 @@
 <script src="/static/js/utils.js?v=20260504" defer></script>
 <script src="/static/js/apiConfig.js?v=20260504" defer></script>
 <script src="/static/js/apiFetch.js?v=20260504" defer></script>
-<script src="/static/js/auth-check.js?v=20260518a" defer></script>
+<script src="/static/js/auth-check.js?v=20260523b" defer></script>
 <script src="/static/js/auth.js?v=20260504" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/hafalan.js?v=20260518d" defer></script>
+<script src="/static/js/hafalan.js?v=20260523c" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init
