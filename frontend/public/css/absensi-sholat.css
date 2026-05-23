@@ -61,6 +61,11 @@
     font-weight: 700;
     color: #111827;
 }
+.as-card-subtitle {
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 3px;
+}
 .as-student-count {
     font-size: 12px;
     color: #6b7280;
@@ -274,4 +279,156 @@
 }
 .edit-btn-delete:hover {
     background: #fecaca;
+}
+
+/* Tab Rekap Kelas */
+.rekap-card {
+    overflow: visible;
+}
+
+.rekap-filter-bar {
+    display: grid;
+    grid-template-columns: minmax(180px, 1.4fr) repeat(4, minmax(130px, 1fr));
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fcfdfc;
+}
+
+.rekap-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rekap-field label {
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.rekap-field select,
+.rekap-field input[type="date"] {
+    background: #fff;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    color: #111827;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 12px;
+}
+
+.rekap-field select:focus,
+.rekap-field input[type="date"]:focus {
+    border-color: #10b981;
+    outline: none;
+}
+
+.rekap-action .as-btn-load {
+    min-height: 37px;
+}
+
+.rekap-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.rekap-summary-card {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 13px 14px;
+}
+
+.rekap-summary-label {
+    color: #6b7280;
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.rekap-summary-card strong {
+    color: #064e3b;
+    display: block;
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.rekap-table-wrap {
+    border-radius: 0 0 12px 12px;
+}
+
+.rekap-table {
+    min-width: 820px;
+}
+
+.rekap-table thead th:first-child {
+    min-width: auto;
+    text-align: center;
+}
+
+.rekap-table tbody td {
+    text-align: center;
+}
+
+.rekap-table tbody td:nth-child(2) {
+    color: #111827;
+    font-weight: 700;
+    text-align: left;
+}
+
+.rekap-empty {
+    color: #9ca3af;
+    padding: 38px 20px !important;
+    text-align: center !important;
+}
+
+.rekap-status-ok {
+    align-items: center;
+    background: #dcfce7;
+    border-radius: 999px;
+    color: #15803d;
+    display: inline-flex;
+    font-weight: 900;
+    height: 26px;
+    justify-content: center;
+    width: 26px;
+}
+
+.rekap-status-empty {
+    color: #9ca3af;
+    font-weight: 800;
+}
+
+.rekap-score {
+    background: #ecfdf5;
+    border-radius: 999px;
+    color: #047857;
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 4px 10px;
+}
+
+@media (max-width: 900px) {
+    .rekap-filter-bar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .rekap-summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .rekap-filter-bar,
+    .rekap-summary-grid {
+        grid-template-columns: 1fr;
+    }
 }

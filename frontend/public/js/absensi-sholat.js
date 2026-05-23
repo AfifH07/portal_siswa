@@ -16,6 +16,7 @@ const WAKTU_LABEL = {
     maghrib: 'Maghrib',
     isya: 'Isya'
 };
+const REKAP_ROLES = ['superadmin', 'admin', 'guru', 'musyrif'];
 const EDIT_STATUS_OPTIONS = [
     { value: '',            label: '-- Pilih --' },
     { value: 'hadir',       label: 'Hadir' },
@@ -71,6 +72,22 @@ function appendKelasOptions(select) {
     });
 }
 
+function getCurrentRole() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return user.role || window.getUserRole?.() || document.body.dataset.role || '';
+}
+
+function isRekapRole() {
+    return REKAP_ROLES.includes(getCurrentRole());
+}
+
+function formatDateInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function buildSelectHTML(nisn, waktu, defaultVal = 'hadir') {
     const opts = STATUS_OPTIONS.map(o =>
         `<option value="${o.value}"${o.value === defaultVal ? ' selected' : ''}>${o.label}</option>`
@@ -95,6 +112,7 @@ async function loadKelas() {
         kelasList = d.classes || d || [];
         appendKelasOptions(document.getElementById('as-kelas'));
         appendKelasOptions(document.getElementById('edit-kelas-select'));
+        appendKelasOptions(document.getElementById('rekap-kelas-select'));
     } catch (e) {
         console.error('[absensi-sholat] gagal load kelas:', e);
         showAlert('Gagal memuat daftar kelas: ' + e.message, 'error');
@@ -488,12 +506,214 @@ async function hapusEditRecord(id, waktu) {
     }
 }
 
+function initRekapTab() {
+    const tabBtn = document.getElementById('tab-btn-rekap-kelas');
+    if (tabBtn) tabBtn.style.display = isRekapRole() ? '' : 'none';
+
+    const rangeSelect = document.getElementById('rekap-range-select');
+    const loadBtn = document.getElementById('btn-rekap-kelas');
+
+    setDefaultRekapRange();
+    toggleRekapCustomDates();
+
+    if (rangeSelect) {
+        rangeSelect.onchange = function() {
+            toggleRekapCustomDates();
+            if (this.value !== 'custom') setDefaultRekapRange();
+        };
+    }
+
+    if (loadBtn) {
+        loadBtn.onclick = loadRekapKelas;
+    }
+}
+
+function setDefaultRekapRange() {
+    const rangeSelect = document.getElementById('rekap-range-select');
+    const startInput = document.getElementById('rekap-start-date');
+    const endInput = document.getElementById('rekap-end-date');
+    if (!rangeSelect || !startInput || !endInput) return;
+
+    const days = rangeSelect.value === 'custom' ? 30 : parseInt(rangeSelect.value || '30', 10);
+    const end = new Date();
+    const start = new Date(end);
+    start.setDate(start.getDate() - Math.max(days - 1, 0));
+
+    startInput.value = formatDateInput(start);
+    endInput.value = formatDateInput(end);
+}
+
+function toggleRekapCustomDates() {
+    const isCustom = document.getElementById('rekap-range-select')?.value === 'custom';
+    document.querySelectorAll('.rekap-custom-date').forEach(el => {
+        el.style.display = isCustom ? '' : 'none';
+    });
+}
+
+function getRekapDateRange() {
+    const range = document.getElementById('rekap-range-select')?.value || '30';
+    const startInput = document.getElementById('rekap-start-date');
+    const endInput = document.getElementById('rekap-end-date');
+
+    if (range !== 'custom') {
+        const days = parseInt(range, 10) || 30;
+        const end = new Date();
+        const start = new Date(end);
+        start.setDate(start.getDate() - Math.max(days - 1, 0));
+        return {
+            startDate: formatDateInput(start),
+            endDate: formatDateInput(end)
+        };
+    }
+
+    return {
+        startDate: startInput?.value || '',
+        endDate: endInput?.value || ''
+    };
+}
+
+async function loadRekapKelas() {
+    const kelas = document.getElementById('rekap-kelas-select')?.value || '';
+    const tbody = document.getElementById('rekap-kelas-body');
+    const summary = document.getElementById('rekap-kelas-summary');
+    const btn = document.getElementById('btn-rekap-kelas');
+    if (!tbody) return;
+
+    if (!kelas) {
+        if (summary) summary.style.display = 'none';
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="rekap-empty">
+                    Pilih kelas untuk melihat rekap absensi sholat.
+                </td>
+            </tr>
+        `;
+        showAlert('Pilih kelas terlebih dahulu.', 'error');
+        return;
+    }
+
+    const { startDate, endDate } = getRekapDateRange();
+    if (!startDate || !endDate) {
+        showAlert('Pilih rentang tanggal terlebih dahulu.', 'error');
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Memuat...';
+    }
+    if (summary) summary.style.display = 'none';
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" class="rekap-empty">
+                Memuat data rekap...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const params = new URLSearchParams({
+            kelas,
+            start_date: startDate,
+            end_date: endDate
+        });
+        const res = await window.apiFetch(`kesantrian/ibadah/rekap/?${params.toString()}`);
+        const data = await parseApiResponse(res, 'loadRekapKelas');
+        renderRekapKelas(data);
+    } catch (e) {
+        console.error('[absensi-sholat] loadRekapKelas error:', e);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="rekap-empty" style="color:#b91c1c;">
+                    Gagal memuat rekap absensi sholat.
+                </td>
+            </tr>
+        `;
+        showAlert('Gagal memuat rekap: ' + e.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Tampilkan';
+        }
+    }
+}
+
+function renderRekapKelas(data) {
+    const tbody = document.getElementById('rekap-kelas-body');
+    const summary = document.getElementById('rekap-kelas-summary');
+    if (!tbody) return;
+
+    const columns = data.columns || WAKTU_LIST;
+    const rows = (data.data || []).map(row => {
+        const score = columns.reduce((total, waktu) => {
+            return total + (row.ibadah && row.ibadah[waktu] ? 1 : 0);
+        }, 0);
+        return { ...row, score };
+    }).sort((a, b) => b.score - a.score || String(a.nama || '').localeCompare(String(b.nama || '')));
+
+    if (!rows.length) {
+        if (summary) summary.style.display = 'none';
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="rekap-empty">
+                    Belum ada data absensi untuk kelas dan periode ini.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    renderRekapSummary(rows, columns);
+
+    tbody.innerHTML = rows.map((row, index) => `
+        <tr>
+            <td>${index + 1}</td>
+            <td>
+                <div>${escapeText(row.nama || '-')}</div>
+                <div class="as-student-meta">${escapeText(row.nisn || '')}</div>
+            </td>
+            ${WAKTU_LIST.map(waktu => `
+                <td>${renderRekapCell(row.ibadah && row.ibadah[waktu])}</td>
+            `).join('')}
+            <td><span class="rekap-score">${row.score}/5</span></td>
+        </tr>
+    `).join('');
+}
+
+function renderRekapSummary(rows, columns) {
+    const summary = document.getElementById('rekap-kelas-summary');
+    if (!summary) return;
+
+    const total = rows.length;
+    const pctFor = (waktu) => {
+        if (!total) return 0;
+        const hadir = rows.filter(row => row.ibadah && row.ibadah[waktu]).length;
+        return Math.round((hadir / total) * 100);
+    };
+
+    const topScore = Math.max(...rows.map(row => row.score));
+    const topSantri = rows.find(row => row.score === topScore);
+
+    document.getElementById('rekap-total-santri').textContent = total;
+    document.getElementById('rekap-subuh-pct').textContent = `${pctFor('subuh')}%`;
+    document.getElementById('rekap-isya-pct').textContent = `${pctFor('isya')}%`;
+    document.getElementById('rekap-top-santri').textContent =
+        topSantri ? `${topSantri.nama || '-'} (${topScore}/${columns.length})` : '-';
+    summary.style.display = 'grid';
+}
+
+function renderRekapCell(isHadir) {
+    if (isHadir) return '<span class="rekap-status-ok">&#10003;</span>';
+    return '<span class="rekap-status-empty">&ndash;</span>';
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('as-tanggal').value = today;
 
     initTabs();
     initEditTab();
+    initRekapTab();
     loadKelas();
 
     document.getElementById('as-btn-load').onclick = loadSantri;
@@ -505,4 +725,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (typeof window.logout === 'function') window.logout();
         };
     });
+});
+
+window.addEventListener('load', function() {
+    initRekapTab();
 });

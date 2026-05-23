@@ -10,7 +10,7 @@
 
     <!-- Baron Light Emerald Theme -->
     <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
-    <link href="/static/css/absensi-sholat.css?v=20260516b" rel="stylesheet">
+    <link href="/static/css/absensi-sholat.css?v=20260523a" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -71,6 +71,7 @@
       <div class="abs-tabs">
         <button class="abs-tab-btn active" data-tab="input">Input Absensi</button>
         <button class="abs-tab-btn" data-tab="edit">Edit Absensi</button>
+        <button class="abs-tab-btn" data-tab="rekap" id="tab-btn-rekap-kelas" style="display:none;">Rekap Kelas</button>
       </div>
 
       <div id="tab-input" class="abs-tab-panel">
@@ -142,6 +143,91 @@
         </div>
         <div id="edit-result-area"></div>
       </div>
+
+      <div id="tab-rekap" class="abs-tab-panel" style="display:none;">
+        <div class="as-card rekap-card">
+          <div class="as-card-header">
+            <div>
+              <span class="as-card-title">Rekap Absensi Sholat per Kelas</span>
+              <div class="as-card-subtitle">Lihat ringkasan kehadiran sholat wajib santri dalam periode tertentu.</div>
+            </div>
+            <span class="as-student-count">Sholat Wajib</span>
+          </div>
+
+          <div class="rekap-filter-bar">
+            <div class="rekap-field">
+              <label for="rekap-kelas-select">Kelas</label>
+              <select id="rekap-kelas-select">
+                <option value="">-- Pilih Kelas --</option>
+              </select>
+            </div>
+            <div class="rekap-field">
+              <label for="rekap-range-select">Range</label>
+              <select id="rekap-range-select">
+                <option value="7">7 hari</option>
+                <option value="14">14 hari</option>
+                <option value="30" selected>30 hari</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div class="rekap-field rekap-custom-date" style="display:none;">
+              <label for="rekap-start-date">Dari</label>
+              <input type="date" id="rekap-start-date">
+            </div>
+            <div class="rekap-field rekap-custom-date" style="display:none;">
+              <label for="rekap-end-date">Sampai</label>
+              <input type="date" id="rekap-end-date">
+            </div>
+            <div class="rekap-field rekap-action">
+              <label>&nbsp;</label>
+              <button id="btn-rekap-kelas" class="as-btn-load">Tampilkan</button>
+            </div>
+          </div>
+
+          <div id="rekap-kelas-summary" class="rekap-summary-grid" style="display:none;">
+            <div class="rekap-summary-card">
+              <span class="rekap-summary-label">Total Santri</span>
+              <strong id="rekap-total-santri">0</strong>
+            </div>
+            <div class="rekap-summary-card">
+              <span class="rekap-summary-label">Rata-rata Subuh</span>
+              <strong id="rekap-subuh-pct">0%</strong>
+            </div>
+            <div class="rekap-summary-card">
+              <span class="rekap-summary-label">Rata-rata Isya</span>
+              <strong id="rekap-isya-pct">0%</strong>
+            </div>
+            <div class="rekap-summary-card">
+              <span class="rekap-summary-label">Paling Konsisten</span>
+              <strong id="rekap-top-santri">-</strong>
+            </div>
+          </div>
+
+          <div class="as-table-wrap rekap-table-wrap">
+            <table class="as-table rekap-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Santri</th>
+                  <th>Subuh</th>
+                  <th>Dzuhur</th>
+                  <th>Ashar</th>
+                  <th>Maghrib</th>
+                  <th>Isya</th>
+                  <th>Skor</th>
+                </tr>
+              </thead>
+              <tbody id="rekap-kelas-body">
+                <tr>
+                  <td colspan="8" class="rekap-empty">
+                    Pilih kelas untuk melihat rekap absensi sholat.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </main>
@@ -156,7 +242,7 @@
 <script src="/static/js/auth-check.js?v=20260523b" defer></script>
 <script src="/static/js/auth.js?v=20260504" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/absensi-sholat.js?v=20260516d" defer></script>
+<script src="/static/js/absensi-sholat.js?v=20260523a" defer></script>
 
 <script>
     window.addEventListener('load', function() {
