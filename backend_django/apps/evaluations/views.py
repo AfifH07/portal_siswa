@@ -140,7 +140,11 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
-        # Filter by is_approved
+        # Filter pending/approval status
+        pending = self.request.query_params.get('pending')
+        if pending is not None and pending.lower() == 'true':
+            queryset = queryset.filter(is_approved=False)
+
         is_approved = self.request.query_params.get('is_approved')
         if is_approved is not None:
             queryset = queryset.filter(is_approved=(is_approved.lower() == 'true'))
@@ -610,7 +614,7 @@ def evaluation_comments(request, evaluation_id):
         }, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        comments = EvaluationComment.objects.filter(evaluation=evaluation).select_related('user')
+        comments = EvaluationComment.objects.filter(evaluation=evaluation).select_related('user', 'parent__user')
 
         # Walisantri hanya bisa lihat comment dengan visibility='semua'
         if request.user.role == 'walisantri':
@@ -661,8 +665,8 @@ def delete_comment(request, comment_id):
     try:
         comment = EvaluationComment.objects.get(pk=comment_id)
 
-        # Check permission: owner or admin
-        if comment.user != request.user and request.user.role not in ['superadmin', 'admin', 'pimpinan']:
+        # Check permission: owner or superadmin/admin
+        if comment.user != request.user and request.user.role not in ['superadmin', 'admin']:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki izin untuk menghapus tanggapan ini'

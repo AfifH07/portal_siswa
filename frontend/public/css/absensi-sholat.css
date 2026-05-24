@@ -405,6 +405,31 @@
     font-weight: 800;
 }
 
+.rekap-status-count {
+    border-radius: 999px;
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 900;
+    min-width: 56px;
+    padding: 5px 9px;
+}
+
+.rekap-status-good {
+    background: #16a34a;
+    color: #fff;
+}
+
+.rekap-status-watch {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.rekap-status-bad {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
 .rekap-score {
     background: #ecfdf5;
     border-radius: 999px;

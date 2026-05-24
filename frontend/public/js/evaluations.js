@@ -21,6 +21,7 @@ let trendChart = null;
 let allStudents = [];
 let currentWizardStep = 1;
 let statisticsLoaded = false;
+let currentEvaluationDetailId = null;
 
 // Category Icons
 const KATEGORI_ICONS = {
@@ -785,7 +786,7 @@ async function loadPendingEvaluations() {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="loading-spinner"></div></td></tr>`;
 
     try {
-        const response = await window.apiFetch('evaluations/?is_approved=false&page_size=100');
+        const response = await window.apiFetch('evaluations/?pending=true&page_size=100');
         if (!response.ok) throw new Error('Failed to load pending evaluations');
 
         const data = await response.json();
@@ -1091,12 +1092,12 @@ async function handleFormSubmit(e) {
         let response;
 
         if (editingEvaluation) {
-            response = await window.apiFetch(`/evaluations/${editingEvaluation.id}/`, {
+            response = await window.apiFetch(`evaluations/${editingEvaluation.id}/`, {
                 method: 'PUT',
                 body: formData
             });
         } else {
-            response = await window.apiFetch('/evaluations/', {
+            response = await window.apiFetch('evaluations/', {
                 method: 'POST',
                 body: formData
             });
@@ -1138,6 +1139,9 @@ async function handleFormSubmit(e) {
 
         // Refresh data
         loadEvaluations(currentPage);
+        if (!editingEvaluation && canManageEvaluationApprovals()) {
+            loadPendingEvaluations();
+        }
         loadStatistics();
 
         // Reset editing state
@@ -1204,6 +1208,7 @@ function resetWizardState() {
 
 async function viewEvaluation(id) {
     try {
+        currentEvaluationDetailId = id;
         const response = await window.apiFetch(`/evaluations/${id}/`);
 
         if (!response.ok) throw new Error('Failed to load evaluation');
@@ -1300,6 +1305,11 @@ async function viewEvaluation(id) {
                 <div class="add-comment-section" style="margin-top: 24px; padding: 16px; background: var(--gray-50); border-radius: var(--radius-md);">
                     <h4 style="margin: 0 0 12px;">💬 Tambah Pembinaan</h4>
                     <form id="eval-comment-form" onsubmit="return window.submitEvaluationComment(event, ${evaluation.id})">
+                        <input type="hidden" id="eval-comment-parent" value="">
+                        <div id="eval-reply-context" style="display:none;margin-bottom:12px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:12px;color:#9a3412;">
+                            <span id="eval-reply-context-text"></span>
+                            <button type="button" id="btn-cancel-eval-reply" style="margin-left:8px;border:none;background:transparent;color:#9a3412;font-weight:700;cursor:pointer;">Batal</button>
+                        </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label style="display: block; margin-bottom: 6px; font-weight: 600;">Jenis</label>
@@ -1404,6 +1414,7 @@ async function viewEvaluation(id) {
                 approveEvaluation(this.dataset.id);
             };
         }
+        bindEvaluationCommentActions(evaluation.id);
 
         document.getElementById('view-modal').classList.add('active');
     } catch (error) {
@@ -1425,7 +1436,19 @@ function renderEvaluationComments(comments, userRole) {
         `;
     }
 
-    const commentsHtml = comments.map(comment => {
+    const currentUserId = currentUser?.id || JSON.parse(localStorage.getItem('user') || '{}').id;
+    const isAdmin = ['superadmin', 'admin'].includes(currentUser?.role || userRole);
+    const canReply = ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin', 'admin'].includes(userRole);
+    const byParent = {};
+    const byId = {};
+    comments.forEach(comment => {
+        byId[comment.id] = comment;
+        const parentId = comment.parent || null;
+        if (!byParent[parentId]) byParent[parentId] = [];
+        byParent[parentId].push(comment);
+    });
+
+    const renderComment = (comment, depth = 0) => {
         const commentDate = comment.created_at ? new Date(comment.created_at).toLocaleDateString('id-ID', {
             day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
         }) : '-';
@@ -1446,11 +1469,25 @@ function renderEvaluationComments(comments, userRole) {
             </div>
         ` : '';
 
+        const authorName = comment.user_nama || comment.user_name || 'User';
+        const showDelete = isAdmin || String(comment.user_id || comment.user) === String(currentUserId);
+        const parentName = comment.parent_user_nama || (comment.parent && byId[comment.parent]?.user_nama) || '';
+        const replyContext = depth > 0 && parentName
+            ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Membalas @${escapeHtml(parentName)}</div>`
+            : '';
+        const actionHtml = `
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+                ${canReply ? `<button type="button" class="eval-comment-reply-btn" data-id="${escapeAttr(comment.id)}" data-name="${escapeAttr(authorName)}" style="border:none;background:none;color:var(--emerald-600,#059669);font-size:12px;font-weight:700;cursor:pointer;padding:0;">Balas</button>` : ''}
+                ${showDelete ? `<button type="button" class="eval-comment-delete-btn" data-id="${escapeAttr(comment.id)}" style="border:none;background:none;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;padding:0;">Hapus</button>` : ''}
+            </div>
+        `;
+        const children = byParent[comment.id] || [];
+
         return `
-            <div class="comment-item" style="padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); margin-bottom: 12px;">
+            <div class="comment-item" style="padding: 12px; background: ${depth > 0 ? '#fff' : 'var(--gray-50)'}; border:${depth > 0 ? '1px solid var(--border-light,#e5e7eb)' : 'none'}; border-left:${depth > 0 ? '3px solid var(--emerald-400,#34d399)' : 'none'}; border-radius: var(--radius-sm); margin: ${depth > 0 ? '0 0 10px 32px' : '0 0 12px 0'};">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                     <div>
-                        <strong>${escapeHtml(comment.user_nama || comment.user_name || 'User')}</strong>
+                        <strong>${escapeHtml(authorName)}</strong>
                         <span class="text-muted" style="font-size: 12px; margin-left: 8px;">${escapeHtml(comment.user_role || '')}</span>
                     </div>
                     <div style="display: flex; gap: 6px; align-items: center;">
@@ -1458,12 +1495,18 @@ function renderEvaluationComments(comments, userRole) {
                         ${visibilityBadge}
                     </div>
                 </div>
+                ${replyContext}
                 <div style="line-height: 1.6;">${escapeHtml(comment.content || '')}</div>
                 ${fotoHtml}
                 <div class="text-muted" style="font-size: 11px; margin-top: 8px;">${commentDate}</div>
+                ${actionHtml}
             </div>
+            ${children.map(child => renderComment(child, depth + 1)).join('')}
         `;
-    }).join('');
+    };
+
+    const roots = byParent[null] || [];
+    const commentsHtml = roots.map(comment => renderComment(comment, 0)).join('');
 
     return `
         <div class="comments-section" style="margin-top: 24px;">
@@ -1494,6 +1537,8 @@ async function submitEvaluationComment(event, evaluationId) {
     formData.append('content', content);
     formData.append('jenis', jenis);
     formData.append('visibility', visibility);
+    const parentId = document.getElementById('eval-comment-parent')?.value || '';
+    if (parentId) formData.append('parent', parentId);
 
     if (fotoInput && fotoInput.files[0]) {
         formData.append('foto', fotoInput.files[0]);
@@ -1509,6 +1554,7 @@ async function submitEvaluationComment(event, evaluationId) {
 
         if (response.ok && data.success) {
             showToast('Tanggapan berhasil ditambahkan');
+            clearEvaluationReplyContext();
             // Refresh the view modal
             viewEvaluation(evaluationId);
         } else {
@@ -1520,6 +1566,71 @@ async function submitEvaluationComment(event, evaluationId) {
     }
 
     return false;
+}
+
+function bindEvaluationCommentActions(evaluationId) {
+    document.querySelectorAll('.eval-comment-reply-btn').forEach(btn => {
+        btn.onclick = function() {
+            startEvaluationReply(this.dataset.id, this.dataset.name);
+        };
+    });
+
+    document.querySelectorAll('.eval-comment-delete-btn').forEach(btn => {
+        btn.onclick = function() {
+            deleteEvaluationComment(this.dataset.id, evaluationId);
+        };
+    });
+
+    const cancelBtn = document.getElementById('btn-cancel-eval-reply');
+    if (cancelBtn) {
+        cancelBtn.onclick = clearEvaluationReplyContext;
+    }
+}
+
+function startEvaluationReply(parentId, parentName) {
+    const parentInput = document.getElementById('eval-comment-parent');
+    const context = document.getElementById('eval-reply-context');
+    const contextText = document.getElementById('eval-reply-context-text');
+    const contentInput = document.getElementById('eval-comment-content');
+
+    if (parentInput) parentInput.value = parentId || '';
+    if (contextText) contextText.textContent = `Membalas @${parentName || 'komentar'}`;
+    if (context) context.style.display = '';
+    if (contentInput) {
+        contentInput.placeholder = `Tulis balasan untuk ${parentName || 'komentar'}...`;
+        contentInput.focus();
+    }
+}
+
+function clearEvaluationReplyContext() {
+    const parentInput = document.getElementById('eval-comment-parent');
+    const context = document.getElementById('eval-reply-context');
+    const contentInput = document.getElementById('eval-comment-content');
+
+    if (parentInput) parentInput.value = '';
+    if (context) context.style.display = 'none';
+    if (contentInput) contentInput.placeholder = 'Tulis tanggapan atau pembinaan...';
+}
+
+async function deleteEvaluationComment(commentId, evaluationId) {
+    if (!confirm('Hapus tanggapan ini?')) return;
+
+    try {
+        const response = await window.apiFetch(`evaluations/comments/${commentId}/`, {
+            method: 'DELETE'
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data.success) {
+            showToast('Tanggapan berhasil dihapus');
+            viewEvaluation(evaluationId || currentEvaluationDetailId);
+        } else {
+            throw new Error(data.message || data.error || 'Gagal menghapus tanggapan');
+        }
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        showToast(error.message || 'Gagal menghapus tanggapan', 'error');
+    }
 }
 
 /**
@@ -2159,3 +2270,6 @@ window.removeIncidentPhoto = removeIncidentPhoto;
 window.submitEvaluationComment = submitEvaluationComment;
 window.closeEvaluationCase = closeEvaluationCase;
 window.renderEvaluationComments = renderEvaluationComments;
+window.startEvaluationReply = startEvaluationReply;
+window.clearEvaluationReplyContext = clearEvaluationReplyContext;
+window.deleteEvaluationComment = deleteEvaluationComment;

@@ -11,7 +11,9 @@ class EvaluationCommentSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.name', read_only=True)
     user_username = serializers.CharField(source='user.username', read_only=True)
     user_role = serializers.CharField(source='user.role', read_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
     user_nama = serializers.SerializerMethodField()
+    parent_user_nama = serializers.SerializerMethodField()
     jenis_display = serializers.CharField(source='get_jenis_display', read_only=True)
     visibility_display = serializers.CharField(source='get_visibility_display', read_only=True)
     foto_url = serializers.SerializerMethodField()
@@ -19,7 +21,8 @@ class EvaluationCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = EvaluationComment
         fields = [
-            'id', 'evaluation', 'user', 'user_name', 'user_username', 'user_role', 'user_nama',
+            'id', 'evaluation', 'user', 'user_id', 'user_name', 'user_username', 'user_role', 'user_nama',
+            'parent', 'parent_user_nama',
             'jenis', 'jenis_display', 'content', 'visibility', 'visibility_display',
             'foto', 'foto_url', 'created_at', 'updated_at'
         ]
@@ -29,6 +32,12 @@ class EvaluationCommentSerializer(serializers.ModelSerializer):
         """Return user.name or user.username"""
         if obj.user:
             return obj.user.name or obj.user.username
+        return None
+
+    def get_parent_user_nama(self, obj):
+        """Return parent comment author name for reply context"""
+        if obj.parent and obj.parent.user:
+            return obj.parent.user.name or obj.parent.user.username
         return None
 
     def get_foto_url(self, obj):
@@ -174,10 +183,20 @@ class EvaluationCommentCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EvaluationComment
-        fields = ['evaluation', 'jenis', 'content', 'visibility']
+        fields = ['evaluation', 'parent', 'jenis', 'content', 'visibility']
         extra_kwargs = {
-            'visibility': {'required': False}  # Default: internal
+            'visibility': {'required': False},  # Default: internal
+            'parent': {'required': False, 'allow_null': True}
         }
+
+    def validate(self, data):
+        parent = data.get('parent')
+        evaluation = data.get('evaluation')
+        if parent and evaluation and parent.evaluation_id != evaluation.id:
+            raise serializers.ValidationError({
+                'parent': 'Parent komentar harus berasal dari evaluasi yang sama'
+            })
+        return data
 
     def validate_jenis(self, value):
         if not value:

@@ -268,15 +268,23 @@ class IbadahRekapView(APIView):
             aktif=True
         ).order_by('nama')
 
+        total_days = (end_date - start_date).days + 1
+
         records = Ibadah.objects.filter(
             siswa__in=students,
             jenis='sholat_wajib',
             waktu__in=self.WAKTU_SHOLAT,
             tanggal__range=(start_date, end_date),
             status='hadir'
-        ).values_list('siswa__nisn', 'waktu').distinct()
+        ).values_list('siswa__nisn', 'waktu', 'tanggal').distinct()
 
-        hadir_set = set(records)
+        hadir_count = {}
+        for nisn, waktu, tanggal in records:
+            key = (nisn, waktu)
+            if key not in hadir_count:
+                hadir_count[key] = set()
+            hadir_count[key].add(tanggal)
+
         rows = []
         for student in students:
             rows.append({
@@ -284,7 +292,10 @@ class IbadahRekapView(APIView):
                 'nama': student.nama,
                 'kelas': student.kelas,
                 'ibadah': {
-                    waktu: (student.nisn, waktu) in hadir_set
+                    waktu: {
+                        'hadir': len(hadir_count.get((student.nisn, waktu), set())),
+                        'total': total_days,
+                    }
                     for waktu in self.WAKTU_SHOLAT
                 }
             })

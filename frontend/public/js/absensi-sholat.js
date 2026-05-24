@@ -645,11 +645,15 @@ function renderRekapKelas(data) {
 
     const columns = data.columns || WAKTU_LIST;
     const rows = (data.data || []).map(row => {
-        const score = columns.reduce((total, waktu) => {
-            return total + (row.ibadah && row.ibadah[waktu] ? 1 : 0);
-        }, 0);
-        return { ...row, score };
-    }).sort((a, b) => b.score - a.score || String(a.nama || '').localeCompare(String(b.nama || '')));
+        const totals = columns.reduce((acc, waktu) => {
+            const metric = normalizeRekapMetric(row.ibadah && row.ibadah[waktu]);
+            acc.hadir += metric.hadir;
+            acc.total += metric.total;
+            return acc;
+        }, { hadir: 0, total: 0 });
+        const scorePercent = totals.total > 0 ? Math.round((totals.hadir / totals.total) * 100) : 0;
+        return { ...row, scorePercent, hadirTotal: totals.hadir, slotTotal: totals.total };
+    }).sort((a, b) => b.scorePercent - a.scorePercent || String(a.nama || '').localeCompare(String(b.nama || '')));
 
     if (!rows.length) {
         if (summary) summary.style.display = 'none';
@@ -675,7 +679,7 @@ function renderRekapKelas(data) {
             ${WAKTU_LIST.map(waktu => `
                 <td>${renderRekapCell(row.ibadah && row.ibadah[waktu])}</td>
             `).join('')}
-            <td><span class="rekap-score">${row.score}/5</span></td>
+            <td><span class="rekap-score">${row.scorePercent}%</span></td>
         </tr>
     `).join('');
 }
@@ -687,24 +691,54 @@ function renderRekapSummary(rows, columns) {
     const total = rows.length;
     const pctFor = (waktu) => {
         if (!total) return 0;
-        const hadir = rows.filter(row => row.ibadah && row.ibadah[waktu]).length;
-        return Math.round((hadir / total) * 100);
+        const sum = rows.reduce((acc, row) => {
+            const metric = normalizeRekapMetric(row.ibadah && row.ibadah[waktu]);
+            acc.hadir += metric.hadir;
+            acc.total += metric.total;
+            return acc;
+        }, { hadir: 0, total: 0 });
+        return sum.total > 0 ? Math.round((sum.hadir / sum.total) * 100) : 0;
     };
 
-    const topScore = Math.max(...rows.map(row => row.score));
-    const topSantri = rows.find(row => row.score === topScore);
+    const topScore = Math.max(...rows.map(row => row.scorePercent));
+    const topSantri = rows.find(row => row.scorePercent === topScore);
 
     document.getElementById('rekap-total-santri').textContent = total;
     document.getElementById('rekap-subuh-pct').textContent = `${pctFor('subuh')}%`;
     document.getElementById('rekap-isya-pct').textContent = `${pctFor('isya')}%`;
     document.getElementById('rekap-top-santri').textContent =
-        topSantri ? `${topSantri.nama || '-'} (${topScore}/${columns.length})` : '-';
+        topSantri ? `${topSantri.nama || '-'} (${topScore}%)` : '-';
     summary.style.display = 'grid';
 }
 
-function renderRekapCell(isHadir) {
-    if (isHadir) return '<span class="rekap-status-ok">&#10003;</span>';
-    return '<span class="rekap-status-empty">&ndash;</span>';
+function normalizeRekapMetric(value) {
+    if (value && typeof value === 'object') {
+        return {
+            hadir: Number(value.hadir || 0),
+            total: Number(value.total || 0)
+        };
+    }
+
+    // Backward compatibility for cached/old API response.
+    return {
+        hadir: value ? 1 : 0,
+        total: 1
+    };
+}
+
+function renderRekapCell(value) {
+    const metric = normalizeRekapMetric(value);
+    const hadir = metric.hadir;
+    const total = metric.total || 0;
+    const ratio = total > 0 ? hadir / total : 0;
+    let cls = 'rekap-status-bad';
+    if (ratio >= 0.8) {
+        cls = 'rekap-status-good';
+    } else if (ratio >= 0.5) {
+        cls = 'rekap-status-watch';
+    }
+
+    return `<span class="rekap-status-count ${cls}">${hadir}/${total}</span>`;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
