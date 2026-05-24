@@ -190,10 +190,9 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         # PERUBAHAN 5: Set created_by dan evaluator otomatis
         user = self.request.user
         evaluator_name = user.name if hasattr(user, 'name') and user.name else user.username
-        serializer.save(
-            evaluator=evaluator_name,
-            created_by=user  # Set created_by ke user yang membuat
-        )
+        instance = serializer.save(evaluator=evaluator_name)
+        instance.created_by = user
+        instance.save(update_fields=['created_by'])
 
     def update(self, request, *args, **kwargs):
         """Override update to add debug logging and better error response"""

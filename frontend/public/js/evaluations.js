@@ -211,7 +211,8 @@ async function loadCurrentUser() {
 }
 
 function canManageEvaluationApprovals() {
-    return ['superadmin', 'admin', 'pimpinan'].includes(currentUser?.role);
+    const role = currentUser?.role || '';
+    return ['superadmin', 'admin', 'pimpinan'].includes(role);
 }
 
 function setupApprovalTabVisibility() {
@@ -756,7 +757,7 @@ function renderEvaluationsTable() {
         // PERUBAHAN 4: Approval badge
         const approvalBadge = eval.is_approved
             ? '<span class="badge badge-approved" title="Sudah Disetujui">✅ Disetujui</span>'
-            : '<span class="badge badge-pending" title="Belum Disetujui">⏳ Pending</span>';
+            : '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;padding:2px 6px;border-radius:4px;">⏳ Menunggu Persetujuan</span>';
 
         // Column order: No, Tanggal, Kategori, Nama Siswa, Kelas, Deskripsi, Jenis, Approval, Aksi
         return `
@@ -1589,26 +1590,45 @@ function bindEvaluationCommentActions(evaluationId) {
 
 function startEvaluationReply(parentId, parentName) {
     const parentInput = document.getElementById('eval-comment-parent');
-    const context = document.getElementById('eval-reply-context');
-    const contextText = document.getElementById('eval-reply-context-text');
-    const contentInput = document.getElementById('eval-comment-content');
+    if (!parentInput) return;
 
-    if (parentInput) parentInput.value = parentId || '';
-    if (contextText) contextText.textContent = `Membalas @${parentName || 'komentar'}`;
-    if (context) context.style.display = '';
-    if (contentInput) {
-        contentInput.placeholder = `Tulis balasan untuk ${parentName || 'komentar'}...`;
-        contentInput.focus();
+    parentInput.value = parentId || '';
+
+    let replyCtx = document.getElementById('eval-reply-context');
+    if (!replyCtx) {
+        replyCtx = document.createElement('div');
+        replyCtx.id = 'eval-reply-context';
+        replyCtx.style.cssText = 'font-size:12px;color:var(--emerald-600,#059669);padding:4px 8px;background:#ecfdf5;border-radius:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;';
+        parentInput.parentNode.insertBefore(replyCtx, parentInput.nextSibling);
+    }
+
+    const safeName = parentName || 'komentar';
+    replyCtx.innerHTML = `
+        <span>↩ Membalas <strong>@${escapeHtml(safeName)}</strong></span>
+        <button type="button" id="btn-cancel-eval-reply" style="cursor:pointer;margin-left:auto;color:#666;border:none;background:transparent;">✕</button>
+    `;
+    replyCtx.style.display = 'flex';
+
+    const cancelBtn = document.getElementById('btn-cancel-eval-reply');
+    if (cancelBtn) {
+        cancelBtn.onclick = clearEvaluationReplyContext;
+    }
+
+    const textarea = document.querySelector('#eval-comment-form textarea, #eval-comment-content, #eval-comment-input');
+    if (textarea) {
+        textarea.placeholder = `Tulis balasan untuk ${safeName}...`;
+        textarea.focus();
+        textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
 
 function clearEvaluationReplyContext() {
     const parentInput = document.getElementById('eval-comment-parent');
-    const context = document.getElementById('eval-reply-context');
+    const replyCtx = document.getElementById('eval-reply-context');
     const contentInput = document.getElementById('eval-comment-content');
 
     if (parentInput) parentInput.value = '';
-    if (context) context.style.display = 'none';
+    if (replyCtx) replyCtx.style.display = 'none';
     if (contentInput) contentInput.placeholder = 'Tulis tanggapan atau pembinaan...';
 }
 
