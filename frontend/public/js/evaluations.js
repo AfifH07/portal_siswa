@@ -1140,9 +1140,7 @@ async function handleFormSubmit(e) {
 
         // Refresh data
         loadEvaluations(currentPage);
-        if (!editingEvaluation && canManageEvaluationApprovals()) {
-            loadPendingEvaluations();
-        }
+        loadPendingEvaluations();
         loadStatistics();
 
         // Reset editing state
@@ -1444,7 +1442,16 @@ function renderEvaluationComments(comments, userRole) {
     const byId = {};
     comments.forEach(comment => {
         byId[comment.id] = comment;
-        const parentId = comment.parent || null;
+
+        // Normalize parent: bisa integer, object {id:...}, string, atau null
+        let parentId = null;
+        if (comment.parent != null) {
+            parentId = typeof comment.parent === 'object'
+                ? comment.parent.id
+                : Number(comment.parent);
+        }
+        comment._parentId = parentId;
+
         if (!byParent[parentId]) byParent[parentId] = [];
         byParent[parentId].push(comment);
     });
@@ -1472,7 +1479,7 @@ function renderEvaluationComments(comments, userRole) {
 
         const authorName = comment.user_nama || comment.user_name || 'User';
         const showDelete = isAdmin || String(comment.user_id || comment.user) === String(currentUserId);
-        const parentName = comment.parent_user_nama || (comment.parent && byId[comment.parent]?.user_nama) || '';
+        const parentName = comment.parent_user_nama || (comment._parentId && byId[comment._parentId]?.user_nama) || '';
         const replyContext = depth > 0 && parentName
             ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Membalas @${escapeHtml(parentName)}</div>`
             : '';
@@ -1482,7 +1489,7 @@ function renderEvaluationComments(comments, userRole) {
                 ${showDelete ? `<button type="button" class="eval-comment-delete-btn" data-id="${escapeAttr(comment.id)}" style="border:none;background:none;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;padding:0;">Hapus</button>` : ''}
             </div>
         `;
-        const children = byParent[comment.id] || [];
+        const children = byParent[Number(comment.id)] || [];
 
         return `
             <div class="comment-item" style="padding: 12px; background: ${depth > 0 ? '#fff' : 'var(--gray-50)'}; border:${depth > 0 ? '1px solid var(--border-light,#e5e7eb)' : 'none'}; border-left:${depth > 0 ? '3px solid var(--emerald-400,#34d399)' : 'none'}; border-radius: var(--radius-sm); margin: ${depth > 0 ? '0 0 10px 32px' : '0 0 12px 0'};">
