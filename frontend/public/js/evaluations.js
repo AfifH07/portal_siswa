@@ -685,28 +685,14 @@ async function loadEvaluations(page = 1) {
     const kategori = document.getElementById('filter-kategori')?.value || '';
 
     let url = `evaluations/?page=${page}`;
-    // Baca role dari multiple sumber agar robust
-    const role = currentUser?.role
-        || window._currentUserRole
-        || localStorage.getItem('user_role')
-        || sessionStorage.getItem('user_role')
-        || '';
-    // Guru hanya lihat evaluasi miliknya sendiri
-    // (backend sudah filter created_by=user untuk role guru)
-    // Role lain yang approved-only tetap pakai is_approved=true
-    const rolesApprovedOnly = [
-        'pimpinan', 'bk', 'musyrif', 'walisantri'
-    ];
-    if (role && rolesApprovedOnly.includes(role)) {
-        url += '&is_approved=true';
-    } else if (!role) {
-        // Safe default jika role belum terbaca
-        url += '&is_approved=true';
-    }
-    // superadmin dan admin tidak dapat filter,
-    // mereka lihat semua lewat backend
-    // guru tidak dapat filter is_approved,
-    // backend sudah batasi ke created_by=user
+    // Tab utama selalu tampilkan is_approved=true
+    // untuk semua role — termasuk superadmin/admin.
+    // Tab pending (loadPendingEvaluations) yang handle
+    // evaluasi belum disetujui.
+    // Guru tetap mendapat is_approved=true di tab utama;
+    // evaluasi milik sendiri yang pending bisa dilihat
+    // via tab terpisah jika diperlukan nanti.
+    url += '&is_approved=true';
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (jenis) url += `&jenis=${encodeURIComponent(jenis)}`;
     if (kelas) url += `&kelas=${encodeURIComponent(kelas)}`;

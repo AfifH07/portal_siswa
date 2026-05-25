@@ -191,12 +191,16 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
-        # PERUBAHAN 5: Set created_by dan evaluator otomatis
         user = self.request.user
-        evaluator_name = user.name if hasattr(user, 'name') and user.name else user.username
-        instance = serializer.save(evaluator=evaluator_name)
-        instance.created_by = user
-        instance.save(update_fields=['created_by'])
+        evaluator_name = (
+            user.name if hasattr(user, 'name') and user.name
+            else user.username
+        )
+        serializer.save(
+            evaluator=evaluator_name,
+            created_by=user,
+            is_approved=False
+        )
 
     def update(self, request, *args, **kwargs):
         """Override update to add debug logging and better error response"""
