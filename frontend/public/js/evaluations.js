@@ -691,11 +691,22 @@ async function loadEvaluations(page = 1) {
         || localStorage.getItem('user_role')
         || sessionStorage.getItem('user_role')
         || '';
-    const rolesApprovedOnly = ['superadmin', 'admin', 'pimpinan', 'bk', 'walisantri'];
-    const shouldShowApprovedOnly = role
-        ? rolesApprovedOnly.includes(role)
-        : true; // safe default: jangan tampilkan pending jika role tidak terbaca
-    if (shouldShowApprovedOnly) url += '&is_approved=true';
+    // Guru hanya lihat evaluasi miliknya sendiri
+    // (backend sudah filter created_by=user untuk role guru)
+    // Role lain yang approved-only tetap pakai is_approved=true
+    const rolesApprovedOnly = [
+        'pimpinan', 'bk', 'musyrif', 'walisantri'
+    ];
+    if (role && rolesApprovedOnly.includes(role)) {
+        url += '&is_approved=true';
+    } else if (!role) {
+        // Safe default jika role belum terbaca
+        url += '&is_approved=true';
+    }
+    // superadmin dan admin tidak dapat filter,
+    // mereka lihat semua lewat backend
+    // guru tidak dapat filter is_approved,
+    // backend sudah batasi ke created_by=user
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (jenis) url += `&jenis=${encodeURIComponent(jenis)}`;
     if (kelas) url += `&kelas=${encodeURIComponent(kelas)}`;

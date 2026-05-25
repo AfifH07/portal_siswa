@@ -28,62 +28,66 @@ from apps.students.models import Student
 # =============================================================
 
 def get_filtered_queryset_for_user(user, base_queryset=None, include_pending_for_review=False):
-    """
-    Get filtered queryset based on user role.
-    Reusable for both EvaluationViewSet.get_queryset() and evaluation_statistics().
-    """
     if base_queryset is None:
-        base_queryset = Evaluation.objects.select_related('nisn', 'approved_by', 'created_by').prefetch_related('comments__user')
+        base_queryset = Evaluation.objects.select_related('nisn').all()
 
-    queryset = base_queryset
+    role = getattr(user, 'role', '')
 
-    # superadmin, admin: lihat semua evaluasi
-    if user.role in ['superadmin', 'admin']:
-        pass  # No filter, see all
+    if role in ['superadmin', 'admin']:
+        # Lihat semua evaluasi
+        return base_queryset
 
-    # pimpinan: bisa review pending di halaman list/detail, statistik tetap approved-only
-    elif user.role == 'pimpinan':
-        if not include_pending_for_review:
-            queryset = queryset.filter(is_approved=True)
+    if role == 'pimpinan':
+        # Lihat semua yang sudah approved
+        return base_queryset.filter(is_approved=True)
 
-    # bk: lihat semua evaluasi yang is_approved=True (semua santri)
-    elif user.role == 'bk':
-        queryset = queryset.filter(is_approved=True)
+    if role == 'bk':
+        # Lihat semua yang sudah approved
+        return base_queryset.filter(is_approved=True)
 
-    # guru/musyrif: lihat approved untuk kelas assignment aktif + semua kasus yang dibuat sendiri
-    elif user.role in ['guru', 'musyrif']:
-        assigned_classes = Assignment.objects.filter(
+    if role == 'musyrif':
+        # Lihat semua yang sudah approved
+        return base_queryset.filter(is_approved=True)
+
+    if role == 'guru':
+        # Lihat evaluasi yang dia buat sendiri (pending maupun approved)
+        # DITAMBAH: evaluasi approved dari kelas yang dia ampu sebagai wali kelas
+        from apps.accounts.models import Assignment
+        wali_kelas = Assignment.objects.filter(
             user=user,
-            status='active'
-        ).exclude(
-            kelas__isnull=True
-        ).exclude(
-            kelas__exact=''
-        ).values_list('kelas', flat=True).distinct()
+            assignment_type='wali_kelas'
+        ).values_list('kelas', flat=True)
 
-        own_q = Q(created_by=user)
-        if assigned_classes.exists():
-            assigned_approved_q = Q(nisn__kelas__in=list(assigned_classes), is_approved=True)
-            queryset = queryset.filter(assigned_approved_q | own_q)
+        if wali_kelas.exists():
+            return base_queryset.filter(
+                Q(created_by=user) |
+                Q(is_approved=True, nisn__kelas__in=wali_kelas)
+            )
         else:
-            queryset = queryset.filter(own_q)
+            return base_queryset.filter(created_by=user)
 
-    # walisantri: nisn__nisn__in=linked_nisns AND is_approved=True
-    elif user.role == 'walisantri':
-        nisn_list = user.get_linked_students() if hasattr(user, 'get_linked_students') else []
-        if not nisn_list:
-            nisn_list = [user.linked_student_nisn] if user.linked_student_nisn else []
-
-        queryset = queryset.filter(
-            nisn__nisn__in=nisn_list,
-            is_approved=True
+    if role == 'walisantri':
+        # Hanya lihat evaluasi approved dari anak yang terhubung
+        import json
+        linked_nisns = []
+        single = getattr(user, 'linked_student_nisn', '') or ''
+        if single:
+            linked_nisns.append(single)
+        multi = getattr(user, 'linked_student_nisns', []) or []
+        if isinstance(multi, str):
+            try:
+                multi = json.loads(multi)
+            except Exception:
+                multi = []
+        linked_nisns.extend(multi)
+        linked_nisns = list(set(linked_nisns))
+        return base_queryset.filter(
+            is_approved=True,
+            nisn__nisn__in=linked_nisns
         )
 
-    # Role lain: tidak bisa lihat apa-apa
-    else:
-        queryset = queryset.none()
-
-    return queryset
+    # Default: tidak tampilkan apapun
+    return base_queryset.none()
 
 
 class StandardResultsSetPagination(PageNumberPagination):
