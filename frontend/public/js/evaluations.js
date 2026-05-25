@@ -189,6 +189,10 @@ async function loadCurrentUser() {
 
         currentUser = await response.json();
         console.log('[Evaluations] Current user:', currentUser);
+        if (currentUser?.role) {
+            localStorage.setItem('user_role', currentUser.role);
+            window._currentUserRole = currentUser.role;
+        }
 
         // Update user display - prefer name for walisantri
         const userNameDisplay = document.getElementById('user-name-display');
@@ -211,7 +215,11 @@ async function loadCurrentUser() {
 }
 
 function canManageEvaluationApprovals() {
-    const role = currentUser?.role || '';
+    const role = currentUser?.role
+        || window._currentUserRole
+        || localStorage.getItem('user_role')
+        || sessionStorage.getItem('user_role')
+        || '';
     return ['superadmin', 'admin', 'pimpinan'].includes(role);
 }
 
@@ -677,8 +685,16 @@ async function loadEvaluations(page = 1) {
     const kategori = document.getElementById('filter-kategori')?.value || '';
 
     let url = `evaluations/?page=${page}`;
-    const role = currentUser?.role || '';
-    const shouldShowApprovedOnly = ['superadmin', 'admin', 'pimpinan', 'bk', 'walisantri'].includes(role);
+    // Baca role dari multiple sumber agar robust
+    const role = currentUser?.role
+        || window._currentUserRole
+        || localStorage.getItem('user_role')
+        || sessionStorage.getItem('user_role')
+        || '';
+    const rolesApprovedOnly = ['superadmin', 'admin', 'pimpinan', 'bk', 'walisantri'];
+    const shouldShowApprovedOnly = role
+        ? rolesApprovedOnly.includes(role)
+        : true; // safe default: jangan tampilkan pending jika role tidak terbaca
     if (shouldShowApprovedOnly) url += '&is_approved=true';
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (jenis) url += `&jenis=${encodeURIComponent(jenis)}`;
@@ -782,7 +798,7 @@ function renderEvaluationsTable() {
 
 async function loadPendingEvaluations() {
     const tbody = document.getElementById('pending-evaluations-table-body');
-    if (!tbody || !canManageEvaluationApprovals()) return;
+    if (!tbody) return;
 
     tbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="loading-spinner"></div></td></tr>`;
 
@@ -1304,11 +1320,6 @@ async function viewEvaluation(id) {
                 <div class="add-comment-section" style="margin-top: 24px; padding: 16px; background: var(--gray-50); border-radius: var(--radius-md);">
                     <h4 style="margin: 0 0 12px;">💬 Tambah Pembinaan</h4>
                     <form id="eval-comment-form" onsubmit="return window.submitEvaluationComment(event, ${evaluation.id})">
-                        <input type="hidden" id="eval-comment-parent" value="">
-                        <div id="eval-reply-context" style="display:none;margin-bottom:12px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:12px;color:#9a3412;">
-                            <span id="eval-reply-context-text"></span>
-                            <button type="button" id="btn-cancel-eval-reply" style="margin-left:8px;border:none;background:transparent;color:#9a3412;font-weight:700;cursor:pointer;">Batal</button>
-                        </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label style="display: block; margin-bottom: 6px; font-weight: 600;">Jenis</label>
@@ -1437,7 +1448,6 @@ function renderEvaluationComments(comments, userRole) {
 
     const currentUserId = currentUser?.id || JSON.parse(localStorage.getItem('user') || '{}').id;
     const isAdmin = ['superadmin', 'admin'].includes(currentUser?.role || userRole);
-    const canReply = ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin', 'admin'].includes(userRole);
     const byParent = {};
     const byId = {};
     comments.forEach(comment => {
@@ -1485,7 +1495,6 @@ function renderEvaluationComments(comments, userRole) {
             : '';
         const actionHtml = `
             <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-                ${canReply ? `<button type="button" class="eval-comment-reply-btn" data-id="${escapeAttr(comment.id)}" data-name="${escapeAttr(authorName)}" style="border:none;background:none;color:var(--emerald-600,#059669);font-size:12px;font-weight:700;cursor:pointer;padding:0;">Balas</button>` : ''}
                 ${showDelete ? `<button type="button" class="eval-comment-delete-btn" data-id="${escapeAttr(comment.id)}" style="border:none;background:none;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;padding:0;">Hapus</button>` : ''}
             </div>
         `;
@@ -1545,8 +1554,6 @@ async function submitEvaluationComment(event, evaluationId) {
     formData.append('content', content);
     formData.append('jenis', jenis);
     formData.append('visibility', visibility);
-    const parentId = document.getElementById('eval-comment-parent')?.value || '';
-    if (parentId) formData.append('parent', parentId);
 
     if (fotoInput && fotoInput.files[0]) {
         formData.append('foto', fotoInput.files[0]);
@@ -1562,7 +1569,6 @@ async function submitEvaluationComment(event, evaluationId) {
 
         if (response.ok && data.success) {
             showToast('Tanggapan berhasil ditambahkan');
-            clearEvaluationReplyContext();
             // Refresh the view modal
             viewEvaluation(evaluationId);
         } else {
@@ -1577,66 +1583,11 @@ async function submitEvaluationComment(event, evaluationId) {
 }
 
 function bindEvaluationCommentActions(evaluationId) {
-    document.querySelectorAll('.eval-comment-reply-btn').forEach(btn => {
-        btn.onclick = function() {
-            startEvaluationReply(this.dataset.id, this.dataset.name);
-        };
-    });
-
     document.querySelectorAll('.eval-comment-delete-btn').forEach(btn => {
         btn.onclick = function() {
             deleteEvaluationComment(this.dataset.id, evaluationId);
         };
     });
-
-    const cancelBtn = document.getElementById('btn-cancel-eval-reply');
-    if (cancelBtn) {
-        cancelBtn.onclick = clearEvaluationReplyContext;
-    }
-}
-
-function startEvaluationReply(parentId, parentName) {
-    const parentInput = document.getElementById('eval-comment-parent');
-    if (!parentInput) return;
-
-    parentInput.value = parentId || '';
-
-    let replyCtx = document.getElementById('eval-reply-context');
-    if (!replyCtx) {
-        replyCtx = document.createElement('div');
-        replyCtx.id = 'eval-reply-context';
-        replyCtx.style.cssText = 'font-size:12px;color:var(--emerald-600,#059669);padding:4px 8px;background:#ecfdf5;border-radius:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;';
-        parentInput.parentNode.insertBefore(replyCtx, parentInput.nextSibling);
-    }
-
-    const safeName = parentName || 'komentar';
-    replyCtx.innerHTML = `
-        <span>↩ Membalas <strong>@${escapeHtml(safeName)}</strong></span>
-        <button type="button" id="btn-cancel-eval-reply" style="cursor:pointer;margin-left:auto;color:#666;border:none;background:transparent;">✕</button>
-    `;
-    replyCtx.style.display = 'flex';
-
-    const cancelBtn = document.getElementById('btn-cancel-eval-reply');
-    if (cancelBtn) {
-        cancelBtn.onclick = clearEvaluationReplyContext;
-    }
-
-    const textarea = document.querySelector('#eval-comment-form textarea, #eval-comment-content, #eval-comment-input');
-    if (textarea) {
-        textarea.placeholder = `Tulis balasan untuk ${safeName}...`;
-        textarea.focus();
-        textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-
-function clearEvaluationReplyContext() {
-    const parentInput = document.getElementById('eval-comment-parent');
-    const replyCtx = document.getElementById('eval-reply-context');
-    const contentInput = document.getElementById('eval-comment-content');
-
-    if (parentInput) parentInput.value = '';
-    if (replyCtx) replyCtx.style.display = 'none';
-    if (contentInput) contentInput.placeholder = 'Tulis tanggapan atau pembinaan...';
 }
 
 async function deleteEvaluationComment(commentId, evaluationId) {
@@ -2297,6 +2248,4 @@ window.removeIncidentPhoto = removeIncidentPhoto;
 window.submitEvaluationComment = submitEvaluationComment;
 window.closeEvaluationCase = closeEvaluationCase;
 window.renderEvaluationComments = renderEvaluationComments;
-window.startEvaluationReply = startEvaluationReply;
-window.clearEvaluationReplyContext = clearEvaluationReplyContext;
 window.deleteEvaluationComment = deleteEvaluationComment;
