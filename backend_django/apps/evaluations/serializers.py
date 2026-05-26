@@ -41,13 +41,14 @@ class EvaluationCommentSerializer(serializers.ModelSerializer):
         return None
 
     def get_foto_url(self, obj):
-        """Return absolute URL for foto field"""
-        if obj.foto:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.foto.url)
-            return obj.foto.url
-        return None
+        if not obj.foto:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.foto.url)
+        from django.conf import settings
+        base = getattr(settings, 'BASE_URL', '').rstrip('/')
+        return base + obj.foto.url
 
 
 class EvaluationSerializer(serializers.ModelSerializer):
@@ -91,13 +92,14 @@ class EvaluationSerializer(serializers.ModelSerializer):
         return None
 
     def get_foto_url(self, obj):
-        """Return absolute URL for foto field"""
-        if obj.foto:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.foto.url)
-            return obj.foto.url
-        return None
+        if not obj.foto:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.foto.url)
+        from django.conf import settings
+        base = getattr(settings, 'BASE_URL', '').rstrip('/')
+        return base + obj.foto.url
 
 
 class EvaluationCreateSerializer(serializers.ModelSerializer):

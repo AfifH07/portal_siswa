@@ -100,7 +100,7 @@
 
 ### Data Siswa
 - [ ] Admin dapat melihat tabel siswa dengan NISN, NIS, nama, kelas, jenis kelamin, dan catatan.
-- [ ] Admin dapat import Excel siswa dan melihat hasil sukses/gagal.
+- [x] Admin dapat import Excel siswa dan melihat hasil sukses/gagal.
 - [ ] Admin dapat export data siswa ke file.
 - [ ] Admin dapat mencari siswa berdasarkan nama dan NISN.
 - [ ] Admin dapat memfilter siswa berdasarkan kelas.
@@ -128,10 +128,10 @@
 
 ### Evaluasi Santri
 - [ ] Admin dapat melihat daftar evaluasi sesuai hak akses.
-- [ ] Admin dapat membuat evaluasi baru untuk santri.
+- [x] Admin dapat membuat evaluasi baru untuk santri.
 - [ ] Admin dapat menambah comment dengan visibility `internal` atau `semua`.
-- [ ] Comment visibility `semua` terlihat oleh walisantri, sedangkan `internal` tidak.
-- [ ] Upload foto evaluasi/comment berhasil dan URL foto dapat dibuka.
+- [x] Comment visibility `semua` terlihat oleh walisantri, sedangkan `internal` tidak.
+- [x] Upload foto evaluasi/comment berhasil dan URL foto dapat dibuka.
 
 ### Hafalan / Program Al-Quran
 - [ ] Admin dapat melihat riwayat hafalan per santri.
@@ -142,6 +142,7 @@
 
 ### Ibadah Santri
 - [ ] Admin dapat melihat rekap ibadah per kelas/santri.
+- [x] Admin dapat menambah rekap ibadah per kelas/santri.
 - [ ] Filter tanggal dan kelas mengubah data dengan benar.
 - [ ] Data ibadah yang kosong menampilkan empty state, bukan error JavaScript.
 

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q
@@ -23,11 +23,16 @@ from apps.accounts.models import Assignment, User
 from apps.students.models import Student
 
 
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.role == 'admin'
+
+
 # =============================================================
 # HELPER: Reusable queryset filter by role
 # =============================================================
 
-def get_filtered_queryset_for_user(user, base_queryset=None, include_pending_for_review=False):
+def get_filtered_queryset_for_user(user, base_queryset=None):
     if base_queryset is None:
         base_queryset = Evaluation.objects.select_related('nisn').all()
 
@@ -38,16 +43,13 @@ def get_filtered_queryset_for_user(user, base_queryset=None, include_pending_for
         return base_queryset
 
     if role == 'pimpinan':
-        # Lihat semua yang sudah approved
-        return base_queryset.filter(is_approved=True)
+        return base_queryset
 
     if role == 'bk':
-        # Lihat semua yang sudah approved
-        return base_queryset.filter(is_approved=True)
+        return base_queryset
 
     if role == 'musyrif':
-        # Lihat semua yang sudah approved
-        return base_queryset.filter(is_approved=True)
+        return base_queryset
 
     if role == 'guru':
         # Lihat evaluasi yang dia buat sendiri (pending maupun approved)
@@ -61,7 +63,7 @@ def get_filtered_queryset_for_user(user, base_queryset=None, include_pending_for
         if wali_kelas.exists():
             return base_queryset.filter(
                 Q(created_by=user) |
-                Q(is_approved=True, nisn__kelas__in=wali_kelas)
+                Q(nisn__kelas__in=wali_kelas)
             )
         else:
             return base_queryset.filter(created_by=user)
@@ -82,7 +84,6 @@ def get_filtered_queryset_for_user(user, base_queryset=None, include_pending_for
         linked_nisns.extend(multi)
         linked_nisns = list(set(linked_nisns))
         return base_queryset.filter(
-            is_approved=True,
             nisn__nisn__in=linked_nisns
         )
 
@@ -110,7 +111,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             # Allow guru, pimpinan, and superadmin to create/edit
-            permission_classes = [IsAuthenticated, IsGuru | IsPimpinan | IsSuperAdmin]
+            permission_classes = [IsAuthenticated, IsGuru | IsPimpinan | IsSuperAdmin | IsAdmin]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -122,7 +123,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Use helper function for role-based filtering
-        queryset = get_filtered_queryset_for_user(user, include_pending_for_review=True)
+        queryset = get_filtered_queryset_for_user(user)
 
         # Filter by kelas (dari query parameter)
         kelas = self.request.query_params.get('kelas')
@@ -143,15 +144,6 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         status_filter = self.request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
-
-        # Filter pending/approval status
-        pending = self.request.query_params.get('pending')
-        if pending is not None and pending.lower() == 'true':
-            queryset = queryset.filter(is_approved=False)
-
-        is_approved = self.request.query_params.get('is_approved')
-        if is_approved is not None:
-            queryset = queryset.filter(is_approved=(is_approved.lower() == 'true'))
 
         # Search by student name or NISN
         search = self.request.query_params.get('search')
@@ -198,8 +190,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         )
         serializer.save(
             evaluator=evaluator_name,
-            created_by=user,
-            is_approved=False
+            created_by=user
         )
 
     def update(self, request, *args, **kwargs):

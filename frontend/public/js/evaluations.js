@@ -8,7 +8,6 @@
 
 // State Management
 let currentEvaluations = [];
-let pendingEvaluations = [];
 let currentPage = 1;
 let totalPages = 1;
 let totalCount = 0;
@@ -69,9 +68,7 @@ function setupEventListeners() {
             if (typeof window.switchTab === 'function') {
                 window.switchTab(tabName);
             }
-            if (tabName === 'pending-approval') {
-                loadPendingEvaluations();
-            } else if (tabName === 'evaluasi' && currentUser?.role !== 'walisantri') {
+            if (tabName === 'evaluasi' && currentUser?.role !== 'walisantri') {
                 loadEvaluations(1);
             }
         };
@@ -203,7 +200,6 @@ async function loadCurrentUser() {
         // Store user in localStorage for sidebar consistency
         localStorage.setItem('user', JSON.stringify(currentUser));
 
-        setupApprovalTabVisibility();
         initializeViews();
         window.dispatchEvent(new CustomEvent('evaluations:user-ready', {
             detail: currentUser
@@ -211,22 +207,6 @@ async function loadCurrentUser() {
     } catch (error) {
         console.error('Error loading user:', error);
         showToast('Gagal memuat data pengguna', 'error');
-    }
-}
-
-function canManageEvaluationApprovals() {
-    const role = currentUser?.role
-        || window._currentUserRole
-        || localStorage.getItem('user_role')
-        || sessionStorage.getItem('user_role')
-        || '';
-    return ['superadmin', 'admin', 'pimpinan'].includes(role);
-}
-
-function setupApprovalTabVisibility() {
-    const pendingTabBtn = document.getElementById('tab-btn-pending-approval');
-    if (pendingTabBtn) {
-        pendingTabBtn.style.display = canManageEvaluationApprovals() ? '' : 'none';
     }
 }
 
@@ -685,14 +665,6 @@ async function loadEvaluations(page = 1) {
     const kategori = document.getElementById('filter-kategori')?.value || '';
 
     let url = `evaluations/?page=${page}`;
-    // Tab utama selalu tampilkan is_approved=true
-    // untuk semua role — termasuk superadmin/admin.
-    // Tab pending (loadPendingEvaluations) yang handle
-    // evaluasi belum disetujui.
-    // Guru tetap mendapat is_approved=true di tab utama;
-    // evaluasi milik sendiri yang pending bisa dilihat
-    // via tab terpisah jika diperlukan nanti.
-    url += '&is_approved=true';
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (jenis) url += `&jenis=${encodeURIComponent(jenis)}`;
     if (kelas) url += `&kelas=${encodeURIComponent(kelas)}`;
@@ -791,82 +763,6 @@ function renderEvaluationsTable() {
             </tr>
         `;
     }).join('');
-}
-
-async function loadPendingEvaluations() {
-    const tbody = document.getElementById('pending-evaluations-table-body');
-    if (!tbody) return;
-
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="loading-spinner"></div></td></tr>`;
-
-    try {
-        const response = await window.apiFetch('evaluations/?pending=true&page_size=100');
-        if (!response.ok) throw new Error('Failed to load pending evaluations');
-
-        const data = await response.json();
-        pendingEvaluations = data.results || [];
-        renderPendingEvaluationsTable();
-    } catch (error) {
-        console.error('Error loading pending evaluations:', error);
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center">Gagal memuat evaluasi pending</td></tr>`;
-        showToast('Gagal memuat evaluasi pending', 'error');
-    }
-}
-
-function renderPendingEvaluationsTable() {
-    const tbody = document.getElementById('pending-evaluations-table-body');
-    const countEl = document.getElementById('pending-evaluations-count');
-    if (!tbody) return;
-
-    if (countEl) countEl.textContent = pendingEvaluations.length;
-
-    if (!pendingEvaluations.length) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="loading">Tidak ada evaluasi yang menunggu persetujuan</div></td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = pendingEvaluations.map((eval, index) => {
-        const jenisBadge = eval.jenis === 'prestasi'
-            ? '<span class="badge badge-pass">Prestasi</span>'
-            : '<span class="badge badge-fail">Pelanggaran</span>';
-
-        const kategoriIcon = KATEGORI_ICONS[eval.kategori] || '';
-        const kategoriBadge = `<span class="badge badge-kategori">${kategoriIcon} ${escapeHtml(eval.kategori || '-')}</span>`;
-
-        const date = eval.tanggal ? new Date(eval.tanggal).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'short', year: 'numeric'
-        }) : '-';
-
-        const safeId = escapeAttr(eval.id);
-
-        return `
-            <tr data-id="${safeId}">
-                <td>${index + 1}</td>
-                <td><span style="font-family: var(--font-mono);">${escapeHtml(date)}</span></td>
-                <td>${kategoriBadge}</td>
-                <td><strong>${escapeHtml(eval.nisn_nama || '-')}</strong></td>
-                <td>${escapeHtml(eval.nisn_kelas || '-')}</td>
-                <td style="max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(eval.name || '')}">${escapeHtml(eval.name) || '-'}</td>
-                <td>${jenisBadge}</td>
-                <td>
-                    <button type="button" class="action-btn action-view btn-view-pending" data-id="${safeId}" title="Lihat">Lihat</button>
-                    <button type="button" class="btn btn-primary btn-sm btn-approve-pending" data-id="${safeId}">Setujui</button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-
-    tbody.querySelectorAll('.btn-view-pending').forEach(btn => {
-        btn.onclick = function() {
-            viewEvaluation(this.dataset.id);
-        };
-    });
-
-    tbody.querySelectorAll('.btn-approve-pending').forEach(btn => {
-        btn.onclick = function() {
-            approveEvaluation(this.dataset.id);
-        };
-    });
 }
 
 function updatePagination() {
@@ -1153,7 +1049,6 @@ async function handleFormSubmit(e) {
 
         // Refresh data
         loadEvaluations(currentPage);
-        loadPendingEvaluations();
         loadStatistics();
 
         // Reset editing state
@@ -1476,10 +1371,11 @@ function renderEvaluationComments(comments, userRole) {
             ? '<span class="badge badge-pass" style="font-size: 10px;">📋 Pembinaan</span>'
             : '<span class="badge badge-secondary" style="font-size: 10px;">💬 Diskusi</span>';
 
-        const fotoHtml = comment.foto_url ? `
+        const fotoSrc = comment.foto_url || comment.foto || '';
+        const fotoHtml = fotoSrc ? `
             <div style="margin-top: 8px;">
-                <a href="${comment.foto_url}" target="_blank">
-                    <img src="${comment.foto_url}" alt="Foto" style="max-width: 200px; border-radius: 8px;">
+                <a href="${fotoSrc}" target="_blank">
+                    <img src="${fotoSrc}" alt="Foto" style="max-width: 200px; border-radius: 8px;">
                 </a>
             </div>
         ` : '';
@@ -2083,11 +1979,69 @@ async function loadWalisantriEvaluations(nisn) {
         if (wsPrestasiEl) wsPrestasiEl.textContent = prestasiCount;
         if (wsPelanggaranEl) wsPelanggaranEl.textContent = pelanggaranCount;
 
-        // Note: Riwayat Evaluasi rendering removed - see "Catatan & Bimbingan" tab
+        // Render riwayat evaluasi
+        renderWalisantriEvaluationList(evaluations);
     } catch (error) {
         console.error('[Evaluations] Error loading walisantri stats:', error);
         // Stats will remain at default values (0)
     }
+}
+
+function renderWalisantriEvaluationList(evaluations) {
+    const container = document.getElementById('ws-evaluations-list');
+    if (!container) return;
+
+    if (!evaluations || !evaluations.length) {
+        container.innerHTML = `
+            <div class="text-center text-muted" style="padding: 24px;">
+                Belum ada catatan evaluasi untuk ananda.
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = evaluations.map(ev => {
+        const jenisBadge = ev.jenis === 'prestasi'
+            ? '<span class="badge badge-pass">Prestasi</span>'
+            : '<span class="badge badge-fail">Pelanggaran</span>';
+
+        const kategoriIcon = KATEGORI_ICONS[ev.kategori] || '📌';
+        const date = ev.tanggal
+            ? new Date(ev.tanggal).toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'short', year: 'numeric'
+            })
+            : '-';
+
+        const safeId = escapeAttr(ev.id);
+
+        return `
+            <div class="ws-eval-card" data-id="${safeId}"
+                 style="background: var(--surface); border: 1px solid var(--border);
+                        border-radius: 12px; padding: 16px; margin-bottom: 12px;
+                        cursor: pointer;">
+                <div style="display: flex; justify-content: space-between;
+                            align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        ${jenisBadge}
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">
+                            ${kategoriIcon} ${escapeHtml(ev.kategori || '-')}
+                        </span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(date)}</span>
+                </div>
+                <p style="margin: 10px 0 0; font-size: 0.9rem; color: var(--text);
+                          overflow: hidden; text-overflow: ellipsis;
+                          display: -webkit-box; -webkit-line-clamp: 2;
+                          -webkit-box-orient: vertical;">
+                    ${escapeHtml(ev.name || ev.deskripsi || '-')}
+                </p>
+            </div>`;
+    }).join('');
+
+    container.querySelectorAll('.ws-eval-card').forEach(card => {
+        card.onclick = function() {
+            viewEvaluation(this.dataset.id);
+        };
+    });
 }
 
 function getInitials(name) {
@@ -2129,7 +2083,6 @@ async function approveEvaluation(id) {
             viewEvaluation(id);
             // Refresh the table
             loadEvaluations(currentPage);
-            loadPendingEvaluations();
         } else {
             throw new Error(data.message || 'Gagal menyetujui evaluasi');
         }
@@ -2227,7 +2180,6 @@ window.closeViewModal = closeViewModal;
 window.editEvaluation = editEvaluation;
 window.deleteEvaluation = deleteEvaluation;
 window.loadEvaluations = loadEvaluations;
-window.loadPendingEvaluations = loadPendingEvaluations;
 window.loadStatistics = loadStatistics;
 window.loadPreviousPage = loadPreviousPage;
 window.loadNextPage = loadNextPage;

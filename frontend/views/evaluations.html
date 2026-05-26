@@ -85,10 +85,6 @@
                 <span class="tab-icon">📊</span>
                 <span class="tab-label">Evaluasi Perilaku</span>
             </button>
-            <button class="tab-btn" id="tab-btn-pending-approval" data-tab="pending-approval" style="display: none;">
-                <span class="tab-icon">!</span>
-                <span class="tab-label">Menunggu Persetujuan</span>
-            </button>
             <button class="tab-btn" data-tab="catatan">
                 <span class="tab-icon">📝</span>
                 <span class="tab-label">Catatan & Bimbingan</span>
@@ -413,42 +409,21 @@
                 </div>
             </div>
 
-            <!-- Note: Riwayat Evaluasi has been relocated to "Catatan & Bimbingan" tab -->
+            <!-- Riwayat Evaluasi Walisantri -->
+            <div class="ws-evaluations-section" id="ws-evaluations-section" style="margin-top: 24px;">
+                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 12px;">
+                    📋 Riwayat Evaluasi
+                </h3>
+                <div id="ws-evaluations-list">
+                    <div class="text-center text-muted" style="padding: 24px;">
+                        Memuat data...
+                    </div>
+                </div>
+            </div>
 
         </div><!-- /walisantri-view -->
 
         </div><!-- /tab-evaluasi -->
-
-        <!-- =========== TAB: MENUNGGU PERSETUJUAN =========== -->
-        <div class="tab-content" id="tab-pending-approval" style="display: none;">
-            <div class="glass-card table-section">
-                <div class="card-head">
-                    <h3><span class="ch-icon">!</span> Evaluasi Menunggu Persetujuan</h3>
-                    <div class="table-info">
-                        <span id="pending-evaluations-count">0</span> kasus pending
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table class="data-table" id="pending-evaluations-table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Tanggal</th>
-                                <th>Kategori</th>
-                                <th>Nama Siswa</th>
-                                <th>Kelas</th>
-                                <th>Deskripsi</th>
-                                <th>Jenis</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pending-evaluations-table-body">
-                            <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div><!-- /tab-pending-approval -->
 
         <!-- =========== TAB: CATATAN & BIMBINGAN (CASE MANAGEMENT) =========== -->
         <div class="tab-content" id="tab-catatan" style="display: none;">
@@ -986,7 +961,7 @@
 <script src="/static/js/auth-check.js?v=20260523b" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/evaluations.js?v=20260525e" defer></script>
+<script src="/static/js/evaluations.js?v=20260526c" defer></script>
 <script src="/static/js/case-management.js?v=20260523a" defer></script>
 <script src="/static/js/integritas-santri.js?v=20260511" defer></script>
 

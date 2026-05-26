@@ -20,6 +20,7 @@ if not SECRET_KEY:
         raise ValueError('SECRET_KEY environment variable is required in production')
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+BASE_URL = 'https://apiiip.pythonanywhere.com'
 
 # Application definition
 INSTALLED_APPS = [

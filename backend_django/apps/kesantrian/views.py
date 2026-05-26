@@ -419,7 +419,7 @@ def record_ibadah(request):
     """
     user = request.user
 
-    if user.role not in ['musyrif', 'guru', 'superadmin']:
+    if user.role not in ['musyrif', 'guru', 'superadmin', 'admin']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin untuk mencatat ibadah'},
             status=status.HTTP_403_FORBIDDEN
@@ -463,7 +463,7 @@ def record_ibadah_bulk(request):
     """
     user = request.user
 
-    if user.role not in ['musyrif', 'guru', 'superadmin']:
+    if user.role not in ['musyrif', 'guru', 'superadmin', 'admin']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN

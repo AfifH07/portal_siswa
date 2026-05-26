@@ -281,7 +281,7 @@ def import_students_view(request):
     user = request.user
 
     # Only superadmin and guru can import
-    if user.role not in ['superadmin', 'guru']:
+    if user.role not in ['superadmin', 'admin', 'guru']:
         return Response(
             {'success': False, 'error': 'Anda tidak memiliki izin untuk import data'},
             status=status.HTTP_403_FORBIDDEN
@@ -437,7 +437,7 @@ def download_import_template(request):
     user = request.user
 
     # Only superadmin and guru can download template
-    if user.role not in ['superadmin', 'guru']:
+    if user.role not in ['superadmin', 'admin', 'guru']:
         return Response(
             {'success': False, 'error': 'Anda tidak memiliki izin untuk download template'},
             status=status.HTTP_403_FORBIDDEN
