@@ -167,9 +167,9 @@
 - [ ] Link dari dashboard ke detail evaluasi/laporan membuka halaman yang tepat.
 
 ### Evaluasi Santri
-- [ ] Pimpinan melihat semua evaluasi yang sudah approved.
-- [ ] Pimpinan dapat approve evaluasi baru jika item belum approved.
-- [ ] Pimpinan dapat unapprove evaluasi dan status berubah.
+- [ ] Pimpinan melihat semua evaluasi yang sudah approved. (fitur ini dihapus)
+- [ ] Pimpinan dapat approve evaluasi baru jika item belum approved.(fitur ini dihapus)
+- [ ] Pimpinan dapat unapprove evaluasi dan status berubah.(fitur ini dihapus)
 - [ ] Tombol close case tampil pada evaluasi yang belum ditutup.
 - [ ] Close case wajib mengisi `keputusan_final`.
 - [ ] Setelah close, detail menampilkan keputusan final, nama penutup, dan waktu close.
@@ -200,9 +200,9 @@
 - [ ] Token expired mengarahkan ke login dan tidak menampilkan halaman kosong.
 
 ### Dashboard Guru
-- [ ] Todo list menampilkan presensi/jurnal yang belum diisi.
-- [ ] Todo list menampilkan nilai yang belum diinput sesuai assignment guru.
-- [ ] Todo list menampilkan izin tanpa titipan tugas jika ada.
+- [x] Todo list menampilkan presensi/jurnal yang belum diisi.
+- [x] Todo list menampilkan nilai yang belum diinput sesuai assignment guru.
+- [x] Todo list menampilkan izin tanpa titipan tugas jika ada.
 - [ ] Klik item todo membuka halaman input yang sesuai.
 - [ ] Setelah jurnal/nilai diisi, item todo berkurang atau berubah status.
 - [ ] Dashboard tidak menampilkan data assignment guru lain.
@@ -227,12 +227,6 @@
 - [ ] Validasi mencegah submit jika data kehadiran wajib belum lengkap.
 - [ ] Jumlah siswa hadir/tidak hadir sesuai pilihan.
 
-### Jurnal Guru — Wizard Step 4 Dokumentasi
-- [ ] Upload foto dokumentasi menerima format gambar valid.
-- [ ] Preview foto tampil sebelum submit jika fitur tersedia.
-- [ ] Submit jurnal menyimpan semua step dan menampilkan notifikasi sukses.
-- [ ] Riwayat jurnal menampilkan jurnal yang baru dibuat.
-- [ ] Detail jurnal memuat dokumentasi yang diupload.
 
 ### Halaman Nilai
 - [ ] Guru hanya melihat mapel/kelas yang menjadi assignment-nya.
@@ -249,12 +243,12 @@
 - [ ] Guru dapat membuat evaluasi baru untuk santri.
 - [ ] Form evaluasi menyimpan jenis, kategori, deskripsi, santri, dan foto jika ada.
 - [ ] Evaluasi baru milik guru tampil di daftar kasus sendiri.
-- [ ] Guru non-wali tidak melihat semua kasus guru lain.
+- [x] Guru non-wali tidak melihat semua kasus guru lain.
 - [ ] Guru dapat menambah comment pada kasus yang bisa diakses.
 - [ ] Guru dapat memilih visibility comment `internal` atau `semua`.
 - [ ] Comment dengan foto berhasil tersimpan dan tampil di detail.
 - [ ] Guru wali kelas dapat melihat evaluasi approved untuk kelas yang diwali.
-- [ ] Guru wali kelas tidak dapat melihat kasus internal kelas lain yang belum approved.
+- [x] Guru wali kelas tidak dapat melihat kasus internal kelas lain yang belum approved. (sistem ini dihapus)
 
 ### Izin Guru / Titipan Tugas
 - [ ] Guru dapat mengajukan izin jika fitur tersedia.

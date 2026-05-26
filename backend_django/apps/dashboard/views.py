@@ -836,21 +836,19 @@ def guru_today_dashboard(request):
 def guru_todo_list(request):
     """
     GET /api/dashboard/guru/todo-list/
-
-    Mengembalikan daftar task yang belum selesai untuk guru:
-    1. Presensi belum diisi (jadwal hari ini tapi belum ada Attendance)
-    2. Nilai belum diinput (Attendance dengan ada_penilaian=True tapi belum ada Grade)
-    3. Izin tanpa titipan tugas (IzinGuru aktif tapi belum ada TitipanTugas)
+    Versi berbasis Assignment - tidak bergantung tabel Schedule.
     """
-    from django.db.models import Q
-    from apps.students.models import Schedule
-    from apps.attendance.models import Attendance, TitipanTugas
+    from apps.accounts.models import Assignment
+    from apps.attendance.models import Attendance
     from apps.grades.models import Grade
     from apps.kesantrian.models import IzinGuru
+    try:
+        from apps.attendance.models import TitipanTugas
+    except ImportError:
+        TitipanTugas = None
 
     user = request.user
 
-    # Only for guru role
     if user.role not in ['guru', 'superadmin', 'pimpinan']:
         return Response({
             'success': False,
@@ -863,131 +861,62 @@ def guru_todo_list(request):
 
     todo_items = []
 
-    # ===========================================
     # 1. CEK PRESENSI BELUM DIISI
-    # ===========================================
+    # Logika: guru punya assignment kbm/diniyah aktif,
+    # tapi belum ada Attendance.input_by=user untuk hari ini di kelas itu
     try:
-        # Ambil jadwal mengajar guru hari ini
-        jadwal_hari_ini = Schedule.objects.filter(
-            username=user.username,
-            hari=today_hari,
-            is_active=True
-        ).select_related('master_jam')
+        kbm_assignments = Assignment.objects.filter(
+            user=user,
+            assignment_type__in=['kbm', 'diniyah'],
+            status='active'
+        ).values('kelas', 'mata_pelajaran').distinct()
 
-        for jadwal in jadwal_hari_ini:
-            # Cek apakah sudah ada attendance untuk kelas + jam_ke + tanggal ini
+        for a in kbm_assignments:
+            kelas = a['kelas']
+            mapel = a['mata_pelajaran']
+            if not kelas:
+                continue
+
             has_attendance = Attendance.objects.filter(
-                nisn__kelas=jadwal.kelas,
+                input_by=user,
                 tanggal=today,
-                jam_ke=jadwal.jam_ke
-            ).exists() if jadwal.jam_ke else False
+                nisn__kelas=kelas,
+                mata_pelajaran=mapel
+            ).exists()
 
             if not has_attendance:
-                # Format waktu
-                waktu = ''
-                if jadwal.jam_mulai:
-                    waktu = jadwal.jam_mulai.strftime('%H:%M')
-                elif jadwal.master_jam and jadwal.master_jam.jam_mulai:
-                    waktu = jadwal.master_jam.jam_mulai.strftime('%H:%M')
-
                 todo_items.append({
                     'type': 'presensi',
                     'label': 'Belum input presensi',
-                    'detail': f"{jadwal.mata_pelajaran or 'N/A'} - {jadwal.kelas}" + (f" ({waktu})" if waktu else ""),
-                    'kelas': jadwal.kelas,
-                    'jam_ke': jadwal.jam_ke,
-                    'mata_pelajaran': jadwal.mata_pelajaran,
+                    'detail': f"{mapel or 'N/A'} - {kelas}",
+                    'kelas': kelas,
+                    'mata_pelajaran': mapel,
                     'url': '/attendance/',
                     'priority': 'high'
                 })
     except Exception as e:
         import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"[TODO List] Error checking presensi: {str(e)}")
+        logging.getLogger(__name__).error(f"[TODO] presensi error: {e}")
 
-    # ===========================================
     # 2. CEK NILAI BELUM DIINPUT
-    # ===========================================
+    # Logika: ada Attendance yang input_by=user hari ini dengan ada_penilaian=True,
+    # tapi belum ada Grade untuk kelas+mapel hari ini
     try:
-        # Mapping hari (English weekday → Indonesian)
-        HARI_MAP = {
-            'Monday': 'Senin', 'Tuesday': 'Selasa', 'Wednesday': 'Rabu',
-            'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu'
-        }
-        hari_indo = HARI_MAP.get(today.strftime('%A'), 'Senin')
-
-        # 1. Ambil jadwal guru hari ini
-        jadwal_hari_ini = Schedule.objects.filter(
-            username=user.username,
-            hari=hari_indo,
-            is_active=True
-        ).select_related('master_jam')
-
-        # Set untuk track kelas+mapel+jam yang sudah dicek (avoid duplicates)
-        checked_items = set()
-
-        # 2. Cek attendance dari jadwal guru sendiri
-        for jadwal in jadwal_hari_ini:
-            if not jadwal.jam_ke or not jadwal.mata_pelajaran:
-                continue
-
-            # Cek apakah ada attendance dengan ada_penilaian=True
-            attendance_penilaian = Attendance.objects.filter(
-                tanggal=today,
-                jam_ke=jadwal.jam_ke,
-                mata_pelajaran=jadwal.mata_pelajaran,
-                nisn__kelas=jadwal.kelas,
-                ada_penilaian=True
-            ).first()
-
-            if attendance_penilaian:
-                # Cek apakah sudah ada Grade untuk kelas + mapel hari ini
-                has_grade = Grade.objects.filter(
-                    kelas=jadwal.kelas,
-                    mata_pelajaran=jadwal.mata_pelajaran,
-                    created_at__date=today
-                ).exists()
-
-                if not has_grade:
-                    item_key = (jadwal.kelas, jadwal.mata_pelajaran, jadwal.jam_ke)
-                    if item_key not in checked_items:
-                        checked_items.add(item_key)
-
-                        # Format waktu
-                        waktu = ''
-                        if jadwal.jam_mulai:
-                            waktu = jadwal.jam_mulai.strftime('%H:%M')
-                        elif jadwal.master_jam and jadwal.master_jam.jam_mulai:
-                            waktu = jadwal.master_jam.jam_mulai.strftime('%H:%M')
-
-                        todo_items.append({
-                            'type': 'nilai',
-                            'label': 'Nilai belum diinput',
-                            'detail': f"{jadwal.mata_pelajaran} - {jadwal.kelas}" + (f" ({waktu})" if waktu else ""),
-                            'kelas': jadwal.kelas,
-                            'jam_ke': jadwal.jam_ke,
-                            'mata_pelajaran': jadwal.mata_pelajaran,
-                            'url': '/grades/',
-                            'priority': 'medium'
-                        })
-
-        # 3. Cek attendance dimana user adalah guru_pengganti (guru piket)
-        attendance_as_pengganti = Attendance.objects.filter(
+        checked = set()
+        attendances_with_penilaian = Attendance.objects.filter(
+            input_by=user,
             tanggal=today,
-            ada_penilaian=True,
-            guru_pengganti=user
-        ).values('nisn__kelas', 'mata_pelajaran', 'jam_ke').distinct()
+            ada_penilaian=True
+        ).values('nisn__kelas', 'mata_pelajaran').distinct()
 
-        for att in attendance_as_pengganti:
+        for att in attendances_with_penilaian:
             kelas = att['nisn__kelas']
             mapel = att['mata_pelajaran']
-            jam_ke = att['jam_ke']
-
-            item_key = (kelas, mapel, jam_ke)
-            if item_key in checked_items:
+            key = (kelas, mapel)
+            if key in checked:
                 continue
+            checked.add(key)
 
-            # Cek apakah sudah ada Grade
             has_grade = Grade.objects.filter(
                 kelas=kelas,
                 mata_pelajaran=mapel,
@@ -995,65 +924,51 @@ def guru_todo_list(request):
             ).exists()
 
             if not has_grade:
-                checked_items.add(item_key)
                 todo_items.append({
                     'type': 'nilai',
                     'label': 'Nilai belum diinput',
-                    'detail': f"{mapel or 'N/A'} - {kelas} (Piket)",
+                    'detail': f"{mapel or 'N/A'} - {kelas}",
                     'kelas': kelas,
-                    'jam_ke': jam_ke,
                     'mata_pelajaran': mapel,
                     'url': '/grades/',
                     'priority': 'medium'
                 })
-
     except Exception as e:
         import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"[TODO List] Error checking nilai: {str(e)}")
+        logging.getLogger(__name__).error(f"[TODO] nilai error: {e}")
 
-    # ===========================================
     # 3. CEK IZIN TANPA TITIPAN TUGAS
-    # ===========================================
-    try:
-        # Cek apakah guru punya izin yang berlaku hari ini
-        # IzinGuru tidak punya field status, semua izin dianggap aktif
-        izin_aktif = IzinGuru.objects.filter(
-            guru=user,
-            tanggal_mulai__lte=today,
-            tanggal_selesai__gte=today
-        ).first()
-
-        if izin_aktif:
-            # Cek apakah sudah ada titipan tugas untuk tanggal-tanggal izin
-            # Get all dates covered by the izin
+    if TitipanTugas is not None:
+        try:
             from datetime import timedelta
-            current_date = izin_aktif.tanggal_mulai
-            while current_date <= izin_aktif.tanggal_selesai:
-                # Skip weekends
-                if current_date.weekday() < 6:  # 0-5 = Senin-Sabtu
-                    # Cek titipan tugas untuk tanggal ini
-                    has_titipan = TitipanTugas.objects.filter(
-                        guru=user,
-                        tanggal_berlaku=current_date
-                    ).exists()
+            izin_aktif = IzinGuru.objects.filter(
+                guru=user,
+                tanggal_mulai__lte=today,
+                tanggal_selesai__gte=today
+            ).first()
 
-                    if not has_titipan and current_date >= today:
-                        todo_items.append({
-                            'type': 'titipan',
-                            'label': 'Belum buat titipan tugas',
-                            'detail': f"Izin {izin_aktif.jenis_izin} - {current_date.strftime('%d/%m/%Y')}",
-                            'tanggal': current_date.strftime('%Y-%m-%d'),
-                            'izin_id': izin_aktif.id,
-                            'url': '/titipan-tugas/',
-                            'priority': 'high'
-                        })
-
-                current_date += timedelta(days=1)
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"[TODO List] Error checking titipan: {str(e)}")
+            if izin_aktif:
+                current_date = izin_aktif.tanggal_mulai
+                while current_date <= izin_aktif.tanggal_selesai:
+                    if current_date.weekday() < 6:
+                        has_titipan = TitipanTugas.objects.filter(
+                            guru=user,
+                            tanggal_berlaku=current_date
+                        ).exists()
+                        if not has_titipan and current_date >= today:
+                            todo_items.append({
+                                'type': 'titipan',
+                                'label': 'Belum buat titipan tugas',
+                                'detail': f"Izin {izin_aktif.jenis_izin} - {current_date.strftime('%d/%m/%Y')}",
+                                'tanggal': current_date.strftime('%Y-%m-%d'),
+                                'izin_id': izin_aktif.id,
+                                'url': '/titipan-tugas/',
+                                'priority': 'high'
+                            })
+                    current_date += timedelta(days=1)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"[TODO] titipan error: {e}")
 
     # Sort by priority (high first)
     priority_order = {'high': 0, 'medium': 1, 'low': 2}
