@@ -751,7 +751,11 @@
 
                     <div class="form-group">
                         <label for="evaluation-photo">Foto Bukti (Opsional)</label>
-                        <input type="file" id="evaluation-photo" name="photo" class="glass-input file-input" accept="image/*">
+                        <input type="file" id="evaluation-photo" name="photo" class="glass-input file-input" accept="image/*" multiple>
+                        <small class="text-muted">Pilih satu atau lebih foto (JPG, PNG, maks 5MB per file)</small>
+                        <div id="photo-preview-container"
+                             style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                        </div>
                         <div id="photo-preview" class="photo-preview" style="display: none;">
                             <img id="preview-img" src="" alt="Preview">
                             <button type="button" onclick="window.removePhoto()" class="btn btn-sm btn-danger">Hapus</button>
@@ -961,7 +965,7 @@
 <script src="/static/js/auth-check.js?v=20260523b" defer></script>
 <script src="/static/js/auth.js?v=20260208" defer></script>
 <script src="/static/js/page-events.js?v=20260312c" defer></script>
-<script src="/static/js/evaluations.js?v=20260526c" defer></script>
+<script src="/static/js/evaluations.js?v=20260526d" defer></script>
 <script src="/static/js/case-management.js?v=20260523a" defer></script>
 <script src="/static/js/integritas-santri.js?v=20260511" defer></script>
 

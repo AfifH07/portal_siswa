@@ -94,7 +94,9 @@ function setupEventListeners() {
 
     const photoInput = document.getElementById('evaluation-photo');
     if (photoInput) {
-        photoInput.addEventListener('change', handlePhotoPreview);
+        photoInput.onchange = function() {
+            renderPhotoPreview(this.files);
+        };
     }
 
     // Listen for child switch events (multi-child walisantri)
@@ -912,10 +914,72 @@ function handlePhotoPreview(e) {
     }
 }
 
+function renderPhotoPreview(files) {
+    const container = document.getElementById('photo-preview-container');
+    if (!container) return;
+    container.innerHTML = '';
+    Array.from(files).forEach((file, i) => {
+        const url = URL.createObjectURL(file);
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:relative;display:inline-block;';
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.cssText =
+            'width:80px;height:80px;object-fit:cover;border-radius:8px;';
+        const badge = document.createElement('span');
+        badge.textContent = i + 1;
+        badge.style.cssText =
+            'position:absolute;top:2px;left:2px;background:rgba(0,0,0,0.5);'
+            + 'color:#fff;font-size:10px;border-radius:4px;padding:1px 4px;';
+        wrapper.appendChild(img);
+        wrapper.appendChild(badge);
+        container.appendChild(wrapper);
+    });
+}
+
 function removePhoto() {
     document.getElementById('evaluation-photo').value = '';
     document.getElementById('preview-img').src = '';
     document.getElementById('photo-preview').style.display = 'none';
+    const previewContainer = document.getElementById('photo-preview-container');
+    if (previewContainer) previewContainer.innerHTML = '';
+}
+
+function renderEvaluationPhotoGallery(evaluation) {
+    // Kumpulkan semua foto: dari foto lama + photos array (baru)
+    const allPhotos = [];
+    if (evaluation.foto_url || evaluation.foto) {
+        allPhotos.push(evaluation.foto_url || evaluation.foto);
+    }
+    if (evaluation.photos && evaluation.photos.length) {
+        evaluation.photos.forEach(p => {
+            const src = p.foto_url || p.foto;
+            if (src && !allPhotos.includes(src)) allPhotos.push(src);
+        });
+    }
+    if (!allPhotos.length) return '';
+
+    const thumbs = allPhotos.map((src, i) => `
+        <a href="${escapeAttr(src)}" target="_blank"
+           class="thread-foto-link" title="Foto ${i + 1} - klik untuk fullscreen"
+           style="position:relative;display:inline-block;">
+            <img src="${escapeAttr(src)}" alt="Foto ${i + 1}"
+                 class="thread-foto-thumbnail"
+                 style="width:100px;height:100px;object-fit:cover;
+                        border-radius:8px;">
+            <span class="thread-foto-overlay">🔍</span>
+        </a>
+    `).join('');
+
+    return `
+        <div class="thread-foto-section" style="margin-top:16px;">
+            <div class="thread-foto-label">📷 Foto Kejadian
+                (${allPhotos.length})</div>
+            <div class="thread-foto-container"
+                 style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+                ${thumbs}
+            </div>
+        </div>`;
 }
 
 // Flag to prevent double submission
@@ -1030,6 +1094,22 @@ async function handleFormSubmit(e) {
                 errorMessage = responseData.detail;
             }
             throw new Error(errorMessage);
+        }
+
+        // Upload foto tambahan jika ada (foto ke-2, ke-3, dst)
+        if (!editingEvaluation && photoInput && photoInput.files.length > 1) {
+            const extraFiles = Array.from(photoInput.files).slice(1);
+            const evalId = responseData.id || responseData.data?.id;
+            if (evalId) {
+                for (const file of extraFiles) {
+                    const photoForm = new FormData();
+                    photoForm.append('foto', file);
+                    await window.apiFetch(`evaluations/${evalId}/photos/`, {
+                        method: 'POST',
+                        body: photoForm
+                    });
+                }
+            }
         }
 
         // ==========================================
@@ -1294,7 +1374,8 @@ async function viewEvaluation(id) {
                 </div>
             ` : ''}
             ${approvalSection}
-            ${(evaluation.foto_url || evaluation.foto) ? `
+            ${renderEvaluationPhotoGallery(evaluation)}
+            ${false ? `
                 <div class="thread-foto-section" style="margin-top: 16px;">
                     <div class="thread-foto-label">📷 Foto Kejadian</div>
                     <div class="thread-foto-container">

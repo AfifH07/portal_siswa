@@ -103,6 +103,25 @@ class Evaluation(models.Model):
         return f"{self.name} - {self.nisn.nama} ({self.tanggal})"
 
 
+class EvaluationPhoto(models.Model):
+    evaluation = models.ForeignKey(
+        Evaluation,
+        on_delete=models.CASCADE,
+        related_name='photos'
+    )
+    foto = models.ImageField(upload_to='evaluations/foto/')
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'evaluation_photos'
+        ordering = ['created_at']
+
+
 # PERUBAHAN 5: Model Tanggapan dengan jenis Diskusi dan Pembinaan
 class EvaluationComment(models.Model):
     """

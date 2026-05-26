@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.decorators import action, api_view, permission_classes, parser_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.pagination import PageNumberPagination
@@ -9,12 +9,13 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 
 from .models import (
-    Evaluation, EvaluationComment, PoinIntegritas,
+    Evaluation, EvaluationComment, EvaluationPhoto, PoinIntegritas,
     PenilaianIntegritasSantri, PenilaianIntegritasGuru
 )
 from .serializers import (
     EvaluationSerializer, EvaluationCreateSerializer,
     EvaluationCommentSerializer, EvaluationCommentCreateSerializer,
+    EvaluationPhotoSerializer,
     PoinIntegritasSerializer, PenilaianIntegritasSantriSerializer,
     PenilaianIntegritasGuruSerializer
 )
@@ -192,6 +193,47 @@ class EvaluationViewSet(viewsets.ModelViewSet):
             evaluator=evaluator_name,
             created_by=user
         )
+
+    @action(detail=True, methods=['post'], url_path='photos',
+            parser_classes=[MultiPartParser, FormParser])
+    def add_photo(self, request, pk=None):
+        evaluation = self.get_object()
+        files = request.FILES.getlist('foto')
+        if not files:
+            return Response(
+                {'success': False, 'error': 'Tidak ada foto yang dikirim'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        created = []
+        for f in files:
+            photo = EvaluationPhoto.objects.create(
+                evaluation=evaluation,
+                foto=f,
+                uploaded_by=request.user
+            )
+            serializer = EvaluationPhotoSerializer(
+                photo, context={'request': request}
+            )
+            created.append(serializer.data)
+        return Response({'success': True, 'photos': created},
+                        status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['delete'],
+            url_path='photos/(?P<photo_id>[0-9]+)')
+    def delete_photo(self, request, photo_id=None, pk=None):
+        try:
+            photo = EvaluationPhoto.objects.get(id=photo_id)
+        except EvaluationPhoto.DoesNotExist:
+            return Response({'success': False, 'error': 'Foto tidak ditemukan'},
+                            status=status.HTTP_404_NOT_FOUND)
+        # Hanya owner atau admin/superadmin yang bisa hapus
+        if (photo.uploaded_by != request.user
+                and request.user.role not in ['admin', 'superadmin']):
+            return Response({'success': False, 'error': 'Tidak ada izin'},
+                            status=status.HTTP_403_FORBIDDEN)
+        photo.foto.delete(save=False)
+        photo.delete()
+        return Response({'success': True})
 
     def update(self, request, *args, **kwargs):
         """Override update to add debug logging and better error response"""

@@ -1,5 +1,9 @@
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 from . import views
+
+router = DefaultRouter()
+router.register(r'', views.EvaluationViewSet, basename='evaluation')
 
 urlpatterns = [
     path('', views.EvaluationViewSet.as_view({'get': 'list', 'post': 'create'}), name='evaluation_list'),
@@ -24,4 +28,5 @@ urlpatterns = [
     path('integritas-santri/<int:pk>/', views.penilaian_integritas_santri_delete),
     path('integritas-guru/', views.penilaian_integritas_guru),
     path('integritas-guru/<int:pk>/', views.penilaian_integritas_guru_delete),
+    path('', include(router.urls)),
 ]

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    Evaluation, EvaluationComment, PoinIntegritas,
+    Evaluation, EvaluationComment, EvaluationPhoto, PoinIntegritas,
     PenilaianIntegritasSantri, PenilaianIntegritasGuru
 )
 from apps.students.models import Student
@@ -51,6 +51,24 @@ class EvaluationCommentSerializer(serializers.ModelSerializer):
         return base + obj.foto.url
 
 
+class EvaluationPhotoSerializer(serializers.ModelSerializer):
+    foto_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EvaluationPhoto
+        fields = ['id', 'foto', 'foto_url', 'created_at']
+
+    def get_foto_url(self, obj):
+        if not obj.foto:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.foto.url)
+        from django.conf import settings
+        base = getattr(settings, 'BASE_URL', '').rstrip('/')
+        return base + obj.foto.url
+
+
 class EvaluationSerializer(serializers.ModelSerializer):
     nisn_nisn = serializers.CharField(source='nisn.nisn', read_only=True)
     nisn_nama = serializers.CharField(source='nisn.nama', read_only=True)
@@ -61,6 +79,7 @@ class EvaluationSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
     closed_by_name = serializers.SerializerMethodField()
     foto_url = serializers.SerializerMethodField()
+    photos = EvaluationPhotoSerializer(many=True, read_only=True)
     comments = EvaluationCommentSerializer(many=True, read_only=True)
 
     class Meta:
@@ -72,7 +91,7 @@ class EvaluationSerializer(serializers.ModelSerializer):
             'is_approved', 'approved_by', 'approved_by_name', 'approved_at',
             'created_by', 'created_by_name',
             'keputusan_final', 'closed_by', 'closed_by_name', 'closed_at',
-            'comments', 'created_at', 'updated_at'
+            'photos', 'comments', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'approved_by', 'approved_at', 'is_approved', 'created_by', 'closed_by', 'closed_at']
 
