@@ -1354,6 +1354,12 @@ class Incident(models.Model):
         null=True,
         help_text="Lokasi kejadian"
     )
+    foto = models.ImageField(
+        upload_to='incidents/foto/',
+        blank=True,
+        null=True,
+        help_text="Foto bukti kejadian"
+    )
 
     # Status tracking
     status = models.CharField(

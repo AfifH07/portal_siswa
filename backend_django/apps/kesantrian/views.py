@@ -1996,6 +1996,7 @@ def incident_summary(request):
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def incident_list_create(request):
     """
     GET: List incidents with filters
@@ -2061,7 +2062,9 @@ def incident_list_create(request):
         final_count = queryset.count()
         logger.info(f"[Incident API] Final count after all filters: {final_count}")
 
-        serializer = IncidentListSerializer(queryset, many=True)
+        serializer = IncidentListSerializer(
+            queryset, many=True, context={'request': request}
+        )
 
         return Response({
             'success': True,
@@ -2080,7 +2083,10 @@ def incident_list_create(request):
         data['pelapor'] = user.id
         data['pelapor_role'] = user.role
 
-        serializer = IncidentCreateSerializer(data=data)
+        serializer = IncidentCreateSerializer(
+            data=data,
+            context={'request': request}
+        )
 
         if serializer.is_valid():
             incident = serializer.save()
@@ -2099,6 +2105,7 @@ def incident_list_create(request):
 
 @api_view(['GET', 'PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def incident_detail(request, pk):
     """
     GET: Get incident detail with comments
@@ -2152,7 +2159,8 @@ def incident_detail(request, pk):
         serializer = IncidentCreateSerializer(
             incident,
             data=request.data,
-            partial=(request.method == 'PATCH')
+            partial=(request.method == 'PATCH'),
+            context={'request': request}
         )
 
         if serializer.is_valid():

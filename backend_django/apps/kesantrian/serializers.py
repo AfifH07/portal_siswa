@@ -578,6 +578,7 @@ class IncidentSerializer(serializers.ModelSerializer):
     diputuskan_oleh_name = serializers.CharField(source='diputuskan_oleh.name', read_only=True)
     comment_count = serializers.IntegerField(read_only=True)
     comments_count = serializers.IntegerField(source='comment_count', read_only=True)  # Alias for frontend
+    foto_url = serializers.SerializerMethodField()
 
     # Include comments in detail view
     comments = serializers.SerializerMethodField()
@@ -588,7 +589,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             'id', 'siswa', 'siswa_nama', 'siswa_nisn', 'siswa_kelas',
             'judul', 'deskripsi', 'kategori', 'kategori_display',
             'tingkat', 'tingkat_display',
-            'tanggal_kejadian', 'lokasi',
+            'tanggal_kejadian', 'lokasi', 'foto', 'foto_url',
             'status', 'status_display', 'status_icon',
             'pelapor', 'pelapor_name', 'pelapor_nama', 'pelapor_role', 'pelapor_role_display',
             'assigned_to', 'assigned_to_name',
@@ -609,6 +610,14 @@ class IncidentSerializer(serializers.ModelSerializer):
             'musyrif': 'Musyrif',
         }
         return role_map.get(obj.pelapor_role, obj.pelapor_role.replace('_', ' ').title() if obj.pelapor_role else '-')
+
+    def get_foto_url(self, obj):
+        if obj.foto:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.foto.url)
+            return obj.foto.url
+        return None
 
     def get_comments(self, obj):
         """Get comments based on user role"""
@@ -638,6 +647,7 @@ class IncidentListSerializer(serializers.ModelSerializer):
     comments_count = serializers.IntegerField(source='comment_count', read_only=True)  # Alias for frontend
     pelapor_name = serializers.CharField(source='pelapor.name', read_only=True)
     pelapor_role_display = serializers.SerializerMethodField()
+    foto_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Incident
@@ -645,7 +655,7 @@ class IncidentListSerializer(serializers.ModelSerializer):
             'id', 'siswa', 'siswa_nama', 'siswa_kelas',
             'judul', 'deskripsi', 'kategori', 'kategori_display',
             'tingkat', 'tingkat_display',
-            'tanggal_kejadian',
+            'tanggal_kejadian', 'foto_url',
             'status', 'status_display', 'status_icon',
             'pelapor_name', 'pelapor_role', 'pelapor_role_display',
             'keputusan_final',
@@ -663,17 +673,26 @@ class IncidentListSerializer(serializers.ModelSerializer):
         }
         return role_map.get(obj.pelapor_role, obj.pelapor_role.replace('_', ' ').title() if obj.pelapor_role else '-')
 
+    def get_foto_url(self, obj):
+        if obj.foto:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.foto.url)
+            return obj.foto.url
+        return None
+
 
 class IncidentCreateSerializer(serializers.ModelSerializer):
     """Serializer untuk create Incident."""
     siswa_nisn = serializers.CharField(write_only=True)
+    foto = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Incident
         fields = [
             'siswa_nisn', 'judul', 'deskripsi',
             'kategori', 'tingkat',
-            'tanggal_kejadian', 'lokasi',
+            'tanggal_kejadian', 'lokasi', 'foto',
             'pelapor', 'pelapor_role',
             'assigned_to', 'tindak_lanjut', 'deadline_tindak_lanjut',
             'tahun_ajaran', 'semester'

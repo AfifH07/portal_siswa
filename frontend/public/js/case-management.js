@@ -766,8 +766,8 @@
             const kategori = document.getElementById('incident-kategori')?.value || '';
             const tingkat = document.getElementById('incident-tingkat')?.value || '';
             const deskripsi = (document.getElementById('incident-deskripsi')?.value || '').trim();
-            const visibility = document.getElementById('incident-visibility')?.value || 'internal';
             const incidentId = document.getElementById('incident-id')?.value || '';
+            const lokasi = document.getElementById('incident-lokasi');
 
             // Append to FormData
             formData.append('siswa_nisn', siswa_nisn);
@@ -776,7 +776,7 @@
             formData.append('kategori', kategori);
             formData.append('tingkat', tingkat);
             formData.append('deskripsi', deskripsi);
-            formData.append('visibility', visibility);
+            if (lokasi) formData.append('lokasi', lokasi.value || '');
 
             // PERUBAHAN 1: Append foto if exists
             const fotoInput = document.getElementById('incident-foto');
@@ -821,7 +821,7 @@
             // ===== STEP 5: Send to API =====
             const isEdit = !!incidentId;
             const apiUrl = isEdit ? `/kesantrian/incidents/${incidentId}/` : '/kesantrian/incidents/';
-            const method = isEdit ? 'PUT' : 'POST';
+            const method = isEdit ? 'PATCH' : 'POST';
 
             console.log(`[CaseManagement] 🌐 ${method} ${apiUrl}`);
 
@@ -1162,6 +1162,17 @@
             `;
         }
 
+        const fotoHtml = incident.foto_url ? `
+            <div style="margin-top: 16px;">
+                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">📷 Foto Bukti</div>
+                <a href="${escapeAttr(incident.foto_url)}" target="_blank" style="display:inline-block;">
+                    <img src="${escapeAttr(incident.foto_url)}" alt="Foto bukti"
+                        style="max-width: 100%; max-height: 300px; border-radius: 8px;
+                               border: 1px solid #e0e0e0; cursor: pointer;">
+                </a>
+            </div>
+        ` : '';
+
         let statusActions = '';
         if (canChangeStatus && isNotClosed) {
             statusActions = `
@@ -1196,6 +1207,7 @@
             <div style="padding:16px;background:#f9fafb;border-radius:8px;color:#374151;line-height:1.6;">
                 ${escapeHtml(incident.deskripsi || 'Tidak ada deskripsi.')}
             </div>
+            ${fotoHtml}
             ${statusActions}
         `;
     }
@@ -1715,7 +1727,8 @@
         if (incidentForm) {
             console.log('[CaseManagement] ✅ Incident form found, attaching submit listener');
 
-            incidentForm.addEventListener('submit', async function(e) {
+            incidentForm.onsubmit = window.handleIncidentSubmit;
+            false && incidentForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('[CaseManagement] 📝 ===== FORM SUBMIT START =====');
