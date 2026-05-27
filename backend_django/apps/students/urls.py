@@ -11,6 +11,7 @@ urlpatterns = [
     path('statistics/', views.StudentViewSet.as_view({'get': 'statistics'}), name='student_statistics'),
     path('import/', views.import_students_view, name='import_students'),
     path('bulk-update-class/', views.bulk_update_class, name='bulk_update_class'),
+    path('naik-kelas/', views.naik_kelas, name='naik-kelas'),
     path('download-template/', views.download_import_template, name='download_import_template'),
 
     # ============================================

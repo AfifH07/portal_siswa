@@ -21,6 +21,27 @@ from apps.accounts.permissions import IsSuperAdmin, IsPimpinan, IsGuru, CanUpdat
 from .excel_parser import import_students, generate_import_template
 
 
+def get_student_or_alumni_error(nisn):
+    """
+    Return (student, None) jika aktif.
+    Return (None, Response) jika tidak ditemukan atau alumni.
+    """
+    try:
+        student = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return None, Response(
+            {'success': False, 'message': 'Santri tidak ditemukan'},
+            status=404
+        )
+    if student.status == 'alumni':
+        return None, Response(
+            {'success': False,
+             'message': f'{student.nama} sudah alumni. Data tidak dapat diubah.'},
+            status=400
+        )
+    return student, None
+
+
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 25
     page_size_query_param = 'page_size'
@@ -418,6 +439,73 @@ def bulk_update_class(request):
             {'success': False, 'error': f'Terjadi kesalahan: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def naik_kelas(request):
+    """
+    Batch naik kelas:
+    - XII x -> status='alumni', aktif=False, tahun_lulus, tanggal_keluar
+    - XI x -> kelas XII x
+    - X x  -> kelas XI x
+    Hanya superadmin dan admin yang bisa jalankan.
+    """
+    user = request.user
+    if user.role not in ['superadmin', 'admin']:
+        return Response(
+            {'success': False, 'message': 'Tidak ada izin'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    from datetime import date
+    today = date.today()
+    tahun_lulus = str(today.year)
+
+    hasil = {
+        'alumni': 0,
+        'naik_ke_xii': 0,
+        'naik_ke_xi': 0,
+        'skip': 0,
+        'errors': []
+    }
+
+    import re
+    # Pattern: "XII A", "XI B", "X C"
+    pattern = re.compile(r'^(XII|XI|X)\s+([A-Z])$')
+
+    students = Student.objects.filter(status='aktif')
+    for s in students:
+        kelas = (s.kelas or '').strip()
+        match = pattern.match(kelas)
+        if not match:
+            hasil['skip'] += 1
+            continue
+
+        tingkat, seksi = match.group(1), match.group(2)
+
+        if tingkat == 'XII':
+            s.status = 'alumni'
+            s.aktif = False
+            s.tahun_lulus = tahun_lulus
+            s.tanggal_keluar = today
+            s.kelas = None
+            s.save()
+            hasil['alumni'] += 1
+        elif tingkat == 'XI':
+            s.kelas = f'XII {seksi}'
+            s.save()
+            hasil['naik_ke_xii'] += 1
+        elif tingkat == 'X':
+            s.kelas = f'XI {seksi}'
+            s.save()
+            hasil['naik_ke_xi'] += 1
+
+    return Response({
+        'success': True,
+        'message': 'Naik kelas selesai',
+        'hasil': hasil
+    })
 
 
 @api_view(['GET'])

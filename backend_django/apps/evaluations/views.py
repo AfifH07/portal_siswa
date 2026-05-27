@@ -189,6 +189,13 @@ class EvaluationViewSet(viewsets.ModelViewSet):
             user.name if hasattr(user, 'name') and user.name
             else user.username
         )
+        from apps.students.views import get_student_or_alumni_error
+        nisn_val = serializer.validated_data.get('nisn')
+        nisn_str = nisn_val.nisn if hasattr(nisn_val, 'nisn') else str(nisn_val)
+        _, err = get_student_or_alumni_error(nisn_str)
+        if err:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({'nisn': f'Santri sudah alumni.'})
         serializer.save(
             evaluator=evaluator_name,
             created_by=user

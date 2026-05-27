@@ -35,6 +35,7 @@ from .utils import (
     aggregate_student_rapor_data
 )
 from apps.students.models import Student
+from apps.students.views import get_student_or_alumni_error
 from apps.grades.models import Grade
 from apps.attendance.models import Attendance
 from apps.accounts.permissions import IsWalisantri
@@ -210,6 +211,7 @@ def get_my_children_summary(request):
             'nisn': student.nisn,
             'nama': student.nama,
             'kelas': student.kelas,
+            'status': student.status,
             'foto': None,  # TODO: Add foto field
             'ibadah_summary': ibadah_summary,
             'hafalan_progress': hafalan_progress,
@@ -424,6 +426,12 @@ def record_ibadah(request):
             {'success': False, 'message': 'Anda tidak memiliki izin untuk mencatat ibadah'},
             status=status.HTTP_403_FORBIDDEN
         )
+
+    nisn = request.data.get('siswa_nisn') or request.data.get('nisn')
+    if nisn:
+        _, err = get_student_or_alumni_error(nisn)
+        if err:
+            return err
 
     serializer = IbadahCreateSerializer(data=request.data)
 
@@ -1218,6 +1226,12 @@ def blp_list_create(request):
                 {'success': False, 'message': 'Anda tidak memiliki izin untuk membuat BLP'},
                 status=status.HTTP_403_FORBIDDEN
             )
+
+        nisn = request.data.get('siswa_nisn')
+        if nisn:
+            _, err = get_student_or_alumni_error(nisn)
+            if err:
+                return err
 
         # Set pencatat from logged-in user
         data = request.data.copy()
@@ -2078,6 +2092,12 @@ def incident_list_create(request):
                 {'success': False, 'message': 'Anda tidak memiliki izin untuk membuat incident'},
                 status=status.HTTP_403_FORBIDDEN
             )
+
+        nisn = request.data.get('siswa_nisn')
+        if nisn:
+            _, err = get_student_or_alumni_error(nisn)
+            if err:
+                return err
 
         data = request.data.copy()
         data['pelapor'] = user.id
@@ -4539,6 +4559,12 @@ def hafalan_record_list(request):
                 'success': False,
                 'message': 'Anda tidak memiliki izin untuk input hafalan. Hubungi admin untuk assignment.'
             }, status=status.HTTP_403_FORBIDDEN)
+
+        nisn = request.data.get('siswa_nisn')
+        if nisn:
+            _, err = get_student_or_alumni_error(nisn)
+            if err:
+                return err
 
         serializer = HafalanRecordCreateSerializer(data=request.data)
         if serializer.is_valid():

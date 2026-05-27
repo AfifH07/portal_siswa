@@ -28,6 +28,7 @@ from .serializers import (
 )
 from apps.accounts.permissions import IsSuperAdmin, IsPimpinan, IsGuru
 from apps.students.models import Student
+from apps.students.views import get_student_or_alumni_error
 
 
 class GradeViewSet(viewsets.ModelViewSet):
@@ -48,6 +49,14 @@ class GradeViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
+
+    def create(self, request, *args, **kwargs):
+        nisn = request.data.get('nisn')
+        if nisn:
+            _, err = get_student_or_alumni_error(nisn)
+            if err:
+                return err
+        return super().create(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = Grade.objects.select_related('nisn')
