@@ -2011,11 +2011,26 @@ function renderChildSelectorGrades() {
                 <div class="child-avatar">${initials}</div>
                 <div class="child-info">
                     <h4>${child.nama || 'Anak'}</h4>
-                    <span>${child.kelas || '-'}</span>
+                    ${child.status === 'alumni'
+                        ? '<span class="badge-alumni" style="font-size:10px;background:#f3f4f6;color:#6b7280;border-radius:4px;padding:2px 6px;">Alumni</span>'
+                        : `<span>${child.kelas || '-'}</span>`
+                    }
                 </div>
             </div>
         `;
     }).join('');
+
+    updateGradesAlumniState(selectedChildNisn);
+}
+
+function updateGradesAlumniState(nisn) {
+    const selectedChild = childrenData.find(c => c.nisn === nisn);
+    const isAlumni = selectedChild && selectedChild.status === 'alumni';
+
+    const inputSection = document.getElementById('grades-input-section');
+    const alumniNotice = document.getElementById('grades-alumni-notice');
+    if (inputSection) inputSection.style.display = isAlumni ? 'none' : '';
+    if (alumniNotice) alumniNotice.style.display = isAlumni ? '' : 'none';
 }
 
 /**
@@ -2024,6 +2039,7 @@ function renderChildSelectorGrades() {
 window.selectChildGrades = function(nisn) {
     selectedChildNisn = nisn;
     localStorage.setItem('selected_child_nisn', nisn);
+    updateGradesAlumniState(nisn);
 
     // Update active state
     document.querySelectorAll('.child-tab-grade').forEach(tab => {
