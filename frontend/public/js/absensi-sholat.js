@@ -16,7 +16,7 @@ const WAKTU_LABEL = {
     maghrib: 'Maghrib',
     isya: 'Isya'
 };
-const REKAP_ROLES = ['superadmin', 'admin', 'guru', 'musyrif'];
+const REKAP_ROLES = ['superadmin', 'admin', 'guru'];
 const EDIT_STATUS_OPTIONS = [
     { value: '',            label: '-- Pilih --' },
     { value: 'hadir',       label: 'Hadir' },

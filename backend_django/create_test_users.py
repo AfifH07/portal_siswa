@@ -44,23 +44,12 @@ def create_test_users():
         )
         print("Walisantri created successfully")
         
-        # Pendaftar
-        User.objects.create_user(
-            username='pendaftar',
-            password='pendaftar123',
-            email='pendaftar@ponpesbaron.id',
-            name='Calon Santri',
-            role='pendaftar'
-        )
-        print("Pendaftar created successfully")
-        
         print("\nAll test users created successfully!")
         print("====================================")
         print("Username: admin, Password: admin123 (Superadmin)")
         print("Username: pimpinan, Password: pimpinan123 (Pimpinan)")
         print("Username: guru, Password: guru123 (Guru)")
         print("Username: walisantri, Password: walisantri123 (Walisantri)")
-        print("Username: pendaftar, Password: pendaftar123 (Pendaftar)")
         print("====================================")
         
     except Exception as e:

@@ -29,12 +29,10 @@ def user_profile(request):
             'superadmin': 'Super Admin',
             'pimpinan': 'Pimpinan',
             'guru': 'Guru/Ustadz',
-            'musyrif': 'Musyrif',
             'wali_kelas': 'Wali Kelas',
             'bk': 'Guru BK',
             'bendahara': 'Bendahara',
             'walisantri': 'Wali Santri',
-            'pendaftar': 'Pendaftar',
             'adituren': 'Alumni',
         },
         # 7-menu structure for walisantri sidebar

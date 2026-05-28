@@ -62,7 +62,7 @@ urlpatterns = [
     # ==========================================
     # ADMIN
     # ==========================================
-    path('admin/', admin.site.urls),
+    path('baron-admin/', admin.site.urls),
 
     # ==========================================
     # API ROUTES

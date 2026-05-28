@@ -149,7 +149,7 @@ async function loadStats() {
             // Calculate teachers count from role distribution
             const roleStats = stats.role_distribution || [];
             const teacherCount = roleStats
-                .filter(r => ['guru', 'musyrif'].includes(r.role))
+                .filter(r => r.role === 'guru')
                 .reduce((sum, r) => sum + r.count, 0);
             document.getElementById('total-teachers').textContent = teacherCount;
         }
@@ -621,7 +621,7 @@ function onRoleChange() {
     walisantriFields.style.display = role === 'walisantri' ? 'block' : 'none';
 
     // Show/hide kelas field
-    const showKelas = ['guru', 'musyrif', 'bk'].includes(role);
+    const showKelas = ['guru', 'bk'].includes(role);
     kelasGroup.style.display = showKelas ? 'block' : 'none';
 }
 
@@ -813,7 +813,7 @@ function openAssignModal(userId) {
     }
 
     // Check if user can be assigned
-    const allowedRoles = ['guru', 'musyrif', 'bk', 'pimpinan'];
+    const allowedRoles = ['guru', 'bk', 'pimpinan'];
     if (!allowedRoles.includes(user.role)) {
         showToast('warning', `User dengan role ${formatRole(user.role)} tidak dapat diberi assignment`);
         return;
@@ -1354,11 +1354,9 @@ function formatRole(role) {
         'superadmin': 'Superadmin',
         'pimpinan': 'Pimpinan',
         'guru': 'Guru',
-        'musyrif': 'Musyrif',
         'bk': 'Guru BK',
         'bendahara': 'Bendahara',
         'walisantri': 'Walisantri',
-        'pendaftar': 'Pendaftar',
         'adituren': 'Alumni'
     };
     return roleMap[role] || role;

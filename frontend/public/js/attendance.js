@@ -457,8 +457,8 @@ function adjustUIForRole() {
         const adminRoles = ['superadmin', 'pimpinan'];
         const isAdmin = adminRoles.includes(role);
 
-        // Guru/musyrif roles that see personal jurnal only
-        const personalRoles = ['guru', 'musyrif'];
+        // Guru roles that see personal jurnal only
+        const personalRoles = ['guru'];
         const isPersonalView = personalRoles.includes(role);
 
         if (role === 'walisantri') {
@@ -474,7 +474,7 @@ function adjustUIForRole() {
             if (adminSection) adminSection.style.display = 'none';
             if (parentSection) parentSection.style.display = 'block';
         } else if (isPersonalView) {
-            // Guru/Musyrif: show personal view label
+            // Guru: show personal view label
             const personalLabel = document.getElementById('personal-view-label');
             if (personalLabel) {
                 personalLabel.style.display = 'inline-flex';
@@ -979,7 +979,6 @@ function getRoleDisplayName(role) {
         'superadmin': 'Super Admin',
         'pimpinan': 'Pimpinan',
         'guru': 'Guru',
-        'musyrif': 'Musyrif',
         'wali_kelas': 'Wali Kelas',
         'bk': 'Guru BK',
         'bendahara': 'Bendahara',

@@ -140,14 +140,6 @@ class CanUpdateStudent(permissions.BasePermission):
         return False
 
 
-class IsPendaftar(permissions.BasePermission):
-    """
-    Permission: Untuk akses modul pendaftaran.
-    """
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['superadmin', 'admin', 'pimpinan', 'pendaftar']
-
-
 class IsBendahara(permissions.BasePermission):
     """
     Permission: Untuk akses modul keuangan.
@@ -188,7 +180,7 @@ class IsAsatidzEvaluationAllowed(permissions.BasePermission):
 
     READ Access (GET):
         - superadmin, pimpinan: Bisa lihat semua
-        - guru, musyrif: Hanya lihat evaluasi diri sendiri
+        - guru: Hanya lihat evaluasi diri sendiri
 
     Object-level:
         - Ustadz hanya bisa lihat record di mana ustadz=request.user
@@ -199,7 +191,7 @@ class IsAsatidzEvaluationAllowed(permissions.BasePermission):
     WRITE_ROLES = ['superadmin', 'admin', 'pimpinan']
 
     # Roles yang boleh READ (semua staff kecuali walisantri)
-    READ_ROLES = ['superadmin', 'admin', 'pimpinan', 'guru', 'musyrif', 'bk']
+    READ_ROLES = ['superadmin', 'admin', 'pimpinan', 'guru', 'bk']
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -231,4 +223,3 @@ class IsAsatidzEvaluationAllowed(permissions.BasePermission):
 
         # Ustadz tidak boleh UPDATE/DELETE
         return False
-

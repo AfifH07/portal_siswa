@@ -98,11 +98,7 @@ async function checkAuthAndRedirect() {
 
         // Single /dashboard/ entry point with role param for dynamic rendering
         if (currentPath === '/') {
-            if (data.role === 'pendaftar') {
-                window.location.href = '/registration';
-            } else {
-                window.location.href = '/dashboard/';
-            }
+            window.location.href = '/dashboard/';
             return { success: true, user: data };
         }
 
@@ -245,11 +241,9 @@ function getAllowedPages(role) {
         'admin': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/absensi-sholat', '/evaluations', '/finance', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
         'pimpinan': ['/','/dashboard', '/dashboard/pimpinan', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/timetable', '/ibadah', '/blp', '/evaluasi-asatidz', '/case-management'],
         'guru': ['/', '/dashboard', '/dashboard/guru', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/absensi-sholat', '/evaluations', '/timetable', '/inval', '/evaluasi-asatidz', '/case-management', '/kelas-saya'],
-        'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/absensi-sholat', '/evaluations', '/timetable', '/inval', '/evaluasi-asatidz', '/case-management'],
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/timetable', '/evaluasi-asatidz', '/case-management'],
         'bendahara': ['/', '/dashboard', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/timetable', '/finance'],
         'walisantri': ['/', '/dashboard', '/dashboard/walisantri', '/dashboard/parent', '/attendance', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/case-management'],
-        'pendaftar': ['/registration']
     };
 
     return roleAccess[role] || [];
@@ -287,12 +281,8 @@ function checkPageAccess() {
     });
 
     if (!isAllowed) {
-        // Redirect to single /dashboard/ entry with role param
-        if (userRole === 'pendaftar') {
-            window.location.href = '/registration';
-        } else {
-            window.location.href = '/dashboard/';
-        }
+        // Redirect to single /dashboard/ entry
+        window.location.href = '/dashboard/';
     }
 }
 
@@ -335,7 +325,6 @@ function hasPermission(permission) {
         'guru': ['create', 'read', 'update', 'view_class'],
         'bendahara': ['create', 'read', 'update', 'view_finance', 'manage_finance'],
         'walisantri': ['read', 'view_child', 'view_finance'],
-        'pendaftar': ['register', 'view_registration']
     };
 
     const permissions = rolePermissions[role] || [];
@@ -473,27 +462,6 @@ function createRoleBasedNav() {
                 { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan', id: 'nav-pertemuan-pengasuhan' }
             ]
         },
-        'musyrif': {
-            main: [
-                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
-                { href: '/students', icon: 'users', label: 'Data Santri' },
-                { href: '/attendance', icon: 'calendar-check', label: 'Jurnal Guru' },
-                { href: '/jurnal-piket', icon: 'clipboard-list', label: 'Jurnal Piket' },
-                { href: '/titipan-tugas', icon: 'bookmark', label: 'Titipan Tugas' },
-                { href: '/izin-guru', icon: 'file-text', label: 'Izin Guru' },
-                { href: '/grades', icon: 'file-text', label: 'Nilai' },
-                { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
-            ],
-            kesantrian: [
-                { href: '/hafalan', icon: 'book-open', label: 'Program Al-Quran', id: 'nav-hafalan' },
-                { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' }
-            ],
-            other: [
-                { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },
-                { href: '/evaluasi-asatidz', icon: 'clipboard-check', label: 'Evaluasi Saya' },
-                { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' }
-            ]
-        },
         'bk': {
             main: [
                 { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' },
@@ -538,7 +506,6 @@ function createRoleBasedNav() {
                 { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
             ]
         },
-        'pendaftar': { main: [], other: [] }
     };
 
     const config = navConfig[userRole] || { main: [], other: [] };
@@ -609,7 +576,7 @@ function createRoleBasedNav() {
         });
     }
 
-    // Render "Kesantrian" section (for guru/musyrif roles)
+    // Render "Kesantrian" section (for guru roles)
     if (config.kesantrian && config.kesantrian.length > 0) {
         const kesantrianLabel = document.createElement('div');
         kesantrianLabel.className = 'nav-label';
@@ -773,11 +740,9 @@ function updateUserRoleDisplay() {
         'admin': 'Admin',
         'pimpinan': 'Pimpinan',
         'guru': 'Guru/Ustadz',
-        'musyrif': 'Musyrif',
         'bk': 'Guru BK',
         'bendahara': 'Bendahara',
         'walisantri': 'Wali Santri',
-        'pendaftar': 'Pendaftar',
         'adituren': 'Alumni'
     };
 

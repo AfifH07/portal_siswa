@@ -65,7 +65,7 @@ class GradeViewSet(viewsets.ModelViewSet):
         if user.role == 'walisantri':
             # Filter by linked student's NISN (linked_student_nisn is a string, nisn is FK)
             queryset = queryset.filter(nisn__nisn=user.linked_student_nisn)
-        elif user.role in ['guru', 'musyrif']:
+        elif user.role == 'guru':
             # Filter by guru name - consistent with save logic
             guru_name = user.name or user.username
             queryset = queryset.filter(guru=guru_name)
@@ -613,7 +613,7 @@ def get_statistics(request):
     # Build base queryset based on user role
     queryset = Grade.objects.select_related('nisn')
 
-    if user.role in ['guru', 'musyrif']:
+    if user.role == 'guru':
         # Filter by both legacy username and current display name if available
         filters = Q(guru=user.username)
         if user.name:
@@ -1685,7 +1685,7 @@ def get_mapel_list(request):
     Get list of mata pelajaran for grade input dropdown.
 
     Logic:
-    - guru/musyrif: return unique mata_pelajaran from active Assignments
+    - guru: return unique mata_pelajaran from active Assignments
     - superadmin/admin/pimpinan: return all active MasterMapel
 
     Response:
@@ -1696,8 +1696,8 @@ def get_mapel_list(request):
     """
     user = request.user
 
-    # For guru/musyrif: get from their active assignments
-    if user.role in ['guru', 'musyrif']:
+    # For guru: get from their active assignments
+    if user.role == 'guru':
         # Get active TahunAjaran
         tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
 

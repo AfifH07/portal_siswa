@@ -61,9 +61,6 @@ def get_redirect_url(role):
     Uses single /dashboard/ entry point with role query param
     for dynamic template rendering.
     """
-    if role == 'pendaftar':
-        return '/registration'
-
     # All roles go to /dashboard/ with role param for dynamic rendering
     return f'/dashboard/?role={role}'
 
@@ -332,7 +329,6 @@ def auth_status_view(request):
         'guru': ['create', 'read', 'update', 'view_class'],
         'bendahara': ['create', 'read', 'update', 'view_finance', 'manage_finance'],
         'walisantri': ['read', 'view_child', 'view_finance'],
-        'pendaftar': ['register', 'view_registration']
     }
 
     # Daftar halaman yang diizinkan berdasarkan role
@@ -341,11 +337,9 @@ def auth_status_view(request):
         'admin': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
         'pimpinan': ['/', '/dashboard', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/finance', '/timetable', '/blp', '/ibadah', '/case-management', '/evaluasi-asatidz'],
         'guru': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/timetable', '/blp', '/inval', '/case-management', '/evaluasi-asatidz'],
-        'musyrif': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/timetable', '/blp', '/inval', '/case-management', '/evaluasi-asatidz'],
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/timetable', '/case-management', '/evaluasi-asatidz'],
         'bendahara': ['/', '/dashboard', '/jurnal-piket', '/timetable', '/finance'],
         'walisantri': ['/', '/dashboard', '/dashboard/parent', '/attendance', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/case-management'],
-        'pendaftar': ['/registration']
     }
 
     return Response({

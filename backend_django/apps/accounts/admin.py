@@ -69,12 +69,10 @@ class UserAdmin(BaseUserAdmin):
             'superadmin': '#dc2626',    # Red
             'pimpinan': '#7c3aed',      # Purple
             'guru': '#2563eb',          # Blue
-            'musyrif': '#0891b2',       # Cyan
             'bk': '#d97706',            # Amber
             'bendahara': '#65a30d',     # Lime
             'walisantri': '#6366f1',    # Indigo
             'adituren': '#64748b',      # Slate
-            'pendaftar': '#a3a3a3',     # Gray
         }
         color = colors.get(obj.role, '#6b7280')
         return format_html(

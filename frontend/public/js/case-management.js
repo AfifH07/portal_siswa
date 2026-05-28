@@ -278,7 +278,7 @@
             // Build URL based on user role
             let url = '/kesantrian/incidents/summary/';
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'];
+            const adminRoles = ['superadmin', 'pimpinan', 'guru', 'bk'];
 
             console.log('[CaseManagement] ===== SUMMARY FETCH =====');
             console.log('[CaseManagement] User role:', user.role);
@@ -388,7 +388,7 @@
 
             // Get user info
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'];
+            const adminRoles = ['superadmin', 'pimpinan', 'guru', 'bk'];
 
             console.log('[CaseManagement] ===== FETCH DEBUG =====');
             console.log('[CaseManagement] User:', user);
@@ -1146,7 +1146,7 @@
         const kategoriLabel = KATEGORI_LABELS[incident.kategori] || incident.kategori;
         const tanggal = formatDate(incident.tanggal_kejadian);
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const canChangeStatus = ['guru', 'musyrif', 'pimpinan', 'superadmin'].includes(user.role);
+        const canChangeStatus = ['guru', 'pimpinan', 'superadmin'].includes(user.role);
         const isNotClosed = incident.status !== 'resolved' && incident.status !== 'closed';
 
         let finalDecisionBanner = '';
@@ -1218,7 +1218,7 @@
         const typeLabel = TYPE_LABELS[comment.comment_type] || comment.comment_type || 'Catatan';
         const timestamp = formatDateTime(comment.created_at);
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const isAdmin = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'].includes(user.role);
+        const isAdmin = ['superadmin', 'pimpinan', 'guru', 'bk'].includes(user.role);
         const isReply = comment.parent_comment != null;
         const isInternal = comment.visibility === 'internal';
 
@@ -1279,7 +1279,7 @@
         const kategoriLabel = KATEGORI_LABELS[incident.kategori] || incident.kategori;
         const tanggal = formatDate(incident.tanggal_kejadian);
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const canChangeStatus = ['guru', 'musyrif', 'pimpinan', 'superadmin'].includes(user.role);
+        const canChangeStatus = ['guru', 'pimpinan', 'superadmin'].includes(user.role);
         const canApprove = ['superadmin', 'pimpinan'].includes(user.role);
         const isNotClosed = incident.status !== 'resolved' && incident.status !== 'closed';
 
@@ -1447,7 +1447,7 @@
 
         // Visibility indicators with tooltips for admin
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const isAdmin = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'].includes(user.role);
+        const isAdmin = ['superadmin', 'pimpinan', 'guru', 'bk'].includes(user.role);
 
         let visibilityBadge = '';
         if (comment.visibility === 'internal') {
@@ -1603,7 +1603,7 @@
         }
 
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const canChangeStatus = ['guru', 'musyrif', 'pimpinan', 'superadmin'].includes(user.role);
+        const canChangeStatus = ['guru', 'pimpinan', 'superadmin'].includes(user.role);
 
         if (!canChangeStatus) {
             showToast('Anda tidak memiliki izin untuk mengubah status', 'error');
@@ -1682,7 +1682,7 @@
         // ========== ROLE-BASED UI VISIBILITY (Parent View Constraints) ==========
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const isWalisantri = user.role === 'walisantri';
-        const isAdmin = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'].includes(user.role);
+        const isAdmin = ['superadmin', 'pimpinan', 'guru', 'bk'].includes(user.role);
 
         console.log('[CaseManagement] User role:', user.role, '| isWalisantri:', isWalisantri, '| isAdmin:', isAdmin);
 
@@ -2203,7 +2203,7 @@
         console.log('[CaseManagement] User username:', user.username);
 
         // Admin roles - auto-load all incidents
-        const adminRoles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk'];
+        const adminRoles = ['superadmin', 'pimpinan', 'guru', 'bk'];
 
         // Check if incident-list element exists (we're on the right page)
         const incidentList = document.getElementById('incident-list');

@@ -267,8 +267,8 @@ def admin_user_assign(request, user_id):
             'message': 'User tidak ditemukan'
         }, status=status.HTTP_404_NOT_FOUND)
 
-    # Validate user role - only guru, musyrif can be assigned
-    allowed_roles = ['guru', 'musyrif', 'pimpinan']
+    # Validate user role - only guru can be assigned
+    allowed_roles = ['guru', 'pimpinan']
     if user.role not in allowed_roles:
         return Response({
             'success': False,
@@ -579,9 +579,9 @@ def admin_stats(request):
     # Active assignments
     active_assignments = Assignment.objects.filter(status='active').count()
 
-    # Users without assignments (guru/musyrif only)
+    # Users without assignments (guru only)
     unassigned_teachers = User.objects.filter(
-        role__in=['guru', 'musyrif'],
+        role__in=['guru'],
         is_active=True
     ).exclude(
         assignments__status='active'
@@ -623,7 +623,7 @@ def admin_bulk_assign(request):
                 user = User.objects.get(id=user_id)
 
                 # Skip if not allowed role
-                if user.role not in ['guru', 'musyrif', 'pimpinan']:
+                if user.role not in ['guru', 'pimpinan']:
                     errors.append(f"User {user.username}: role tidak diizinkan")
                     continue
 

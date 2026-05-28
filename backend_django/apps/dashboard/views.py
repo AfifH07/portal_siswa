@@ -479,7 +479,7 @@ def ustadz_dashboard_summary(request):
     """
     user = request.user
 
-    allowed_roles = ['guru', 'musyrif', 'superadmin', 'pimpinan']
+    allowed_roles = ['guru', 'superadmin', 'pimpinan']
     if user.role not in allowed_roles:
         return Response({
             'success': False,
@@ -1026,7 +1026,7 @@ def pimpinan_dashboard_summary(request):
         # =============================================
         total_santri = Student.objects.filter(aktif=True).count()
         total_guru = User.objects.filter(
-            role__in=['guru', 'musyrif'], is_active=True
+            role__in=['guru'], is_active=True
         ).count()
 
         # =============================================

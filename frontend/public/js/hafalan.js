@@ -651,7 +651,7 @@ function renderStudentProfile() {
 async function initStudentSelector() {
     const bar = document.getElementById('student-selector-bar');
     if (!bar) return;
-    if (!['guru', 'musyrif', 'admin', 'superadmin'].includes(currentRole)) return;
+    if (!['guru', 'admin', 'superadmin'].includes(currentRole)) return;
     bar.style.display = 'block';
 
     let allStudents = [];
@@ -963,9 +963,7 @@ async function openKompetensiEdit() {
     try {
         const r1 = await window.apiFetch('auth/users/?role=guru');
         const d1 = typeof r1?.json === 'function' ? await r1.json() : r1;
-        const r2 = await window.apiFetch('auth/users/?role=musyrif');
-        const d2 = typeof r2?.json === 'function' ? await r2.json() : r2;
-        users = [...(d1.data || []), ...(d2.data || [])];
+        users = d1.data || [];
         users.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     } catch (e) {}
 
@@ -1983,7 +1981,7 @@ async function initHafalan() {
     }
 
     // Show tab navigation for roles that can input hafalan
-    const canInputHafalan = ['superadmin', 'admin', 'guru', 'musyrif'].includes(currentRole);
+    const canInputHafalan = ['superadmin', 'admin', 'guru'].includes(currentRole);
     const tabNavigation = document.getElementById('tab-navigation');
     if (tabNavigation && (canInputHafalan || ['superadmin', 'admin', 'pimpinan'].includes(currentRole))) {
         tabNavigation.style.display = 'flex';
@@ -2008,7 +2006,7 @@ async function initHafalan() {
 
         // Tampilkan tab Kajian Mingguan untuk pengasuh dan admin roles
         const kajianTabBtn = document.getElementById('tab-btn-kajian');
-        if (kajianTabBtn && ['superadmin', 'admin', 'pimpinan', 'guru', 'musyrif'].includes(currentRole)) {
+        if (kajianTabBtn && ['superadmin', 'admin', 'pimpinan', 'guru'].includes(currentRole)) {
             kajianTabBtn.style.display = '';
         }
 
@@ -2894,7 +2892,7 @@ function legacyRenderKelompokList() {
                         ${k.nama}
                     </div>
                     <div style="font-size:12px;color:#6b7280;margin-top:2px;">
-                        Musyrif: ${k.pengasuh_name || '—'} &nbsp;·&nbsp;
+                        Pengajar: ${k.pengasuh_name || '—'} &nbsp;·&nbsp;
                         ${k.jumlah_santri} santri
                     </div>
                 </div>
@@ -3099,7 +3097,7 @@ async function legacyRefreshKelompokCard(kelompokId) {
         if (card) {
             const subtitle = card.querySelector('[data-expand-id] div div:last-child');
             if (subtitle) subtitle.textContent =
-                `Musyrif: ${updated.pengasuh_name || '—'} · ${updated.jumlah_santri} santri`;
+                `Pengajar: ${updated.pengasuh_name || '—'} · ${updated.jumlah_santri} santri`;
         }
     } catch (e) { /* silent */ }
 }
@@ -3108,18 +3106,18 @@ async function legacyOpenKelompokModal(kelompokId = null) {
     const modal = document.getElementById('modal-kelompok');
     const title = document.getElementById('modal-kelompok-title');
     const inputNama = document.getElementById('input-kelompok-nama');
-    const selectMusyrif = document.getElementById('input-kelompok-musyrif');
+    const selectPengajar = document.getElementById('input-kelompok-pengajar');
     if (!modal) return;
 
     kelompokState.editingId = kelompokId;
     title.textContent = kelompokId ? 'Edit Kelompok' : 'Buat Kelompok';
     inputNama.value = '';
-    selectMusyrif.innerHTML = '<option value="">-- Pilih Musyrif --</option>';
+    selectPengajar.innerHTML = '<option value="">-- Pilih Pengajar --</option>';
 
     try {
         const res = await window.apiFetch('auth/users/?role=guru');
         const d = typeof res?.json === 'function' ? await res.json() : res;
-        const resM = await window.apiFetch('auth/users/?role=musyrif');
+        const resM = await window.apiFetch('auth/users/?role=guru');
         const dM = typeof resM?.json === 'function' ? await resM.json() : resM;
         const users = [...(d.data || []), ...(dM.data || [])];
         users.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -3127,15 +3125,15 @@ async function legacyOpenKelompokModal(kelompokId = null) {
             const opt = document.createElement('option');
             opt.value = u.id;
             opt.textContent = u.name;
-            selectMusyrif.appendChild(opt);
+            selectPengajar.appendChild(opt);
         });
-    } catch (e) { /* tetap buka modal meski gagal load musyrif */ }
+    } catch (e) { /* tetap buka modal meski gagal load pengajar */ }
 
     if (kelompokId) {
         const k = kelompokState.list.find(x => x.id === kelompokId);
         if (k) {
             inputNama.value = k.nama;
-            if (k.pengasuh) selectMusyrif.value = k.pengasuh;
+            if (k.pengasuh) selectPengajar.value = k.pengasuh;
         }
     }
 
@@ -3144,7 +3142,7 @@ async function legacyOpenKelompokModal(kelompokId = null) {
 
 async function legacySaveKelompok() {
     const nama = document.getElementById('input-kelompok-nama')?.value?.trim();
-    const pengasuhId = document.getElementById('input-kelompok-musyrif')?.value;
+    const pengasuhId = document.getElementById('input-kelompok-pengajar')?.value;
     if (!nama) { alert('Nama kelompok wajib diisi.'); return; }
     if (!pengasuhId) { alert('Pengasuh wajib dipilih.'); return; }
 
@@ -4273,7 +4271,7 @@ function bukaModalKelompok(id = null) {
     const modal = document.getElementById('modal-kelompok');
     const title = document.getElementById('modal-kelompok-title');
     const namaInput = document.getElementById('input-kelompok-nama');
-    const pengasuhSelect = document.getElementById('input-kelompok-musyrif');
+    const pengasuhSelect = document.getElementById('input-kelompok-pengajar');
     if (!modal || !title || !namaInput || !pengasuhSelect) return;
 
     kelompokState.editingId = id;
@@ -4315,7 +4313,7 @@ function bukaModalKelompok(id = null) {
 async function saveKelompok() {
     const modal = document.getElementById('modal-kelompok');
     const nama = document.getElementById('input-kelompok-nama')?.value?.trim();
-    const pengasuhId = document.getElementById('input-kelompok-musyrif')?.value;
+    const pengasuhId = document.getElementById('input-kelompok-pengajar')?.value;
     if (!nama) { alert('Nama kelompok wajib diisi.'); return; }
 
     const kelompokId = kelompokState.editingId;

@@ -21,7 +21,7 @@
     <!-- Role Validation (Ustadz Dashboard) -->
     <script>
         (function() {
-            const allowedRoles = ['guru', 'musyrif', 'bk'];
+            const allowedRoles = ['guru', 'bk'];
             const verifiedRole = sessionStorage.getItem('verified_role');
             const timestamp = parseInt(sessionStorage.getItem('verified_timestamp') || '0');
             const isRecent = (Date.now() - timestamp) < 5000;
@@ -359,8 +359,8 @@
 <script src="/static/js/utils.js?v=20260327B"></script>
 <script src="/static/js/apiConfig.js?v=20260327B"></script>
 <script src="/static/js/apiFetch.js?v=20260327B"></script>
-<script src="/static/js/auth-check.js?v=20260523b"></script>
+<script src="/static/js/auth-check.js?v=20260528role"></script>
 <!-- Page-specific JS -->
-<script src="/static/js/dashboard-ustadz.js?v=20260327C"></script>
+<script src="/static/js/dashboard-ustadz.js?v=20260528role"></script>
 </body>
 </html>

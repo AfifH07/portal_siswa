@@ -136,7 +136,7 @@ async function loadSantriList() {
             const response = await window.apiFetch('/students/?page_size=1000');
             const result = await response.json();
             santri = result.results || result.data || [];
-        } else if (['guru', 'musyrif'].includes(user.role)) {
+        } else if (user.role === 'guru') {
             const response = await window.apiFetch(`users/${user.id}/assignments/`);
             const assignments = await response.json();
             const classes = [...new Set(
@@ -732,7 +732,7 @@ async function refreshIntegritasData() {
 
 function canScore() {
     const user = integritasSantriState.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
-    return ['superadmin', 'admin', 'pimpinan', 'guru', 'musyrif'].includes(user.role);
+    return ['superadmin', 'admin', 'pimpinan', 'guru'].includes(user.role);
 }
 
 function formatDate(dateStr) {

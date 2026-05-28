@@ -245,7 +245,7 @@
 
     <script src="/static/js/apiConfig.js" defer></script>
     <script src="/static/js/apiFetch.js" defer></script>
-    <script src="/static/js/auth-check.js?v=20260523b" defer></script>
+    <script src="/static/js/auth-check.js?v=20260528role" defer></script>
     <script src="/static/js/page-events.js" defer></script>
     <script src="/static/js/registration.js" defer></script>
     <script>
@@ -253,7 +253,7 @@
             const userRole = window.getUserRole();
             const currentPath = window.location.pathname;
 
-            if (userRole && userRole !== 'pendaftar') {
+            if (userRole) {
                 const redirectMap = {
                     'superadmin': '/dashboard/admin',
                     'pimpinan': '/dashboard/pimpinan',

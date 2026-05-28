@@ -49,9 +49,6 @@ def get_filtered_queryset_for_user(user, base_queryset=None):
     if role == 'bk':
         return base_queryset
 
-    if role == 'musyrif':
-        return base_queryset
-
     if role == 'guru':
         # Lihat evaluasi yang dia buat sendiri (pending maupun approved)
         # DITAMBAH: evaluasi approved dari kelas yang dia ampu sebagai wali kelas
@@ -674,8 +671,8 @@ def evaluation_comments(request, evaluation_id):
         })
 
     elif request.method == 'POST':
-        # Only guru, bk, musyrif, pimpinan, superadmin, admin can add comments
-        if request.user.role not in ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin', 'admin']:
+        # Only guru, bk, pimpinan, superadmin, admin can add comments
+        if request.user.role not in ['guru', 'bk', 'pimpinan', 'superadmin', 'admin']:
             return Response({
                 'success': False,
                 'message': 'Anda tidak memiliki izin untuk menambah tanggapan'
@@ -789,7 +786,7 @@ def _is_point_manager(user):
 
 
 def _can_score_santri(user):
-    return user.role in ['superadmin', 'admin', 'pimpinan', 'guru', 'musyrif']
+    return user.role in ['superadmin', 'admin', 'pimpinan', 'guru']
 
 
 def _get_assigned_classes(user):
@@ -863,7 +860,7 @@ def penilaian_integritas_santri(request):
         queryset = PenilaianIntegritasSantri.objects.select_related('penilai', 'poin', 'santri')
         santri_nisn = request.query_params.get('santri_nisn')
 
-        if user.role in ['guru', 'musyrif']:
+        if user.role == 'guru':
             allowed_classes = _get_assigned_classes(user)
             if not allowed_classes:
                 queryset = queryset.none()
@@ -892,7 +889,7 @@ def penilaian_integritas_santri(request):
     except Student.DoesNotExist:
         return Response({'success': False, 'message': 'Santri tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
 
-    if user.role in ['guru', 'musyrif']:
+    if user.role == 'guru':
         allowed_classes = _get_assigned_classes(user)
         if santri.kelas not in allowed_classes:
             return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)

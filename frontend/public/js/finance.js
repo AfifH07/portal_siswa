@@ -95,7 +95,6 @@ function capitalizeRole(role) {
         'bendahara': 'Bendahara',
         'guru': 'Guru',
         'walisantri': 'Wali Santri',
-        'pendaftar': 'Pendaftar'
     };
     return roleNames[role] || role;
 }

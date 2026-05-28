@@ -472,7 +472,7 @@ class InvalRecordCreateSerializer(serializers.ModelSerializer):
         guru_absent = data.get('guru_absent')
         guru_pengganti = data.get('guru_pengganti')
 
-        allowed_roles = ['guru', 'musyrif', 'pimpinan']
+        allowed_roles = ['guru', 'pimpinan']
 
         if guru_absent and guru_absent.role not in allowed_roles:
             raise serializers.ValidationError({
@@ -607,7 +607,6 @@ class IncidentSerializer(serializers.ModelSerializer):
             'pimpinan': 'Pimpinan/Mudir',
             'guru': 'Guru/Ustadz',
             'bk': 'Guru BK',
-            'musyrif': 'Musyrif',
         }
         return role_map.get(obj.pelapor_role, obj.pelapor_role.replace('_', ' ').title() if obj.pelapor_role else '-')
 
@@ -669,7 +668,6 @@ class IncidentListSerializer(serializers.ModelSerializer):
             'pimpinan': 'Pimpinan/Mudir',
             'guru': 'Guru/Ustadz',
             'bk': 'Guru BK',
-            'musyrif': 'Musyrif',
         }
         return role_map.get(obj.pelapor_role, obj.pelapor_role.replace('_', ' ').title() if obj.pelapor_role else '-')
 

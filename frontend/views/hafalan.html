@@ -78,7 +78,7 @@
 
         <div class="child-selector" id="hafalan-child-selector" style="display:none;"></div>
 
-        <!-- ==================== TAB NAVIGATION (Guru/Musyrif Only) ==================== -->
+        <!-- ==================== TAB NAVIGATION (Guru Only) ==================== -->
         <div class="tab-navigation" id="tab-navigation" style="display: none;">
             <button class="tab-btn active" data-tab="overview" onclick="switchHafalanTab('overview')">
                 <i data-lucide="layout-grid" class="tab-icon"></i>
@@ -452,7 +452,7 @@
 
         </div><!-- /tab-overview -->
 
-        <!-- ==================== TAB: SETORAN HAFALAN (Guru/Musyrif) ==================== -->
+        <!-- ==================== TAB: SETORAN HAFALAN (Guru) ==================== -->
         <div class="tab-content" id="tab-setoran" style="display: none;">
             <!-- Filter Bar -->
             <div class="glass-card filter-bar-section">
@@ -858,7 +858,7 @@
                 <div style="margin-bottom:20px;">
                     <label style="display:block;font-size:12px;font-weight:500;
                                    color:#374151;margin-bottom:6px;">Pengasuh (Ustadz)</label>
-                    <select id="input-kelompok-musyrif"
+                    <select id="input-kelompok-pengajar"
                             style="width:100%;padding:9px 12px;border:1px solid #d1d5db;
                                    border-radius:8px;font-size:13px;outline:none;
                                    background:#fff;box-sizing:border-box;">
@@ -1046,10 +1046,10 @@
 <script src="/static/js/utils.js?v=20260504" defer></script>
 <script src="/static/js/apiConfig.js?v=20260504" defer></script>
 <script src="/static/js/apiFetch.js?v=20260504" defer></script>
-<script src="/static/js/auth-check.js?v=20260523b" defer></script>
-<script src="/static/js/auth.js?v=20260504" defer></script>
+<script src="/static/js/auth-check.js?v=20260528role" defer></script>
+<script src="/static/js/auth.js?v=20260528role" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/hafalan.js?v=20260523c" defer></script>
+<script src="/static/js/hafalan.js?v=20260528role" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init

@@ -13,7 +13,7 @@ let ibadahCharts = {};
 
 const API_BASE = '/api';
 const WAKTU_SHOLAT = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
-const REKAP_ADMIN_ROLES = ['superadmin', 'admin', 'guru', 'musyrif'];
+const REKAP_ADMIN_ROLES = ['superadmin', 'admin', 'guru'];
 const HARI_NAMES = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 const BULAN_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 

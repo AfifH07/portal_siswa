@@ -34,18 +34,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('admin', 'Admin'),               # Admin (akses manajemen data, tapi tidak bisa kelola user)
         ('pimpinan', 'Pimpinan'),
         ('guru', 'Guru'),
-        ('musyrif', 'Musyrif'),           # Pengawas asrama/halaqoh
         ('bk', 'Guru BK'),                # Guru Bimbingan Konseling
         ('bendahara', 'Bendahara'),
         ('walisantri', 'Walisantri'),
         ('adituren', 'Adituren/Alumni'),  # Alumni access
-        ('pendaftar', 'Pendaftar'),
     ]
 
     id = models.BigAutoField(primary_key=True)
     username = models.CharField(max_length=50, unique=True)
     password = models.CharField(max_length=255)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='pendaftar')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='guru')
     name = models.CharField(max_length=100)
     nisn = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(max_length=100, blank=True, null=True)

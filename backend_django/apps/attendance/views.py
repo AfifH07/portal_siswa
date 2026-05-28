@@ -813,7 +813,7 @@ def get_attendance_history(request):
 
     # ========== GURU VIEW: Filter by input_by (who input the attendance) ==========
     # Role superadmin/pimpinan/admin → tampilkan semua (tidak difilter)
-    if user.role == 'guru' or user.role == 'musyrif':
+    if user.role == 'guru':
         # Filter berdasarkan siapa yang input attendance
         queryset = queryset.filter(input_by=user)
 

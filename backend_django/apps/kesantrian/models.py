@@ -1584,7 +1584,6 @@ class IncidentComment(models.Model):
                 'superadmin': 'Administrator',
                 'pimpinan': 'Mudir/Pimpinan',
                 'guru': 'Guru/Ustadz',
-                'musyrif': 'Musyrif',
                 'bk': 'Guru BK',
             }
             self.author_role_display = role_map.get(self.author.role, self.author.role)

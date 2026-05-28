@@ -161,7 +161,7 @@ function checkAuthAndRedirect() {
         const role = window.getUserRole ? window.getUserRole() : localStorage.getItem('user_role');
 
         if (currentPath === '/') {
-            const redirectUrl = role === 'pendaftar' ? '/registration' : '/dashboard';
+            const redirectUrl = '/dashboard';
             window.location.href = redirectUrl;
         }
     }

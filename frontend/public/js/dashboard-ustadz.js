@@ -41,7 +41,7 @@ async function checkAuth() {
 
         currentUser = await response.json();
 
-        const allowedRoles = ['guru', 'musyrif', 'bk', 'superadmin', 'pimpinan'];
+        const allowedRoles = ['guru', 'bk', 'superadmin', 'pimpinan'];
         if (!allowedRoles.includes(currentUser.role)) {
             showToast('Akses ditolak. Halaman ini untuk Ustadz/Ustadzah.', 'error');
             setTimeout(() => window.location.href = '/dashboard', 2000);
@@ -71,7 +71,6 @@ async function checkAuth() {
 function getRoleDisplay(role) {
     const displays = {
         'guru': 'Guru/Ustadz',
-        'musyrif': 'Musyrif',
         'bk': 'Guru BK',
         'superadmin': 'Super Admin',
         'pimpinan': 'Pimpinan'

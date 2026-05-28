@@ -1216,7 +1216,7 @@ async function viewEvaluation(id) {
         const userRole = currentUser?.role || '';
         const canApprove = ['superadmin', 'admin', 'pimpinan'].includes(userRole);
         const canClose = ['pimpinan', 'superadmin'].includes(userRole);
-        const canComment = ['guru', 'musyrif', 'bk', 'pimpinan', 'superadmin', 'admin'].includes(userRole);
+        const canComment = ['guru', 'bk', 'pimpinan', 'superadmin', 'admin'].includes(userRole);
 
         let approvalSection = '';
         if (evaluation.is_approved) {
