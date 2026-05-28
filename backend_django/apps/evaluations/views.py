@@ -57,14 +57,19 @@ def get_filtered_queryset_for_user(user, base_queryset=None):
             user=user,
             assignment_type='wali_kelas'
         ).values_list('kelas', flat=True)
+        evaluator_name = getattr(user, 'name', '') or user.username
 
         if wali_kelas.exists():
             return base_queryset.filter(
                 Q(created_by=user) |
+                Q(evaluator=evaluator_name) |
                 Q(nisn__kelas__in=wali_kelas)
             )
         else:
-            return base_queryset.filter(created_by=user)
+            return base_queryset.filter(
+                Q(created_by=user) |
+                Q(evaluator=evaluator_name)
+            )
 
     if role == 'walisantri':
         # Hanya lihat evaluasi approved dari anak yang terhubung
@@ -790,7 +795,7 @@ def _can_score_santri(user):
 
 
 def _get_assigned_classes(user):
-    return list(
+    kelas_list = list(
         Assignment.objects.filter(
             user=user,
             status='active'
@@ -800,6 +805,7 @@ def _get_assigned_classes(user):
             kelas__exact=''
         ).values_list('kelas', flat=True).distinct()
     )
+    return list(set(kelas_list))
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -930,9 +936,12 @@ def penilaian_integritas_guru(request):
 
     if request.method == 'GET':
         if user.role == 'guru':
-            return Response({'success': False, 'message': 'Tidak memiliki akses'}, status=status.HTTP_403_FORBIDDEN)
+            # guru hanya bisa lihat penilaian dirinya sendiri
+            pass
 
         queryset = PenilaianIntegritasGuru.objects.select_related('penilai', 'guru', 'poin')
+        if user.role == 'guru':
+            queryset = queryset.filter(guru=user)
         guru_id = request.query_params.get('guru_id')
         if guru_id:
             queryset = queryset.filter(guru_id=guru_id)
