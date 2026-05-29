@@ -6,6 +6,7 @@
     <title>Karakter & Evaluasi Ananda - Portal Ponpes Baron</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
+    <link href="/static/css/karakter.css?v=20260529a" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* Hero */
@@ -341,10 +342,17 @@
     </div>
 </main>
 
+<div id="incident-detail-modal" class="incident-detail-overlay" aria-hidden="true">
+    <div class="incident-detail-box">
+        <button type="button" id="incident-detail-close" class="incident-detail-close" aria-label="Tutup">&times;</button>
+        <div id="incident-detail-content"></div>
+    </div>
+</div>
+
 <script src="/static/js/apiConfig.js" defer></script>
 <script src="/static/js/apiFetch.js" defer></script>
 <script src="/static/js/utils.js" defer></script>
 <script src="/static/js/auth-check.js?v=20260528blp" defer></script>
-<script src="/static/js/karakter.js?v=20260529c" defer></script>
+<script src="/static/js/karakter.js?v=20260529d" defer></script>
 </body>
 </html>

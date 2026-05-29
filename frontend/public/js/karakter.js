@@ -84,6 +84,8 @@ async function initKarakter() {
             if (entry) renderBLPEntry(entry);
         };
     }
+
+    setupIncidentModal();
 }
 
 async function loadBLPIndicators() {
@@ -289,7 +291,7 @@ async function loadEvaluasi(nisn) {
                 }[incident.status] || '🔴';
 
                 return `
-                    <div class="kar-eval-item" data-incident-id="${incident.id}" style="cursor:pointer;">
+                    <div class="kar-eval-item">
                         <div class="kar-eval-header">
                             <div class="kar-eval-title">
                                 ${statusIcon} ${escapeHtml(incident.judul || '-')}
@@ -318,8 +320,8 @@ async function loadEvaluasi(nisn) {
                     </div>
                 `;
             }).join('');
-            listEl.querySelectorAll('.kar-eval-item[data-incident-id]').forEach(card => {
-                card.onclick = () => openIncidentModal(card.dataset.incidentId);
+            listEl.querySelectorAll('.kar-eval-item').forEach((el, i) => {
+                el.onclick = () => openIncidentModal(items[i].id);
             });
             show('eval-list');
         }
@@ -332,91 +334,44 @@ async function loadEvaluasi(nisn) {
 }
 
 async function openIncidentModal(incidentId) {
-    ensureIncidentModal();
-    renderIncidentModalLoading();
-    showIncidentModal();
+    const modal = document.getElementById('incident-detail-modal');
+    const content = document.getElementById('incident-detail-content');
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+        <div class="incident-empty-comments">
+            Memuat detail catatan...
+        </div>
+    `;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
 
     try {
-        const res = await window.apiFetch(`kesantrian/incidents/${incidentId}/`);
+        const res = await window.apiFetch('kesantrian/incidents/' + incidentId + '/');
         const d = typeof res?.json === 'function' ? await res.json() : res;
-        const incident = d.data || d;
+        const incident = d.data;
         renderIncidentModal(incident);
     } catch (e) {
-        const body = document.getElementById('kar-incident-modal-body');
-        if (body) {
-            body.innerHTML = `
-                <div style="padding:24px;text-align:center;color:#dc2626;">
-                    Gagal memuat detail catatan.
-                </div>
-            `;
-        }
+        content.innerHTML = `
+            <div class="incident-empty-comments" style="color:#dc2626;">
+                Gagal memuat detail catatan.
+            </div>
+        `;
         console.error('[karakter] incident detail error:', e);
     }
 }
 
-function ensureIncidentModal() {
-    if (document.getElementById('kar-incident-modal')) return;
-
-    const modal = document.createElement('div');
-    modal.id = 'kar-incident-modal';
-    modal.style.cssText = [
-        'position:fixed',
-        'inset:0',
-        'z-index:9999',
-        'display:none',
-        'align-items:center',
-        'justify-content:center',
-        'background:rgba(15,23,42,0.48)',
-        'padding:18px'
-    ].join(';');
-
-    modal.innerHTML = `
-        <div style="width:min(760px,100%);max-height:88vh;overflow:hidden;
-            background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,0.28);">
-            <div style="display:flex;align-items:center;justify-content:space-between;
-                gap:12px;padding:18px 22px;border-bottom:1px solid #e5e7eb;">
-                <div>
-                    <div style="font-size:12px;color:#6b7280;font-weight:600;">Detail Catatan & Bimbingan</div>
-                    <div id="kar-incident-modal-title" style="font-size:18px;color:#064e3b;font-weight:800;margin-top:3px;">
-                        Memuat...
-                    </div>
-                </div>
-                <button type="button" id="kar-incident-modal-close"
-                    style="border:0;background:#f3f4f6;color:#374151;border-radius:10px;
-                    width:36px;height:36px;cursor:pointer;font-size:18px;">&times;</button>
-            </div>
-            <div id="kar-incident-modal-body" style="padding:20px 22px;overflow:auto;max-height:calc(88vh - 82px);"></div>
-        </div>
-    `;
-
-    modal.onclick = event => {
-        if (event.target === modal) closeIncidentModal();
-    };
-    document.body.appendChild(modal);
-
-    const closeBtn = document.getElementById('kar-incident-modal-close');
-    if (closeBtn) closeBtn.onclick = closeIncidentModal;
-}
-
-function renderIncidentModalLoading() {
-    setText('kar-incident-modal-title', 'Memuat...');
-    const body = document.getElementById('kar-incident-modal-body');
-    if (body) {
-        body.innerHTML = `
-            <div style="padding:24px;text-align:center;color:#6b7280;">
-                Memuat detail catatan...
-            </div>
-        `;
-    }
-}
-
 function renderIncidentModal(incident) {
-    setText('kar-incident-modal-title', incident.judul || '-');
-
-    const body = document.getElementById('kar-incident-modal-body');
-    if (!body) return;
+    const content = document.getElementById('incident-detail-content');
+    if (!content || !incident) return;
 
     const comments = Array.isArray(incident.comments) ? incident.comments : [];
+    const statusIcon = {
+        open: 'ðŸ”´',
+        in_discussion: 'ðŸŸ¡',
+        resolved: 'ðŸŸ¢',
+        closed: 'âšª'
+    }[incident.status] || 'ðŸ”´';
     const tingkatClass = {
         ringan: 'badge-ringan',
         sedang: 'badge-sedang',
@@ -425,42 +380,41 @@ function renderIncidentModal(incident) {
     }[incident.tingkat] || 'badge-ringan';
 
     const fotoHtml = incident.foto_url ? `
-        <div style="margin-top:14px;">
-            <div style="font-size:12px;color:#6b7280;font-weight:600;margin-bottom:8px;">Foto bukti</div>
+        <div class="incident-detail-photo">
+            <div class="incident-detail-meta">Foto bukti</div>
             <a href="${escapeHtml(incident.foto_url)}" target="_blank" rel="noopener">
-                <img src="${escapeHtml(incident.foto_url)}" alt="Foto bukti"
-                    style="max-width:100%;max-height:280px;border-radius:12px;border:1px solid #e5e7eb;">
+                <img src="${escapeHtml(incident.foto_url)}" alt="Foto bukti">
             </a>
         </div>
     ` : '';
 
     const keputusanHtml = incident.keputusan_final ? `
-        <div style="margin-top:14px;padding:12px 14px;background:#f0fdf4;border:1px solid #bbf7d0;
-            border-radius:12px;color:#047857;font-size:13px;">
+        <div class="incident-final-decision">
             <strong>Keputusan:</strong> ${escapeHtml(incident.keputusan_final)}
         </div>
     ` : '';
 
     const commentsHtml = comments.length > 0 ? comments.map(comment => `
-        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin-top:10px;">
-            <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;">
-                <strong style="font-size:13px;color:#111827;">${escapeHtml(comment.author_name || '-')}</strong>
-                <span style="font-size:11px;color:#9ca3af;">${formatDateOnly(comment.created_at)}</span>
+        <div class="incident-comment-card">
+            <div class="incident-comment-head">
+                <strong class="incident-comment-author">${escapeHtml(comment.author_name || '-')}</strong>
+                <span class="incident-comment-date">${formatDateOnly(comment.created_at)}</span>
             </div>
-            <div style="font-size:12px;color:#047857;font-weight:600;margin-bottom:6px;">
+            <div class="incident-comment-type">
                 ${escapeHtml(comment.comment_type_display || 'Komentar')}
             </div>
-            <div style="font-size:13px;color:#374151;line-height:1.6;">
+            <div class="incident-comment-content">
                 ${escapeHtml(comment.content || '')}
             </div>
         </div>
     `).join('') : `
-        <div style="padding:16px;text-align:center;color:#9ca3af;font-size:13px;">
-            Belum ada komentar publik.
+        <div class="incident-empty-comments">
+            Belum ada tanggapan publik.
         </div>
     `;
 
-    body.innerHTML = `
+    content.innerHTML = `
+        <h2 class="incident-detail-title">${statusIcon} ${escapeHtml(incident.judul || '-')}</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
             <span class="kar-badge ${tingkatClass}">
                 ${escapeHtml(incident.tingkat_display || incident.tingkat || '-')}
@@ -474,17 +428,18 @@ function renderIncidentModal(incident) {
                 </span>
             ` : ''}
         </div>
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:12px;">
+        <div class="incident-detail-meta">
             ${escapeHtml(incident.tanggal_kejadian || '-')}
+            ${incident.kategori_display ? ' &middot; ' + escapeHtml(incident.kategori_display) : ''}
             ${incident.pelapor_name ? ' &middot; ' + escapeHtml(incident.pelapor_name) : ''}
         </div>
-        <div style="font-size:14px;color:#374151;line-height:1.7;">
+        <div class="incident-detail-description">
             ${escapeHtml(incident.deskripsi || '')}
         </div>
         ${fotoHtml}
         ${keputusanHtml}
-        <div style="margin-top:18px;border-top:1px solid #e5e7eb;padding-top:16px;">
-            <div style="font-size:15px;font-weight:800;color:#064e3b;margin-bottom:10px;">
+        <div class="incident-comments-section">
+            <div class="incident-comments-title">
                 Komentar & Pembinaan
             </div>
             ${commentsHtml}
@@ -492,15 +447,28 @@ function renderIncidentModal(incident) {
     `;
 }
 
-function showIncidentModal() {
-    const modal = document.getElementById('kar-incident-modal');
-    if (modal) modal.style.display = 'flex';
+function setupIncidentModal() {
+    const modal = document.getElementById('incident-detail-modal');
+    const closeBtn = document.getElementById('incident-detail-close');
+    if (modal) {
+        modal.onclick = event => {
+            if (event.target === modal) closeIncidentModal();
+        };
+    }
+    if (closeBtn) closeBtn.onclick = closeIncidentModal;
 }
 
 function closeIncidentModal() {
-    const modal = document.getElementById('kar-incident-modal');
-    if (modal) modal.style.display = 'none';
+    const modal = document.getElementById('incident-detail-modal');
+    const content = document.getElementById('incident-detail-content');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+    if (content) content.innerHTML = '';
 }
+
+window.closeIncidentModal = closeIncidentModal;
 
 // ===== HELPERS =====
 

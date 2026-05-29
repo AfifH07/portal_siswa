@@ -273,7 +273,8 @@ class BLPEntryCreateSerializer(serializers.ModelSerializer):
             'tahun_ajaran', 'semester',
             'indicator_values', 'bonus_points', 'bonus_notes',
             'catatan', 'tindak_lanjut',
-            'pencatat', 'pencatat_username'
+            'pencatat', 'pencatat_username',
+            'status'
         ]
 
     def validate_siswa_nisn(self, value):
@@ -316,6 +317,14 @@ class BLPEntryCreateSerializer(serializers.ModelSerializer):
                 })
 
         return data
+
+    def validate_status(self, value):
+        allowed = ['draft', 'submitted']
+        if value not in allowed:
+            raise serializers.ValidationError(
+                f"Status tidak valid. Pilihan: {allowed}"
+            )
+        return value
 
     def create(self, validated_data):
         nisn = validated_data.pop('siswa_nisn')
