@@ -150,6 +150,122 @@
             .blp-toolbar, .blp-period-grid, .blp-form-grid, .blp-total-panel { grid-template-columns: 1fr; }
             .blp-indicator-row { grid-template-columns: 1fr; }
         }
+
+        /* ===== TOMBOL ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            border: none;
+        }
+        .btn-primary {
+            background: #047857;
+            color: #fff;
+            border: none;
+        }
+        .btn-primary:hover { background: #065f46; }
+
+        .btn-secondary {
+            background: #fff;
+            color: #374151;
+            border: 1.5px solid #d1d5db;
+        }
+        .btn-secondary:hover { background: #f3f4f6; }
+
+        .btn-sm { padding: 6px 14px; font-size: 13px; border-radius: 8px; }
+
+        /* Tombol Input BLP di tabel - override btn-primary ukuran kecil */
+        .blp-actions .btn-primary {
+            background: #047857;
+            color: #fff;
+            border: none;
+        }
+        .blp-actions .btn-secondary {
+            background: #fff;
+            color: #374151;
+            border: 1.5px solid #d1d5db;
+        }
+
+        /* ===== FORM FIELDS ===== */
+        .glass-input {
+            width: 100%;
+            padding: 9px 13px;
+            border-radius: 10px;
+            border: 1.5px solid #d1e9df;
+            background: #f8fffe;
+            font-size: 14px;
+            color: #0f172a;
+            font-family: inherit;
+            transition: border-color 0.15s;
+            box-sizing: border-box;
+        }
+        .glass-input:focus {
+            outline: none;
+            border-color: #047857;
+            background: #fff;
+        }
+        .glass-input[readonly] {
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: default;
+        }
+        textarea.glass-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* ===== FIX LAYOUT blp-form-grid ===== */
+        /* Ganti grid 2 kolom menjadi stack per field */
+        .blp-form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 20px;
+        }
+        .blp-form-grid label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        /* Row bonus: dua kolom berdampingan */
+        .blp-bonus-row {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 12px;
+        }
+
+        /* ===== TOTAL PANEL ===== */
+        .blp-total-box {
+            border-radius: 16px;
+            padding: 14px 18px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+        .blp-total-box span { display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; }
+        .blp-total-box strong { font-size: 1.6rem; color: #047857; }
+
+        /* ===== MODAL FOOTER ===== */
+        .blp-modal-footer {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            z-index: 2;
+            border-top: 1px solid #e5e7eb;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
     </style>
     <link rel="stylesheet" href="/static/css/blp.css?v=20260529a">
 </head>
@@ -258,22 +374,24 @@
             <div id="blp-indicators-container"></div>
 
             <div class="blp-form-grid">
-                <div>
-                    <label for="blp-bonus-points">Bonus points</label>
-                    <input type="number" id="blp-bonus-points" class="glass-input" min="0" max="95" value="0">
-                </div>
-                <div>
-                    <label for="blp-bonus-notes">Bonus notes</label>
-                    <input type="text" id="blp-bonus-notes" class="glass-input" placeholder="Catatan bonus jika ada">
+                <div class="blp-bonus-row">
+                    <div>
+                        <label for="blp-bonus-points">Bonus points</label>
+                        <input type="number" id="blp-bonus-points" class="glass-input" min="0" max="95" value="0">
+                    </div>
+                    <div>
+                        <label for="blp-bonus-notes">Catatan bonus</label>
+                        <input type="text" id="blp-bonus-notes" class="glass-input" placeholder="Catatan bonus jika ada">
+                    </div>
                 </div>
                 <div>
                     <label for="blp-catatan">Catatan</label>
+                    <textarea id="blp-catatan" class="glass-input" rows="3" placeholder="Catatan umum"></textarea>
                 </div>
-                <textarea id="blp-catatan" class="glass-input" rows="3" placeholder="Catatan umum"></textarea>
                 <div>
                     <label for="blp-tindak-lanjut">Tindak lanjut</label>
+                    <textarea id="blp-tindak-lanjut" class="glass-input" rows="3" placeholder="Rencana tindak lanjut"></textarea>
                 </div>
-                <textarea id="blp-tindak-lanjut" class="glass-input" rows="3" placeholder="Rencana tindak lanjut"></textarea>
             </div>
 
             <div class="blp-total-panel">
