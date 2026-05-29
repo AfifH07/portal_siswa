@@ -89,6 +89,12 @@ async function loadBLPIndicators() {
 }
 
 async function loadStudents() {
+    // Walisantri tidak punya akses halaman input BLP.
+    if (currentUser?.role === 'walisantri') {
+        window.location.href = '/karakter';
+        return;
+    }
+
     const tbody = document.getElementById('blp-students-tbody');
     if (tbody) {
         tbody.innerHTML = '<tr><td colspan="4" class="blp-muted">Memuat data santri...</td></tr>';
@@ -308,43 +314,75 @@ function renderIndicatorTabs() {
     const subtotal = getDomainSubtotal(currentDomain);
 
     container.innerHTML = `
-        <div class="blp-card" style="box-shadow:none;">
-            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;">
-                <div>
-                    <strong>${escapeHtml(domainMeta.label || formatDomain(currentDomain))}</strong>
-                    <div class="blp-muted">${indicators.length} indikator</div>
-                </div>
-                <span class="blp-score-pill" id="blp-domain-subtotal">${subtotal}</span>
+        <div class="blp-card blp-domain-section" data-domain="${escapeAttr(currentDomain)}" style="box-shadow:none;">
+            <div class="blp-domain-header">
+                <span>${escapeHtml(domainMeta.label || formatDomain(currentDomain))} <span class="blp-muted">(${indicators.length} indikator)</span></span>
+                <span class="blp-domain-score" data-domain-score="${escapeAttr(currentDomain)}">${subtotal}</span>
             </div>
             ${indicators.map(item => {
                 const value = Number(indicatorValues[currentDomain]?.[item.code] || 0);
-                return `
-                    <div class="blp-indicator-row">
-                        <label for="blp-${escapeAttr(currentDomain)}-${escapeAttr(item.code)}">${escapeHtml(item.label)}</label>
-                        <input type="range" min="0" max="5" value="${value}" class="blp-indicator-input"
-                               id="blp-${escapeAttr(currentDomain)}-${escapeAttr(item.code)}"
-                               data-domain="${escapeAttr(currentDomain)}" data-code="${escapeAttr(item.code)}">
-                        <span class="blp-score-pill" data-score-display="${escapeAttr(currentDomain)}.${escapeAttr(item.code)}">${value}</span>
-                    </div>`;
+                return renderIndicator(item.code, item.label, value);
             }).join('')}
         </div>
     `;
-
-    container.querySelectorAll('.blp-indicator-input').forEach(input => {
-        input.oninput = function() {
-            const domain = this.dataset.domain;
-            const code = this.dataset.code;
-            if (!indicatorValues[domain]) indicatorValues[domain] = {};
-            indicatorValues[domain][code] = Number(this.value || 0);
-
-            const display = container.querySelector(`[data-score-display="${cssEscape(`${domain}.${code}`)}"]`);
-            if (display) display.textContent = this.value;
-            const subtotalEl = document.getElementById('blp-domain-subtotal');
-            if (subtotalEl) subtotalEl.textContent = getDomainSubtotal(domain);
-            updateTotalScore();
-        };
-    });
 }
+
+function renderIndicator(code, label, value) {
+    return `
+        <div class="blp-indicator-row" data-code="${escapeAttr(code)}">
+            <div class="blp-indicator-label">${escapeHtml(label)}</div>
+            <div class="blp-indicator-control">
+                <div class="blp-score-buttons">
+                    ${[0, 1, 2, 3, 4, 5].map(n => `
+                        <button type="button"
+                            class="blp-score-btn ${value == n ? 'active' : ''}"
+                            data-score="${n}"
+                            onclick="window.setIndicatorScore('${escapeJs(code)}', ${n}, this)">
+                            ${n}
+                        </button>
+                    `).join('')}
+                </div>
+                <span class="blp-score-label">${getScoreLabel(value)}</span>
+            </div>
+        </div>
+    `;
+}
+
+function getScoreLabel(score) {
+    const labels = {
+        0: 'Belum dinilai',
+        1: 'Sangat Kurang',
+        2: 'Kurang',
+        3: 'Cukup',
+        4: 'Baik',
+        5: 'Sangat Baik'
+    };
+    return labels[score] || '';
+}
+
+function updateDomainScore(domain) {
+    const scoreEl = document.querySelector(`[data-domain-score="${cssEscape(domain)}"]`);
+    if (scoreEl) scoreEl.textContent = getDomainSubtotal(domain);
+}
+
+window.setIndicatorScore = function(code, score, btn) {
+    const row = btn.closest('.blp-indicator-row');
+    const domainEl = btn.closest('.blp-domain-section');
+    const domain = domainEl?.dataset.domain;
+    if (!domain) return;
+
+    if (!indicatorValues[domain]) indicatorValues[domain] = {};
+    indicatorValues[domain][code] = score;
+
+    row.querySelectorAll('.blp-score-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const label = row.querySelector('.blp-score-label');
+    if (label) label.textContent = getScoreLabel(score);
+
+    updateDomainScore(domain);
+    updateTotalScore();
+};
 
 function updateTotalScore() {
     const baseScore = Object.keys(indicatorValues).reduce((sum, domain) => {
@@ -530,6 +568,14 @@ function escapeHtml(value) {
 
 function escapeAttr(value) {
     return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
+function escapeJs(value) {
+    return String(value ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
 }
 
 function cssEscape(value) {
