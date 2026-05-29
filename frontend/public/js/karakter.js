@@ -134,10 +134,13 @@ async function loadBLP(nisn) {
             : Array.isArray(d.results) ? d.results
             : Array.isArray(d) ? d : [];
 
-        // Filter hanya submitted/approved
+        // Filter hanya status yang sudah dapat dilihat wali.
         const visible = karBLPEntries.filter(e =>
-            e.status === 'submitted' || e.status === 'approved'
+            ['submitted', 'approved', 'locked'].includes(e.status)
         );
+        console.log('[karakter] BLP raw response:', JSON.stringify(d).slice(0, 500));
+        console.log('[karakter] entries count:', karBLPEntries.length);
+        console.log('[karakter] visible count:', visible.length);
 
         if (visible.length === 0) {
             hide('blp-loading');
@@ -254,7 +257,7 @@ async function loadEvaluasi(nisn) {
 
     try {
         const res = await window.apiFetch(
-            `evaluations/?nisn=${nisn}&is_approved=true&visibility=publik`
+            `kesantrian/incidents/?siswa_nisn=${nisn}`
         );
         const d = typeof res?.json === 'function' ? await res.json() : res;
         const items = Array.isArray(d.results) ? d.results
@@ -270,22 +273,48 @@ async function loadEvaluasi(nisn) {
 
         const listEl = document.getElementById('eval-list');
         if (listEl) {
-            listEl.innerHTML = items.map(ev => {
-                const badgeClass = ev.jenis === 'prestasi' ? 'badge-prestasi'
-                    : ev.jenis === 'pelanggaran' ? 'badge-pelanggaran'
-                    : 'badge-pembinaan';
-                const badgeLabel = ev.jenis_display || ev.jenis || '-';
+            listEl.innerHTML = items.map(incident => {
+                const tingkatClass = {
+                    ringan: 'badge-ringan',
+                    sedang: 'badge-sedang',
+                    berat: 'badge-berat',
+                    kritis: 'badge-kritis'
+                }[incident.tingkat] || 'badge-ringan';
+
+                const statusIcon = {
+                    open: '🔴',
+                    in_discussion: '🟡',
+                    resolved: '🟢',
+                    closed: '⚪'
+                }[incident.status] || '🔴';
+
                 return `
                     <div class="kar-eval-item">
                         <div class="kar-eval-header">
-                            <div class="kar-eval-title">${escapeHtml(ev.name || ev.judul || ev.kategori_display || '-')}</div>
-                            <span class="kar-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
+                            <div class="kar-eval-title">
+                                ${statusIcon} ${escapeHtml(incident.judul || '-')}
+                            </div>
+                            <span class="kar-badge ${tingkatClass}">
+                                ${escapeHtml(incident.tingkat_display || incident.tingkat || '-')}
+                            </span>
                         </div>
                         <div class="kar-eval-meta">
-                            ${escapeHtml(ev.created_at ? ev.created_at.slice(0,10) : '-')}
-                            ${ev.kategori_display ? ' · ' + escapeHtml(ev.kategori_display) : ''}
+                            ${escapeHtml(incident.tanggal_kejadian || '-')}
+                            ${incident.kategori_display
+                                ? ' · ' + escapeHtml(incident.kategori_display) : ''}
+                            ${incident.pelapor_name
+                                ? ' · ' + escapeHtml(incident.pelapor_name) : ''}
                         </div>
-                        <div class="kar-eval-desc">${escapeHtml(ev.summary || ev.deskripsi || '')}</div>
+                        <div class="kar-eval-desc">
+                            ${escapeHtml(incident.deskripsi || '')}
+                        </div>
+                        ${incident.keputusan_final ? `
+                            <div style="margin-top:8px; padding:8px 12px;
+                                background:#f0fdf4; border-radius:8px;
+                                font-size:12px; color:#047857;">
+                                ✅ Keputusan: ${escapeHtml(incident.keputusan_final)}
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }).join('');
@@ -295,7 +324,7 @@ async function loadEvaluasi(nisn) {
     } catch (e) {
         hide('eval-loading');
         show('eval-empty');
-        console.error('[karakter] evaluasi error:', e);
+        console.error('[karakter] incident error:', e);
     }
 }
 
