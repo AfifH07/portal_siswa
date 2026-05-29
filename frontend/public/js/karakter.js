@@ -171,14 +171,17 @@ async function loadBLP(nisn) {
     }
 }
 
+function formatIndicatorLabel(key) {
+    return key.replace(/_/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function renderBLPEntry(entry) {
     karCurrentEntry = entry;
 
     // Score panel
     setText('kar-total-score', entry.total_score ?? '-');
     setText('kar-predikat', entry.predikat || '-');
-    setText('kar-status', capitalizeFirst(entry.status || '-'));
-    setText('kar-periode', formatPeriod(entry.week_start, entry.week_end));
     setText('kar-bonus', entry.bonus_points ?? '0');
     setText('kar-bonus-notes', entry.bonus_notes || '-');
 
@@ -216,7 +219,9 @@ function renderBLPEntry(entry) {
 
             const rows = Object.entries(indicators).map(([code, score]) => {
                 const indMeta = indicatorList.find(i => i.code === code);
-                const indLabel = indMeta?.label || code;
+                const indLabel = indMeta?.label && indMeta.label !== code
+                    ? indMeta.label
+                    : formatIndicatorLabel(code);
                 return `
                     <div class="kar-indicator-row">
                         <span>${escapeHtml(indLabel)}</span>
@@ -283,18 +288,11 @@ async function loadEvaluasi(nisn) {
                     kritis: 'badge-kritis'
                 }[incident.tingkat] || 'badge-ringan';
 
-                const statusIcon = {
-                    open: '🔴',
-                    in_discussion: '🟡',
-                    resolved: '🟢',
-                    closed: '⚪'
-                }[incident.status] || '🔴';
-
                 return `
                     <div class="kar-eval-item">
                         <div class="kar-eval-header">
                             <div class="kar-eval-title">
-                                ${statusIcon} ${escapeHtml(incident.judul || '-')}
+                                ${getStatusIconHtml(incident.status)} ${escapeHtml(incident.judul || '-')}
                             </div>
                             <span class="kar-badge ${tingkatClass}">
                                 ${escapeHtml(incident.tingkat_display || incident.tingkat || '-')}
@@ -366,12 +364,6 @@ function renderIncidentModal(incident) {
     if (!content || !incident) return;
 
     const comments = Array.isArray(incident.comments) ? incident.comments : [];
-    const statusIcon = {
-        open: 'ðŸ”´',
-        in_discussion: 'ðŸŸ¡',
-        resolved: 'ðŸŸ¢',
-        closed: 'âšª'
-    }[incident.status] || 'ðŸ”´';
     const tingkatClass = {
         ringan: 'badge-ringan',
         sedang: 'badge-sedang',
@@ -414,7 +406,7 @@ function renderIncidentModal(incident) {
     `;
 
     content.innerHTML = `
-        <h2 class="incident-detail-title">${statusIcon} ${escapeHtml(incident.judul || '-')}</h2>
+        <h2 class="incident-detail-title">${getStatusIconHtml(incident.status)} ${escapeHtml(incident.judul || '-')}</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
             <span class="kar-badge ${tingkatClass}">
                 ${escapeHtml(incident.tingkat_display || incident.tingkat || '-')}
@@ -482,6 +474,16 @@ function getDomainLabel(domain) {
         pengembangan_diri: 'Pengembangan Diri'
     };
     return labels[domain] || domain;
+}
+
+function getStatusIconHtml(status) {
+    const icons = {
+        open: '<span style="color:#ef4444">&#9679;</span>',
+        in_discussion: '<span style="color:#f59e0b">&#9679;</span>',
+        resolved: '<span style="color:#22c55e">&#9679;</span>',
+        closed: '<span style="color:#9ca3af">&#9679;</span>'
+    };
+    return icons[status] || icons.open;
 }
 
 function formatPeriod(start, end) {
