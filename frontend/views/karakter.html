@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karakter & Evaluasi Ananda - Portal Ponpes Baron</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Hero */
+        .kar-hero {
+            background: linear-gradient(135deg, #064e3b 0%, #0f766e 52%, #f5c542 140%);
+            border-radius: 20px;
+            color: #fff;
+            padding: 24px 28px;
+            margin-bottom: 20px;
+        }
+        .kar-hero h2 { margin: 0 0 6px; font-size: 1.5rem; font-weight: 800; }
+        .kar-hero p { margin: 0; opacity: 0.88; font-size: 14px; }
+
+        /* Child selector */
+        .kar-child-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .kar-child-bar label { font-weight: 600; font-size: 14px; white-space: nowrap; }
+
+        /* Tabs */
+        .kar-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0;
+        }
+        .kar-tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.15s;
+        }
+        .kar-tab.active {
+            color: #047857;
+            border-bottom-color: #047857;
+        }
+        .kar-tab-content { display: none; }
+        .kar-tab-content.active { display: block; }
+
+        /* Card */
+        .kar-card {
+            background: #fff;
+            border: 1px solid #d1e9df;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 16px rgba(15,118,110,0.06);
+        }
+        .kar-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #064e3b;
+            margin: 0 0 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* BLP domain grid */
+        .kar-domain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .kar-domain-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .kar-domain-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .kar-domain-bar-wrap {
+            background: #f3f4f6;
+            border-radius: 999px;
+            height: 8px;
+            margin-bottom: 6px;
+            overflow: hidden;
+        }
+        .kar-domain-bar {
+            height: 100%;
+            background: #10b981;
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+        .kar-domain-score {
+            font-size: 12px;
+            color: #6b7280;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* BLP indicator detail */
+        .kar-indicator-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+        }
+        .kar-indicator-row:last-child { border-bottom: none; }
+        .kar-score-badge {
+            min-width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .score-0 { background:#f3f4f6; color:#9ca3af; }
+        .score-1 { background:#fee2e2; color:#dc2626; }
+        .score-2 { background:#ffedd5; color:#ea580c; }
+        .score-3 { background:#fef9c3; color:#ca8a04; }
+        .score-4 { background:#dbeafe; color:#2563eb; }
+        .score-5 { background:#dcfce7; color:#16a34a; }
+
+        /* BLP riwayat tabel */
+        .kar-table { width: 100%; border-collapse: collapse; }
+        .kar-table th, .kar-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            text-align: left;
+            font-size: 13px;
+        }
+        .kar-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: #9ca3af;
+            font-weight: 600;
+        }
+
+        /* Evaluasi thread */
+        .kar-eval-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .kar-eval-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            gap: 8px;
+        }
+        .kar-eval-title { font-weight: 700; font-size: 14px; color: #111827; }
+        .kar-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+        .badge-prestasi { background:#dcfce7; color:#16a34a; }
+        .badge-pelanggaran { background:#fee2e2; color:#dc2626; }
+        .badge-pembinaan { background:#dbeafe; color:#2563eb; }
+        .kar-eval-meta { font-size: 12px; color: #9ca3af; margin-bottom: 6px; }
+        .kar-eval-desc { font-size: 13px; color: #374151; }
+
+        /* Empty state */
+        .kar-empty {
+            text-align: center;
+            padding: 32px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        /* Total skor panel */
+        .kar-score-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .kar-score-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 14px;
+            padding: 14px;
+            text-align: center;
+        }
+        .kar-score-box .label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+        .kar-score-box .value { font-size: 1.6rem; font-weight: 800; color: #047857; }
+        .kar-score-box .sub { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+        @media (max-width: 640px) {
+            .kar-domain-grid, .kar-score-panel { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body data-role="">
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">B</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+    <a class="back-chip" href="/dashboard">
+        <span class="arrow">&larr;</span>
+        <span>Kembali ke Dashboard</span>
+    </a>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+            </div>
+        </div>
+        <button class="btn-logout" id="btn-logout-karakter">Keluar</button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1>Karakter & Evaluasi Ananda</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Karakter (BLP)</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">Memuat tanggal...</div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <section class="kar-hero">
+            <h2>Karakter & Evaluasi Ananda</h2>
+            <p>Penilaian karakter (BLP) dan statistik evaluasi ananda di pesantren.</p>
+        </section>
+
+        <div class="kar-child-bar">
+            <label for="kar-child-select">Pilih anak:</label>
+            <select id="kar-child-select" class="glass-input" style="max-width:320px;">
+                <option value="">Memuat data...</option>
+            </select>
+        </div>
+
+        <div class="kar-tabs">
+            <button class="kar-tab active" data-tab="blp">📊 Karakter (BLP)</button>
+            <button class="kar-tab" data-tab="evaluasi">📋 Catatan & Bimbingan</button>
+        </div>
+
+        <!-- TAB BLP -->
+        <div class="kar-tab-content active" id="tab-blp">
+            <div id="blp-loading" class="kar-empty">Memuat data BLP...</div>
+
+            <!-- Summary tersembunyi sampai data ada -->
+            <div id="blp-content" style="display:none;">
+                <!-- Selector riwayat minggu -->
+                <div class="kar-card" style="margin-bottom:16px;">
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <label style="font-size:13px; font-weight:600;">Periode:</label>
+                        <select id="kar-blp-week" class="glass-input" style="max-width:260px;"></select>
+                    </div>
+                </div>
+
+                <!-- Skor total -->
+                <div class="kar-score-panel" id="kar-score-panel">
+                    <div class="kar-score-box">
+                        <div class="label">Total Skor</div>
+                        <div class="value" id="kar-total-score">-</div>
+                        <div class="sub" id="kar-predikat">-</div>
+                    </div>
+                    <div class="kar-score-box">
+                        <div class="label">Status</div>
+                        <div class="value" style="font-size:1rem;" id="kar-status">-</div>
+                        <div class="sub" id="kar-periode">-</div>
+                    </div>
+                    <div class="kar-score-box">
+                        <div class="label">Bonus Poin</div>
+                        <div class="value" id="kar-bonus">0</div>
+                        <div class="sub" id="kar-bonus-notes">-</div>
+                    </div>
+                </div>
+
+                <!-- Domain progress -->
+                <div class="kar-card">
+                    <div class="kar-card-title">Ringkasan per Domain</div>
+                    <div class="kar-domain-grid" id="kar-domain-grid"></div>
+                </div>
+
+                <!-- Detail indikator per domain -->
+                <div id="kar-domain-details"></div>
+
+                <!-- Catatan -->
+                <div class="kar-card" id="kar-notes-card" style="display:none;">
+                    <div class="kar-card-title">Catatan Pembimbing</div>
+                    <div id="kar-catatan" style="font-size:14px; color:#374151; margin-bottom:10px;"></div>
+                    <div id="kar-tindak-lanjut-wrap" style="display:none;">
+                        <div style="font-size:12px; font-weight:600; color:#6b7280; margin-bottom:4px;">Tindak Lanjut:</div>
+                        <div id="kar-tindak-lanjut" style="font-size:14px; color:#374151;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="blp-empty" class="kar-empty" style="display:none;">
+                Belum ada data BLP untuk ananda.
+            </div>
+        </div>
+
+        <!-- TAB EVALUASI -->
+        <div class="kar-tab-content" id="tab-evaluasi">
+            <div id="eval-loading" class="kar-empty">Memuat data evaluasi...</div>
+            <div id="eval-list" style="display:none;"></div>
+            <div id="eval-empty" class="kar-empty" style="display:none;">
+                Belum ada catatan evaluasi yang dapat ditampilkan.
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/static/js/apiConfig.js" defer></script>
+<script src="/static/js/apiFetch.js" defer></script>
+<script src="/static/js/utils.js" defer></script>
+<script src="/static/js/auth-check.js?v=20260528blp" defer></script>
+<script src="/static/js/karakter.js?v=20260529a" defer></script>
+</body>
+</html>

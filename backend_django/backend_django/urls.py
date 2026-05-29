@@ -36,6 +36,7 @@ urlpatterns = [
     # ==========================================
     path('ibadah/', TemplateView.as_view(template_name='ibadah.html')),          # Ibadah/Sholat tracking
     path('blp/', TemplateView.as_view(template_name='blp.html')),                # Input BLP
+    path('karakter/', TemplateView.as_view(template_name='karakter.html')),
 
     # ==========================================
     # HR MODULE (Asatidz/Employee)
