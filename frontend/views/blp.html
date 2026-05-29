@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input BLP Santri - Portal Ponpes Baron</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="/static/css/baron-emerald.css?v=20260504" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        .blp-hero {
+            background: linear-gradient(135deg, #064e3b 0%, #0f766e 52%, #f5c542 140%);
+            border-radius: 24px;
+            color: #fff;
+            padding: 28px;
+            box-shadow: 0 24px 60px rgba(6, 78, 59, 0.22);
+            margin-bottom: 22px;
+        }
+        .blp-hero h2 { margin: 0 0 8px; font-size: 1.7rem; font-weight: 800; }
+        .blp-hero p { margin: 0; max-width: 720px; opacity: 0.9; line-height: 1.6; }
+        .blp-toolbar {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) 220px;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .blp-card {
+            background: var(--surface, #fff);
+            border: 1px solid var(--border, #d1e9df);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(15, 118, 110, 0.08);
+        }
+        .blp-table-wrap { overflow-x: auto; }
+        .blp-table { width: 100%; border-collapse: collapse; }
+        .blp-table th, .blp-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border, #e5e7eb);
+            text-align: left;
+            vertical-align: middle;
+        }
+        .blp-table th { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted, #64748b); letter-spacing: .06em; }
+        .blp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .blp-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.58);
+            z-index: 1000;
+            padding: 20px;
+        }
+        .blp-modal.active { display: flex; }
+        .blp-modal-content {
+            width: min(1120px, 100%);
+            max-height: 92vh;
+            overflow: auto;
+            background: #fff;
+            border-radius: 22px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+        }
+        .blp-modal-header {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            padding: 22px 24px;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .blp-modal-body { padding: 22px 24px; }
+        .blp-period-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .blp-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+        }
+        .blp-tab {
+            border: 1px solid #d1e9df;
+            background: #f8fafc;
+            color: #0f172a;
+            border-radius: 999px;
+            padding: 9px 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 700;
+        }
+        .blp-tab.active { background: #047857; border-color: #047857; color: #fff; }
+        .blp-indicator-row {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) 210px 44px;
+            gap: 14px;
+            align-items: center;
+            padding: 13px 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .blp-score-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 32px;
+            border-radius: 10px;
+            background: #ecfdf5;
+            color: #047857;
+            font-weight: 800;
+            font-family: "DM Mono", monospace;
+        }
+        .blp-total-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .blp-total-box {
+            border-radius: 16px;
+            padding: 14px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+        }
+        .blp-total-box strong { display: block; font-size: 1.5rem; color: #064e3b; }
+        .blp-form-grid {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .blp-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 18px 24px 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .blp-muted { color: var(--text-muted, #64748b); font-size: 0.9rem; }
+        @media (max-width: 760px) {
+            .blp-toolbar, .blp-period-grid, .blp-form-grid, .blp-total-panel { grid-template-columns: 1fr; }
+            .blp-indicator-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body data-role="">
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">B</div>
+        <div class="brand-text">
+            <div class="brand-name">Baron Ponpes</div>
+            <div class="brand-tagline">Portal Akademik</div>
+        </div>
+    </div>
+    <a class="back-chip" href="/">
+        <span class="arrow">&larr;</span>
+        <span>Kembali ke Website</span>
+    </a>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+        <div class="user-chip sidebar-profile-card">
+            <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-meta">
+                <div class="user-name" id="user-name-display">Loading...</div>
+                <div class="user-role" id="user-role-display">-</div>
+                <div class="user-children" id="user-children"></div>
+            </div>
+        </div>
+        <button class="btn-logout" id="btn-logout-blp">Keluar</button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 id="page-title">Input BLP Santri</h1>
+            <div class="breadcrumb">Portal Ponpes Baron &rsaquo; <span>Input BLP</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-date" id="topbar-date">Memuat tanggal...</div>
+            <div class="topbar-academic-year">Tahun ajaran: <strong id="blp-academic-label">Memuat...</strong></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <section class="blp-hero">
+            <h2>Input BLP Santri</h2>
+            <p>Pantau karakter mingguan santri lewat 59 indikator dalam 6 domain. Pilih santri, isi skor 0-5, lalu simpan draft atau submit.</p>
+        </section>
+
+        <section class="blp-card">
+            <div class="blp-toolbar">
+                <input type="search" id="blp-search" class="glass-input" placeholder="Cari nama atau NISN...">
+                <select id="blp-class-filter" class="glass-input">
+                    <option value="">Semua kelas</option>
+                </select>
+            </div>
+            <div class="blp-table-wrap">
+                <table class="blp-table">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>NISN</th>
+                            <th>Kelas</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blp-students-tbody">
+                        <tr><td colspan="4" class="blp-muted">Memuat data santri...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div class="blp-modal" id="blp-modal" aria-hidden="true">
+    <div class="blp-modal-content">
+        <div class="blp-modal-header">
+            <div>
+                <h2 id="blp-modal-title" style="margin:0 0 6px;">Input BLP</h2>
+                <div class="blp-muted" id="blp-modal-subtitle">-</div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="btn-close-blp-modal">Tutup</button>
+        </div>
+        <div class="blp-modal-body">
+            <div class="blp-period-grid">
+                <div>
+                    <label for="blp-week-start">Week start</label>
+                    <input type="date" id="blp-week-start" class="glass-input">
+                </div>
+                <div>
+                    <label for="blp-week-end">Week end</label>
+                    <input type="date" id="blp-week-end" class="glass-input" readonly>
+                </div>
+                <div>
+                    <label for="blp-tahun-ajaran">Tahun ajaran</label>
+                    <input type="text" id="blp-tahun-ajaran" class="glass-input" readonly>
+                </div>
+                <div>
+                    <label for="blp-semester">Semester</label>
+                    <input type="text" id="blp-semester" class="glass-input" readonly>
+                </div>
+            </div>
+
+            <div class="blp-tabs" id="blp-domain-tabs"></div>
+            <div id="blp-indicators-container"></div>
+
+            <div class="blp-form-grid">
+                <div>
+                    <label for="blp-bonus-points">Bonus points</label>
+                    <input type="number" id="blp-bonus-points" class="glass-input" min="0" max="95" value="0">
+                </div>
+                <div>
+                    <label for="blp-bonus-notes">Bonus notes</label>
+                    <input type="text" id="blp-bonus-notes" class="glass-input" placeholder="Catatan bonus jika ada">
+                </div>
+                <div>
+                    <label for="blp-catatan">Catatan</label>
+                </div>
+                <textarea id="blp-catatan" class="glass-input" rows="3" placeholder="Catatan umum"></textarea>
+                <div>
+                    <label for="blp-tindak-lanjut">Tindak lanjut</label>
+                </div>
+                <textarea id="blp-tindak-lanjut" class="glass-input" rows="3" placeholder="Rencana tindak lanjut"></textarea>
+            </div>
+
+            <div class="blp-total-panel">
+                <div class="blp-total-box">
+                    <span class="blp-muted">Skor indikator</span>
+                    <strong id="blp-base-score">0</strong>
+                </div>
+                <div class="blp-total-box">
+                    <span class="blp-muted">Bonus</span>
+                    <strong id="blp-bonus-preview">0</strong>
+                </div>
+                <div class="blp-total-box">
+                    <span class="blp-muted">Total preview</span>
+                    <strong id="blp-total-score">0</strong>
+                </div>
+            </div>
+        </div>
+        <div class="blp-modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-save-blp-draft">Simpan Draft</button>
+            <button type="button" class="btn btn-primary" id="btn-save-blp-submit">Simpan &amp; Submit</button>
+        </div>
+    </div>
+</div>
+
+<div class="blp-modal" id="blp-history-modal" aria-hidden="true">
+    <div class="blp-modal-content" style="max-width: 900px;">
+        <div class="blp-modal-header">
+            <div>
+                <h2 style="margin:0 0 6px;">Riwayat BLP Santri</h2>
+                <div class="blp-muted" id="blp-history-subtitle">-</div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="btn-close-history-modal">Tutup</button>
+        </div>
+        <div class="blp-modal-body">
+            <div class="blp-table-wrap">
+                <table class="blp-table">
+                    <thead>
+                        <tr>
+                            <th>Periode</th>
+                            <th>Total Score</th>
+                            <th>Predikat</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blp-history-tbody">
+                        <tr><td colspan="4" class="blp-muted">Memuat riwayat...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast" style="display:none;">
+    <span id="toast-message"></span>
+</div>
+
+<script src="/static/js/apiConfig.js" defer></script>
+<script src="/static/js/apiFetch.js" defer></script>
+<script src="/static/js/utils.js" defer></script>
+<script src="/static/js/auth-check.js?v=20260528blp" defer></script>
+<script src="/static/js/blp.js?v=20260528a" defer></script>
+</body>
+</html>

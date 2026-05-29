@@ -377,6 +377,7 @@ function createRoleBasedNav() {
                 { href: '/grades', icon: 'file-text', label: 'Nilai' },
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' },
                 { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' },
+                { href: '/blp', icon: 'clipboard-list', label: 'Input BLP', id: 'nav-blp' },
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             admin: [
@@ -405,6 +406,7 @@ function createRoleBasedNav() {
                 { href: '/grades', icon: 'file-text', label: 'Nilai' },
                 { href: '/hafalan', icon: 'book-open', label: 'Hafalan', id: 'nav-hafalan' },
                 { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' },
+                { href: '/blp', icon: 'clipboard-list', label: 'Input BLP', id: 'nav-blp' },
                 { href: '/timetable', icon: 'table', label: 'Jadwal Pelajaran' }
             ],
             admin: [
@@ -453,7 +455,8 @@ function createRoleBasedNav() {
             ],
             kesantrian: [
                 { href: '/hafalan', icon: 'book-open', label: 'Program Al-Quran', id: 'nav-hafalan' },
-                { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' }
+                { href: '/absensi-sholat', icon: 'calendar-check', label: 'Absensi Sholat', id: 'nav-absensi-sholat' },
+                { href: '/blp', icon: 'clipboard-list', label: 'Input BLP', id: 'nav-blp' }
             ],
             other: [
                 { href: '/evaluations', icon: 'star', label: 'Evaluasi Santri' },

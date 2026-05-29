@@ -35,7 +35,7 @@ urlpatterns = [
     # NEW MODULE PAGES (for 7-menu structure)
     # ==========================================
     path('ibadah/', TemplateView.as_view(template_name='ibadah.html')),          # Ibadah/Sholat tracking
-    path('blp/', TemplateView.as_view(template_name='evaluations.html')),        # Karakter/BLP
+    path('blp/', TemplateView.as_view(template_name='blp.html')),                # Input BLP
 
     # ==========================================
     # HR MODULE (Asatidz/Employee)
