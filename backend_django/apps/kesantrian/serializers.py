@@ -222,7 +222,7 @@ class BLPIndicatorInfoSerializer(serializers.Serializer):
         for domain, data in BLP_INDICATORS.items():
             result[domain] = {
                 'label': data['label'],
-                'max_score': data['max_score'],
+                'max_score': len(data['indicators']),
                 'indicators': [
                     {'code': code, 'label': label}
                     for code, label in data['indicators']
@@ -245,8 +245,7 @@ class BLPEntrySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'siswa', 'siswa_nama', 'siswa_nisn', 'siswa_kelas',
             'week_start', 'week_end', 'tahun_ajaran', 'semester',
-            'indicator_values', 'bonus_points', 'bonus_notes',
-            'total_score', 'domain_scores', 'predikat',
+            'indicator_values', 'total_score', 'domain_scores', 'predikat',
             'status', 'status_display', 'is_locked', 'locked_at', 'locked_by',
             'catatan', 'tindak_lanjut',
             'pencatat', 'pencatat_username',
@@ -271,7 +270,7 @@ class BLPEntryCreateSerializer(serializers.ModelSerializer):
         fields = [
             'siswa_nisn', 'week_start', 'week_end',
             'tahun_ajaran', 'semester',
-            'indicator_values', 'bonus_points', 'bonus_notes',
+            'indicator_values',
             'catatan', 'tindak_lanjut',
             'pencatat', 'pencatat_username',
             'status'
@@ -285,27 +284,26 @@ class BLPEntryCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_indicator_values(self, value):
-        """Validasi struktur dan nilai indikator"""
         if not isinstance(value, dict):
-            raise serializers.ValidationError('indicator_values harus berupa object/dict')
-
-        # Validasi setiap domain dan indikator
+            raise serializers.ValidationError(
+                'indicator_values harus berupa object/dict'
+            )
         for domain, data in BLP_INDICATORS.items():
             if domain not in value:
                 continue
-
             domain_values = value[domain]
             if not isinstance(domain_values, dict):
-                raise serializers.ValidationError(f'Domain {domain} harus berupa object/dict')
-
+                raise serializers.ValidationError(
+                    f'Domain {domain} harus berupa object/dict'
+                )
             for code, label in data['indicators']:
                 if code in domain_values:
-                    score = domain_values[code]
-                    if not isinstance(score, (int, float)) or score < 0 or score > 5:
+                    val = domain_values[code]
+                    if val not in (0, 1, True, False):
                         raise serializers.ValidationError(
-                            f'Nilai {domain}.{code} harus 0-5, ditemukan: {score}'
+                            f'Nilai {domain}.{code} harus 0 atau 1, '
+                            f'ditemukan: {val}'
                         )
-
         return value
 
     def validate(self, data):

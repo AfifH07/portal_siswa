@@ -32,6 +32,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
         ('superadmin', 'Superadmin'),
         ('admin', 'Admin'),               # Admin (akses manajemen data, tapi tidak bisa kelola user)
+        ('admin_santri', 'Admin Santri'),
         ('pimpinan', 'Pimpinan'),
         ('guru', 'Guru'),
         ('bk', 'Guru BK'),                # Guru Bimbingan Konseling

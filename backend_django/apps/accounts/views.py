@@ -325,6 +325,7 @@ def auth_status_view(request):
     role_permissions = {
         'superadmin': ['create', 'read', 'update', 'delete', 'view_all', 'manage_users', 'manage_finance'],
         'admin': ['create', 'read', 'update', 'delete', 'view_all', 'manage_finance'],
+        'admin_santri': ['create', 'read', 'update', 'view_all'],
         'pimpinan': ['read', 'update', 'view_all', 'approve', 'view_finance'],
         'guru': ['create', 'read', 'update', 'view_class'],
         'bendahara': ['create', 'read', 'update', 'view_finance', 'manage_finance'],
@@ -335,6 +336,7 @@ def auth_status_view(request):
     role_allowed_pages = {
         'superadmin': ['/', '/dashboard', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/registration', '/finance', '/users', '/blp', '/inval', '/ibadah', '/case-management', '/evaluasi-asatidz', '/timetable', '/jadwal-mengajar', '/master-mapel'],
         'admin': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/finance', '/jadwal-mengajar', '/master-mapel', '/timetable', '/blp', '/inval', '/ibadah', '/evaluasi-asatidz', '/case-management'],
+        'admin_santri': ['/', '/dashboard', '/dashboard/admin', '/students', '/attendance', '/hafalan', '/evaluations', '/blp', '/ibadah', '/case-management'],
         'pimpinan': ['/', '/dashboard', '/dashboard/parent', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/finance', '/timetable', '/blp', '/ibadah', '/case-management', '/evaluasi-asatidz'],
         'guru': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/timetable', '/blp', '/inval', '/case-management', '/evaluasi-asatidz'],
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/grades', '/hafalan', '/evaluations', '/timetable', '/case-management', '/evaluasi-asatidz'],
@@ -352,7 +354,7 @@ def auth_status_view(request):
         'linked_student_nisn': user.linked_student_nisn,
         'permissions': role_permissions.get(user.role, []),
         'allowed_pages': role_allowed_pages.get(user.role, []),
-        'is_staff': user.role in ['superadmin', 'pimpinan', 'guru', 'bendahara'],
+        'is_staff': user.role in ['superadmin', 'pimpinan', 'guru', 'bendahara', 'admin_santri'],
         'timestamp': timezone.now().isoformat()
     })
 

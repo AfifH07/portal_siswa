@@ -4,10 +4,10 @@ let blpIndicators = {};
 let currentStudentNisn = null;
 let currentBLPId = null;
 let indicatorValues = {};
-let currentDomain = 'akhlak';
+let currentDomain = 'ibadah_religius';
 let activeTahunAjaran = { nama: '', semester: '' };
 
-const DOMAIN_ORDER = ['akhlak', 'kedisiplinan', 'ibadah', 'akademik', 'sosial', 'pengembangan_diri'];
+const DOMAIN_ORDER = ['ibadah_religius', 'akhlak_perilaku', 'resiliensi', 'kecerdikan', 'refleksi', 'timbal_balik'];
 
 document.addEventListener('DOMContentLoaded', async () => {
     updateTopbarDate();
@@ -104,7 +104,7 @@ async function loadStudents() {
     let students = [];
 
     try {
-        if (['superadmin', 'admin'].includes(userRole)) {
+        if (['superadmin', 'admin', 'admin_santri'].includes(userRole)) {
             const data = await apiJson('students/?page_size=1000&aktif=true');
             students = normalizeStudents(data);
         } else if (userRole === 'guru') {
@@ -216,7 +216,7 @@ function filterStudents() {
 async function openBLPModal(nisn) {
     currentStudentNisn = nisn;
     currentBLPId = null;
-    currentDomain = DOMAIN_ORDER.find(domain => blpIndicators[domain]) || Object.keys(blpIndicators)[0] || 'akhlak';
+    currentDomain = DOMAIN_ORDER.find(domain => blpIndicators[domain]) || Object.keys(blpIndicators)[0] || 'ibadah_religius';
     indicatorValues = buildDefaultIndicatorValues();
 
     const student = allStudents.find(item => item.nisn === nisn) || {};
@@ -248,8 +248,6 @@ async function openBLPModal(nisn) {
 }
 
 function resetBLPFormFields() {
-    document.getElementById('blp-bonus-points').value = 0;
-    document.getElementById('blp-bonus-notes').value = '';
     document.getElementById('blp-catatan').value = '';
     document.getElementById('blp-tindak-lanjut').value = '';
 }
@@ -261,8 +259,6 @@ function loadBLPEntryToForm(entry) {
     document.getElementById('blp-week-end').value = entry.week_end || getSundayOfCurrentWeek(entry.week_start);
     document.getElementById('blp-tahun-ajaran').value = entry.tahun_ajaran || activeTahunAjaran.nama || '';
     document.getElementById('blp-semester').value = entry.semester || activeTahunAjaran.semester || '';
-    document.getElementById('blp-bonus-points').value = entry.bonus_points || 0;
-    document.getElementById('blp-bonus-notes').value = entry.bonus_notes || '';
     document.getElementById('blp-catatan').value = entry.catatan || '';
     document.getElementById('blp-tindak-lanjut').value = entry.tindak_lanjut || '';
 }
@@ -317,7 +313,7 @@ function renderIndicatorTabs() {
         <div class="blp-card blp-domain-section" data-domain="${escapeAttr(currentDomain)}" style="box-shadow:none;">
             <div class="blp-domain-header">
                 <span>${escapeHtml(domainMeta.label || formatDomain(currentDomain))} <span class="blp-muted">(${indicators.length} indikator)</span></span>
-                <span class="blp-domain-score" data-domain-score="${escapeAttr(currentDomain)}">${subtotal}</span>
+                <span class="blp-domain-score" data-domain-score="${escapeAttr(currentDomain)}">${subtotal}/${indicators.length}</span>
             </div>
             ${indicators.map(item => {
                 const value = Number(indicatorValues[currentDomain]?.[item.code] || 0);
@@ -333,7 +329,7 @@ function renderIndicator(code, label, value) {
             <div class="blp-indicator-label">${escapeHtml(label)}</div>
             <div class="blp-indicator-control">
                 <div class="blp-score-buttons">
-                    ${[0, 1, 2, 3, 4, 5].map(n => `
+                    ${[0, 1].map(n => `
                         <button type="button"
                             class="blp-score-btn ${value == n ? 'active' : ''}"
                             data-score="${n}"
@@ -350,19 +346,16 @@ function renderIndicator(code, label, value) {
 
 function getScoreLabel(score) {
     const labels = {
-        0: 'Belum dinilai',
-        1: 'Sangat Kurang',
-        2: 'Kurang',
-        3: 'Cukup',
-        4: 'Baik',
-        5: 'Sangat Baik'
+        0: 'Belum tercapai',
+        1: 'Tercapai'
     };
     return labels[score] || '';
 }
 
 function updateDomainScore(domain) {
     const scoreEl = document.querySelector(`[data-domain-score="${cssEscape(domain)}"]`);
-    if (scoreEl) scoreEl.textContent = getDomainSubtotal(domain);
+    const count = (blpIndicators[domain]?.indicators || []).length;
+    if (scoreEl) scoreEl.textContent = `${getDomainSubtotal(domain)}/${count}`;
 }
 
 window.setIndicatorScore = function(code, score, btn) {
@@ -385,16 +378,14 @@ window.setIndicatorScore = function(code, score, btn) {
 };
 
 function updateTotalScore() {
-    const baseScore = Object.keys(indicatorValues).reduce((sum, domain) => {
+    const checked = Object.keys(indicatorValues).reduce((sum, domain) => {
         return sum + Object.values(indicatorValues[domain] || {}).reduce((inner, val) => inner + Number(val || 0), 0);
     }, 0);
-    const bonusInput = document.getElementById('blp-bonus-points');
-    const bonus = Math.max(0, Math.min(95, Number(bonusInput?.value || 0)));
-    if (bonusInput && Number(bonusInput.value || 0) !== bonus) bonusInput.value = bonus;
+    const totalIndicators = Object.values(blpIndicators).reduce((sum, data) => sum + (data.indicators || []).length, 0);
+    const percentage = totalIndicators > 0 ? Math.round((checked / totalIndicators) * 1000) / 10 : 0;
 
-    document.getElementById('blp-base-score').textContent = baseScore;
-    document.getElementById('blp-bonus-preview').textContent = bonus;
-    document.getElementById('blp-total-score').textContent = Math.min(390, baseScore + bonus);
+    document.getElementById('blp-base-score').textContent = `${checked}/${totalIndicators}`;
+    document.getElementById('blp-total-score').textContent = `${percentage}%`;
 }
 
 async function saveBLP(submitStatus) {
@@ -407,8 +398,6 @@ async function saveBLP(submitStatus) {
         tahun_ajaran: document.getElementById('blp-tahun-ajaran').value,
         semester: document.getElementById('blp-semester').value,
         indicator_values: indicatorValues,
-        bonus_points: Number(document.getElementById('blp-bonus-points').value || 0),
-        bonus_notes: document.getElementById('blp-bonus-notes').value || '',
         catatan: document.getElementById('blp-catatan').value || '',
         tindak_lanjut: document.getElementById('blp-tindak-lanjut').value || '',
         status: submitStatus
@@ -473,9 +462,6 @@ function setupEventListeners() {
             document.getElementById('blp-week-end').value = getSundayOfCurrentWeek(this.value);
         });
     }
-
-    const bonus = document.getElementById('blp-bonus-points');
-    if (bonus) bonus.addEventListener('input', updateTotalScore);
 
     const closeBlp = document.getElementById('btn-close-blp-modal');
     if (closeBlp) closeBlp.onclick = () => hideModal('blp-modal');

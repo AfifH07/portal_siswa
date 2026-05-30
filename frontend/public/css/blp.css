@@ -48,7 +48,7 @@
     color: #fff;
 }
 
-.blp-score-btn[data-score="1"].active { background: #ef4444; border-color: #ef4444; }
+.blp-score-btn[data-score="1"].active { background: #10b981; border-color: #10b981; }
 .blp-score-btn[data-score="2"].active { background: #f97316; border-color: #f97316; }
 .blp-score-btn[data-score="3"].active { background: #eab308; border-color: #eab308; }
 .blp-score-btn[data-score="4"].active { background: #3b82f6; border-color: #3b82f6; }

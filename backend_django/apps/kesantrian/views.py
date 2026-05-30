@@ -421,7 +421,7 @@ def record_ibadah(request):
     """
     user = request.user
 
-    if user.role not in ['guru', 'superadmin', 'admin']:
+    if user.role not in ['guru', 'superadmin', 'admin', 'admin_santri']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin untuk mencatat ibadah'},
             status=status.HTTP_403_FORBIDDEN
@@ -471,7 +471,7 @@ def record_ibadah_bulk(request):
     """
     user = request.user
 
-    if user.role not in ['guru', 'superadmin', 'admin']:
+    if user.role not in ['guru', 'superadmin', 'admin', 'admin_santri']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN
@@ -534,7 +534,7 @@ def delete_ibadah(request, ibadah_id):
     """Hapus satu record ibadah by id. Hanya guru/admin."""
     user = request.user
 
-    if user.role not in ['guru', 'admin', 'superadmin']:
+    if user.role not in ['guru', 'admin', 'superadmin', 'admin_santri']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN
@@ -558,7 +558,7 @@ def update_ibadah(request, ibadah_id):
     """Update status/catatan satu record ibadah by id."""
     user = request.user
 
-    if user.role not in ['guru', 'admin', 'superadmin']:
+    if user.role not in ['guru', 'admin', 'superadmin', 'admin_santri']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN
@@ -588,7 +588,7 @@ def create_ibadah_single(request):
     """Tambah satu record ibadah untuk satu santri satu waktu."""
     user = request.user
 
-    if user.role not in ['guru', 'admin', 'superadmin']:
+    if user.role not in ['guru', 'admin', 'superadmin', 'admin_santri']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN
@@ -1128,24 +1128,17 @@ def get_blp_indicators(request):
     """
     Get all BLP indicators structure.
 
-    Returns 59 indicators grouped in 6 domains:
-    - akhlak (12 indicators)
-    - kedisiplinan (10 indicators)
-    - ibadah (15 indicators)
-    - akademik (8 indicators)
-    - sosial (8 indicators)
-    - pengembangan_diri (6 indicators)
-
-    Each indicator scored 0-5, total max 295 + 95 bonus = 390
+    Returns 59 boolean indicators grouped in 6 domains.
+    Each indicator scored 0 or 1. Total score is a percentage (0.0 - 100.0).
     """
     indicators = BLPIndicatorInfoSerializer.get_all_indicators()
 
     return Response({
         'success': True,
         'total_indicators': 59,
-        'max_base_score': 295,
-        'max_bonus': 95,
-        'max_total_score': 390,
+        'max_base_score': 59,
+        'max_bonus': 0,
+        'max_total_score': 100.0,
         'domains': indicators
     })
 
@@ -1173,7 +1166,7 @@ def blp_list_create(request):
     user = request.user
 
     # Check permissions
-    allowed_roles = ['guru', 'superadmin', 'pimpinan']
+    allowed_roles = ['guru', 'superadmin', 'pimpinan', 'admin_santri']
 
     if request.method == 'GET':
         # Walisantri can view their children's BLP
@@ -1278,7 +1271,7 @@ def blp_detail(request, pk):
         )
 
     # Security check
-    allowed_roles = ['guru', 'superadmin', 'pimpinan']
+    allowed_roles = ['guru', 'superadmin', 'pimpinan', 'admin_santri']
 
     if user.role == 'walisantri':
         linked_nisns = user.get_linked_students()
@@ -1397,7 +1390,7 @@ def blp_student_history(request, nisn):
                 {'success': False, 'message': 'Anda tidak memiliki akses ke data ini'},
                 status=status.HTTP_403_FORBIDDEN
             )
-    elif user.role not in ['guru', 'superadmin', 'pimpinan']:
+    elif user.role not in ['guru', 'superadmin', 'pimpinan', 'admin_santri']:
         return Response(
             {'success': False, 'message': 'Anda tidak memiliki izin'},
             status=status.HTTP_403_FORBIDDEN

@@ -180,16 +180,19 @@ function renderBLPEntry(entry) {
     karCurrentEntry = entry;
 
     // Score panel
-    setText('kar-total-score', entry.total_score ?? '-');
+    setText('kar-total-score', entry.total_score != null ? `${entry.total_score}%` : '-');
     setText('kar-predikat', entry.predikat || '-');
-    setText('kar-bonus', entry.bonus_points ?? '0');
-    setText('kar-bonus-notes', entry.bonus_notes || '-');
 
     // Domain grid
     const domainGrid = document.getElementById('kar-domain-grid');
     const domainDetails = document.getElementById('kar-domain-details');
     const domainScores = entry.domain_scores || {};
     const iv = entry.indicator_values || {};
+    const checkedTotal = Object.values(domainScores).reduce((sum, scores) => sum + Number(scores.checked || 0), 0);
+    const indicatorTotal = Object.values(domainScores).reduce((sum, scores) => sum + Number(scores.total || 0), 0);
+
+    setText('kar-bonus', `${checkedTotal}/${indicatorTotal || 59}`);
+    setText('kar-bonus-notes', 'Indikator tercapai');
 
     if (domainGrid) {
         domainGrid.innerHTML = Object.entries(domainScores).map(([domain, scores]) => {
@@ -202,7 +205,7 @@ function renderBLPEntry(entry) {
                         <div class="kar-domain-bar" style="width:${pct}%"></div>
                     </div>
                     <div class="kar-domain-score">
-                        <span>${scores.score ?? 0} / ${scores.max_score ?? 0}</span>
+                        <span>${scores.checked ?? 0} / ${scores.total ?? 0}</span>
                         <span>${Math.round(pct)}%</span>
                     </div>
                 </div>
@@ -466,12 +469,12 @@ window.closeIncidentModal = closeIncidentModal;
 
 function getDomainLabel(domain) {
     const labels = {
-        akhlak: 'Akhlak & Adab',
-        kedisiplinan: 'Kedisiplinan',
-        ibadah: 'Ibadah & Spiritual',
-        akademik: 'Akademik Keagamaan',
-        sosial: 'Interaksi Sosial',
-        pengembangan_diri: 'Pengembangan Diri'
+        ibadah_religius: 'Ibadah & Religius',
+        akhlak_perilaku: 'Akhlak & Perilaku',
+        resiliensi: 'Resiliensi & Daya Pegan',
+        kecerdikan: 'Kecerdikan & Resourcefulness',
+        refleksi: 'Refleksi & Meta Belajar',
+        timbal_balik: 'Timbal Balik & Empati'
     };
     return labels[domain] || domain;
 }
@@ -491,7 +494,7 @@ function formatPeriod(start, end) {
     const opts = { day: 'numeric', month: 'short', year: 'numeric' };
     const s = new Date(start).toLocaleDateString('id-ID', opts);
     const e = end ? new Date(end).toLocaleDateString('id-ID', opts) : '';
-    return e ? `${s} – ${e}` : s;
+    return e ? `${s} - ${e}` : s;
 }
 
 function capitalizeFirst(str) {

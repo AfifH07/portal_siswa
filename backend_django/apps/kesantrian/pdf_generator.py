@@ -306,7 +306,7 @@ def generate_rapor_pdf(nisn, semester='Ganjil', tahun_ajaran='2025/2026'):
 
     if blp_entry:
         blp_info = [
-            ['Total Skor', ':', f"{blp_entry.total_score} / 390"],
+            ['Total Skor', ':', f"{blp_entry.total_score}%"],
             ['Predikat', ':', blp_entry.predikat],
             ['Periode', ':', f"{blp_entry.week_start.strftime('%d %b')} - {blp_entry.week_end.strftime('%d %b %Y')}"],
         ]
@@ -327,20 +327,16 @@ def generate_rapor_pdf(nisn, semester='Ganjil', tahun_ajaran='2025/2026'):
             domain_data = [['Domain', 'Skor', 'Maks', 'Persentase']]
 
             domain_labels = {
-                'akhlak': 'Akhlak & Adab',
-                'kedisiplinan': 'Kedisiplinan',
-                'ibadah': 'Ibadah & Spiritual',
-                'akademik': 'Akademik Keagamaan',
-                'sosial': 'Interaksi Sosial',
-                'pengembangan_diri': 'Pengembangan Diri'
+                domain: info['label']
+                for domain, info in BLP_INDICATORS.items()
             }
 
             for domain, scores in blp_entry.domain_scores.items():
                 label = domain_labels.get(domain, domain)
                 domain_data.append([
                     label,
-                    str(scores.get('score', 0)),
-                    str(scores.get('max_score', 0)),
+                    str(scores.get('checked', 0)),
+                    str(scores.get('total', 0)),
                     f"{scores.get('percentage', 0):.1f}%"
                 ])
 
@@ -573,9 +569,8 @@ def generate_blp_report_pdf(nisn, week_start=None):
     # Score summary
     content.append(Paragraph("RINGKASAN SKOR", styles['SectionHeader']))
     score_info = [
-        ['Total Skor', ':', f"{blp_entry.total_score} / 390 poin"],
+        ['Total Skor', ':', f"{blp_entry.total_score}%"],
         ['Predikat', ':', blp_entry.predikat],
-        ['Bonus Poin', ':', f"{blp_entry.bonus_points} poin"],
     ]
     score_table = Table(score_info, colWidths=[4*cm, 0.5*cm, 10*cm])
     score_table.setStyle(TableStyle([
@@ -598,7 +593,7 @@ def generate_blp_report_pdf(nisn, week_start=None):
 
         for code, label in domain_info['indicators']:
             score = domain_values.get(code, 0)
-            indicator_data.append([label, f"{score}/5"])
+            indicator_data.append([label, 'Ya' if score else 'Tidak'])
 
         ind_table = Table(indicator_data, colWidths=[12*cm, 2*cm])
         ind_table.setStyle(TableStyle([

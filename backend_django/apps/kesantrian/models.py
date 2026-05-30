@@ -655,225 +655,140 @@ class KelompokHafalanAnggota(models.Model):
 
 # Definisi 59 Indikator BLP
 BLP_INDICATORS = {
-    'akhlak': {
-        'label': 'Akhlak & Adab',
-        'max_score': 60,  # 12 indikator × 5 poin
+    'ibadah_religius': {
+        'label': 'Ibadah & Religius',
         'indicators': [
-            ('sopan_santun', 'Sopan Santun kepada Ustadz/Ustadzah'),
-            ('hormat_orang_tua', 'Hormat kepada Orang Tua'),
-            ('kejujuran', 'Kejujuran dalam Perkataan'),
-            ('amanah', 'Menjaga Amanah'),
-            ('rendah_hati', 'Rendah Hati (Tawadhu)'),
-            ('sabar', 'Kesabaran'),
-            ('syukur', 'Sikap Syukur'),
-            ('pemaaf', 'Sifat Pemaaf'),
-            ('adab_makan', 'Adab Makan & Minum'),
-            ('adab_berbicara', 'Adab Berbicara'),
-            ('adab_berpakaian', 'Adab Berpakaian'),
-            ('adab_tidur', 'Adab Tidur & Bangun'),
+            ('sholat_subuh', 'Menegakkan Sholat Subuh berjamaah dan dzikir'),
+            ('sholat_dzuhur', 'Menegakkan Sholat Dzuhur berjamaah dan dzikir'),
+            ('sholat_ashar', 'Menegakkan Sholat Ashar berjamaah dan dzikir'),
+            ('sholat_maghrib', 'Menegakkan Sholat Maghrib berjamaah dan dzikir'),
+            ('sholat_isya', 'Menegakkan Sholat Isya berjamaah dan dzikir'),
+            ('sholat_jumat', 'Menegakkan Sholat Jumat berjamaah dan dzikir'),
+            ('sholat_rawatib', 'Menegakkan Sholat-sholat Rawatib Muakkadah'),
+            ('sholat_tahajud', 'Menegakkan Sholat Tahajud dan Witir'),
+            ('sholat_dhuha', 'Menegakkan Sholat Dhuha'),
+            ('tadarus', 'Membaca Al Quran (Tadarus) setelah Sholat Fardhu'),
+            ('hafalan_quran', 'Menghafal Al Quran (Menambah hafalan)'),
+            ('murojaah', 'Mengulang Hafalan Al Quran (Muroja\'ah)'),
+            ('tadabur', 'Memahami dan merenungkan isi Al Quran (Tadabur)'),
+            ('doa_harian', 'Membaca Doa-doa harian'),
+            ('puasa_sunnah', 'Melakukan Puasa Sunnah (Senin & Kamis)'),
+            ('wudhu', 'Menjaga Wudhu'),
+            ('infaq', 'Berinfaq'),
+            ('halaqoh', 'Halaqoh'),
         ]
     },
-    'kedisiplinan': {
-        'label': 'Kedisiplinan',
-        'max_score': 50,  # 10 indikator × 5 poin
+    'akhlak_perilaku': {
+        'label': 'Akhlak & Perilaku',
         'indicators': [
-            ('tepat_waktu_sholat', 'Tepat Waktu Sholat Berjamaah'),
-            ('tepat_waktu_kelas', 'Tepat Waktu Masuk Kelas'),
-            ('tepat_waktu_makan', 'Tepat Waktu Makan'),
-            ('seragam', 'Kerapihan Seragam'),
-            ('kebersihan_diri', 'Kebersihan Diri'),
-            ('kebersihan_kamar', 'Kebersihan Kamar/Asrama'),
-            ('izin_keluar', 'Prosedur Izin Keluar'),
-            ('penggunaan_hp', 'Penggunaan HP Sesuai Aturan'),
-            ('jam_malam', 'Kepatuhan Jam Malam'),
-            ('antrian', 'Tertib Antrian'),
+            ('bicara_santun', 'Berbicara Santun'),
+            ('panggilan_baik', 'Memanggil Teman dengan panggilan yang baik'),
+            ('senyum_salam', 'Melaksanakan 5S: senyum, salam, salim, sapa & santun'),
+            ('siapkan_buku', 'Menyiapkan Buku Pelajaran Sekolah dan Ponpes'),
+            ('belajar_malam', 'Belajar Malam'),
+            ('rapikan_tempat_tidur', 'Merapikan Tempat Tidur'),
+            ('mandi_pagi', 'Mandi Pagi'),
+            ('mandi_sore', 'Mandi Sore'),
+            ('sikat_gigi', 'Sikat Gigi'),
+            ('cuci_pakaian', 'Mencuci Pakaian'),
+            ('setrika_pakaian', 'Mensetrika Pakaian'),
+            ('siapkan_seragam', 'Menyiapkan dan Memakai Seragam'),
+            ('deodoran', 'Memakai Deodoran'),
+            ('potong_kuku', 'Memotong Kuku'),
+            ('piket', 'Mengerjakan Piket Kamar+Piket Sekolah'),
+            ('rapikan_sandal', 'Merapikan Sandal dan Sepatu'),
+            ('potong_rambut', 'Memotong Rambut dengan Rapi'),
+            ('cuci_rambut', 'Mencuci Rambut+Menyisir Rambut dengan Rapi'),
+            ('perlengkapan_sholat', 'Melengkapi Alat-alat Sholat: Sarung, Koko, Sajdah, Tasbih, Kopyh'),
+            ('baju_jumat', 'Memakai Baju/Jubah Putih+Kopyah ketika Sholat Jumat'),
+            ('laptop_tugas', 'Menggunakan Laptop/Notebook untuk Mengerjakan Tugas'),
+            ('hp_syarie', 'Menggunakan HP untuk Keperluan yang Syar\'ie'),
+            ('jas_almamater', 'Memakai Jas Almamater ketika keluar & acara resmi'),
+            ('jaga_fasilitas', 'Menjaga dan merawat fasilitas sekolah dan ponpes'),
+            ('buang_sampah', 'Membuang sampah pada tempat sampah'),
         ]
     },
-    'ibadah': {
-        'label': 'Ibadah & Spiritual',
-        'max_score': 75,  # 15 indikator × 5 poin
+    'resiliensi': {
+        'label': 'Resiliensi & Daya Pegan',
         'indicators': [
-            ('sholat_subuh', 'Kehadiran Sholat Subuh'),
-            ('sholat_dzuhur', 'Kehadiran Sholat Dzuhur'),
-            ('sholat_ashar', 'Kehadiran Sholat Ashar'),
-            ('sholat_maghrib', 'Kehadiran Sholat Maghrib'),
-            ('sholat_isya', 'Kehadiran Sholat Isya'),
-            ('sholat_dhuha', 'Sholat Dhuha'),
-            ('sholat_tahajud', 'Sholat Tahajud'),
-            ('sholat_rawatib', 'Sholat Rawatib'),
-            ('tilawah_harian', 'Tilawah Al-Quran Harian'),
-            ('dzikir_pagi', 'Dzikir Pagi'),
-            ('dzikir_sore', 'Dzikir Sore'),
-            ('puasa_sunnah', 'Puasa Sunnah'),
-            ('sedekah', 'Sedekah/Infaq'),
-            ('doa_sebelum_aktivitas', 'Doa Sebelum Aktivitas'),
-            ('khusyuk_sholat', 'Kekhusyukan Sholat'),
+            ('tepat_waktu_kegiatan', 'Tepat waktu mengikuti kegiatan di sekolah dan ponpes'),
+            ('selesaikan_tugas', 'Menyelesaikan tugas tepat waktu'),
+            ('suka_tantangan', 'Menyukai Tantangan (tidak mudah putus asa)'),
+            ('libatkan_diri', 'Melibatkan diri secara penuh setiap mengikuti kegiatan'),
         ]
     },
-    'akademik': {
-        'label': 'Akademik Keagamaan',
-        'max_score': 40,  # 8 indikator × 5 poin
+    'kecerdikan': {
+        'label': 'Kecerdikan & Resourcefulness',
         'indicators': [
-            ('hafalan_quran', 'Progress Hafalan Al-Quran'),
-            ('murojaah', 'Konsistensi Murojaah'),
-            ('tajwid', 'Penguasaan Tajwid'),
-            ('makhorijul_huruf', 'Makhorijul Huruf'),
-            ('kehadiran_diniyah', 'Kehadiran Kelas Diniyah'),
-            ('tugas_diniyah', 'Pengumpulan Tugas Diniyah'),
-            ('bahasa_arab', 'Kemampuan Bahasa Arab'),
-            ('hafalan_hadits', 'Hafalan Hadits'),
+            ('ajukan_pertanyaan', 'Mengajukan pertanyaan baik secara tertulis maupun lisan'),
+            ('gunakan_sumber_daya', 'Mampu menggunakan berbagai sumber daya'),
+            ('coba_alternatif', 'Mau mencoba berbagai alternatif cara/solusi'),
+            ('gagasan_inovatif', 'Melahirkan gagasan-gagasan baru yang inovatif (ditulis)'),
         ]
     },
-    'sosial': {
-        'label': 'Interaksi Sosial',
-        'max_score': 40,  # 8 indikator × 5 poin
+    'refleksi': {
+        'label': 'Refleksi & Meta Belajar',
         'indicators': [
-            ('kerjasama', 'Kerjasama Tim'),
-            ('tolong_menolong', 'Sikap Tolong Menolong'),
-            ('menghargai_perbedaan', 'Menghargai Perbedaan'),
-            ('komunikasi', 'Kemampuan Komunikasi'),
-            ('empati', 'Empati terhadap Teman'),
-            ('tidak_bullying', 'Tidak Melakukan Bullying'),
-            ('partisipasi_kegiatan', 'Partisipasi Kegiatan Bersama'),
-            ('kepemimpinan', 'Jiwa Kepemimpinan'),
+            ('baca_buku', 'Membaca buku-buku pelajaran/ilmiah/tsaqofah'),
+            ('serap_informasi', 'Menyerap informasi (dari media cetak/elektronik)'),
+            ('catat_tulis', 'Mencatat, menulis, mengarang (tulis menulis)'),
+            ('cara_belajar', 'Menemukan cara belajar dengan baik dalam segala situasi'),
         ]
     },
-    'pengembangan_diri': {
-        'label': 'Pengembangan Diri',
-        'max_score': 30,  # 6 indikator × 5 poin
+    'timbal_balik': {
+        'label': 'Timbal Balik & Empati',
         'indicators': [
-            ('minat_baca', 'Minat Baca'),
-            ('kreativitas', 'Kreativitas'),
-            ('public_speaking', 'Kemampuan Public Speaking'),
-            ('manajemen_waktu', 'Manajemen Waktu'),
-            ('kemandirian', 'Kemandirian'),
-            ('inisiatif', 'Inisiatif'),
+            ('teladani_sukses', 'Meneladani perilaku sukses dari orang lain'),
+            ('dengarkan_nasihat', 'Mendengarkan dan melaksanakan nasihat'),
+            ('kerjasama', 'Bersedia bekerjasama dengan siapapun'),
+            ('bantu_orang_lain', 'Membantu meringankan pekerjaan orang lain'),
         ]
-    }
+    },
 }
 
-# Total: 12 + 10 + 15 + 8 + 8 + 6 = 59 indikator
-# Max score: 60 + 50 + 75 + 40 + 40 + 30 = 295 (jika max per indikator = 5)
-# Untuk mencapai 390, kita bisa adjust max per indikator atau tambah bonus
-
-
-# ============================================
-# BLP CORE INDICATORS (25 Indikator Inti)
-# ============================================
-# Versi ringkas untuk dashboard dan laporan cepat
-BLP_CORE_INDICATORS = {
-    'akhlak': {
-        'label': 'Akhlak & Adab',
-        'max_score': 25,  # 5 indikator × 5 poin
-        'indicators': [
-            ('sopan_santun', 'Sopan Santun kepada Ustadz'),
-            ('kejujuran', 'Kejujuran'),
-            ('rendah_hati', 'Rendah Hati (Tawadhu)'),
-            ('adab_makan', 'Adab Makan & Minum'),
-            ('adab_berbicara', 'Adab Berbicara'),
-        ]
-    },
-    'kedisiplinan': {
-        'label': 'Kedisiplinan',
-        'max_score': 20,  # 4 indikator × 5 poin
-        'indicators': [
-            ('tepat_waktu_sholat', 'Tepat Waktu Sholat'),
-            ('tepat_waktu_kelas', 'Tepat Waktu Kelas'),
-            ('kebersihan_diri', 'Kebersihan Diri'),
-            ('jam_malam', 'Kepatuhan Jam Malam'),
-        ]
-    },
-    'ibadah': {
-        'label': 'Ibadah & Spiritual',
-        'max_score': 30,  # 6 indikator × 5 poin
-        'indicators': [
-            ('sholat_wajib', 'Kehadiran Sholat Wajib'),
-            ('sholat_dhuha', 'Sholat Dhuha'),
-            ('sholat_tahajud', 'Sholat Tahajud'),
-            ('tilawah_harian', 'Tilawah Al-Quran'),
-            ('dzikir', 'Dzikir Pagi/Sore'),
-            ('khusyuk_sholat', 'Kekhusyukan Sholat'),
-        ]
-    },
-    'akademik': {
-        'label': 'Akademik Keagamaan',
-        'max_score': 20,  # 4 indikator × 5 poin
-        'indicators': [
-            ('hafalan_quran', 'Progress Hafalan'),
-            ('murojaah', 'Konsistensi Murojaah'),
-            ('tajwid', 'Penguasaan Tajwid'),
-            ('kehadiran_diniyah', 'Kehadiran Diniyah'),
-        ]
-    },
-    'sosial': {
-        'label': 'Interaksi Sosial',
-        'max_score': 15,  # 3 indikator × 5 poin
-        'indicators': [
-            ('kerjasama', 'Kerjasama Tim'),
-            ('tolong_menolong', 'Tolong Menolong'),
-            ('tidak_bullying', 'Anti Bullying'),
-        ]
-    },
-    'pengembangan_diri': {
-        'label': 'Pengembangan Diri',
-        'max_score': 15,  # 3 indikator × 5 poin
-        'indicators': [
-            ('kemandirian', 'Kemandirian'),
-            ('inisiatif', 'Inisiatif'),
-            ('public_speaking', 'Public Speaking'),
-        ]
-    }
-}
-
-# Total Core: 5 + 4 + 6 + 4 + 3 + 3 = 25 indikator
-# Max Core Score: 25 + 20 + 30 + 20 + 15 + 15 = 125
+# Total: 18 + 25 + 4 + 4 + 4 + 4 = 59 indikator
+# Max score: 59 (boolean, setiap indikator = 0 atau 1)
 
 
 def get_blp_core_default_values():
-    """Generate default BLP core values (25 indikator, semua = 0)"""
-    values = {}
-    for domain, data in BLP_CORE_INDICATORS.items():
-        values[domain] = {}
-        for code, label in data['indicators']:
-            values[domain][code] = 0
-    return values
+    """Backward-compatible alias untuk default BLP boolean."""
+    return get_blp_default_values()
 
 
 def calculate_core_scores(indicator_values):
-    """
-    Calculate scores using only core 25 indicators.
-    Maps full indicator_values to core indicators only.
-    """
+    """Standalone helper: hitung skor dari indicator_values boolean"""
     domain_scores = {}
-    total = 0
+    total_checked = 0
+    total_indicators = 0
 
-    for domain, data in BLP_CORE_INDICATORS.items():
-        domain_total = 0
+    for domain, data in BLP_INDICATORS.items():
+        domain_checked = 0
         values = indicator_values.get(domain, {})
+        count = len(data['indicators'])
 
         for code, label in data['indicators']:
-            score = values.get(code, 0)
-            score = max(0, min(5, int(score) if score else 0))
-            domain_total += score
+            val = values.get(code, 0)
+            val = 1 if val else 0
+            domain_checked += val
 
+        percentage = round((domain_checked / count) * 100, 1) if count > 0 else 0.0
         domain_scores[domain] = {
-            'score': domain_total,
-            'max_score': data['max_score'],
-            'percentage': round((domain_total / data['max_score']) * 100, 1) if data['max_score'] > 0 else 0
+            'checked': domain_checked,
+            'total': count,
+            'percentage': percentage
         }
-        total += domain_total
+        total_checked += domain_checked
+        total_indicators += count
 
-    return total, domain_scores
+    total_score = round((total_checked / total_indicators) * 100, 1) if total_indicators > 0 else 0.0
+    return total_score, domain_scores
 
 
 def get_blp_default_values():
-    """Generate default BLP values (semua indikator = 0)"""
-    values = {}
-    for domain, data in BLP_INDICATORS.items():
-        values[domain] = {}
-        for code, label in data['indicators']:
-            values[domain][code] = 0
-    return values
+    return {
+        domain: {code: 0 for code, label in data['indicators']}
+        for domain, data in BLP_INDICATORS.items()
+    }
 
 
 class BLPEntry(models.Model):
@@ -884,10 +799,9 @@ class BLPEntry(models.Model):
     Penilaian dilakukan setiap minggu (Minggu-Sabtu).
 
     Scoring:
-    - Setiap indikator: 0-5 poin (Belum/Sangat Kurang/Kurang/Cukup/Baik/Sangat Baik)
-    - Total maksimal: 59 × 5 = 295 poin dasar
-    - Bonus poin: max 95 poin (untuk pencapaian luar biasa)
-    - Grand total maksimal: 390 poin
+    - Setiap indikator: 0 atau 1 (boolean)
+    - Total: persentase dari jumlah indikator yang dicentang
+    - Max score: 100.0 (semua 59 indikator dicentang)
     """
 
     WEEK_STATUS_CHOICES = [
@@ -918,27 +832,16 @@ class BLPEntry(models.Model):
     )
 
     # JSONField untuk 59 indikator
-    # Struktur: {"akhlak": {"sopan_santun": 4, "kejujuran": 5, ...}, ...}
+    # Struktur: {"domain": {"kode_indikator": 0 atau 1, ...}, ...}
     indicator_values = models.JSONField(
         default=get_blp_default_values,
         help_text="Nilai untuk setiap indikator BLP (59 total)"
     )
 
-    # Bonus poin (untuk pencapaian luar biasa)
-    bonus_points = models.PositiveIntegerField(
-        default=0,
-        validators=[MaxValueValidator(95)],
-        help_text="Bonus poin untuk pencapaian luar biasa (max 95)"
-    )
-    bonus_notes = models.TextField(
-        blank=True, null=True,
-        help_text="Catatan untuk bonus poin"
-    )
-
     # Calculated scores (di-cache untuk performa)
-    total_score = models.PositiveIntegerField(
-        default=0,
-        help_text="Total skor (max 390)"
+    total_score = models.FloatField(
+        default=0.0,
+        help_text="Persentase total skor (0.0 - 100.0)"
     )
     domain_scores = models.JSONField(
         default=dict,
@@ -988,33 +891,33 @@ class BLPEntry(models.Model):
         return f"{self.siswa.nama} - {self.week_start} to {self.week_end} (Score: {self.total_score})"
 
     def calculate_scores(self):
-        """Hitung total_score dan domain_scores dari indicator_values"""
+        """Hitung total_score dan domain_scores dari indicator_values (boolean)"""
         domain_scores = {}
-        total = 0
+        total_checked = 0
+        total_indicators = 0
 
         for domain, data in BLP_INDICATORS.items():
-            domain_total = 0
+            domain_checked = 0
             values = self.indicator_values.get(domain, {})
+            count = len(data['indicators'])
 
             for code, label in data['indicators']:
-                score = values.get(code, 0)
-                # Validasi range 0-5
-                score = max(0, min(5, int(score) if score else 0))
-                domain_total += score
+                val = values.get(code, 0)
+                # Boolean: hanya 0 atau 1
+                val = 1 if val else 0
+                domain_checked += val
 
+            percentage = round((domain_checked / count) * 100, 1) if count > 0 else 0.0
             domain_scores[domain] = {
-                'score': domain_total,
-                'max_score': data['max_score'],
-                'percentage': round((domain_total / data['max_score']) * 100, 1) if data['max_score'] > 0 else 0
+                'checked': domain_checked,
+                'total': count,
+                'percentage': percentage
             }
-            total += domain_total
-
-        # Tambah bonus
-        total += self.bonus_points
+            total_checked += domain_checked
+            total_indicators += count
 
         self.domain_scores = domain_scores
-        self.total_score = min(total, 390)  # Cap at 390
-
+        self.total_score = round((total_checked / total_indicators) * 100, 1) if total_indicators > 0 else 0.0
         return self.total_score
 
     def save(self, *args, **kwargs):
@@ -1049,16 +952,15 @@ class BLPEntry(models.Model):
 
     @property
     def predikat(self):
-        """Return predikat berdasarkan total_score"""
-        percentage = (self.total_score / 390) * 100 if self.total_score else 0
-
-        if percentage >= 90:
+        """Return predikat berdasarkan persentase total_score"""
+        pct = self.total_score  # sudah dalam bentuk persentase
+        if pct >= 90:
             return 'Mumtaz'
-        elif percentage >= 75:
+        elif pct >= 75:
             return 'Jayyid Jiddan'
-        elif percentage >= 60:
+        elif pct >= 60:
             return 'Jayyid'
-        elif percentage >= 40:
+        elif pct >= 40:
             return 'Maqbul'
         else:
             return 'Perlu Pembinaan'

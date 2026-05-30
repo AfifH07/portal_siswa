@@ -237,13 +237,6 @@
             color: #374151;
             margin-bottom: 5px;
         }
-        /* Row bonus: dua kolom berdampingan */
-        .blp-bonus-row {
-            display: grid;
-            grid-template-columns: 160px 1fr;
-            gap: 12px;
-        }
-
         /* ===== TOTAL PANEL ===== */
         .blp-total-box {
             border-radius: 16px;
@@ -267,7 +260,7 @@
             gap: 10px;
         }
     </style>
-    <link rel="stylesheet" href="/static/css/blp.css?v=20260529a">
+    <link rel="stylesheet" href="/static/css/blp.css?v=20260530a">
 </head>
 <body data-role="">
 
@@ -312,7 +305,7 @@
     <div class="page-body">
         <section class="blp-hero">
             <h2>Input BLP Santri</h2>
-            <p>Pantau karakter mingguan santri lewat 59 indikator dalam 6 domain. Pilih santri, isi skor 0-5, lalu simpan draft atau submit.</p>
+            <p>Pantau karakter mingguan santri lewat 59 indikator dalam 6 domain. Pilih santri, centang indikator yang tercapai, lalu simpan draft atau submit.</p>
         </section>
 
         <section class="blp-card">
@@ -374,16 +367,6 @@
             <div id="blp-indicators-container"></div>
 
             <div class="blp-form-grid">
-                <div class="blp-bonus-row">
-                    <div>
-                        <label for="blp-bonus-points">Bonus points</label>
-                        <input type="number" id="blp-bonus-points" class="glass-input" min="0" max="95" value="0">
-                    </div>
-                    <div>
-                        <label for="blp-bonus-notes">Catatan bonus</label>
-                        <input type="text" id="blp-bonus-notes" class="glass-input" placeholder="Catatan bonus jika ada">
-                    </div>
-                </div>
                 <div>
                     <label for="blp-catatan">Catatan</label>
                     <textarea id="blp-catatan" class="glass-input" rows="3" placeholder="Catatan umum"></textarea>
@@ -396,15 +379,11 @@
 
             <div class="blp-total-panel">
                 <div class="blp-total-box">
-                    <span class="blp-muted">Skor indikator</span>
+                    <span class="blp-muted">Indikator tercapai</span>
                     <strong id="blp-base-score">0</strong>
                 </div>
                 <div class="blp-total-box">
-                    <span class="blp-muted">Bonus</span>
-                    <strong id="blp-bonus-preview">0</strong>
-                </div>
-                <div class="blp-total-box">
-                    <span class="blp-muted">Total preview</span>
+                    <span class="blp-muted">Persentase</span>
                     <strong id="blp-total-score">0</strong>
                 </div>
             </div>
@@ -453,6 +432,6 @@
 <script src="/static/js/apiFetch.js" defer></script>
 <script src="/static/js/utils.js" defer></script>
 <script src="/static/js/auth-check.js?v=20260528blp" defer></script>
-<script src="/static/js/blp.js?v=20260529a" defer></script>
+<script src="/static/js/blp.js?v=20260530b" defer></script>
 </body>
 </html>
