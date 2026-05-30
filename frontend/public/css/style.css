@@ -229,3 +229,29 @@ body {
         padding: 15px;
     }
 }
+
+/* Global watermark */
+body::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 400px;
+    background-image: url('/static/images/logo_watermark.png');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.main-content,
+.content-area,
+main,
+.container {
+    position: relative;
+    z-index: 1;
+}
