@@ -237,13 +237,13 @@ body::before {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 400px;
-    height: 400px;
+    width: 600px;
+    height: 600px;
     background-image: url('/static/images/logo_watermark.png');
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
-    opacity: 0.015;
+    opacity: 0.06;
     pointer-events: none;
     z-index: 0;
 }
