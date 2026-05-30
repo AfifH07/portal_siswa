@@ -1387,7 +1387,7 @@ body::before {
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
-    opacity: 0.04;
+    opacity: 0.015;
     pointer-events: none;
     z-index: 0;
 }
