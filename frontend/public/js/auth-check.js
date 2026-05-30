@@ -244,6 +244,7 @@ function getAllowedPages(role) {
         'bk': ['/', '/dashboard', '/dashboard/ustadz', '/students', '/attendance', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/grades', '/hafalan', '/evaluations', '/timetable', '/evaluasi-asatidz', '/case-management'],
         'bendahara': ['/', '/dashboard', '/jurnal-piket', '/titipan-tugas', '/izin-guru', '/timetable', '/finance'],
         'walisantri': ['/', '/dashboard', '/dashboard/walisantri', '/dashboard/parent', '/attendance', '/grades', '/hafalan', '/evaluations', '/finance', '/ibadah', '/blp', '/case-management'],
+        'admin_santri': ['/', '/dashboard', '/blp', '/absensi-sholat'],
     };
 
     return roleAccess[role] || [];
@@ -325,6 +326,7 @@ function hasPermission(permission) {
         'guru': ['create', 'read', 'update', 'view_class'],
         'bendahara': ['create', 'read', 'update', 'view_finance', 'manage_finance'],
         'walisantri': ['read', 'view_child', 'view_finance'],
+        'admin_santri': ['create', 'read', 'update'],
     };
 
     const permissions = rolePermissions[role] || [];
@@ -507,6 +509,15 @@ function createRoleBasedNav() {
             other: [
                 { href: '/kritik-saran', icon: 'message-square', label: 'Kritik & Saran' },
                 { href: '/pertemuan-pengasuhan', icon: 'users-round', label: 'Pertemuan Pengasuhan' }
+            ]
+        },
+        'admin_santri': {
+            main: [
+                { href: '/dashboard/', icon: 'layout-dashboard', label: 'Dashboard' }
+            ],
+            kesantrian: [
+                { href: '/blp', icon: 'clipboard-list', label: 'Input BLP', id: 'nav-blp' },
+                { href: '/absensi-sholat', icon: 'moon', label: 'Absensi Sholat', id: 'nav-absensi-sholat' }
             ]
         },
     };
@@ -741,6 +752,7 @@ function updateUserRoleDisplay() {
     const roleDisplayMap = {
         'superadmin': 'Super Admin',
         'admin': 'Admin',
+        'admin_santri': 'Admin Santri',
         'pimpinan': 'Pimpinan',
         'guru': 'Guru/Ustadz',
         'bk': 'Guru BK',
