@@ -4713,7 +4713,8 @@ function wireKajianModal() {
     if (btnTambah) {
         btnTambah.onclick = () => {
             document.getElementById('input-pertemuan-judul').value = '';
-            document.getElementById('input-pertemuan-tanggal').value = '';
+            document.getElementById('input-pertemuan-tanggal').value =
+                new Date().toISOString().split('T')[0];
             document.getElementById('input-pertemuan-lokasi').value = '';
             if (modal) modal.style.display = 'flex';
         };

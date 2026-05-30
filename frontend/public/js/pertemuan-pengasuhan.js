@@ -51,6 +51,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Warning guru belum pertemuan
     if (userRole === 'guru') await checkWarningGuru();
+
+    const ptTanggal = document.getElementById('pt-tanggal');
+    if (ptTanggal) {
+        ptTanggal.value = new Date().toISOString().split('T')[0];
+    }
 });
 
 // ============================================
@@ -426,7 +431,8 @@ async function submitPertemuan() {
         if (result.success) {
             alert('✅ Pertemuan berhasil dicatat!');
             document.getElementById('pt-kelompok').value = '';
-            document.getElementById('pt-tanggal').value = '';
+            document.getElementById('pt-tanggal').value =
+                new Date().toISOString().split('T')[0];
             document.getElementById('pt-lokasi').value = '';
             document.getElementById('pt-deskripsi').value = '';
             if (fotoInput) fotoInput.value = '';
