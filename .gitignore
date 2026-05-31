@@ -54,3 +54,65 @@ archive/
 .claude/
 *.csv
 nul
+
+# === PORTAL SISWA BARON — PRODUCTION RULES ===
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+env/
+.venv/
+.env/
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+static_collected/
+*.log
+
+# Environment secrets
+.env
+backend_django/.env
+!.env.example
+!backend_django/.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker (tidak dipakai di Hostinger VPS)
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+
+# File sampah proyek lama
+server.py
+v1v2.py
+appskesantrian*.py
+example\ dashboard.html
+PROJECT_PROGRESS_*.md
+PROJECT_SUMMARY_*.md
+docs/
+database/
+
+# RTK (lokal only, tidak di server)
+rtk/
+*.rtk
