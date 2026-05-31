@@ -116,3 +116,21 @@ database/
 # RTK (lokal only, tidak di server)
 rtk/
 *.rtk
+
+# Dokumen handover lama (hanya v7 yang aktif)
+HANDOVER_BARON_v[0-6].md
+HANDOVER_v2_4_*.md
+HANDOVER_INTEGRITAS.md
+CHANGELOG_v*.md
+BLUEPRINT_PORTAL_BARON*.md
+QA_CHECKLIST*.md
+
+# File nyasar
+backtest_*.csv
+BUKU KP*.pdf
+BUKU KP*.md
+nul
+"CLAUDE copy.md"
+
+# Folder arsip
+archive/
