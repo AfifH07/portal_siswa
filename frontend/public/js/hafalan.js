@@ -1797,26 +1797,49 @@ async function saveCatatan() {
 }
 
 function exportHafalanData() {
-    const exportData = {
-        student: hafalanData.student,
-        tartil: hafalanData.tartil,
-        tahfidz: hafalanData.tahfidz,
-        kehadiran: hafalanData.kehadiran,
-        catatan: hafalanData.catatan,
-        exported_at: new Date().toISOString()
-    };
+    const nisn = hafalanData.student?.nisn;
+    if (!nisn) {
+        showToast('Pilih santri terlebih dahulu.', 'error');
+        return;
+    }
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `hafalan_${hafalanData.student.nisn}_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const btn = document.getElementById('btn-export');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Mengunduh...';
+    }
 
-    showToast('Data berhasil di-export!');
+    const token = localStorage.getItem('access_token') || '';
+    fetch(`/api/kesantrian/hafalan/export-pdf/${nisn}/`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Gagal mengunduh PDF');
+        return res.blob();
+    })
+    .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `hafalan_${nisn}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('PDF berhasil diunduh!');
+    })
+    .catch(err => {
+        showToast('Gagal mengunduh PDF: ' + err.message, 'error');
+    })
+    .finally(() => {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Export';
+        }
+    });
 }
 
 async function saveAllChanges() {

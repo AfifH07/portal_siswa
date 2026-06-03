@@ -4977,6 +4977,150 @@ def download_hafalan_template(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def export_hafalan_pdf(request, nisn):
+    """
+    Export data hafalan satu santri ke PDF menggunakan reportlab.
+    """
+    user = request.user
+
+    allowed_roles = ['superadmin', 'pimpinan', 'guru', 'musyrif', 'bk', 'walisantri']
+    if user.role not in allowed_roles:
+        return Response({'success': False, 'message': 'Tidak diizinkan'}, status=403)
+
+    try:
+        student = Student.objects.get(nisn=nisn)
+    except Student.DoesNotExist:
+        return Response({'success': False, 'message': 'Santri tidak ditemukan'}, status=404)
+
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        from io import BytesIO
+        from datetime import datetime
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=2*cm,
+            leftMargin=2*cm,
+            topMargin=2*cm,
+            bottomMargin=2*cm
+        )
+
+        elements = []
+        styles = getSampleStyleSheet()
+
+        title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=16, alignment=TA_CENTER, spaceAfter=6)
+        subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=10, alignment=TA_CENTER, spaceAfter=4)
+        section_style = ParagraphStyle('Section', parent=styles['Heading2'], fontSize=12, spaceAfter=6, spaceBefore=12)
+        normal_style = ParagraphStyle('Normal2', parent=styles['Normal'], fontSize=9, spaceAfter=4, alignment=TA_LEFT)
+
+        elements.append(Paragraph("LAPORAN HAFALAN SANTRI", title_style))
+        elements.append(Paragraph("Pondok Pesantren Baron", subtitle_style))
+        elements.append(Spacer(1, 0.3*cm))
+
+        kelas_str = getattr(student, 'kelas', '-') or '-'
+        info_data = [
+            ['Nama', ':', student.nama or '-'],
+            ['NISN', ':', student.nisn],
+            ['Kelas', ':', kelas_str],
+            ['Tanggal Cetak', ':', datetime.now().strftime('%d/%m/%Y %H:%M')],
+        ]
+        info_table = Table(info_data, colWidths=[3.5*cm, 0.5*cm, 10*cm])
+        info_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ]))
+        elements.append(info_table)
+        elements.append(Spacer(1, 0.5*cm))
+
+        elements.append(Paragraph("Tartil", section_style))
+        tartil_records = TartilSantri.objects.filter(siswa=student).order_by('jilid')
+        if tartil_records.exists():
+            tartil_data = [['No', 'Jilid', 'Nilai', 'Capaian', 'Status', 'Tanggal Lulus']]
+            for idx, record in enumerate(tartil_records, 1):
+                tartil_data.append([
+                    str(idx),
+                    record.jilid or '-',
+                    str(record.nilai),
+                    f"{record.capaian_persen}%",
+                    'Lulus' if record.status_lulus else 'Belum',
+                    record.tanggal_lulus.strftime('%d/%m/%Y') if record.tanggal_lulus else '-',
+                ])
+            table = Table(tartil_data, colWidths=[1*cm, 3*cm, 2.5*cm, 2.5*cm, 2.5*cm, 4*cm])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#059669')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+            ]))
+            elements.append(table)
+        else:
+            elements.append(Paragraph("Belum ada data tartil.", normal_style))
+
+        elements.append(Paragraph("Tahfidz", section_style))
+        tahfidz_records = TahfidzSantri.objects.filter(siswa=student).order_by('kategori')
+        if tahfidz_records.exists():
+            tahfidz_data = [['No', 'Kategori', 'Nilai', 'Jumlah Juz', 'Target Juz', 'Detail']]
+            for idx, record in enumerate(tahfidz_records, 1):
+                tahfidz_data.append([
+                    str(idx),
+                    record.kategori or '-',
+                    str(record.nilai),
+                    str(record.jumlah_juz),
+                    str(record.total_juz_target),
+                    (record.detail or '')[:60],
+                ])
+            table = Table(tahfidz_data, colWidths=[1*cm, 3*cm, 2.5*cm, 2.5*cm, 2.5*cm, 4*cm])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#059669')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+            ]))
+            elements.append(table)
+        else:
+            elements.append(Paragraph("Belum ada data tahfidz.", normal_style))
+
+        elements.append(Spacer(1, 0.5*cm))
+        footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey)
+        elements.append(Paragraph(
+            f"Dicetak oleh: {user.name or user.username} - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+            footer_style
+        ))
+
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"hafalan_{nisn}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.write(pdf)
+        return response
+
+    except ImportError:
+        return Response({'success': False, 'message': 'reportlab tidak terinstall'}, status=500)
+    except Exception as e:
+        import traceback
+        return Response({'success': False, 'message': str(e), 'traceback': traceback.format_exc()}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def hafalan_per_siswa(request, nisn):
     """
     Get summary hafalan untuk satu santri.

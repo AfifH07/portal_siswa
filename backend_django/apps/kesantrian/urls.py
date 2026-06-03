@@ -115,6 +115,7 @@ urlpatterns = [
     path('hafalan/records/', views.hafalan_record_list, name='hafalan-record-list'),
     path('hafalan/records/<int:pk>/', views.hafalan_record_detail, name='hafalan-record-detail'),
     path('hafalan/template/', views.download_hafalan_template, name='hafalan-template'),
+    path('hafalan/export-pdf/<str:nisn>/', views.export_hafalan_pdf, name='hafalan-export-pdf'),
     path('hafalan/siswa/<str:nisn>/', views.hafalan_per_siswa, name='hafalan-per-siswa'),
     path('hafalan/siswa/<str:nisn>/kehadiran-kajian/', views.siswa_kehadiran_kajian, name='hafalan-kehadiran-kajian'),
     path('kompetensi/<str:nisn>/', views.kompetensi_santri_get, name='kompetensi-santri'),
