@@ -4782,6 +4782,117 @@ window.saveItemChanges = saveItemChanges;
 window.saveCatatan = saveCatatan;
 window.saveAllChanges = saveAllChanges;
 window.exportHafalanData = exportHafalanData;
+
+// ===================== IMPORT SETORAN HAFALAN CSV =====================
+
+(function initImportHafalanCsv() {
+    let selectedCsvFile = null;
+
+    function setupCsvImport() {
+        const fileInput = document.getElementById('file-import-hafalan-csv');
+        const clearBtn = document.getElementById('btn-clear-hafalan-csv');
+        const importBtn = document.getElementById('btn-import-hafalan-csv');
+        const resetBtn = document.getElementById('btn-reset-hafalan-csv');
+
+        if (!fileInput) return;
+
+        fileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            selectedCsvFile = file;
+            document.getElementById('file-name-hafalan-csv').textContent = file.name;
+            document.getElementById('file-size-hafalan-csv').textContent = (file.size / 1024).toFixed(1) + ' KB';
+            document.getElementById('dropzone-hafalan-csv').style.display = 'none';
+            document.getElementById('file-preview-hafalan-csv').style.display = 'block';
+        };
+
+        if (clearBtn) {
+            clearBtn.onclick = function() {
+                selectedCsvFile = null;
+                fileInput.value = '';
+                document.getElementById('dropzone-hafalan-csv').style.display = 'block';
+                document.getElementById('file-preview-hafalan-csv').style.display = 'none';
+            };
+        }
+
+        if (importBtn) {
+            importBtn.onclick = async function() {
+                if (!selectedCsvFile) {
+                    showToast('Pilih file CSV terlebih dahulu', 'error');
+                    return;
+                }
+                importBtn.disabled = true;
+                importBtn.textContent = 'Mengimport...';
+
+                const formData = new FormData();
+                formData.append('file', selectedCsvFile);
+
+                try {
+                    const response = await window.apiFetch('kesantrian/hafalan/import-csv/', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+
+                    document.getElementById('import-csv-total').textContent = data.total || 0;
+                    document.getElementById('import-csv-success').textContent = data.berhasil || 0;
+                    document.getElementById('import-csv-failed').textContent = data.gagal || 0;
+
+                    const errorsDiv = document.getElementById('import-csv-errors');
+                    const errorList = document.getElementById('import-csv-error-list');
+                    if (data.errors && data.errors.length > 0) {
+                        errorList.innerHTML = data.errors.map(e => `<li>${e}</li>`).join('');
+                        errorsDiv.style.display = 'block';
+                    } else {
+                        errorsDiv.style.display = 'none';
+                    }
+
+                    document.getElementById('file-preview-hafalan-csv').style.display = 'none';
+                    document.getElementById('import-result-hafalan-csv').style.display = 'block';
+
+                    if (data.berhasil > 0) showToast(`${data.berhasil} setoran berhasil diimport`, 'success');
+
+                } catch (err) {
+                    showToast('Import gagal: ' + err.message, 'error');
+                    importBtn.disabled = false;
+                    importBtn.textContent = 'Import Setoran';
+                }
+            };
+        }
+
+        if (resetBtn) {
+            resetBtn.onclick = function() {
+                selectedCsvFile = null;
+                fileInput.value = '';
+                document.getElementById('import-result-hafalan-csv').style.display = 'none';
+                document.getElementById('dropzone-hafalan-csv').style.display = 'block';
+                document.getElementById('file-preview-hafalan-csv').style.display = 'none';
+            };
+        }
+    }
+
+    // Init setelah DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupCsvImport);
+    } else {
+        setupCsvImport();
+    }
+
+    window.handleDropHafalanCsv = function(e) {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.name.endsWith('.csv')) {
+            showToast('Hanya file CSV yang didukung', 'error');
+            return;
+        }
+        const fileInput = document.getElementById('file-import-hafalan-csv');
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        fileInput.onchange({ target: { files: [file] } });
+    };
+})();
+
 window.switchRole = switchRole;
 
 // Setoran exports

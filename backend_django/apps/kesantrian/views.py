@@ -4977,6 +4977,156 @@ def download_hafalan_template(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def download_hafalan_record_template(request):
+    """
+    Download template CSV untuk import HafalanRecord (setoran per juz).
+    """
+    import csv
+    from django.http import HttpResponse as DjangoHttpResponse
+
+    response = DjangoHttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="template_import_setoran_hafalan.csv"'
+    response.write('\ufeff')  # BOM untuk Excel
+
+    writer = csv.writer(response)
+    writer.writerow(['nisn', 'tanggal', 'juz', 'jumlah_halaman', 'halaman_dari', 'halaman_sampai', 'status', 'catatan'])
+    writer.writerow(['0069028700', '2026-06-04', '6', '2', '1', '2', 'lancar', 'Contoh catatan'])
+    writer.writerow(['# Keterangan:', '', '', '', '', '', '', ''])
+    writer.writerow(['# nisn', 'Wajib. NISN santri', '', '', '', '', '', ''])
+    writer.writerow(['# tanggal', 'Wajib. Format: YYYY-MM-DD', '', '', '', '', '', ''])
+    writer.writerow(['# juz', 'Wajib. Angka 1-30', '', '', '', '', '', ''])
+    writer.writerow(['# jumlah_halaman', 'Wajib. Jumlah halaman disetorkan', '', '', '', '', '', ''])
+    writer.writerow(['# halaman_dari', 'Opsional. Halaman mulai (1-604)', '', '', '', '', '', ''])
+    writer.writerow(['# halaman_sampai', 'Opsional. Halaman selesai (1-604)', '', '', '', '', '', ''])
+    writer.writerow(['# status', 'Opsional. lancar / perlu_ulang / belum_selesai (default: lancar)', '', '', '', '', '', ''])
+    writer.writerow(['# catatan', 'Opsional.', '', '', '', '', '', ''])
+
+    return response
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def import_hafalan_record_csv(request):
+    """
+    Import HafalanRecord (setoran per juz) dari CSV.
+    Kolom: nisn, tanggal, juz, jumlah_halaman, halaman_dari, halaman_sampai, status, catatan
+    """
+    user = request.user
+
+    allowed_roles = ['superadmin', 'admin', 'guru', 'musyrif']
+    if user.role not in allowed_roles:
+        return Response({'success': False, 'message': 'Tidak diizinkan'}, status=403)
+
+    if 'file' not in request.FILES:
+        return Response({'success': False, 'message': 'File tidak ditemukan'}, status=400)
+
+    uploaded_file = request.FILES['file']
+    if not uploaded_file.name.lower().endswith('.csv'):
+        return Response({'success': False, 'message': 'Hanya file CSV yang didukung'}, status=400)
+
+    try:
+        import csv
+        import io
+        from datetime import datetime
+
+        content = uploaded_file.read().decode('utf-8-sig')  # handle BOM
+        reader = csv.DictReader(io.StringIO(content))
+
+        tahun_ajaran = TahunAjaran.objects.filter(is_active=True).first()
+
+        berhasil = 0
+        gagal = 0
+        errors = []
+
+        VALID_STATUS = ['lancar', 'perlu_ulang', 'belum_selesai']
+
+        for row_idx, row in enumerate(reader, start=2):
+            # Skip komentar
+            nisn_val = (row.get('nisn') or '').strip()
+            if not nisn_val or nisn_val.startswith('#'):
+                continue
+
+            try:
+                student = Student.objects.get(nisn=nisn_val)
+            except Student.DoesNotExist:
+                errors.append(f"Baris {row_idx}: NISN {nisn_val} tidak ditemukan")
+                gagal += 1
+                continue
+
+            try:
+                tanggal_str = (row.get('tanggal') or '').strip()
+                if not tanggal_str:
+                    errors.append(f"Baris {row_idx}: kolom tanggal wajib diisi")
+                    gagal += 1
+                    continue
+                tanggal = datetime.strptime(tanggal_str, '%Y-%m-%d').date()
+
+                juz_val = row.get('juz', '').strip()
+                if not juz_val:
+                    errors.append(f"Baris {row_idx}: kolom juz wajib diisi")
+                    gagal += 1
+                    continue
+                juz = int(juz_val)
+                if not (1 <= juz <= 30):
+                    errors.append(f"Baris {row_idx}: juz harus antara 1-30")
+                    gagal += 1
+                    continue
+
+                jumlah_halaman_val = row.get('jumlah_halaman', '').strip()
+                if not jumlah_halaman_val:
+                    errors.append(f"Baris {row_idx}: kolom jumlah_halaman wajib diisi")
+                    gagal += 1
+                    continue
+                jumlah_halaman = int(jumlah_halaman_val)
+
+                halaman_dari_val = row.get('halaman_dari', '').strip()
+                halaman_dari = int(halaman_dari_val) if halaman_dari_val else None
+
+                halaman_sampai_val = row.get('halaman_sampai', '').strip()
+                halaman_sampai = int(halaman_sampai_val) if halaman_sampai_val else None
+
+                status_val = (row.get('status') or 'lancar').strip().lower()
+                if status_val not in VALID_STATUS:
+                    status_val = 'lancar'
+
+                catatan = (row.get('catatan') or '').strip()
+
+                HafalanRecord.objects.create(
+                    siswa=student,
+                    tanggal=tanggal,
+                    juz=juz,
+                    jumlah_halaman=jumlah_halaman,
+                    halaman_dari=halaman_dari,
+                    halaman_sampai=halaman_sampai,
+                    status=status_val,
+                    catatan=catatan,
+                    input_by=user,
+                    tahun_ajaran=tahun_ajaran,
+                )
+                berhasil += 1
+
+            except ValueError as ve:
+                errors.append(f"Baris {row_idx}: Format data salah - {str(ve)}")
+                gagal += 1
+            except Exception as e:
+                errors.append(f"Baris {row_idx}: Error - {str(e)}")
+                gagal += 1
+
+        return Response({
+            'success': True,
+            'berhasil': berhasil,
+            'gagal': gagal,
+            'total': berhasil + gagal,
+            'errors': errors[:20]
+        })
+
+    except Exception as e:
+        import traceback
+        return Response({'success': False, 'message': str(e), 'traceback': traceback.format_exc()}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def export_hafalan_pdf(request, nisn):
     """
     Export data hafalan satu santri ke PDF menggunakan reportlab.

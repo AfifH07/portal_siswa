@@ -685,6 +685,87 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Divider -->
+                    <hr style="margin: 2rem 0; border-color: var(--emerald-200);">
+
+                    <!-- Import Setoran Hafalan (CSV) -->
+                    <div class="card-head" style="margin-bottom: 1rem;">
+                        <h3><i data-lucide="file-text" class="ch-icon"></i> Import Setoran Hafalan per Juz (CSV)</h3>
+                    </div>
+                    <div class="import-instructions">
+                        <h4>Panduan Import Setoran:</h4>
+                        <ol>
+                            <li>Download template CSV terlebih dahulu</li>
+                            <li>Kolom wajib: <code>nisn</code>, <code>tanggal</code> (YYYY-MM-DD), <code>juz</code>, <code>jumlah_halaman</code></li>
+                            <li>Kolom opsional: <code>halaman_dari</code>, <code>halaman_sampai</code>, <code>status</code>, <code>catatan</code></li>
+                            <li>Status: <code>lancar</code> / <code>perlu_ulang</code> / <code>belum_selesai</code></li>
+                        </ol>
+                        <div class="import-actions">
+                            <a href="/api/kesantrian/hafalan/template-csv/" class="btn btn-outline" download>
+                                <i data-lucide="download"></i> Download Template CSV
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="upload-area" id="upload-area-hafalan-csv">
+                        <div class="upload-dropzone" id="dropzone-hafalan-csv"
+                             ondrop="handleDropHafalanCsv(event)"
+                             ondragover="handleDragOver(event)"
+                             ondragleave="handleDragLeave(event)">
+                            <i data-lucide="upload-cloud" style="width: 64px; height: 64px; color: var(--emerald-500);"></i>
+                            <p class="upload-text">Drag & drop file CSV di sini</p>
+                            <p class="upload-subtext">atau klik untuk memilih file</p>
+                            <input type="file" id="file-import-hafalan-csv" accept=".csv" style="display: none;">
+                            <button class="btn btn-primary" onclick="document.getElementById('file-import-hafalan-csv').click()">
+                                <i data-lucide="folder-open"></i> Pilih File CSV
+                            </button>
+                        </div>
+
+                        <div class="file-preview" id="file-preview-hafalan-csv" style="display: none;">
+                            <div class="file-info">
+                                <i data-lucide="file-text" class="file-icon"></i>
+                                <div class="file-details">
+                                    <span class="file-name" id="file-name-hafalan-csv">-</span>
+                                    <span class="file-size" id="file-size-hafalan-csv">-</span>
+                                </div>
+                                <button class="btn btn-icon btn-danger" id="btn-clear-hafalan-csv">
+                                    <i data-lucide="x"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-success btn-lg" id="btn-import-hafalan-csv">
+                                <i data-lucide="upload"></i> Import Setoran
+                            </button>
+                        </div>
+
+                        <div class="import-result" id="import-result-hafalan-csv" style="display: none;">
+                            <div class="result-header">
+                                <i data-lucide="check-circle" class="result-icon success"></i>
+                                <h4>Import Selesai</h4>
+                            </div>
+                            <div class="result-stats">
+                                <div class="result-stat">
+                                    <span class="stat-value" id="import-csv-total">0</span>
+                                    <span class="stat-label">Total Baris</span>
+                                </div>
+                                <div class="result-stat success">
+                                    <span class="stat-value" id="import-csv-success">0</span>
+                                    <span class="stat-label">Berhasil</span>
+                                </div>
+                                <div class="result-stat error">
+                                    <span class="stat-value" id="import-csv-failed">0</span>
+                                    <span class="stat-label">Gagal</span>
+                                </div>
+                            </div>
+                            <div id="import-csv-errors" style="display: none;">
+                                <h5>Detail Error:</h5>
+                                <ul id="import-csv-error-list"></ul>
+                            </div>
+                            <button class="btn btn-outline" id="btn-reset-hafalan-csv">
+                                <i data-lucide="refresh-cw"></i> Import Lagi
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div><!-- /tab-import -->
@@ -1050,7 +1131,7 @@
 <script src="/static/js/auth-check.js?v=20260530adminsantri" defer></script>
 <script src="/static/js/auth.js?v=20260528role" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/hafalan.js?v=20260604a" defer></script>
+<script src="/static/js/hafalan.js?v=20260604b" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init
