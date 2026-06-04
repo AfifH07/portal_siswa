@@ -5006,10 +5006,10 @@ def export_hafalan_pdf(request, nisn):
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=2*cm,
-            leftMargin=2*cm,
-            topMargin=2*cm,
-            bottomMargin=2*cm
+            rightMargin=1.8*cm,
+            leftMargin=1.8*cm,
+            topMargin=1.5*cm,
+            bottomMargin=1.5*cm
         )
 
         elements = []
@@ -5017,7 +5017,15 @@ def export_hafalan_pdf(request, nisn):
 
         title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=16, alignment=TA_CENTER, spaceAfter=6)
         subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=10, alignment=TA_CENTER, spaceAfter=4)
-        section_style = ParagraphStyle('Section', parent=styles['Heading2'], fontSize=12, spaceAfter=6, spaceBefore=12)
+        section_style = ParagraphStyle(
+            'Section',
+            parent=styles['Heading2'],
+            fontSize=11,
+            spaceAfter=4,
+            spaceBefore=10,
+            textColor=colors.HexColor('#065f46'),
+            borderPad=2,
+        )
         normal_style = ParagraphStyle('Normal2', parent=styles['Normal'], fontSize=9, spaceAfter=4, alignment=TA_LEFT)
 
         elements.append(Paragraph("LAPORAN HAFALAN SANTRI", title_style))
@@ -5098,35 +5106,69 @@ def export_hafalan_pdf(request, nisn):
         # === SECTION: Progress Hafalan 30 Juz ===
         elements.append(Paragraph("Progress Hafalan 30 Juz", section_style))
         try:
-            target_records = TargetHafalan.objects.filter(siswa=student).order_by('-tahun_ajaran', 'semester')
-        except Exception:
-            target_records = []
+            from django.db.models import Sum as DjangoSum
+            juz_data = HafalanRecord.objects.filter(siswa=student).exclude(
+                juz__isnull=True
+            ).values('juz').annotate(
+                halaman=DjangoSum('jumlah_halaman')
+            ).order_by('juz')
 
-        if target_records:
-            target_data = [['No', 'Tahun Ajaran', 'Semester', 'Target Juz', 'Tercapai Juz', 'Catatan']]
-            for idx, r in enumerate(target_records, 1):
-                target_data.append([
-                    str(idx),
-                    str(r.tahun_ajaran),
-                    str(r.semester),
-                    str(r.target_juz),
-                    str(r.tercapai_juz),
-                    (r.catatan or '')[:60],
-                ])
-            t = Table(target_data, colWidths=[1*cm, 3*cm, 2.5*cm, 2.5*cm, 2.5*cm, 5*cm])
-            t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#059669')),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0,0), (-1,-1), 8),
-                ('ALIGN', (0,0), (-1,0), 'CENTER'),
-                ('ALIGN', (0,1), (4,-1), 'CENTER'),
-                ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f0fdf4')]),
-            ]))
-            elements.append(t)
-        else:
-            elements.append(Paragraph("Belum ada data target hafalan.", normal_style))
+            juz_map = {item['juz']: item['halaman'] for item in juz_data}
+
+            # Build 30 juz rows - only show juz with data, plus summary for untouched
+            juz_rows_ada = []
+            belum_count = 0
+            for juz_num in range(1, 31):
+                halaman = juz_map.get(juz_num, 0)
+                if halaman >= 20:
+                    status_juz = 'Murojaah'
+                    status_color = colors.HexColor('#fef3c7')
+                elif halaman > 0:
+                    status_juz = 'Proses'
+                    status_color = colors.HexColor('#fef3c7')
+                else:
+                    belum_count += 1
+                    continue
+
+                juz_rows_ada.append((juz_num, halaman, status_juz, status_color))
+
+            if juz_rows_ada:
+                juz_table_data = [['Juz', 'Halaman Dihafal', 'Status']]
+                juz_table_styles = [
+                    ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#059669')),
+                    ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                    ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0,0), (-1,-1), 9),
+                    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                    ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                ]
+                for row_idx, (juz_num, halaman, status_juz, status_color) in enumerate(juz_rows_ada, 1):
+                    juz_table_data.append([
+                        f"Juz {juz_num}",
+                        f"{halaman} halaman",
+                        status_juz,
+                    ])
+                    juz_table_styles.append(
+                        ('BACKGROUND', (2, row_idx), (2, row_idx), status_color)
+                    )
+
+                juz_tbl = Table(juz_table_data, colWidths=[4*cm, 5*cm, 4*cm])
+                juz_tbl.setStyle(TableStyle(juz_table_styles))
+                elements.append(juz_tbl)
+                elements.append(Spacer(1, 0.2*cm))
+
+                total_juz = len(juz_rows_ada)
+                elements.append(Paragraph(
+                    f"<b>{total_juz} juz</b> sudah dimulai &nbsp;|&nbsp; "
+                    f"<b>{belum_count} juz</b> belum dimulai &nbsp;|&nbsp; "
+                    f"<b>Total halaman:</b> {sum(h for _, h, _, _ in juz_rows_ada)} halaman",
+                    normal_style
+                ))
+            else:
+                elements.append(Paragraph("Santri belum memiliki catatan hafalan.", normal_style))
+
+        except Exception as e:
+            elements.append(Paragraph(f"Data progress hafalan tidak tersedia: {str(e)}", normal_style))
 
         elements.append(Spacer(1, 0.3*cm))
 
