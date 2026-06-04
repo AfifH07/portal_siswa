@@ -5095,6 +5095,126 @@ def export_hafalan_pdf(request, nisn):
         else:
             elements.append(Paragraph("Belum ada data tahfidz.", normal_style))
 
+        # === SECTION: Progress Hafalan 30 Juz ===
+        elements.append(Paragraph("Progress Hafalan 30 Juz", section_style))
+        try:
+            target_records = TargetHafalan.objects.filter(siswa=student).order_by('-tahun_ajaran', 'semester')
+        except Exception:
+            target_records = []
+
+        if target_records:
+            target_data = [['No', 'Tahun Ajaran', 'Semester', 'Target Juz', 'Tercapai Juz', 'Catatan']]
+            for idx, r in enumerate(target_records, 1):
+                target_data.append([
+                    str(idx),
+                    str(r.tahun_ajaran),
+                    str(r.semester),
+                    str(r.target_juz),
+                    str(r.tercapai_juz),
+                    (r.catatan or '')[:60],
+                ])
+            t = Table(target_data, colWidths=[1*cm, 3*cm, 2.5*cm, 2.5*cm, 2.5*cm, 5*cm])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#059669')),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,-1), 8),
+                ('ALIGN', (0,0), (-1,0), 'CENTER'),
+                ('ALIGN', (0,1), (4,-1), 'CENTER'),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f0fdf4')]),
+            ]))
+            elements.append(t)
+        else:
+            elements.append(Paragraph("Belum ada data target hafalan.", normal_style))
+
+        elements.append(Spacer(1, 0.3*cm))
+
+        # === SECTION: Kehadiran Kajian Mingguan ===
+        elements.append(Paragraph("Kehadiran Kajian Mingguan", section_style))
+        try:
+            from django.db.models import Q as DjangoQ
+            presensi_qs = PresensiPertemuan.objects.filter(
+                santri=student
+            ).select_related('pertemuan', 'pertemuan__kelompok').order_by('-pertemuan__tanggal')
+
+            hadir = presensi_qs.filter(status='hadir').count()
+            izin = presensi_qs.filter(status='izin').count()
+            sakit = presensi_qs.filter(status='sakit').count()
+            alfa = presensi_qs.filter(status='tidak_hadir').count()
+            total = hadir + izin + sakit + alfa
+            pct = round((hadir / total * 100), 1) if total > 0 else 0
+
+            summary_data = [['Hadir', 'Izin', 'Sakit', 'Alfa', 'Total', 'Persentase Hadir']]
+            summary_data.append([str(hadir), str(izin), str(sakit), str(alfa), str(total), f"{pct}%"])
+            ts = Table(summary_data, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 3.5*cm])
+            ts.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#059669')),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,-1), 9),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f0fdf4')),
+            ]))
+            elements.append(ts)
+            elements.append(Spacer(1, 0.3*cm))
+
+            # History tabel (max 20 baris terakhir)
+            if presensi_qs.exists():
+                history_data = [['No', 'Tanggal', 'Judul Kajian', 'Kelompok', 'Status']]
+                STATUS_LABEL = {
+                    'hadir': 'Hadir',
+                    'izin': 'Izin',
+                    'sakit': 'Sakit',
+                    'tidak_hadir': 'Alfa',
+                }
+                for idx, p in enumerate(presensi_qs[:20], 1):
+                    history_data.append([
+                        str(idx),
+                        str(p.pertemuan.tanggal.strftime('%d/%m/%Y')) if p.pertemuan.tanggal else '-',
+                        (p.pertemuan.judul or '')[:40],
+                        (p.pertemuan.kelompok.nama if p.pertemuan.kelompok else '-'),
+                        STATUS_LABEL.get(p.status, p.status),
+                    ])
+                th = Table(history_data, colWidths=[1*cm, 2.5*cm, 6*cm, 4*cm, 2.5*cm])
+                th.setStyle(TableStyle([
+                    ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#34d399')),
+                    ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+                    ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0,0), (-1,-1), 8),
+                    ('ALIGN', (0,0), (1,-1), 'CENTER'),
+                    ('ALIGN', (4,0), (4,-1), 'CENTER'),
+                    ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                    ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f0fdf4')]),
+                ]))
+                elements.append(th)
+        except Exception as e:
+            elements.append(Paragraph(f"Data kehadiran tidak tersedia: {str(e)}", normal_style))
+
+        elements.append(Spacer(1, 0.3*cm))
+
+        # === SECTION: Catatan Guru ===
+        elements.append(Paragraph("Catatan Guru", section_style))
+        try:
+            catatan_guru = getattr(student, 'catatan', None) or '-'
+        except Exception:
+            catatan_guru = '-'
+
+        catatan_style = ParagraphStyle(
+            'Catatan',
+            parent=styles['Normal'],
+            fontSize=9,
+            spaceAfter=4,
+            borderPad=6,
+            backColor=colors.HexColor('#f0fdf4'),
+            borderColor=colors.HexColor('#059669'),
+            borderWidth=0.5,
+            borderRadius=4,
+        )
+        elements.append(Paragraph(catatan_guru, catatan_style))
+        elements.append(Spacer(1, 0.3*cm))
+
         elements.append(Spacer(1, 0.5*cm))
         footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey)
         elements.append(Paragraph(
