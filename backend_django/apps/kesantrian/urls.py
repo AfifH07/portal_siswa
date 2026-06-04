@@ -19,6 +19,8 @@ urlpatterns = [
     path('ibadah/delete/<int:ibadah_id>/', views.delete_ibadah, name='delete-ibadah'),
     path('ibadah/update/<int:ibadah_id>/', views.update_ibadah, name='update-ibadah'),
     path('ibadah/create-single/', views.create_ibadah_single, name='create-ibadah-single'),
+    path('ibadah/template-presensi-csv/', views.download_presensi_sholat_template, name='ibadah-template-presensi-csv'),
+    path('ibadah/import-presensi-csv/', views.import_presensi_sholat_csv, name='ibadah-import-presensi-csv'),
 
     # Student-specific endpoints
     path('ibadah/rekap/', views.IbadahRekapView.as_view(), name='ibadah-rekap'),

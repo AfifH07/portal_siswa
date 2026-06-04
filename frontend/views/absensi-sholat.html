@@ -73,6 +73,7 @@
         <button class="abs-tab-btn active" data-tab="input">Input Absensi</button>
         <button class="abs-tab-btn" data-tab="edit">Edit Absensi</button>
         <button class="abs-tab-btn" data-tab="rekap" id="tab-btn-rekap-kelas" style="display:none;">Rekap Kelas</button>
+        <button class="abs-tab-btn" data-tab="import-csv">Import CSV</button>
       </div>
 
       <div id="tab-input" class="abs-tab-panel">
@@ -229,6 +230,76 @@
           </div>
         </div>
       </div>
+
+      <!-- Tab Import CSV -->
+      <div id="tab-import-csv" class="abs-tab-panel" style="display:none;">
+        <div class="as-card">
+          <h3 style="margin-bottom: 1rem;">Import Presensi Sholat dari CSV</h3>
+
+          <div style="background: var(--emerald-50, #f0fdf4); border: 1px solid var(--emerald-200, #a7f3d0); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <strong>Panduan:</strong>
+            <ol style="margin: 0.5rem 0 0 1.2rem; font-size: 0.9rem;">
+              <li>Download template CSV terlebih dahulu</li>
+              <li>Kolom wajib: <code>nisn</code>, <code>tanggal</code> (YYYY-MM-DD)</li>
+              <li>Kolom waktu: <code>subuh</code>, <code>dzuhur</code>, <code>ashar</code>, <code>maghrib</code>, <code>isya</code></li>
+              <li>Nilai: <code>hadir</code> / <code>tidak_hadir</code> / <code>terlambat</code></li>
+              <li>Satu baris = satu santri satu hari (semua 5 waktu)</li>
+              <li>Jika sudah ada data, akan di-<em>update</em> otomatis</li>
+            </ol>
+            <a href="/api/kesantrian/ibadah/template-presensi-csv/" download
+               style="display: inline-block; margin-top: 0.75rem; padding: 0.4rem 1rem; background: white; border: 1px solid var(--emerald-500, #10b981); border-radius: 6px; color: var(--emerald-700, #047857); font-size: 0.875rem; text-decoration: none;">
+              Download Template CSV
+            </a>
+          </div>
+
+          <!-- Dropzone -->
+          <div id="abs-csv-dropzone" style="border: 2px dashed var(--emerald-400, #34d399); border-radius: 10px; padding: 2.5rem; text-align: center; cursor: pointer; background: white;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">CSV</div>
+            <p style="margin: 0 0 0.5rem; font-weight: 500;">Drag & drop file CSV di sini</p>
+            <p style="margin: 0 0 1rem; color: #6b7280; font-size: 0.875rem;">atau klik untuk memilih file</p>
+            <input type="file" id="abs-csv-file-input" accept=".csv" style="display:none;">
+            <button class="as-btn as-btn-primary" id="abs-csv-pick-btn">Pilih File CSV</button>
+          </div>
+
+          <!-- Preview -->
+          <div id="abs-csv-preview" style="display:none; margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <span style="font-size: 1.5rem;">CSV</span>
+              <div style="flex: 1;">
+                <div id="abs-csv-filename" style="font-weight: 500;">-</div>
+                <div id="abs-csv-filesize" style="color: #6b7280; font-size: 0.85rem;">-</div>
+              </div>
+              <button class="as-btn as-btn-danger" id="abs-csv-clear-btn">x</button>
+            </div>
+            <button class="as-btn as-btn-success" id="abs-csv-import-btn" style="margin-top: 1rem; width: 100%;">
+              Import Presensi
+            </button>
+          </div>
+
+          <!-- Result -->
+          <div id="abs-csv-result" style="display:none; margin-top: 1rem;">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 80px; text-align: center; padding: 1rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #a7f3d0;">
+                <div id="abs-csv-total" style="font-size: 2rem; font-weight: 700; color: #059669;">0</div>
+                <div style="font-size: 0.8rem; color: #6b7280;">Total</div>
+              </div>
+              <div style="flex: 1; min-width: 80px; text-align: center; padding: 1rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #a7f3d0;">
+                <div id="abs-csv-success" style="font-size: 2rem; font-weight: 700; color: #059669;">0</div>
+                <div style="font-size: 0.8rem; color: #6b7280;">Berhasil</div>
+              </div>
+              <div style="flex: 1; min-width: 80px; text-align: center; padding: 1rem; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
+                <div id="abs-csv-failed" style="font-size: 2rem; font-weight: 700; color: #dc2626;">0</div>
+                <div style="font-size: 0.8rem; color: #6b7280;">Gagal</div>
+              </div>
+            </div>
+            <div id="abs-csv-errors-wrap" style="display:none;">
+              <strong>Detail Error:</strong>
+              <ul id="abs-csv-error-list" style="margin-top: 0.5rem; font-size: 0.875rem; color: #dc2626;"></ul>
+            </div>
+            <button class="as-btn as-btn-outline" id="abs-csv-reset-btn">Import Lagi</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </main>
@@ -243,7 +314,7 @@
 <script src="/static/js/auth-check.js?v=20260530adminsantri" defer></script>
 <script src="/static/js/auth.js?v=20260528role" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/absensi-sholat.js?v=20260530adminsantri" defer></script>
+<script src="/static/js/absensi-sholat.js?v=20260604a" defer></script>
 
 <script>
     window.addEventListener('load', function() {

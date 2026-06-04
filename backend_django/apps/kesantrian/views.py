@@ -3540,6 +3540,135 @@ def hafalan_dashboard_stats(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_presensi_sholat_template(request):
+    """
+    Download template CSV untuk import presensi sholat wajib.
+    Kolom: nisn, tanggal, subuh, dzuhur, ashar, maghrib, isya
+    Nilai status: hadir / tidak_hadir / terlambat
+    """
+    import csv
+    from django.http import HttpResponse as DjangoHttpResponse
+
+    response = DjangoHttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="template_presensi_sholat.csv"'
+    response.write('\ufeff')  # BOM untuk Excel
+
+    writer = csv.writer(response)
+    writer.writerow(['nisn', 'tanggal', 'subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'])
+    writer.writerow(['0069028700', '2026-06-04', 'hadir', 'hadir', 'terlambat', 'hadir', 'hadir'])
+    writer.writerow(['0069028701', '2026-06-04', 'hadir', 'tidak_hadir', 'hadir', 'hadir', 'hadir'])
+    writer.writerow(['# Keterangan:', '', '', '', '', '', ''])
+    writer.writerow(['# nisn', 'Wajib. NISN santri', '', '', '', '', ''])
+    writer.writerow(['# tanggal', 'Wajib. Format: YYYY-MM-DD', '', '', '', '', ''])
+    writer.writerow(['# subuh dst', 'Nilai: hadir / tidak_hadir / terlambat', '', '', '', '', ''])
+    writer.writerow(['# Kolom waktu kosong', 'dianggap tidak_hadir', '', '', '', '', ''])
+
+    return response
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def import_presensi_sholat_csv(request):
+    """
+    Import presensi sholat wajib dari CSV.
+    Kolom: nisn, tanggal, subuh, dzuhur, ashar, maghrib, isya
+    Untuk setiap baris, create/update record Ibadah per waktu.
+    """
+    user = request.user
+
+    allowed_roles = ['superadmin', 'admin', 'guru', 'musyrif']
+    if user.role not in allowed_roles:
+        return Response({'success': False, 'message': 'Tidak diizinkan'}, status=403)
+
+    if 'file' not in request.FILES:
+        return Response({'success': False, 'message': 'File tidak ditemukan'}, status=400)
+
+    uploaded_file = request.FILES['file']
+    if not uploaded_file.name.lower().endswith('.csv'):
+        return Response({'success': False, 'message': 'Hanya file CSV yang didukung'}, status=400)
+
+    try:
+        import csv
+        import io
+        from datetime import datetime
+
+        content = uploaded_file.read().decode('utf-8-sig')
+        reader = csv.DictReader(io.StringIO(content))
+
+        VALID_STATUS = ['hadir', 'tidak_hadir', 'terlambat']
+        WAKTU_LIST = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya']
+
+        berhasil = 0
+        gagal = 0
+        errors = []
+
+        for row_idx, row in enumerate(reader, start=2):
+            nisn_val = (row.get('nisn') or '').strip()
+            if not nisn_val or nisn_val.startswith('#'):
+                continue
+
+            try:
+                student = Student.objects.get(nisn=nisn_val)
+            except Student.DoesNotExist:
+                errors.append(f"Baris {row_idx}: NISN {nisn_val} tidak ditemukan")
+                gagal += 1
+                continue
+
+            tanggal_str = (row.get('tanggal') or '').strip()
+            if not tanggal_str:
+                errors.append(f"Baris {row_idx}: kolom tanggal wajib diisi")
+                gagal += 1
+                continue
+
+            try:
+                tanggal = datetime.strptime(tanggal_str, '%Y-%m-%d').date()
+            except ValueError:
+                errors.append(f"Baris {row_idx}: format tanggal salah, gunakan YYYY-MM-DD")
+                gagal += 1
+                continue
+
+            try:
+                for waktu in WAKTU_LIST:
+                    status_val = (row.get(waktu) or '').strip().lower()
+                    if status_val not in VALID_STATUS:
+                        status_val = 'tidak_hadir'
+
+                    Ibadah.objects.update_or_create(
+                        siswa=student,
+                        tanggal=tanggal,
+                        jenis='sholat_wajib',
+                        waktu=waktu,
+                        defaults={
+                            'status': status_val,
+                            'catatan': '',
+                            'pencatat': user.username,
+                        }
+                    )
+                berhasil += 1
+
+            except Exception as e:
+                errors.append(f"Baris {row_idx}: Error - {str(e)}")
+                gagal += 1
+
+        return Response({
+            'success': True,
+            'berhasil': berhasil,
+            'gagal': gagal,
+            'total': berhasil + gagal,
+            'errors': errors[:20]
+        })
+
+    except Exception as e:
+        import traceback
+        return Response({
+            'success': False,
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
+
+
 # ============================================================
 # HELPER
 # ============================================================

@@ -764,3 +764,111 @@ document.addEventListener('DOMContentLoaded', function () {
 window.addEventListener('load', function() {
     initRekapTab();
 });
+
+// ===================== IMPORT PRESENSI SHOLAT CSV =====================
+(function initAbsensiCsvImport() {
+    let csvFile = null;
+
+    function setup() {
+        const pickBtn = document.getElementById('abs-csv-pick-btn');
+        const fileInput = document.getElementById('abs-csv-file-input');
+        const dropzone = document.getElementById('abs-csv-dropzone');
+        const clearBtn = document.getElementById('abs-csv-clear-btn');
+        const importBtn = document.getElementById('abs-csv-import-btn');
+        const resetBtn = document.getElementById('abs-csv-reset-btn');
+
+        if (!pickBtn) return;
+
+        pickBtn.onclick = () => fileInput.click();
+
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.style.borderColor = '#059669'; });
+        dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = ''; });
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropzone.style.borderColor = '';
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.csv')) setFile(file);
+        });
+
+        fileInput.onchange = e => {
+            const file = e.target.files[0];
+            if (file) setFile(file);
+        };
+
+        if (clearBtn) clearBtn.onclick = resetForm;
+        if (resetBtn) resetBtn.onclick = resetForm;
+
+        if (importBtn) {
+            importBtn.onclick = async function() {
+                if (!csvFile) return;
+                importBtn.disabled = true;
+                importBtn.textContent = 'Mengimport...';
+
+                const formData = new FormData();
+                formData.append('file', csvFile);
+
+                try {
+                    const res = await window.apiFetch('kesantrian/ibadah/import-presensi-csv/', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+
+                    document.getElementById('abs-csv-total').textContent = data.total || 0;
+                    document.getElementById('abs-csv-success').textContent = data.berhasil || 0;
+                    document.getElementById('abs-csv-failed').textContent = data.gagal || 0;
+
+                    const errWrap = document.getElementById('abs-csv-errors-wrap');
+                    const errList = document.getElementById('abs-csv-error-list');
+                    if (data.errors && data.errors.length > 0) {
+                        errList.innerHTML = data.errors.map(e => `<li>${e}</li>`).join('');
+                        errWrap.style.display = 'block';
+                    } else {
+                        errWrap.style.display = 'none';
+                    }
+
+                    document.getElementById('abs-csv-preview').style.display = 'none';
+                    document.getElementById('abs-csv-result').style.display = 'block';
+
+                } catch (err) {
+                    alert('Import gagal: ' + err.message);
+                    importBtn.disabled = false;
+                    importBtn.textContent = 'Import Presensi';
+                }
+            };
+        }
+    }
+
+    function setFile(file) {
+        csvFile = file;
+        const importBtn = document.getElementById('abs-csv-import-btn');
+        if (importBtn) {
+            importBtn.disabled = false;
+            importBtn.textContent = 'Import Presensi';
+        }
+        document.getElementById('abs-csv-filename').textContent = file.name;
+        document.getElementById('abs-csv-filesize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+        document.getElementById('abs-csv-dropzone').style.display = 'none';
+        document.getElementById('abs-csv-preview').style.display = 'block';
+        document.getElementById('abs-csv-result').style.display = 'none';
+    }
+
+    function resetForm() {
+        csvFile = null;
+        const importBtn = document.getElementById('abs-csv-import-btn');
+        if (importBtn) {
+            importBtn.disabled = false;
+            importBtn.textContent = 'Import Presensi';
+        }
+        document.getElementById('abs-csv-file-input').value = '';
+        document.getElementById('abs-csv-dropzone').style.display = 'block';
+        document.getElementById('abs-csv-preview').style.display = 'none';
+        document.getElementById('abs-csv-result').style.display = 'none';
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setup);
+    } else {
+        setup();
+    }
+})();
