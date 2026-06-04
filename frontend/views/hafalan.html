@@ -96,7 +96,7 @@
             </button>
             <button class="tab-btn" data-tab="import" onclick="switchHafalanTab('import')">
                 <i data-lucide="upload" class="tab-icon"></i>
-                <span>Import Excel</span>
+                <span>Import Data</span>
             </button>
             <button class="tab-btn" data-tab="kelompok" id="tab-btn-kelompok"
                     style="display:none;" onclick="switchHafalanTab('kelompok')">
@@ -606,18 +606,22 @@
         <div class="tab-content" id="tab-import" style="display: none;">
             <div class="glass-card">
                 <div class="card-head">
-                    <h3><i data-lucide="file-spreadsheet" class="ch-icon"></i> Import Data Hafalan dari Excel</h3>
+                    <h3><i data-lucide="file-spreadsheet" class="ch-icon"></i> Import Data Awal Hafalan (Santri Baru)</h3>
                 </div>
                 <div class="card-body">
                     <!-- Instructions -->
                     <div class="import-instructions">
-                        <h4>Panduan Import:</h4>
+                        <h4>Untuk apa?</h4>
+                        <p style="margin-bottom: 0.75rem; color: var(--gray-600); font-size: 0.9rem;">
+                            Digunakan saat <strong>santri baru masuk</strong> dan perlu mengisi data hafalan awal —
+                            yaitu berapa target juz dan capaian hafalan yang sudah dimiliki sebelum masuk pesantren.
+                        </p>
+                        <h4>Panduan:</h4>
                         <ol>
                             <li>Download template Excel terlebih dahulu</li>
-                            <li>Isi data sesuai format yang ditentukan</li>
                             <li>Kolom wajib: <code>nisn</code></li>
                             <li>Kolom opsional: <code>nama</code>, <code>kelas</code>, <code>target_halaman</code>, <code>capaian_halaman</code></li>
-                            <li>Isi target/capaian halaman dengan angka 0-604</li>
+                            <li>Isi angka halaman (0–604). Sistem otomatis konversi ke juz.</li>
                             <li>Upload file Excel (.xlsx atau .xls)</li>
                         </ol>
                         <div class="import-actions">
@@ -691,15 +695,22 @@
 
                     <!-- Import Setoran Hafalan (CSV) -->
                     <div class="card-head" style="margin-bottom: 1rem;">
-                        <h3><i data-lucide="file-text" class="ch-icon"></i> Import Setoran Hafalan per Juz (CSV)</h3>
+                        <h3><i data-lucide="file-text" class="ch-icon"></i> Import Ziyadah — Tambah Setoran Hafalan (CSV)</h3>
                     </div>
                     <div class="import-instructions">
-                        <h4>Panduan Import Setoran:</h4>
+                        <h4>Untuk apa?</h4>
+                        <p style="margin-bottom: 0.75rem; color: var(--gray-600); font-size: 0.9rem;">
+                            Digunakan untuk <strong>menambahkan catatan setoran hafalan (ziyadah)</strong> —
+                            yaitu hafalan baru yang disetorkan santri kepada guru, baik harian maupun mingguan.
+                            Berbeda dengan import data awal, ini mencatat <em>progress</em> hafalan per juz secara detail.
+                        </p>
+                        <h4>Panduan:</h4>
                         <ol>
                             <li>Download template CSV terlebih dahulu</li>
-                            <li>Kolom wajib: <code>nisn</code>, <code>tanggal</code> (YYYY-MM-DD), <code>juz</code>, <code>jumlah_halaman</code></li>
+                            <li>Kolom wajib: <code>nisn</code>, <code>tanggal</code> (format: YYYY-MM-DD), <code>juz</code>, <code>jumlah_halaman</code></li>
                             <li>Kolom opsional: <code>halaman_dari</code>, <code>halaman_sampai</code>, <code>status</code>, <code>catatan</code></li>
-                            <li>Status: <code>lancar</code> / <code>perlu_ulang</code> / <code>belum_selesai</code></li>
+                            <li>Status: <code>lancar</code> / <code>perlu_ulang</code> / <code>belum_selesai</code> (default: lancar)</li>
+                            <li>Satu baris = satu sesi setoran santri</li>
                         </ol>
                         <div class="import-actions">
                             <a href="/api/kesantrian/hafalan/template-csv/" class="btn btn-outline" download>
@@ -1131,7 +1142,7 @@
 <script src="/static/js/auth-check.js?v=20260530adminsantri" defer></script>
 <script src="/static/js/auth.js?v=20260528role" defer></script>
 <script src="/static/js/page-events.js?v=20260504" defer></script>
-<script src="/static/js/hafalan.js?v=20260604b" defer></script>
+<script src="/static/js/hafalan.js?v=20260604c" defer></script>
 
 <script>
     // Baron Light Emerald Theme Init
