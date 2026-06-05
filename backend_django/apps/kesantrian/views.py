@@ -3544,27 +3544,142 @@ def hafalan_dashboard_stats(request):
 @login_required
 def download_presensi_sholat_template(request):
     """
-    Download template CSV untuk import presensi sholat wajib.
+    Download template Excel (.xlsx) untuk import presensi sholat wajib.
     Kolom: nisn, tanggal, subuh, dzuhur, ashar, maghrib, isya
     Nilai status: hadir / tidak_hadir / terlambat
     """
-    import csv
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from io import BytesIO
+    except ImportError:
+        from django.http import HttpResponse as DjangoHttpResponse
+        return DjangoHttpResponse('openpyxl tidak terinstall', status=500)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Presensi Sholat'
+
+    # === Definisi kolom ===
+    columns = [
+        {
+            'header': 'NISN',
+            'keterangan': 'Wajib - Nomor Induk Siswa Nasional',
+            'contoh': '0069028700',
+            'width': 20,
+        },
+        {
+            'header': 'Tanggal',
+            'keterangan': 'Wajib - Format: YYYY-MM-DD (contoh: 2026-06-04)',
+            'contoh': '2026-06-04',
+            'width': 22,
+        },
+        {
+            'header': 'Subuh',
+            'keterangan': 'hadir / tidak_hadir / terlambat',
+            'contoh': 'hadir',
+            'width': 18,
+        },
+        {
+            'header': 'Dzuhur',
+            'keterangan': 'hadir / tidak_hadir / terlambat',
+            'contoh': 'hadir',
+            'width': 18,
+        },
+        {
+            'header': 'Ashar',
+            'keterangan': 'hadir / tidak_hadir / terlambat',
+            'contoh': 'terlambat',
+            'width': 18,
+        },
+        {
+            'header': 'Maghrib',
+            'keterangan': 'hadir / tidak_hadir / terlambat',
+            'contoh': 'hadir',
+            'width': 18,
+        },
+        {
+            'header': 'Isya',
+            'keterangan': 'hadir / tidak_hadir / terlambat',
+            'contoh': 'hadir',
+            'width': 18,
+        },
+    ]
+
+    # === Style ===
+    header_fill = PatternFill(start_color='065F46', end_color='065F46', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    header_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    keterangan_fill = PatternFill(start_color='FEF3C7', end_color='FEF3C7', fill_type='solid')
+    keterangan_font = Font(color='92400E', size=9, italic=True)
+    keterangan_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    contoh_fill = PatternFill(start_color='F0FDF4', end_color='F0FDF4', fill_type='solid')
+    contoh_font = Font(color='065F46', size=10)
+    contoh_align = Alignment(horizontal='center', vertical='center')
+
+    thin_border = Border(
+        left=Side(style='thin', color='D1D5DB'),
+        right=Side(style='thin', color='D1D5DB'),
+        top=Side(style='thin', color='D1D5DB'),
+        bottom=Side(style='thin', color='D1D5DB'),
+    )
+
+    # === Row 1: Header ===
+    ws.row_dimensions[1].height = 30
+    for col_idx, col in enumerate(columns, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=col['header'])
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = header_align
+        cell.border = thin_border
+        ws.column_dimensions[cell.column_letter].width = col['width']
+
+    # === Row 2: Keterangan ===
+    ws.row_dimensions[2].height = 35
+    for col_idx, col in enumerate(columns, start=1):
+        cell = ws.cell(row=2, column=col_idx, value=col['keterangan'])
+        cell.fill = keterangan_fill
+        cell.font = keterangan_font
+        cell.alignment = keterangan_align
+        cell.border = thin_border
+
+    # === Row 3: Contoh data ===
+    ws.row_dimensions[3].height = 22
+    for col_idx, col in enumerate(columns, start=1):
+        cell = ws.cell(row=3, column=col_idx, value=col['contoh'])
+        cell.fill = contoh_fill
+        cell.font = contoh_font
+        cell.alignment = contoh_align
+        cell.border = thin_border
+
+    # Freeze row 1 & 2, mulai input dari row 4
+    ws.freeze_panes = 'A4'
+
+    # Data validation untuk kolom status (C-G, row 4-500)
+    from openpyxl.worksheet.datavalidation import DataValidation
+    status_dv = DataValidation(
+        type='list',
+        formula1='"hadir,tidak_hadir,terlambat"',
+        allow_blank=True,
+        showDropDown=False,
+    )
+    status_dv.error = 'Isi dengan: hadir, tidak_hadir, atau terlambat'
+    status_dv.errorTitle = 'Nilai tidak valid'
+    ws.add_data_validation(status_dv)
+    status_dv.add('C4:G500')
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
     from django.http import HttpResponse as DjangoHttpResponse
-
-    response = DjangoHttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="template_presensi_sholat.csv"'
-    response.write('\ufeff')  # BOM untuk Excel
-
-    writer = csv.writer(response)
-    writer.writerow(['nisn', 'tanggal', 'subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'])
-    writer.writerow(['0069028700', '2026-06-04', 'hadir', 'hadir', 'terlambat', 'hadir', 'hadir'])
-    writer.writerow(['0069028701', '2026-06-04', 'hadir', 'tidak_hadir', 'hadir', 'hadir', 'hadir'])
-    writer.writerow(['# Keterangan:', '', '', '', '', '', ''])
-    writer.writerow(['# nisn', 'Wajib. NISN santri', '', '', '', '', ''])
-    writer.writerow(['# tanggal', 'Wajib. Format: YYYY-MM-DD', '', '', '', '', ''])
-    writer.writerow(['# subuh dst', 'Nilai: hadir / tidak_hadir / terlambat', '', '', '', '', ''])
-    writer.writerow(['# Kolom waktu kosong', 'dianggap tidak_hadir', '', '', '', '', ''])
-
+    response = DjangoHttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="template_presensi_sholat.xlsx"'
     return response
 
 
@@ -3586,16 +3701,35 @@ def import_presensi_sholat_csv(request):
         return Response({'success': False, 'message': 'File tidak ditemukan'}, status=400)
 
     uploaded_file = request.FILES['file']
-    if not uploaded_file.name.lower().endswith('.csv'):
-        return Response({'success': False, 'message': 'Hanya file CSV yang didukung'}, status=400)
+    filename_lower = uploaded_file.name.lower()
+    is_csv = filename_lower.endswith('.csv')
+    is_xlsx = filename_lower.endswith('.xlsx')
+    if not is_csv and not is_xlsx:
+        return Response({'success': False, 'message': 'Gunakan file CSV atau Excel (.xlsx)'}, status=400)
 
     try:
         import csv
         import io
         from datetime import datetime
 
-        content = uploaded_file.read().decode('utf-8-sig')
-        reader = csv.DictReader(io.StringIO(content))
+        file_bytes = uploaded_file.read()
+
+        if is_xlsx:
+            from openpyxl import load_workbook
+            wb = load_workbook(filename=io.BytesIO(file_bytes), data_only=True)
+            ws = wb.active
+            # Baca header dari row 1, skip row 2 (keterangan), mulai data dari row 3
+            raw_headers = [str(ws.cell(row=1, column=c).value or '').strip().lower() for c in range(1, ws.max_column + 1)]
+            rows = []
+            for r in range(3, ws.max_row + 1):
+                row_dict = {}
+                for c_idx, h in enumerate(raw_headers, start=1):
+                    val = ws.cell(row=r, column=c_idx).value
+                    row_dict[h] = str(val).strip() if val is not None else ''
+                rows.append(row_dict)
+        else:
+            content = file_bytes.decode('utf-8-sig')
+            rows = list(csv.DictReader(io.StringIO(content)))
 
         VALID_STATUS = ['hadir', 'tidak_hadir', 'terlambat']
         WAKTU_LIST = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya']
@@ -3604,7 +3738,7 @@ def import_presensi_sholat_csv(request):
         gagal = 0
         errors = []
 
-        for row_idx, row in enumerate(reader, start=2):
+        for row_idx, row in enumerate(rows, start=2):
             nisn_val = (row.get('nisn') or '').strip()
             if not nisn_val or nisn_val.startswith('#'):
                 continue
