@@ -474,6 +474,87 @@ function setupEventListeners() {
 
     const saveSubmit = document.getElementById('btn-save-blp-submit');
     if (saveSubmit) saveSubmit.onclick = () => saveBLP('submitted');
+
+    initImportBLP();
+}
+
+// ===================== IMPORT BLP =====================
+
+function initImportBLP() {
+    const btnDownload = document.getElementById('btn-download-template-blp');
+    const inputFile = document.getElementById('input-import-blp');
+    const btnPilih = document.getElementById('btn-pilih-file-blp');
+    const labelFile = document.getElementById('label-file-blp');
+    const btnImport = document.getElementById('btn-import-blp');
+    const resultDiv = document.getElementById('import-blp-result');
+
+    if (!btnDownload) return; // section tidak ada di halaman ini
+
+    btnDownload.onclick = function() {
+        window.location.href = '/api/kesantrian/download-template-blp/';
+    };
+
+    btnPilih.onclick = function() {
+        inputFile.click();
+    };
+
+    inputFile.onchange = function() {
+        if (inputFile.files.length > 0) {
+            labelFile.textContent = inputFile.files[0].name;
+            btnImport.style.display = '';
+        } else {
+            labelFile.textContent = 'Belum ada file dipilih';
+            btnImport.style.display = 'none';
+        }
+    };
+
+    btnImport.onclick = function() {
+        handleImportBLP(inputFile, btnImport, resultDiv);
+    };
+}
+
+async function handleImportBLP(inputFile, btnImport, resultDiv) {
+    if (!inputFile.files.length) return;
+
+    const file = inputFile.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    btnImport.disabled = true;
+    btnImport.textContent = 'Mengupload...';
+    resultDiv.style.display = 'none';
+
+    try {
+        const data = await apiJson('kesantrian/import-blp/', {
+            method: 'POST',
+            body: formData
+        });
+
+        resultDiv.style.display = 'block';
+        if (data.success) {
+            resultDiv.style.background = '#d1fae5';
+            resultDiv.style.color = '#065f46';
+            let html = `<strong>✅ ${escapeHtml(data.message)}</strong>`;
+            if (data.errors && data.errors.length > 0) {
+                html += '<br><br><strong>Detail error:</strong><ul>';
+                data.errors.forEach(e => { html += `<li>${escapeHtml(e)}</li>`; });
+                html += '</ul>';
+            }
+            resultDiv.innerHTML = html;
+        } else {
+            resultDiv.style.background = '#fee2e2';
+            resultDiv.style.color = '#991b1b';
+            resultDiv.innerHTML = `<strong>❌ ${escapeHtml(data.message)}</strong>`;
+        }
+    } catch (err) {
+        resultDiv.style.display = 'block';
+        resultDiv.style.background = '#fee2e2';
+        resultDiv.style.color = '#991b1b';
+        resultDiv.innerHTML = `<strong>❌ Gagal menghubungi server: ${escapeHtml(err.message)}</strong>`;
+    } finally {
+        btnImport.disabled = false;
+        btnImport.textContent = '⬆ Upload & Import';
+    }
 }
 
 function buildDefaultIndicatorValues() {

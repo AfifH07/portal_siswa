@@ -49,6 +49,8 @@ urlpatterns = [
     path('blp/<int:pk>/', views.blp_detail, name='blp-detail'),
     path('blp/<int:pk>/lock/', views.blp_lock, name='blp-lock'),
     path('blp/student/<str:nisn>/', views.blp_student_history, name='blp-student-history'),
+    path('download-template-blp/', views.download_template_blp, name='download-template-blp'),
+    path('import-blp/', views.import_blp_excel, name='import-blp'),
 
     # ============================================
     # INVAL (AUTO-INVAL SYSTEM)

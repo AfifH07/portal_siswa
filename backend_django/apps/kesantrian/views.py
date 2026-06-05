@@ -1923,6 +1923,230 @@ def download_blp_pdf(request, nisn):
         )
 
 
+@login_required
+def download_template_blp(request):
+    """Download template Excel untuk import BLP."""
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import PatternFill, Font, Alignment
+    from django.http import HttpResponse
+
+    # Urutan domain dan indikator (flat, 59 kolom)
+    DOMAIN_INDICATOR_ORDER = [
+        ('ibadah_religius', ['sholat_subuh','sholat_dzuhur','sholat_ashar','sholat_maghrib','sholat_isya','sholat_jumat','sholat_rawatib','sholat_tahajud','sholat_dhuha','tadarus','hafalan_quran','murojaah','tadabur','doa_harian','puasa_sunnah','wudhu','infaq','halaqoh']),
+        ('akhlak_perilaku', ['bicara_santun','panggilan_baik','senyum_salam','siapkan_buku','belajar_malam','rapikan_tempat_tidur','mandi_pagi','mandi_sore','sikat_gigi','cuci_pakaian','setrika_pakaian','siapkan_seragam','deodoran','potong_kuku','piket','rapikan_sandal','potong_rambut','cuci_rambut','perlengkapan_sholat','baju_jumat','laptop_tugas','hp_syarie','jas_almamater','jaga_fasilitas','buang_sampah']),
+        ('resiliensi', ['tepat_waktu_kegiatan','selesaikan_tugas','suka_tantangan','libatkan_diri']),
+        ('kecerdikan', ['ajukan_pertanyaan','gunakan_sumber_daya','coba_alternatif','gagasan_inovatif']),
+        ('refleksi', ['baca_buku','serap_informasi','catat_tulis','cara_belajar']),
+        ('timbal_balik', ['teladani_sukses','dengarkan_nasihat','kerjasama','bantu_orang_lain']),
+    ]
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Import BLP'
+
+    # Header row 1: kolom tetap + nama indikator (flat)
+    headers = ['nisn', 'week_start'] + [ind for _, inds in DOMAIN_INDICATOR_ORDER for ind in inds]
+    header_fill = PatternFill(start_color='047857', end_color='047857', fill_type='solid')
+    header_font = Font(color='FFFFFF', bold=True)
+
+    for col_idx, h in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=h)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center')
+
+    # Row 2: keterangan
+    ws.cell(row=2, column=1, value='# Contoh: 1234567890')
+    ws.cell(row=2, column=2, value='# Format: YYYY-MM-DD (Senin minggu tsb)')
+    for col_idx in range(3, len(headers) + 1):
+        ws.cell(row=2, column=col_idx, value='# 0 atau 1')
+
+    # Row 3: contoh data
+    ws.cell(row=3, column=1, value='1234567890')
+    ws.cell(row=3, column=2, value='2026-06-02')
+    for col_idx in range(3, len(headers) + 1):
+        ws.cell(row=3, column=col_idx, value=1)
+
+    # Lebar kolom
+    ws.column_dimensions['A'].width = 16
+    ws.column_dimensions['B'].width = 14
+    for col_idx in range(3, len(headers) + 1):
+        col_letter = ws.cell(row=1, column=col_idx).column_letter
+        ws.column_dimensions[col_letter].width = 22
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="template_import_blp.xlsx"'
+    return response
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def import_blp_excel(request):
+    """
+    Import BLP dari Excel (.xlsx).
+    Format: 61 kolom - nisn, week_start, + 59 kode indikator (nilai 0/1).
+    Row 1 = header, Row 2 = keterangan (dilewati jika nisn diawali #), Row 3+ = data.
+    Setiap baris = satu BLPEntry untuk satu santri satu minggu.
+    Jika BLPEntry untuk nisn+week_start sudah ada dan statusnya draft -> update.
+    Jika sudah locked -> skip, catat error.
+    """
+    import io
+    from openpyxl import load_workbook
+
+    user = request.user
+    allowed_roles = ['superadmin', 'admin', 'guru', 'musyrif', 'admin_santri']
+    if user.role not in allowed_roles:
+        return Response({'success': False, 'message': 'Tidak diizinkan'}, status=403)
+
+    if 'file' not in request.FILES:
+        return Response({'success': False, 'message': 'File tidak ditemukan'}, status=400)
+
+    uploaded_file = request.FILES['file']
+    if not uploaded_file.name.lower().endswith('.xlsx'):
+        return Response({'success': False, 'message': 'Gunakan file Excel (.xlsx)'}, status=400)
+
+    DOMAIN_INDICATOR_ORDER = [
+        ('ibadah_religius', ['sholat_subuh','sholat_dzuhur','sholat_ashar','sholat_maghrib','sholat_isya','sholat_jumat','sholat_rawatib','sholat_tahajud','sholat_dhuha','tadarus','hafalan_quran','murojaah','tadabur','doa_harian','puasa_sunnah','wudhu','infaq','halaqoh']),
+        ('akhlak_perilaku', ['bicara_santun','panggilan_baik','senyum_salam','siapkan_buku','belajar_malam','rapikan_tempat_tidur','mandi_pagi','mandi_sore','sikat_gigi','cuci_pakaian','setrika_pakaian','siapkan_seragam','deodoran','potong_kuku','piket','rapikan_sandal','potong_rambut','cuci_rambut','perlengkapan_sholat','baju_jumat','laptop_tugas','hp_syarie','jas_almamater','jaga_fasilitas','buang_sampah']),
+        ('resiliensi', ['tepat_waktu_kegiatan','selesaikan_tugas','suka_tantangan','libatkan_diri']),
+        ('kecerdikan', ['ajukan_pertanyaan','gunakan_sumber_daya','coba_alternatif','gagasan_inovatif']),
+        ('refleksi', ['baca_buku','serap_informasi','catat_tulis','cara_belajar']),
+        ('timbal_balik', ['teladani_sukses','dengarkan_nasihat','kerjasama','bantu_orang_lain']),
+    ]
+    ALL_INDICATORS = {ind: domain for domain, inds in DOMAIN_INDICATOR_ORDER for ind in inds}
+
+    try:
+        file_bytes = uploaded_file.read()
+        wb = load_workbook(filename=io.BytesIO(file_bytes), data_only=True)
+        ws = wb.active
+
+        raw_headers = [
+            str(ws.cell(row=1, column=c).value or '').strip().lower()
+            for c in range(1, ws.max_column + 1)
+        ]
+
+        berhasil = 0
+        diupdate = 0
+        gagal = 0
+        errors = []
+
+        pencatat = user.name if hasattr(user, 'name') else user.username
+
+        try:
+            tahun_ajaran_obj = TahunAjaran.objects.filter(is_active=True).first()
+            tahun_ajaran = tahun_ajaran_obj.nama if tahun_ajaran_obj else ''
+            semester = tahun_ajaran_obj.semester if tahun_ajaran_obj else ''
+        except Exception:
+            tahun_ajaran = ''
+            semester = ''
+
+        for r in range(2, ws.max_row + 1):
+            row_dict = {}
+            for c_idx, h in enumerate(raw_headers, start=1):
+                val = ws.cell(row=r, column=c_idx).value
+                row_dict[h] = val
+
+            nisn_val = str(row_dict.get('nisn') or '').strip()
+            if not nisn_val or nisn_val.startswith('#') or nisn_val == 'None':
+                continue
+
+            try:
+                student = Student.objects.get(nisn=nisn_val)
+            except Student.DoesNotExist:
+                errors.append(f"Baris {r}: NISN {nisn_val} tidak ditemukan")
+                gagal += 1
+                continue
+
+            week_start_val = row_dict.get('week_start')
+            if not week_start_val:
+                errors.append(f"Baris {r} (NISN {nisn_val}): week_start wajib diisi")
+                gagal += 1
+                continue
+
+            from datetime import datetime, date, timedelta
+            if isinstance(week_start_val, datetime):
+                week_start = week_start_val.date()
+            elif isinstance(week_start_val, date):
+                week_start = week_start_val
+            else:
+                try:
+                    week_start = datetime.strptime(str(week_start_val).strip(), '%Y-%m-%d').date()
+                except ValueError:
+                    errors.append(f"Baris {r} (NISN {nisn_val}): format week_start salah, gunakan YYYY-MM-DD")
+                    gagal += 1
+                    continue
+
+            week_end = week_start + timedelta(days=6)
+
+            # Susun indicator_values dari flat ke nested
+            indicator_values = {domain: {} for domain, _ in DOMAIN_INDICATOR_ORDER}
+            for ind, domain in ALL_INDICATORS.items():
+                raw_val = row_dict.get(ind)
+                try:
+                    val_int = int(float(str(raw_val))) if raw_val is not None and str(raw_val).strip() not in ('', 'None') else 0
+                    val_int = 1 if val_int >= 1 else 0
+                except (ValueError, TypeError):
+                    val_int = 0
+                indicator_values[domain][ind] = val_int
+
+            # Cek apakah sudah ada entry untuk nisn + week_start
+            existing = BLPEntry.objects.filter(siswa=student, week_start=week_start).first()
+            if existing:
+                if existing.status == 'locked':
+                    errors.append(f"Baris {r} (NISN {nisn_val}, {week_start}): sudah locked, dilewati")
+                    gagal += 1
+                    continue
+                # Update entry yang ada (status draft/submitted)
+                existing.indicator_values = indicator_values
+                existing.pencatat = pencatat
+                existing.pencatat_username = user.username
+                existing.save()
+                diupdate += 1
+                continue
+
+            # Buat entry baru via serializer
+            data = {
+                'siswa_nisn': nisn_val,
+                'week_start': str(week_start),
+                'week_end': str(week_end),
+                'tahun_ajaran': tahun_ajaran,
+                'semester': semester,
+                'indicator_values': indicator_values,
+                'catatan': '',
+                'tindak_lanjut': '',
+                'pencatat': pencatat,
+                'pencatat_username': user.username,
+                'status': 'submitted',
+            }
+            serializer = BLPEntryCreateSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                berhasil += 1
+            else:
+                errors.append(f"Baris {r} (NISN {nisn_val}): {serializer.errors}")
+                gagal += 1
+
+        return Response({
+            'success': True,
+            'message': f'Import selesai: {berhasil} dibuat, {diupdate} diupdate, {gagal} gagal.',
+            'berhasil': berhasil,
+            'diupdate': diupdate,
+            'gagal': gagal,
+            'errors': errors[:20],
+        })
+
+    except Exception as e:
+        return Response({'success': False, 'message': f'Error membaca file: {str(e)}'}, status=400)
+
+
 # ============================================================
 # INCIDENT (CASE MANAGEMENT / CATATAN & BIMBINGAN) API
 # ============================================================
