@@ -11,6 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Avg
 from django.utils import timezone
 from django.http import HttpResponse
@@ -3540,8 +3541,7 @@ def hafalan_dashboard_stats(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@login_required
 def download_presensi_sholat_template(request):
     """
     Download template CSV untuk import presensi sholat wajib.
@@ -5104,8 +5104,7 @@ def download_hafalan_template(request):
     return response
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@login_required
 def download_hafalan_record_template(request):
     """
     Download template CSV untuk import HafalanRecord (setoran per juz).
