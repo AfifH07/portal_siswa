@@ -7,7 +7,7 @@
 [![Django](https://img.shields.io/badge/Django-4.2-092E20?style=flat-square&logo=django)](https://djangoproject.com)
 [![DRF](https://img.shields.io/badge/DRF-3.14-red?style=flat-square)](https://django-rest-framework.org)
 [![Vanilla JS](https://img.shields.io/badge/Frontend-Vanilla%20JS%20ES6+-F7DF1E?style=flat-square&logo=javascript)](/)
-[![Deploy](https://img.shields.io/badge/Deploy-PythonAnywhere-2196F3?style=flat-square)](https://apiiip.pythonanywhere.com)
+[![Deploy](https://img.shields.io/badge/Deploy-portal.ponpesbaron.id-2196F3?style=flat-square)](https://portal.ponpesbaron.id)
 
 *Satu platform untuk mengelola santri, akademik, karakter, ibadah, hafalan, dan komunikasi walisantri.*
 
@@ -149,18 +149,15 @@ portal-siswa/
 
 ## 🚀 Deploy
 
+**Target:** `portal.ponpesbaron.id` (subdomain dari [ponpesbaron.id](https://ponpesbaron.id)) via Hostinger  
+**Database:** PostgreSQL 15
+
 ```bash
-cd ~/portal_siswa && git pull
+git pull
 cd backend_django
 python manage.py makemigrations
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
-# Reload di Web tab PythonAnywhere
-```
-
-```bash
-# Cek error
-cat /var/log/apiiip.pythonanywhere.com.error.log | tail -50
 ```
 
 ---
