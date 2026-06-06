@@ -1,86 +1,109 @@
+<div align="center">
+
 # Portal Siswa Baron
 
-Sistem Informasi Akademik Terpadu untuk Pondok Pesantren Baron. Mengelola data santri, kegiatan akademik, evaluasi karakter, pemantauan ibadah, hafalan Al-Quran, dan komunikasi dengan walisantri dalam satu platform.
+**Sistem Informasi Akademik Terpadu — Pondok Pesantren Baron**
 
-**Deployment:** https://apiiip.pythonanywhere.com  
-**Stack:** Django 4.2 + DRF · Vanilla JS ES6+ · SQLite (staging) / PostgreSQL (production)
+[![Django](https://img.shields.io/badge/Django-4.2-092E20?style=flat-square&logo=django)](https://djangoproject.com)
+[![DRF](https://img.shields.io/badge/DRF-3.14-red?style=flat-square)](https://django-rest-framework.org)
+[![Vanilla JS](https://img.shields.io/badge/Frontend-Vanilla%20JS%20ES6+-F7DF1E?style=flat-square&logo=javascript)](/)
+[![Deploy](https://img.shields.io/badge/Deploy-PythonAnywhere-2196F3?style=flat-square)](https://apiiip.pythonanywhere.com)
 
----
+*Satu platform untuk mengelola santri, akademik, karakter, ibadah, hafalan, dan komunikasi walisantri.*
 
-## Fitur Utama
-
-### Manajemen Santri
-Data lengkap santri mencakup NISN, NIS, jenis kelamin, kelas, dan catatan khusus. Setiap santri diidentifikasi dengan NISN sebagai primary key di seluruh sistem. Walisantri dapat memiliki lebih dari satu anak yang terhubung ke akun mereka.
-
-### Jurnal Guru (Presensi KBM)
-Guru mencatat kehadiran santri per sesi dengan wizard 4 langkah: tipe pengajar (pengampu/piket), info kelas, kehadiran per santri, dan dokumentasi. Setiap sesi bisa dilengkapi tujuan pembelajaran, ketuntasan materi, dan penilaian.
-
-### Sistem Nilai
-Mendukung 8 jenis penilaian: penugasan, tes tulis, tes lisan, portofolio, praktek, proyek, UTS, dan UAS. Guru input nilai per mata pelajaran dan materi. Admin dan pimpinan dapat melihat rekap per kelas.
-
-### Evaluasi Santri & Pembinaan
-Guru dan BK mencatat evaluasi/insiden santri dengan foto. Alur: guru input → admin/pimpinan approve → pimpinan bisa close kasus dengan keputusan final. Setiap evaluasi bisa dikomentari; komentar memiliki visibilitas `internal` (hanya staf) atau `semua` (termasuk walisantri).
-
-### Program Al-Quran (Hafalan)
-Musyrif dan guru tahfidz mencatat setoran hafalan harian per santri dengan detail juz, halaman dari-sampai, jumlah halaman, catatan, dan status (lancar/perlu ulang/belum selesai). Mendukung import bulk via Excel. Setiap santri memiliki target hafalan per semester. Tersedia export PDF progress hafalan 30 juz.
-
-### Presensi Sholat
-Pencatatan kehadiran sholat wajib 5 waktu per santri per hari (hadir/tidak hadir/terlambat). Mendukung input manual dan import bulk via CSV/Excel. Tersedia rekap per kelas untuk admin.
-
-### BLP — Buku Lapangan Pesantren
-Pemantauan karakter santri mingguan berbasis 59 indikator boolean (0/1) yang terbagi dalam 6 domain:
-
-| Domain | Jumlah Indikator |
-|--------|-----------------|
-| Ibadah & Religius | 18 |
-| Akhlak & Perilaku | 25 |
-| Resiliensi & Daya Pegan | 4 |
-| Kecerdikan & Resourcefulness | 4 |
-| Refleksi & Meta Belajar | 4 |
-| Timbal Balik & Empati | 4 |
-
-Skor dihitung sebagai persentase (0–100%). Predikat: Mumtaz (≥90%), Jayyid Jiddan (≥75%), Jayyid (≥60%), Maqbul (≥40%), Perlu Pembinaan (<40%). Mendukung import bulk via Excel (61 kolom: nisn, week_start, + 59 kode indikator).
-
-### Kompetensi & Pengajar
-Setiap santri memiliki data guru tartil dan guru tahfidz yang bertanggung jawab, beserta status kelulusan masing-masing (sudah lulus / belum lulus). Informasi ini ditampilkan di halaman hafalan dan dapat dilihat oleh walisantri.
-
-### Status Khidmat
-Mencatat status keterlibatan santri dalam kegiatan pesantren dengan 4 pilihan: Sangat Aktif, Aktif, Tidak Aktif, atau Pengabdian. Dilengkapi tanggal mulai dan akhir masa khidmat.
-
-### Evaluasi Asatidz
-Penilaian kinerja ustadz/ustadzah oleh pimpinan mencakup evaluasi kompetensi, kinerja mengajar, dan indikator kinerja yang dapat dikonfigurasi.
-
-### Izin Guru
-Guru mengajukan izin dengan foto surat. Admin/pimpinan approve atau tolak. Status izin terlihat di dashboard guru.
-
-### Keuangan
-Modul pencatatan keuangan pesantren diakses oleh role bendahara.
-
-### Dashboard
-Setiap role mendapatkan dashboard yang disesuaikan. Dashboard guru menampilkan todo list: sesi yang belum diisi presensi, nilai yang belum diinput, dan izin tanpa titipan tugas. Dashboard walisantri menampilkan ringkasan data anak.
-
-### Pertemuan Pengasuhan
-Pencatatan jadwal dan presensi pertemuan antara pesantren dengan walisantri.
+</div>
 
 ---
 
-## Role & Akses
+## ✨ Fitur Unggulan
 
-| Role | Deskripsi Akses |
-|------|----------------|
-| `superadmin` | Akses penuh termasuk manajemen user |
-| `admin` | Co-superadmin: import/export, semua data, tanpa kelola user |
-| `pimpinan` | Lihat semua data approved, approval evaluasi, close kasus |
-| `guru` | Jurnal KBM, input nilai, evaluasi santri (kelas sendiri) |
-| `musyrif` | Input ibadah, hafalan, pembinaan santri |
-| `bk` | Bimbingan konseling, lihat semua evaluasi approved |
-| `bendahara` | Modul keuangan |
-| `walisantri` | Lihat data anak: hafalan, evaluasi (visibility=semua), BLP, kehadiran |
-| `admin_santri` | Input BLP dan presensi sholat untuk semua santri |
+### 🎯 Dashboard Adaptif per Role
+Setiap role mendapatkan tampilan dashboard yang berbeda dan relevan. **Dashboard Guru** menampilkan todo list dinamis — sesi mana yang belum diisi presensi, nilai yang belum diinput, dan izin tanpa titipan tugas — sehingga guru tahu persis apa yang harus dikerjakan hari itu. **Dashboard Walisantri** menyajikan ringkasan progress anak secara visual: jumlah juz hafalan, persentase kehadiran ibadah, dan statistik kajian mingguan dalam satu layar. **Dashboard Ustadz** hadir dalam layout bento grid dengan kartu assignment, jadwal mengajar, dan status inval real-time.
+
+### 📖 Program Al-Quran — Hafalan Terintegrasi
+Pencatatan hafalan harian per santri dengan detail penuh: juz, halaman dari-sampai, jumlah halaman, status kelancaran, dan catatan pembimbing. Setiap santri memiliki target hafalan per semester yang terpantau. Tersedia export PDF progress 30 juz lengkap dengan tabel detail per juz, rekap kehadiran kajian, dan catatan guru. Import bulk via Excel untuk efisiensi input massal.
+
+### 📊 BLP — Pemantauan Karakter Mingguan
+Sistem penilaian karakter berbasis 59 indikator behavioral yang terbagi dalam 6 domain (Ibadah & Religius, Akhlak & Perilaku, Resiliensi, Kecerdikan, Refleksi, Timbal Balik). Setiap indikator dinilai secara boolean (terpenuhi/tidak), menghasilkan skor persentase dan predikat otomatis — dari Mumtaz hingga Perlu Pembinaan. Walisantri dapat melihat ringkasan domain dan riwayat per minggu langsung dari halaman karakter anak.
+
+### 🔥 Heatmap Konsistensi Ibadah
+Visualisasi kehadiran sholat berjamaah santri dalam bentuk heatmap 3 bulan terakhir, mirip GitHub contribution graph. Sekilas terlihat pola konsistensi dan hari-hari yang sering absen. Dilengkapi chart sholat wajib 7 hari terakhir per waktu (Subuh–Isya) dan analitik insight otomatis.
+
+### 📋 Evaluasi Santri dengan Alur Approval
+Guru dan BK mencatat evaluasi atau insiden santri dengan foto bukti. Kasus mengalir melalui alur approval: guru input → admin/pimpinan approve → pimpinan close dengan keputusan final tertulis. Setiap kasus bisa dikomentari secara bertahap dengan kontrol visibilitas: komentar `internal` hanya terlihat staf, komentar `semua` juga terlihat walisantri.
+
+### 💰 Manajemen SPP & Keuangan
+Generate tagihan SPP massal, verifikasi pembayaran dengan bukti foto, dan manajemen keuangan pesantren terintegrasi khusus untuk role bendahara.
 
 ---
 
-## Arsitektur
+## 📦 Fitur Lengkap
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**🎓 Akademik**
+- Jurnal Guru (wizard 4 langkah: tipe pengajar, info kelas, kehadiran, dokumentasi)
+- 8 jenis penilaian: penugasan, tes tulis, tes lisan, portofolio, praktek, proyek, UTS, UAS
+- Import nilai massal via Excel + generate template otomatis
+- Jadwal mengajar & timetable per kelas
+- Titipan tugas saat guru izin
+- Wali kelas: catatan kelas, rekap pembinaan, detail santri
+
+**🕌 Kesantrian**
+- Presensi sholat 5 waktu (hadir/tidak hadir/terlambat)
+- Rekap presensi sholat per kelas untuk admin
+- Import presensi sholat bulk via CSV/Excel
+- Setoran hafalan harian (CRUD + import bulk)
+- Target hafalan per semester
+- Pertemuan pengasuhan: kelompok, jadwal, presensi
+
+**👤 Data Santri**
+- Profil lengkap: NISN, NIS, jenis kelamin, catatan
+- Statistik santri (total, aktif, per jenis kelamin)
+- Filter & pencarian multi-kriteria
+- Import santri dari Excel
+- Kenaikan kelas massal
+- Pendaftaran santri baru via form multi-step
+
+</td>
+<td width="50%" valign="top">
+
+**📈 Evaluasi & Karakter**
+- Evaluasi perilaku santri dengan foto
+- Alur approval + close case + keputusan final
+- Catatan & bimbingan dengan visibilitas internal/publik
+- Poin integritas santri
+- Evaluasi integritas guru (penilaian kinerja)
+- Riwayat incident per santri
+- BLP: 59 indikator, 6 domain, skor persentase
+
+**📄 Export & Import**
+- PDF rapor santri (hafalan + karakter + ibadah)
+- PDF BLP per santri
+- PDF hafalan progress 30 juz
+- PDF rekap izin guru
+- Export nilai via Excel
+- Import nilai, hafalan, BLP, presensi — semua via Excel/CSV dengan template siap pakai
+
+**⚙️ Administrasi**
+- Manajemen user & role (9 role)
+- Master mata pelajaran & jam pelajaran
+- Tahun ajaran & semester
+- Izin guru dengan foto surat + approval
+- Evaluasi kinerja asatidz
+- Kritik & saran (anonim/identitas)
+- Kompetensi santri: guru tartil/tahfidz + status lulus
+- Status khidmat santri (4 pilihan + periode)
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🏗️ Arsitektur
 
 ```
 portal-siswa/
@@ -90,91 +113,41 @@ portal-siswa/
 │       ├── attendance/     — Jurnal Guru, TitipanTugas
 │       ├── core/           — TahunAjaran, MasterJam, MasterMapel
 │       ├── dashboard/      — Dashboard views per role
-│       ├── evaluations/    — Evaluasi santri, komentar, approval, close case
-│       ├── finance/        — Keuangan
+│       ├── evaluations/    — Evaluasi, komentar, approval, close case, integritas
+│       ├── finance/        — Keuangan & SPP
 │       ├── grades/         — Nilai santri
 │       ├── kesantrian/     — BLP, Hafalan, Ibadah, IzinGuru, KompetensiSantri, Incident
-│       ├── registration/   — Pendaftaran santri
+│       ├── registration/   — Pendaftaran santri baru
 │       └── students/       — Student, Schedule
 └── frontend/
     ├── public/
-    │   ├── css/
-    │   │   └── baron-emerald.css   — Main theme (glassmorphism, Baron Emerald)
-    │   └── js/
-    │       ├── utils.js            — Utilities (escapeHtml, getCookie, dll)
-    │       ├── apiConfig.js        — Konfigurasi base URL API
-    │       ├── apiFetch.js         — Wrapper fetch dengan CSRF & auth
-    │       ├── auth-check.js       — Autentikasi & render sidebar per role
-    │       └── *.js                — Script per halaman
-    └── views/
-        └── *.html                  — Halaman HTML per fitur
+    │   ├── css/baron-emerald.css   — Baron Emerald Theme (glassmorphism)
+    │   └── js/                     — utils → apiConfig → apiFetch → auth-check (urutan wajib)
+    └── views/                      — 27 halaman HTML
 ```
 
-**Custom User Model — penting:**
-- Nama lengkap: `user.name` (bukan `first_name`, bukan `get_full_name()`)
-- Selalu gunakan: `user.name or user.username`
-- Walisantri: `user.linked_student_nisn` (anak pertama), `user.linked_student_nisns` (semua anak, JSONField)
-- Student PK: `nisn` (string) — bukan auto-increment integer
+**Stack:** Django 4.2 · DRF 3.14 · SimpleJWT · ReportLab · openpyxl · Chart.js · Vanilla JS ES6+  
+**Design:** Baron Emerald Theme · Plus Jakarta Sans · Glassmorphism · Lucide Icons
 
 ---
 
-## Model Database Utama
+## 👥 Role & Hak Akses
 
-| Model | App | Keterangan |
-|-------|-----|-----------|
-| `User` | accounts | Custom user model dengan field `name` dan `role` |
-| `Assignment` | accounts | Penugasan guru: kelas, mapel, tipe (hafalan_type) |
-| `Student` | students | PK = nisn, field: nis, jenis_kelamin, catatan |
-| `TahunAjaran` | core | Tahun ajaran + semester aktif |
-| `MasterMapel` | core | Master mata pelajaran |
-| `Attendance` | attendance | Kehadiran per sesi KBM |
-| `Grade` | grades | Nilai per mapel per jenis penilaian |
-| `Evaluation` | evaluations | Evaluasi/insiden santri + approval + close |
-| `EvaluationComment` | evaluations | Komentar evaluasi dengan visibility |
-| `Ibadah` | kesantrian | Presensi sholat wajib |
-| `HafalanRecord` | kesantrian | Setoran hafalan harian |
-| `BLPEntry` | kesantrian | Penilaian karakter mingguan (59 indikator boolean) |
-| `KompetensiSantri` | kesantrian | Guru tartil/tahfidz, status lulus, status khidmat |
-| `Incident` | kesantrian | Insiden/kejadian santri |
+| Role | Akses |
+|------|-------|
+| `superadmin` | Akses penuh termasuk manajemen user |
+| `admin` | Semua fitur kecuali kelola user |
+| `pimpinan` | Lihat semua data approved, approval, close case evaluasi |
+| `guru` | Jurnal KBM, input nilai, evaluasi kelas sendiri |
+| `musyrif` | Input ibadah, hafalan, pembinaan santri |
+| `bk` | Bimbingan konseling, semua evaluasi approved |
+| `bendahara` | Modul keuangan & SPP |
+| `walisantri` | Lihat data anak: hafalan, karakter, evaluasi, kehadiran ibadah |
+| `admin_santri` | Input BLP dan presensi sholat untuk semua santri |
 
 ---
 
-## API Endpoints Utama
-
-### Auth (`/api/auth/`)
-- `POST /login/` — Login
-- `GET /status/` — Cek status autentikasi & role
-- `GET /users/` — List user (admin)
-
-### Kesantrian (`/api/kesantrian/`)
-- `GET|POST /hafalan/` — List & tambah setoran hafalan
-- `GET /hafalan/template/` — Download template Excel hafalan
-- `POST /hafalan/import/` — Import hafalan bulk
-- `GET|POST /blp/` — List & buat BLP entry
-- `GET /download-template-blp/` — Download template Excel BLP
-- `POST /import-blp/` — Import BLP bulk
-- `GET|POST /ibadah/` — Presensi sholat
-- `GET /ibadah/template-presensi-csv/` — Download template presensi
-- `POST /ibadah/import-presensi-csv/` — Import presensi bulk
-- `GET /kompetensi/<nisn>/` — Data kompetensi santri
-- `PATCH /kompetensi/<nisn>/update/` — Update kompetensi
-- `GET|POST /incidents/` — List & tambah incident
-- `GET /download-rapor/<nisn>/` — Export PDF rapor
-- `GET /download-blp/<nisn>/` — Export PDF BLP
-
-### Evaluations (`/api/evaluations/`)
-- `GET|POST /` — List & buat evaluasi
-- `PATCH /<id>/approve/` — Approve evaluasi
-- `PATCH /<id>/close/` — Close kasus (pimpinan)
-- `GET|POST /<id>/comments/` — Komentar evaluasi
-
-### Grades (`/api/grades/`)
-- `GET|POST /` — List & input nilai
-- `GET /mapel-list/` — Daftar mata pelajaran
-
----
-
-## Deploy
+## 🚀 Deploy
 
 ```bash
 cd ~/portal_siswa && git pull
@@ -185,32 +158,13 @@ python manage.py collectstatic --noinput
 # Reload di Web tab PythonAnywhere
 ```
 
-Cek log error:
 ```bash
+# Cek error
 cat /var/log/apiiip.pythonanywhere.com.error.log | tail -50
 ```
 
 ---
 
-## Konvensi Pengembangan
-
-**Frontend:**
-- `apiFetch('endpoint/')` — tanpa prefix `/api/`, selalu tanpa leading slash
-- Event handler via `.onclick = fn`, bukan inline `onclick=""` di HTML statis (di `innerHTML` dinamis boleh `onclick="window.fn()"`)
-- Bump `?v=YYYYMMDD` setiap ada perubahan JS/CSS
-- `grades.js` masih pakai raw `fetch()` — jangan dimigrasi ke `apiFetch`
-- `evaluasi-asatidz.js` — jangan diubah sama sekali
-
-**Backend:**
-- Template download file: wajib `@login_required` + `HttpResponse` (bukan `@api_view` — DRF akan paksa response jadi JSON)
-- Student FK filter: `nisn__nisn=<string>` bukan `nisn=<string>`
-- Cek duplikat fungsi sebelum menambah fungsi baru
-
-**Alur bug fix:**
-1. Prompt investigasi (read-only: grep/cat)
-2. Analisis output → tentukan root cause
-3. Jika belum jelas → investigasi lanjutan
-4. Root cause terkonfirmasi → prompt fix
-5. Deploy → konfirmasi hasil
-
-Dilarang fix berdasarkan asumsi tanpa investigasi.
+<div align="center">
+<sub>Portal Siswa Baron · Pondok Pesantren Baron · v2.4.3</sub>
+</div>
